@@ -5,27 +5,27 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=41d';
-import { PF } from './perf.js?v=41d';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=42b';
+import { PF } from './perf.js?v=42b';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=41d';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=41d';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=41d';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=41d';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=41d';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=41d';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=41d';
-import { createGuns } from './hrguns.js?v=41d';
-import { createHrZombies } from './hrzombies.js?v=41d';
-import { createFlora } from './hrflora.js?v=41d';
-import { createTown, wearJacket } from './hrtown.js?v=41d';
-import { createSaloon } from './hrsaloon.js?v=41d';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=41d';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=41d';
-import { createSunItem } from './hrsunweapon.js?v=41d';
-import { createBuild } from './hrbuild.js?v=41d';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=41d';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=41d';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=42b';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=42b';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42b';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42b';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=42b';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=42b';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=42b';
+import { createGuns } from './hrguns.js?v=42b';
+import { createHrZombies } from './hrzombies.js?v=42b';
+import { createFlora } from './hrflora.js?v=42b';
+import { createTown, wearJacket } from './hrtown.js?v=42b';
+import { createSaloon } from './hrsaloon.js?v=42b';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=42b';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=42b';
+import { createSunItem } from './hrsunweapon.js?v=42b';
+import { createBuild } from './hrbuild.js?v=42b';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=42b';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=42b';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -684,6 +684,7 @@ export function createHorseRider(ctx) {
       fog.color.copy(sky.horizon).lerp(sky.sunSide, .25); if (!GX.composer) { fogTmp.copy(fog.color); fog.color.setRGB(aces(fogTmp.r), aces(fogTmp.g), aces(fogTmp.b), THREE.SRGBColorSpace); } }
     if (scene.background) scene.background = null;
     const day = sstep(-1, 9, el); GX.sunDir.copy(sky.sunDir); GX.sun.color.copy(sky.sunCol); GX.sun.intensity = 3.6 * day; GX.hemi.intensity = .1 + .08 * day;
+    { const cd = H.caveDark || 0; GX.sun.intensity *= 1 - .92 * cd; GX.hemi.intensity *= 1 - .85 * cd; if (scene.environment) scene.environmentIntensity = (STYLE_ON ? 1.35 : 1) * (1 - .85 * cd); } // v42: dark inside Bandit Falls
     fog.far = Math.floor((((SUN_AZ % TAU) + TAU) % TAU) * 100) + Math.min(.999, Math.max(0, sky.sunDir.y));
     if (H.grassG) H.grassG.update(dt || 0, camera, sky.sunDir, sky.sunCol, .55 + .45 * Math.sin(H.t * .21) * Math.sin(H.t * .053 + 1));
   }
@@ -801,7 +802,7 @@ export function createHorseRider(ctx) {
       if (l > .12 && vv > 5 && dk > 3 && !H.noTrip && Math.random() < dt * (dk - 3) * .045 * Math.min(1.6, (vv - 4.5) / 2.7)) { H.fallD = H.fallT = 1.5 + Math.random() * 1.5; H.falls = (H.falls || 0) + 1; H.trips = (H.trips || 0) + 1; H.fallYaw = Math.random() < .5 ? -1 : 1; H.fv.set(0, 0); H.shake = Math.max(H.shake, .5); msg(dk > 10 ? 'You faceplant in the dirt' : 'You tripped and fell', 1.5); } } }
     const v = H.fv.length(), ox0 = P.pos.x, oz0 = P.pos.z, gy0 = hAt(ox0, oz0), onS = town2 && town2.onStruct(ox0, oz0, P.pos.y); H.curY = P.pos.y; moveCircle(P.pos, H.fv.x * dt, H.fv.y * dt, .35, null); H.curY = null;
     const nT = town2 && town2.towers.some(t => Math.hypot(P.pos.x - t.cx, P.pos.z - t.cz) < 22); // v34: you can always scramble up to a lookout, from any side
-    if (!onS && !(town2 && town2.onStruct(P.pos.x, P.pos.z, P.pos.y)) && !(H.temple && H.temple.under(P.pos.x, P.pos.z, P.pos.y)) && (nT ? Math.hypot(H.fv.x, H.fv.y) > 2.2 && P.pos.y - gy0 > dt * 2.2 && H.fv.multiplyScalar(.97) && false : slopeGate(P.pos, ox0, oz0, gy0, 1.3, .35, null))) H.fv.multiplyScalar(.9); // scrambling up: only up to ~52 degrees
+    if (!onS && !(town2 && town2.onStruct(P.pos.x, P.pos.z, P.pos.y)) && !(H.temple && H.temple.under(P.pos.x, P.pos.z, P.pos.y)) && !(H.cave && H.cave.under && H.cave.under(P.pos.x, P.pos.z, P.pos.y)) && (nT ? Math.hypot(H.fv.x, H.fv.y) > 2.2 && P.pos.y - gy0 > dt * 2.2 && H.fv.multiplyScalar(.97) && false : slopeGate(P.pos, ox0, oz0, gy0, 1.3, .35, null))) H.fv.multiplyScalar(.9); // scrambling up: only up to ~52 degrees
     let g0 = town2 ? town2.floorAt(P.pos.x, P.pos.z, P.pos.y) : hAt(P.pos.x, P.pos.z); if (H.cave) g0 = H.cave.floorAt(P.pos.x, P.pos.z, P.pos.y, g0); if (H.temple) { const tg = H.temple.groundAt(P.pos.x, P.pos.z, P.pos.y); if (tg !== null) g0 = tg; } // v39: under the mound the temple's floors decide if (jump && H.ground) { H.vy = 7; H.ground = false; }
     H.vy -= 22 * dt; P.pos.y += H.vy * dt; if (P.pos.y <= g0) { P.pos.y = g0; H.vy = 0; H.ground = true; }
     const ob = P.bob; P.bob += dt * v * 1.6; if (H.ground && v > .5 && Math.floor(ob / Math.PI) !== Math.floor(P.bob / Math.PI)) sfx.step && sfx.step(false);
@@ -873,6 +874,7 @@ export function createHorseRider(ctx) {
   // v41: buildings (saloon, towers, store...) — pull the camera in front of any wall between it and you, and keep it under the
   // ceiling when you are indoors, so it never looks through a wall or out of the roof.
   function camWalls(from, to) {
+    if (H.cave && H.cave.camClip) H.cave.camClip(from, to);
     if (!town2 || !town2.walls || !town2.walls.length) return;
     const dx = to.x - from.x, dz = to.z - from.z, dy = to.y - from.y, len = Math.hypot(dx, dz); if (len < .05) return; let best = 1;
     for (const w of town2.walls) {
@@ -911,9 +913,9 @@ export function createHorseRider(ctx) {
       fov = (70 + sstep(8, 18, sp) * 5 - 14 * ak) * FK; k = 9; }
     const mode = h ? 'ride' : 'foot'; if (H.camInit && lastMode && mode !== lastMode) lookOff.add(lastLook).sub(look); lastMode = mode; lookOff.multiplyScalar(1 - Math.min(1, (dt || 1) * 3.5));
     look.add(lookOff); want.add(lookOff); lastLook.copy(look).sub(lookOff);
-    camClear(look, want); camWalls(look, want); want.y = Math.max(want.y, hAt(want.x, want.z) + .5);
+    camClear(look, want); camWalls(look, want); if (!(H.cave && H.cave.underP) && !(H.temple && H.temple.underP)) want.y = Math.max(want.y, hAt(want.x, want.z) + .5);
     want.sub(look); if (!H.camInit || !dt) { camPos.copy(want); H.camInit = true; } else { camPos.lerp(want, Math.min(1, dt * k)); if (want.lengthSq() < camPos.lengthSq()) camPos.copy(want); } /* v41: snap in at once when a wall is closer, ease back out */ // smooth the offset, not the position: no lag at a gallop
-    camera.position.copy(look).add(camPos); if (!(H.temple && H.temple.underP)) camera.position.y = Math.max(camera.position.y, hAt(camera.position.x, camera.position.z) + .4); if (H.shake > 0) camera.position.add(tmp.set((Math.random() - .5), (Math.random() - .5), (Math.random() - .5)).multiplyScalar(H.shake * .12)); camera.lookAt(look);
+    camera.position.copy(look).add(camPos); if (!(H.temple && H.temple.underP) && !(H.cave && H.cave.underP)) camera.position.y = Math.max(camera.position.y, hAt(camera.position.x, camera.position.z) + .4); if (H.shake > 0) camera.position.add(tmp.set((Math.random() - .5), (Math.random() - .5), (Math.random() - .5)).multiplyScalar(H.shake * .12)); camera.lookAt(look);
     { const cp = h ? Math.max(-.7, Math.min(.35, P.pitch)) : Math.max(-.85, Math.min(.6, P.pitch)), ex = Math.max(-1.553, Math.min(1.553, P.pitch)) - cp; if (Math.abs(ex) > 1e-4) camera.rotateX(ex); } // v33: the camera keeps its orbit, the view tilts on to look straight up / down (+-89 deg)
     if (h) camera.rotateZ(H.roll * .3);
     drunkCam(h);

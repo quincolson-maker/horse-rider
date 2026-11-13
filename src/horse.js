@@ -869,6 +869,20 @@ export function createHorseRider(ctx) {
   function camClear(from, to) { // pull the camera in front of tree trunks / rocks between it and the subject
     const dx = to.x - from.x, dz = to.z - from.z; for (let t = .3; t <= 1.001; t += .175) { const x = from.x + dx * t, z = from.z + dz * t;
       for (const [ox, oz, or] of obstNear(x, z)) if (Math.abs(ox - x) < or + .35 && Math.abs(oz - z) < or + .35 && Math.hypot(ox - x, oz - z) < or + .3) { to.x = from.x + dx * (t - .2); to.z = from.z + dz * (t - .2); to.y = from.y + (to.y - from.y) * (t - .2); return; } } }
+  // v41: buildings (saloon, towers, store...) — pull the camera in front of any wall between it and you, and keep it under the
+  // ceiling when you are indoors, so it never looks through a wall or out of the roof.
+  function camWalls(from, to) {
+    if (!town2 || !town2.walls || !town2.walls.length) return;
+    const dx = to.x - from.x, dz = to.z - from.z, dy = to.y - from.y, len = Math.hypot(dx, dz); if (len < .05) return; let best = 1;
+    for (const w of town2.walls) {
+      const ex = w[2] - w[0], ez = w[3] - w[1], den = dx * ez - dz * ex; if (Math.abs(den) < 1e-9) continue;
+      const fx = w[0] - from.x, fz = w[1] - from.z, t = (fx * ez - fz * ex) / den, u = (fx * dz - fz * dx) / den;
+      if (t <= 0 || t >= best || u < -.02 || u > 1.02) continue; const y = from.y + dy * t; if (y < w[4] - .3 || y > w[5] + .3) continue; best = t; }
+    const s = town2.town; let ceil = Infinity;
+    if (s && H.saloon && H.saloon.inside && H.saloon.inside()) { const up = P.pos.y > s.y0 + (s.Y2 || 4) - .6; ceil = s.y0 + (up ? (s.Y2 || 4) + 3.2 : (s.Y2 || 4) - .1) - .25; }
+    if (best < 1) { const k = Math.max(.08, best - .3 / len); to.x = from.x + dx * k; to.z = from.z + dz * k; to.y = from.y + dy * k; }
+    if (to.y > ceil) to.y = Math.max(from.y - .1, ceil);
+  }
   function syncCamera(dt) { if (H.fovSave) { camera.fov = H.fovSave; H.fovSave = 0; camera.updateProjectionMatrix(); } camRig(dt); if (guns) guns.scopeCam(dt); if (H.saloon) H.saloon.postCam(); if (H.build) H.build.postCam(); } // the scope takes over after the rig
   function drunkCam(h) { // v33/34 drunk sway, double / triple vision, tunnel vision, hiccups and the fall-over camera
     { const dk = H.drunkK || 0; if (dk > .05) { const t = H.t, k = Math.min(2.8, dk / 5); camera.rotateZ(Math.sin(t * .55) * .09 * k + Math.sin(t * 1.3) * .02 * k); camera.rotateY(Math.sin(t * .43 + 1) * .03 * k); camera.rotateX(Math.sin(t * .71) * .025 * k); }
@@ -896,8 +910,8 @@ export function createHorseRider(ctx) {
       fov = (70 + sstep(8, 18, sp) * 5 - 14 * ak) * FK; k = 9; }
     const mode = h ? 'ride' : 'foot'; if (H.camInit && lastMode && mode !== lastMode) lookOff.add(lastLook).sub(look); lastMode = mode; lookOff.multiplyScalar(1 - Math.min(1, (dt || 1) * 3.5));
     look.add(lookOff); want.add(lookOff); lastLook.copy(look).sub(lookOff);
-    camClear(look, want); want.y = Math.max(want.y, hAt(want.x, want.z) + .5);
-    want.sub(look); if (!H.camInit || !dt) { camPos.copy(want); H.camInit = true; } else camPos.lerp(want, Math.min(1, dt * k)); // smooth the offset, not the position: no lag at a gallop
+    camClear(look, want); camWalls(look, want); want.y = Math.max(want.y, hAt(want.x, want.z) + .5);
+    want.sub(look); if (!H.camInit || !dt) { camPos.copy(want); H.camInit = true; } else { camPos.lerp(want, Math.min(1, dt * k)); if (want.lengthSq() < camPos.lengthSq()) camPos.copy(want); } /* v41: snap in at once when a wall is closer, ease back out */ // smooth the offset, not the position: no lag at a gallop
     camera.position.copy(look).add(camPos); if (!(H.temple && H.temple.underP)) camera.position.y = Math.max(camera.position.y, hAt(camera.position.x, camera.position.z) + .4); if (H.shake > 0) camera.position.add(tmp.set((Math.random() - .5), (Math.random() - .5), (Math.random() - .5)).multiplyScalar(H.shake * .12)); camera.lookAt(look);
     { const cp = h ? Math.max(-.7, Math.min(.35, P.pitch)) : Math.max(-.85, Math.min(.6, P.pitch)), ex = Math.max(-1.553, Math.min(1.553, P.pitch)) - cp; if (Math.abs(ex) > 1e-4) camera.rotateX(ex); } // v33: the camera keeps its orbit, the view tilts on to look straight up / down (+-89 deg)
     if (h) camera.rotateZ(H.roll * .3);

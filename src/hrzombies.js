@@ -5,7 +5,7 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=41c';
+import { PF } from './perf.js?v=41d';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -160,7 +160,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
       const tb = rc(ro, d, o.pos.x, o.pos.z, .3 * o.K.s, o.pos.y, o.pos.y + 1.5 * o.K.s); if (tb > 0 && tb < maxT && (!best || tb < best.t - .05)) best = { t: tb, Z: o, head: false }; }
     return best; }
   function assistPoints() { const out = []; for (const o of Z.list) if (o.alive) { out.push({ c: headPos(o, new THREE.Vector3()), z: o }); out.push({ c: new THREE.Vector3(o.pos.x, o.pos.y + 1.15 * o.K.s, o.pos.z), z: o }); } return out; }
-  function damage(o, dmg, head, p, dir, by, from) { if (!o || !o.alive) return false; o.hp -= dmg; o.flinch = Math.min(1, o.flinch + (head ? .8 : .45)); if (dir) o.push = [dir.x * (dmg > 150 ? 2.5 : .8), dir.z * (dmg > 150 ? 2.5 : .8)];
+  function damage(o, dmg, head, p, dir, by, from) { if (!o || !o.alive) return false; if (o.kind === 'outlaw' && Z.outlawCalm) { Z.outlawCalm = false; c.onOutlawProvoked && c.onOutlawProvoked(); } o.hp -= dmg; o.flinch = Math.min(1, o.flinch + (head ? .8 : .45)); if (dir) o.push = [dir.x * (dmg > 150 ? 2.5 : .8), dir.z * (dmg > 150 ? 2.5 : .8)];
     if (o.hp <= 0) { kill(o, head, by); if (from && c.sendTo) { c.sendTo(from, { t: 'zk', h: head ? 1 : 0, b: Z.byBandit ? 1 : 0, z: o.id, ...(o.kind === 'outlaw' ? { o: 1 } : {}) }); c.creditRemote && c.creditRemote(from, head); } } return true; }
   const zAt = (pos, fn, wet) => sfx.zAt ? sfx.zAt(pos, fn, wet) : sfx.at(pos, fn, wet); // zombie voices: their own (fadeable) bus
   function kill(o, head, by) { if (!o.alive) return; o.alive = false; o.hp = 0; o.st = 2; o.deadT = 0; o.fallDir = rnd() < .5 ? 1 : -1; if (o.kind === 'outlaw') { if (Z.role() !== 'client' && c.onOutlawDown) c.onOutlawDown(o); if (sfx.at && sfx.ctx) sfx.at(o.pos, () => sfx.tone('triangle', 220, 90, .3, .5), .3); return; } // v38
@@ -186,6 +186,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
   function stepOutlaw(o, dt) { if (o.hold) { o.sp = 0; o.st = 0; return; } if (!o.post) o.post = [o.pos.x, o.pos.z];
     let T = null, bd = o.K.range; for (const p of players()) { if (Math.abs((p.y ?? o.pos.y) - o.pos.y) > 7 || (c.inCave && !c.inCave(p.x, p.z))) continue; const d = Math.hypot(p.x - o.pos.x, p.z - o.pos.z); if (d < bd) { bd = d; T = p; } }
     o.cd -= dt; if (o.shotT > 0 && (o.shotT -= dt) <= 0) o.st = 0; let tx = o.post[0], tz = o.post[1], spd = 1.3;
+    if (T && Z.outlawCalm) { o.yaw += wrapA(Math.atan2(-(T.x - o.pos.x), -(T.z - o.pos.z)) - o.yaw) * Math.min(1, dt * 2); T = null; } // v41: they watch you, but hold fire until someone starts shooting
     if (T) { o.yaw += wrapA(Math.atan2(-(T.x - o.pos.x), -(T.z - o.pos.z)) - o.yaw) * Math.min(1, dt * 6); const fromPost = Math.hypot(o.pos.x - o.post[0], o.pos.z - o.post[1]);
       if (!o.stay && bd > 9 && fromPost < 4) { tx = T.x; tz = T.z; spd = o.K.spd; } else { tx = o.pos.x; tz = o.pos.z; }
       if (o.cd <= 0) { const see = !c.outlawLOS || c.outlawLOS(o.pos.x, o.pos.y + 1.45, o.pos.z, T.x, (T.y ?? o.pos.y) + 1.4, T.z); o.cd = see ? o.K.cd * (.75 + rnd() * .6) : .4;

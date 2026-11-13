@@ -4,9 +4,10 @@
 // picked the same way on every machine — and wires it into our controller (walls + floors), guns (rock stops bullets),
 // host-authoritative co-op (the host runs the outlaws and the vault) and game points. Points are game points only.
 import * as THREE from 'three';
-import { createBanditCave } from './hrbanditcave.js?v=41c';
-import { makeFrontierCharacter } from './hrcharacters.js?v=41c';
-import { poseDoll } from './hrsaloon.js?v=41c';
+import { createBanditCave } from './hrbanditcave.js?v=41d';
+import { createFalls } from './hrfalls.js?v=41d';
+import { makeFrontierCharacter } from './hrcharacters.js?v=41d';
+import { poseDoll } from './hrsaloon.js?v=41d';
 
 export const CAVE = { chest: 2500, dance: 50, slotBet: 10, outlaw: 60, outlawHead: 75 };
 const FU = 40, FV0 = -59, FV1 = 8, BL = 16, BS = 5; // footprint in the cave's own frame (u across, v out of the mouth); terrain blend: 16 m apron in front, 5 m to the sides and back (the hill meets the rock)
@@ -37,7 +38,7 @@ export function pickCaveSite(hAt, F, o) { const { PEN, WALK } = o, tops = (F.tra
 // the terrain notch: flat under the footprint (a dip under the falls pool), blending back into the hill over 16 m
 export function makePad(S) { const R = 150; return (x, z, h) => { if (Math.abs(x - S.x) > R || Math.abs(z - S.z) > R) return h; const [u, v] = toLocal(S, x, z);
   const du = Math.max(0, Math.abs(u) - (FU + 1)), dv = Math.max(0, FV0 - 1 - v, v - FV1), dist = Math.hypot(du, dv), w = v > FV1 ? BL : BS; if (dist >= w) return h;
-  const p = Math.abs(u) < 8.6 && v > -1.4 && v < 6.6 ? S.y0 - .45 : S.y0 - .08; return dist <= 0 ? p : p + (h - p) * sstep(0, w, dist); }; }
+  const p = (u / 9.6) ** 2 + ((v - 4.4) / 4.7) ** 2 < 1 || (Math.abs(u) < 3 && v > -1.4 && v < 4.4) ? S.y0 - .45 : S.y0 - .08; /* v41: an oval pool basin in front of the mouth */ return dist <= 0 ? p : p + (h - p) * sstep(0, w, dist); }; }
 
 const OUTLAW_LOOKS = [{ coat: 0x3a2a1c, hatC: 0x15100c, bandana: 0x7a1612, top: 0x4a3a2a, hair: 0x22160e, skin: 0xd0a07a, rifle: true }, { coat: 0x26221f, hatC: 0x2a1e14, bandana: 0x161616, top: 0x5a2a1e, hair: 0x4a3018, skin: 0xb88664 },
   { coat: 0x4c3a26, hatC: 0x1c1610, bandana: 0x2a3a5a, top: 0x3a3a30, hair: 0x18120c, skin: 0x9a6a4a, rifle: true }, { coat: 0x5a2a1a, hatC: 0x2c2018, bandana: 0x6a5a1a, top: 0x2a2a2a, hair: 0x6a4a2a, skin: 0xe0b090 }];
@@ -49,15 +50,15 @@ const PH = ['idle', 'fight', 'key', 'open'];
 
 export function createCave(c) {
   const { scene, H, P, T, hAt, sfx, msg, mobile, site: S } = c, g = () => H.guns;
-  const cave = createBanditCave({ position: new THREE.Vector3(S.x, S.y0, S.z), rotationY: S.rot, quality: mobile || c.low ? 'low' : 'high', viewDist: mobile ? 240 : 340 });
-  scene.add(cave.group); cave.group.updateMatrixWorld(true);
+  const cave = createBanditCave({ position: new THREE.Vector3(S.x, S.y0, S.z), rotationY: S.rot, quality: mobile || c.low ? 'low' : 'high', viewDist: mobile ? 240 : 340, naturalFalls: true });
+  scene.add(cave.group); const falls = createFalls({ position: new THREE.Vector3(S.x, S.y0, S.z), rot: S.rot, high: !(mobile || c.low) }); scene.add(falls.group); cave.group.updateMatrixWorld(true);
   if (mobile) cave.lights.forEach((l, i) => { if (i >= 2) l.removeFromParent(); }); // phones: two of the five lamps (each lamp costs every lit pixel)
   const BOX = cave.colliders, WALLS = BOX.filter(b => b.max.y - b.min.y > .65), ALL = new THREE.Box3(); for (const b of BOX) ALL.union(b); ALL.expandByScalar(1);
   const IN = caveRect(S, 2), R = { ...caveRect(S, 2), name: 'BANDIT FALLS', label: '🛡 NO ZOMBIES · BANDIT FALLS' }; (H.safeRects || (H.safeRects = [])).push(R);
   const inside = (x, z) => Math.abs(x - IN.x) < IN.hw && Math.abs(z - IN.z) < IN.hd, deep = (x, z) => { const [u, v] = toLocal(S, x, z); return Math.abs(u) < FU && v < -3 && v > FV0; };
   const out = { site: S, cave, rect: R, inside, deep, state: { phase: 0, left: 0, key: null, startedAt: 0 } };
   // ---- collisions: height-aware walls, walkable box tops, bullets stop on rock ----
-  out.wallHit = (x, z, r, y) => { if (x < ALL.min.x - r || x > ALL.max.x + r || z < ALL.min.z - r || z > ALL.max.z + r) return false;
+  out.wallHit = (x, z, r, y) => { if (falls.hit(x, z, r, y)) return true; if (x < ALL.min.x - r || x > ALL.max.x + r || z < ALL.min.z - r || z > ALL.max.z + r) return false;
     for (const b of WALLS) { if (b.isEmpty() || y + 1.7 < b.min.y || y + .4 > b.max.y) continue; const cx = Math.max(b.min.x, Math.min(x, b.max.x)), cz = Math.max(b.min.z, Math.min(z, b.max.z)); if ((x - cx) ** 2 + (z - cz) ** 2 < r * r) return true; } return false; };
   out.floorAt = (x, z, y, base) => { let f = base; if (x < ALL.min.x || x > ALL.max.x || z < ALL.min.z || z > ALL.max.z) return f;
     for (const b of BOX) { if (b.isEmpty() || x < b.min.x || x > b.max.x || z < b.min.z || z > b.max.z) continue; if (b.max.y <= y + .55 && b.max.y > f) f = b.max.y; } return f; };
@@ -108,7 +109,9 @@ export function createCave(c) {
   function bc() { bcT = 0; if (c.role() === 'host') c.send({ t: 'cv', p: out.state.phase, n: out.state.left, k: out.state.key }); }
   function startFight() { const Z = Zs(); if (!Z || !Z.spawnOutlaw || !Z.state.on) return; cave.startChallenge();
     for (const s of cave.spawnPoints) Z.spawnOutlaw(s.position.x, s.position.z, s.position.y, s.rotationY, s.role); // facing out toward the mouth
-    out.state.phase = 1; out.state.left = cave.spawnPoints.length; out.state.startedAt = performance.now(); msg('Outlaws! ' + out.state.left + ' guns hold Bandit Falls — the last one carries the vault key', 3.5); bc(); }
+    Z.state.outlawCalm = true; out.state.phase = 1; out.state.left = cave.spawnPoints.length; out.state.startedAt = performance.now(); msg(out.state.left + ' outlaws guard Bandit Falls. They will leave you be — unless you start shooting. The last one carries the vault key', 5); bc(); }
+  out.provoked = () => msg('You started a gunfight! The outlaws open fire', 2.5);
+  out.provoke = () => { const Z = Zs(); if (Z && Z.state.outlawCalm && out.state.phase === 1) { Z.state.outlawCalm = false; out.provoked(); } };
   out.outlawDown = o => { lastDown = o.pos.clone(); };
   function dropKey(at) { if (!cave.state.challenge) cave.startChallenge(); for (const s of cave.spawnPoints) cave.guardDefeated(s.id, at); const k = IA('vault-key').position; out.state.key = [+k.x.toFixed(2), +k.y.toFixed(2), +k.z.toFixed(2)]; }
   function showOpen() { if (cave.state.vaultOpen) return; if (!cave.state.keyDropped) dropKey(null); const k = IA('vault-key'); cave.interact('vault-key', k.position); cave.interact('vault-gate', IA('vault-gate').position); }
@@ -129,7 +132,7 @@ export function createCave(c) {
       const hg = ac.createGain(); hg.gain.value = .35; const g = ac.createGain(); g.gain.value = 0; src.connect(lo); lo.connect(g); src.connect(hi); hi.connect(hg); hg.connect(g); g.connect(sfx.master); src.start(); wl = { src, g, nodes: [lo, hi, hg] }; }
     if (!wl) return; const k = Math.max(0, 1 - d / 85), v = .2 * k * k; wl.v = v; wl.g.gain.setTargetAtTime(v, ac.currentTime, .25);
     if (d > 100) { const w = wl; wl = null; w.g.gain.setTargetAtTime(0, ac.currentTime, .1); setTimeout(() => { try { w.src.stop(); w.src.disconnect(); w.g.disconnect(); w.nodes.forEach(n => n.disconnect()); } catch (_) {} }, 600); } }
-  out.update = dt => { cp.copy(P.pos); if (H.mounted) cp.copy(H.mounted.pos); cave.update(dt, null, cp); const near = cave.group.visible && cp.distanceToSquared(cave.entrance) < 70 * 70; waterSound(cp.distanceTo(fallP));
+  out.update = dt => { cp.copy(P.pos); if (H.mounted) cp.copy(H.mounted.pos); cave.update(dt, null, cp); const near = cave.group.visible && cp.distanceToSquared(cave.entrance) < 70 * 70; falls.group.visible = cave.group.visible || cp.distanceToSquared(cave.entrance) < 600 * 600; falls.update(dt, cp.distanceToSquared(cave.entrance) < 160 * 160); waterSound(cp.distanceTo(fallP));
     if (!near) for (const l of cave.lights) l.intensity = 0; // lamps stay in the scene (no shader rebuilds), dark when you are away
     for (const D of dancers) { D.g.visible = near; if (!near) continue; D.cheer = Math.max(0, D.cheer - dt); poseDoll(D, dt, D.cheer > 0 ? 'cheer' : 'dance'); }
     if (c.role() !== 'client') { const st = out.state;

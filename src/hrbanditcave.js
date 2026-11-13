@@ -11,7 +11,7 @@
  */
 import * as THREE from 'three';
 
-export function createBanditCave({ position = [0, 0, 0], rotationY = 0, quality = 'high', viewDist = 320 } = {}) {
+export function createBanditCave({ position = [0, 0, 0], rotationY = 0, quality = 'high', viewDist = 320, naturalFalls = false } = {}) {
   const high = quality !== 'low', group = new THREE.Group(); group.name = 'Bandit Falls';
   if (Array.isArray(position)) group.position.set(position[0], position[1], position[2]);
   else group.position.copy(position);
@@ -231,10 +231,10 @@ export function createBanditCave({ position = [0, 0, 0], rotationY = 0, quality 
       diffuseColor.a=side*clamp(.22+streak*.6+foam*.7+lip,0.,.92)*smoothstep(0.,.03,y);`);
   };
   waterfallMat.customProgramCacheKey = () => 'bandit-waterfall-v2';
-  for (const [x, w, h, z] of [[0, 19, 12, -2.2], [-8.5, 7, 16, -4], [8.5, 7, 15, -4.5], [0, 13, 6, -6]]) { solid(x, 5.2 + h / 2 - .4, z, w, h, 4.2, rock); } // v38: the cliff face the water falls from
+  if (!naturalFalls) for (const [x, w, h, z] of [[0, 19, 12, -2.2], [-8.5, 7, 16, -4], [8.5, 7, 15, -4.5], [0, 13, 6, -6]]) { solid(x, 5.2 + h / 2 - .4, z, w, h, 4.2, rock); } // v38: the cliff face the water falls from
   const sheetG = geo(new THREE.PlaneGeometry(12, 16, high ? 32 : 12, high ? 24 : 8));
-  const sheet = new THREE.Mesh(sheetG, waterfallMat); sheet.position.set(0, 7.8, .9); sheet.renderOrder = 2; group.add(sheet);
-  const poolG = geo(new THREE.CircleGeometry(8, 40)); const pool = new THREE.Mesh(poolG, waterDark); pool.rotation.x = -Math.PI / 2; pool.position.set(0, -.09, 3.5); group.add(pool);
+  const sheet = new THREE.Mesh(sheetG, waterfallMat); sheet.position.set(0, 7.8, .9); sheet.renderOrder = 2; if (!naturalFalls) group.add(sheet); // v41: hrfalls.js draws the falls
+  const poolG = geo(new THREE.CircleGeometry(8, 40)); const pool = new THREE.Mesh(poolG, waterDark); pool.rotation.x = -Math.PI / 2; pool.position.set(0, -.09, 3.5); if (!naturalFalls) group.add(pool);
   floor(0, 4, 17, 12, -.4);
   const mistMat = mat(new THREE.MeshBasicMaterial({ color: 0xc8e1da, transparent: true, opacity: .08, blending: THREE.AdditiveBlending, depthWrite: false, fog: true }));
   const mistMesh = new THREE.InstancedMesh(sphereG, mistMat, high ? 16 : 7); group.add(mistMesh);
@@ -243,7 +243,7 @@ export function createBanditCave({ position = [0, 0, 0], rotationY = 0, quality 
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float caveTime; varying vec2 fUV; float fh(vec2 p){return fract(sin(dot(p,vec2(41.3,289.1)))*15731.7);} float fn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(fh(i),fh(i+vec2(1,0)),f.x),mix(fh(i+vec2(0,1)),fh(i+1.),f.x),f.y);}')
       .replace('#include <color_fragment>', '#include <color_fragment>\nvec2 q=fUV-.5; float r=length(q*vec2(1.,2.2))*2.; float n=fn(fUV*vec2(26.,11.)+vec2(0.,caveTime*1.6))*.6+fn(fUV*vec2(61.,23.)-vec2(caveTime*.7,0.))*.4; diffuseColor.a*=smoothstep(1.,.35,r)*smoothstep(.35,.75,n+.35*(1.-r));'); };
   foamMat.customProgramCacheKey = () => 'bandit-foam-v1';
-  const foam = new THREE.Mesh(planeG, foamMat); foam.rotation.x = -Math.PI / 2; foam.scale.set(13, 5.5, 1); foam.position.set(0, -.04, 1.6); foam.renderOrder = 3; group.add(foam);
+  const foam = new THREE.Mesh(planeG, foamMat); foam.rotation.x = -Math.PI / 2; foam.scale.set(13, 5.5, 1); foam.position.set(0, -.04, 1.6); foam.renderOrder = 3; if (!naturalFalls) group.add(foam);
   const splashMat = mat(new THREE.MeshBasicMaterial({ color: 0xf2fbfa, transparent: true, opacity: .7, depthWrite: false, fog: true }));
   const splashCount = high ? 56 : 20, splashMesh = new THREE.InstancedMesh(sphereG, splashMat, splashCount); group.add(splashMesh);
   const splashData = new Float32Array(splashCount * 4); for (let i = 0; i < splashCount; i++) { splashData[i * 4] = (rand() - .5) * 10; splashData[i * 4 + 1] = rand(); splashData[i * 4 + 2] = .7 + rand() * .8; splashData[i * 4 + 3] = (rand() - .5) * 1.4; }
@@ -350,7 +350,7 @@ export function createBanditCave({ position = [0, 0, 0], rotationY = 0, quality 
 }
 
 /* Usage (your page must already resolve the bare 'three' import, e.g. import map):
-import { createBanditCave } from './banditcave.js?v=41c';
+import { createBanditCave } from './banditcave.js?v=41d';
 const cave = createBanditCave({ position: new THREE.Vector3(120,0,-80), quality:'high' });
 scene.add(cave.group);
 // Spawn your NPCs at cave.spawnPoints[i].position and retain each marker id.

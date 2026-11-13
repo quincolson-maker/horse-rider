@@ -3,7 +3,7 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=41c'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=41d'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -383,6 +383,7 @@ export function createGuns(c) {
     const mounted = !!H.mounted, land = () => { impact(hit, bd, w); state.lastHit = { kind: hit.kind, target: hit.T ? hit.T.kind : hit.kind === 'zombie' ? hit.Z.kind : null, head: !!hit.head, zr: hit.zr || null, point: hit.p.toArray().map(v => +v.toFixed(2)), mounted, weapon: w, dist: +hit.p.distanceTo(muz).toFixed(1) }; };
     if (SCOPED(w)) { const tt = hit.p.distanceTo(muz) / (w === 'gold' ? S.goldVelocity : S.sniperVelocity); effects(w, muz, bd, hit.p, false, tt); flights.push({ t: tt, land }); } else { effects(w, muz, bd, hit.p); land(); }
     clock.recoil = 1; const k = w === 'rifle' ? S.recoilRifle : w === 'gatling' ? S.recoilGatling * (state.aiming ? .7 : 1) : w === 'tommy' ? S.recoilTommy * (state.aiming ? .6 : 1) : SCOPED(w) ? (w === 'gold' ? S.recoilGold : S.recoilSniper) * (state.scoped ? .6 : 1) : S.recoilRevolver; P.pitch += k; clock.rec += k; H.shake = Math.max(H.shake || 0, SCOPED(w) ? .35 : w === 'rifle' ? .25 : w === 'tommy' ? .08 : w === 'gatling' ? .1 : .15);
+    if (H.onGunShot) H.onGunShot(w);
     if (w === 'tommy') tfx.emit(models.tommy); else if (w === 'gatling' && fx && fx.shell && Math.random() < .5) { const m = models.gatling; v3.set(.05, m.muzzle.y, -.1); m.group.localToWorld(v3); fx.shell(v3.clone(), new THREE.Vector3(1.4, 1.2, 0).applyQuaternion(m.group.quaternion)); } // v36: pooled brass from the ejection port (visual only: damage / ammo / cadence unchanged)
     if (c.send) c.send({ t: 'sh', w: WCODE[w] || 1, o: muz.toArray().map(v => +v.toFixed(2)), e: hit.p.toArray().map(v => +v.toFixed(2)), ...(w === 'tommy' && tsup() ? { sp: 1 } : {}) });
     if (H.mounted && H.speed < .5) H.mounted.g.userData.spook = SCOPED(w) ? .7 : w === 'tommy' ? .25 : .4; // the horse flinches a little at the report

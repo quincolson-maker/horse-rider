@@ -5,27 +5,27 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=41c';
-import { PF } from './perf.js?v=41c';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=41d';
+import { PF } from './perf.js?v=41d';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=41c';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=41c';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=41c';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=41c';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=41c';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=41c';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=41c';
-import { createGuns } from './hrguns.js?v=41c';
-import { createHrZombies } from './hrzombies.js?v=41c';
-import { createFlora } from './hrflora.js?v=41c';
-import { createTown, wearJacket } from './hrtown.js?v=41c';
-import { createSaloon } from './hrsaloon.js?v=41c';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=41c';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=41c';
-import { createSunItem } from './hrsunweapon.js?v=41c';
-import { createBuild } from './hrbuild.js?v=41c';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=41c';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=41c';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=41d';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=41d';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=41d';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=41d';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=41d';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=41d';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=41d';
+import { createGuns } from './hrguns.js?v=41d';
+import { createHrZombies } from './hrzombies.js?v=41d';
+import { createFlora } from './hrflora.js?v=41d';
+import { createTown, wearJacket } from './hrtown.js?v=41d';
+import { createSaloon } from './hrsaloon.js?v=41d';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=41d';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=41d';
+import { createSunItem } from './hrsunweapon.js?v=41d';
+import { createBuild } from './hrbuild.js?v=41d';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=41d';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=41d';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -692,6 +692,7 @@ export function createHorseRider(ctx) {
     P.yaw = Math.atan2(SPAWN.x - PEN.x, SPAWN.z - PEN.z); P.pitch = -.05; P.hp = 100;
     GX.setLighting('day', false); setupSky();
     guns = H.guns = createGuns({ scene, camera, P, H, hAt, sfx, fx: ctx.fx, msg, mobile, input, keys, renderer: GX.renderer, rig: () => real() ? rider : null, aimBone, twistBone, RANGE, BASE, dev: new URLSearchParams(location.search).has('dev'), send: m => H.netShot && H.netShot(m), zombies: () => zombies });
+    H.onGunShot = () => { if (H.cave && H.cave.inside(P.pos.x, P.pos.z)) H.cave.provoke(); }; // v41: a shot fired inside Bandit Falls starts the gunfight
     H.sun = createSunItem({ scene, H, P, camera, sfx, msg, mobile, fx: ctx.fx, role: () => H.netRole ? H.netRole() : 'solo', send: m => H.zSend && H.zSend(m) }); // v39 the Sun Pyramid
     if (town2 && town2.registerStoreItem && guns.models.tommy.setSuppressor) try { // v36: Tommy suppressor (900 pts, saved with the guns; needs the Tommy)
       const gs = guns.state, item = createTommySuppressorItem({ weapon: guns.models.tommy, price: 900, owned: gs.att.tsup.owned, equipped: gs.att.tsup.equipped,
@@ -702,7 +703,7 @@ export function createHorseRider(ctx) {
     zombies = H.zombies = createHrZombies({ scene, camera, P, H, hAt, PEN, EDGE, WALK, sfx, fx: ctx.fx, mobile, msg, aimBone, dismount, walker: () => H.assets && H.assets.riderSrc ? makeWalker(H.assets.riderSrc, H.assets.clips) : null,
       remotes: () => H.netRemotes ? H.netRemotes() : [], send: m => H.zSend && H.zSend(m), sendTo: (id, m) => H.zSendTo && H.zSendTo(id, m), role: () => H.netRole ? H.netRole() : 'solo',
       // v38 Bandit Falls outlaws
-      outlawBody: () => H.cave ? H.cave.outlawBody() : null, onOutlawDown: o => H.cave && H.cave.outlawDown(o), inCave: (x, z) => !!H.cave && H.cave.inside(x, z), outlawLOS: (ax, ay, az, bx, by, bz) => !H.cave || H.cave.los(ax, ay, az, bx, by, bz),
+      outlawBody: () => H.cave ? H.cave.outlawBody() : null, onOutlawDown: o => H.cave && H.cave.outlawDown(o), onOutlawProvoked: () => H.cave && H.cave.provoked(), inCave: (x, z) => !!H.cave && H.cave.inside(x, z), outlawLOS: (ax, ay, az, bx, by, bz) => !H.cave || H.cave.los(ax, ay, az, bx, by, bz),
       outlawGround: (x, z, y) => H.cave ? H.cave.floorAt(x, z, y, hAt(x, z)) : hAt(x, z), outlawSpawnY: (x, z) => H.cave ? H.cave.spawnY(x, z) : hAt(x, z), outlawBlocked: (x, z, y) => !!H.cave && H.cave.wallHit(x, z, .35, y) });
     if (mobile) { const a = document.getElementById('tAds'); if (a) a.textContent = 'AIM'; }
     loadAssets(!mobile && Q.shadow > 0).then(dress).catch(e => { H.models = 'proc'; if (!/requested/.test(e && e.message)) console.warn('horse models failed, using procedural horses', e); });

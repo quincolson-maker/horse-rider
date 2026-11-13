@@ -53,7 +53,13 @@ function update(dt) { if (G.phase == 'menu') return; G.t += dt; horse.tick(dt); 
 // ---------------- HUD ----------------
 let hudT = 0, hurtFlash = 0;
 const CMP = (() => { let h = ''; for (let d = -360; d <= 720; d += 15) { const n = ((d % 360) + 360) % 360; const lab = { 0: 'N', 45: 'NE', 90: 'E', 135: 'SE', 180: 'S', 225: 'SW', 270: 'W', 315: 'NW' }[n]; h += `<span class="${lab ? 'c' : ''}">${lab || n}</span>`; } return h; })();
-function compass() { const el = $('cstrip'); if (!el) return; if (!el.innerHTML) el.innerHTML = CMP; const hd = ((-P.yaw * 180 / Math.PI) % 360 + 360) % 360; el.style.transform = `translateX(${-(hd + 360) / 15 * 40 - 20}px)`; $('chead').textContent = Math.round(hd); }
+const PINS = [['pen', '🐎'], ['town', '🏠'], ['cave', '💧'], ['temple', '☀️']];
+function pins(hd) { const box = $('cpins'); if (!box || !horse.state.places) return; const H = horse.state, pl = H.places, w = box.parentNode.clientWidth || 300;
+  if (!box.dataset.on) { box.dataset.on = 1; box.innerHTML = PINS.map(([k, ic]) => `<i data-k="${k}">${ic}<b></b></i>`).join(''); }
+  for (const el of box.children) { const k = el.dataset.k, t = k === 'pen' ? [horse.PEN.x, horse.PEN.z] : k === 'town' ? pl.town : pl[k] ? [pl[k].x, pl[k].z] : null; if (!t) { el.style.display = 'none'; continue; }
+    const dx = t[0] - P.pos.x, dz = t[1] - P.pos.z, d = Math.hypot(dx, dz), b = Math.atan2(dx, -dz) * 180 / Math.PI; let dl = ((b - hd) % 360 + 540) % 360 - 180; const x = dl / 15 * 40;
+    if (d < 25 || Math.abs(x) > w / 2 - 10) { el.style.display = 'none'; continue; } el.style.display = ''; el.style.transform = `translateX(${x.toFixed(0)}px)`; el.lastChild.textContent = d > 999 ? (d / 1000).toFixed(1) + 'k' : Math.round(d) + 'm'; } }
+function compass() { const el = $('cstrip'); if (!el) return; if (!el.innerHTML) el.innerHTML = CMP; const hd = ((-P.yaw * 180 / Math.PI) % 360 + 360) % 360; el.style.transform = `translateX(${-(hd + 360) / 15 * 40 - 20}px)`; $('chead').textContent = Math.round(hd); pins(hd); }
 function hud(dt) { compass(); hurtFlash = Math.max(0, hurtFlash - dt * 1.5); $('vign').style.opacity = hurtFlash;
   hudT -= dt; if (hudT > 0) return; hudT = .1; uiSync(); horse.hud(); }
 function uiSync() { if (!IS_TOUCH) return; const a = $('tAct'), lab = horse.touchLabel(); a.hidden = !lab; if (lab && a.innerHTML !== lab) a.innerHTML = lab; }

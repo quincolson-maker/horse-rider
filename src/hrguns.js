@@ -588,6 +588,13 @@ export function createGuns(c) {
 
   // v33: pick up / buy guns, buy upgrade tiers (points = zombie kills and range score)
   const pts = () => state.score - (state.spent || 0);
+  // v41: owner's gift — ?gift=<secret phrase> adds 1,000,000 points once on this device. Only the SHA-256 of the phrase is in
+  // the code (the repo is public), so nobody else can claim it.
+  (async () => { try { const q = new URLSearchParams(location.search).get('gift'); if (!q || localStorage.getItem('hr_gift1')) return;
+    const h = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(q.trim())))].map(b => b.toString(16).padStart(2, '0')).join('');
+    if (h !== 'e227ccc2d932947105dde37dc13a8c35b84d604dade5ca3b3391f78c85b7c36c') return;
+    state.score += 1000000; localStorage.setItem('hr_gift1', '1'); save(); say('💰 +1,000,000 points — buy everything!');
+    try { const u = new URL(location.href); u.searchParams.delete('gift'); history.replaceState(null, '', u); } catch (_) {} } catch (_) {} })();
   function give(w) { if (!models[w]) return false; state.owned[w] = true; state.ammo[w] = maxAmmo(w); save(); syncUI(); return true; }
   function buy(cost, fn) { if (pts() < cost) { say('Not enough points'); return false; } state.spent = (state.spent || 0) + cost; fn(); save(); syncUI(); return true; }
   function upgrade(w) { const t = tier(w); if (t >= 3 || !state.owned[w]) return false; return buy(UP_COST[w][t], () => { state.up[w] = t + 1; state.ammo[w] = maxAmmo(w); say(`${WNAME[w]} → ${['', 'BRONZE', 'SILVER', 'GOLD'][t + 1]}`); }); }

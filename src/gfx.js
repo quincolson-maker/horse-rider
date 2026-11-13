@@ -1,6 +1,5 @@
 // Graphics core: quality presets, procedural PBR texture atlas, sky/lighting, post-processing.
 import * as THREE from 'three';
-import { RGBELoader } from '../addons/loaders/RGBELoader.js';
 import { EffectComposer } from '../addons/postprocessing/EffectComposer.js';
 import { RenderPass } from '../addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../addons/postprocessing/UnrealBloomPass.js';
@@ -78,7 +77,7 @@ export function createGraphics(qname) {
   const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.05, 600); camera.rotation.order = 'YXZ'; scene.add(camera);
   const sunDir = new THREE.Vector3(-.55, .62, -.56).normalize();
   const pm = new THREE.PMREMGenerator(renderer);
-  new RGBELoader().load('assets/hdri/kloofendal_1k.hdr', hdr => { if (scene.userData.ownSky) return; hdr.mapping = THREE.EquirectangularReflectionMapping; scene.environment = pm.fromEquirectangular(hdr).texture; scene.background = scene.userData.zombieNight ? new THREE.Color(0x0c1721) : hdr; scene.backgroundIntensity = scene.userData.zombieNight ? .015 : .9; scene.environmentIntensity = scene.userData.zombieNight ? .15 : .7; scene.backgroundBlurriness = 0; });
+  // v40: the HDRI backdrop is gone; Horse Rider renders its own sky + IBL (hrworld.js createSky)
   const hemi = new THREE.HemisphereLight(0xc8d8e8, 0x4a4a3a, .35); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xfff0dc, 3.2); sun.position.copy(sunDir).multiplyScalar(80); scene.add(sun); scene.add(sun.target);
   if (Qp.shadow) { sun.castShadow = true; sun.shadow.mapSize.set(Qp.shadow, Qp.shadow); const s = sun.shadow.camera; const R = Qp.shadow >= 4096 ? 60 : 40; s.left = s.bottom = -R; s.right = s.top = R; s.near = 1; s.far = 220; sun.shadow.bias = -.0004; sun.shadow.normalBias = .04; }

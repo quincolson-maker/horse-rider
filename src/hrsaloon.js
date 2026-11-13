@@ -140,7 +140,8 @@ export function createSaloon(c) {
   }
   // ---- swinging batwing doors, lamps, light shafts, dust ----
   S.doors = [[-6.8, 1], [-5.2, -1]].map(([x, sd]) => { const hinge = new THREE.Group(); hinge.position.copy(Lh(x, F + 1.25, 0)); hinge.rotation.y = rot; const leaf = mesh(new THREE.BoxGeometry(.78, 1.05, .04), mat(0x5a3a22), sd * .39, 0, 0); hinge.add(leaf); scene.add(hinge); return { hinge, sd, a: 0, v: 0 }; });
-  const lampLights = (mobile ? [[-7, F + 2.9, 3]] : [[-7, F + 2.9, 3], [-14.2, Y2 - .7, 6.2]]).map(([x, y, z]) => { const L = new THREE.PointLight(0xffb060, mobile ? 4 : 5, 13, 1.6); L.position.copy(Lh(x, y, z)); scene.add(L); return L; });
+  const lampLights = (mobile ? [] : [[-7, F + 2.9, 3], [-14.2, Y2 - .7, 6.2]]).map( // v41: phones get no point lights (per-pixel cost on every surface)
+    ([x, y, z]) => { const L = new THREE.PointLight(0xffb060, mobile ? 4 : 5, 13, 1.6); L.position.copy(Lh(x, y, z)); scene.add(L); return L; });
   { const shaftM = new THREE.MeshBasicMaterial({ color: 0xffe2a8, transparent: true, opacity: .07, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
     for (const x of [-15.4, -2.6]) { const sh = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 3.2), shaftM); sh.position.copy(Lh(x, F + 1.2, 1.3)); sh.rotation.set(-.75, rot, 0); scene.add(sh); } }
   const DN = mobile ? 50 : 140, dust = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ color: 0xffe8c0, size: .03, transparent: true, opacity: .55, depthWrite: false })); const dp = new Float32Array(DN * 3), dseed = [];
@@ -292,7 +293,7 @@ export function createSaloon(c) {
       tmpV.set(sd * (.2 - bl * .1), -.2 + bl * .12 + Math.sin(H.t * 5 + sd) * .01, -.42 - pk * .35); f.position.copy(tmpV.applyMatrix4(camera.matrixWorld)); f.quaternion.copy(camera.quaternion); } };
   // ---- frame ----
   let near = false;
-  S.tick = dt => { if(disposed)return;const dTown = Math.min(Math.hypot(camera.position.x - s.cx, camera.position.z - s.cz), Math.hypot(P.pos.x - s.cx, P.pos.z - s.cz)); near = dTown < (mobile ? 60 : 90); for (const D of npcAll()) D.g.visible = near; lodBuild(dt); if (near) npcLOD(); dust.visible = near && dTown < 30; for (const L of lampLights) L.visible = dTown < 45; for (const M of S.slots) M.g.visible = near;
+  S.tick = dt => { if(disposed)return;const dTown = Math.min(Math.hypot(camera.position.x - s.cx, camera.position.z - s.cz), Math.hypot(P.pos.x - s.cx, P.pos.z - s.cz)); near = dTown < (mobile ? 60 : 90); for (const D of npcAll()) D.g.visible = near; lodBuild(dt); if (near) npcLOD(); dust.visible = near && dTown < 30; for (const L of lampLights) L.intensity = dTown < 45 ? 5 : 0; /* v41: fade by intensity, visibility stays on (no shader recompiles) */ for (const M of S.slots) M.g.visible = near;
     casino.tick(dt);decor.update(H.t||0,near);slotTick(dt);buzzTick(dt);fightTick(dt);
     if(panel?.kind==='slot'&&panel.data.spin){S.slotUIT=(S.slotUIT||0)+dt;if(S.slotUIT>.1){S.slotUIT=0;render();}}
     for (let i = S.bandits.length - 1; i >= 0; i--) if (!banditTick(S.bandits[i], dt, i)) { dropBandit(S.bandits[i], true); S.bandits.splice(i, 1); }

@@ -651,7 +651,7 @@ export function createHorseRider(ctx) {
   // ---------------- sky, sun, aerial haze, shadows, grade (Horse Rider only; leaving the mode reloads the page) ----------------
   const QS = new URLSearchParams(location.search), SUN_FIX = QS.has('sun'), SUN0 = SUN_FIX ? +QS.get('sun') : (STYLE_ON ? 34 : 11), SUN_AZ = -.75;
   let sky = null, fog = null; const sunTmp = new THREE.Vector3(), lm = new THREE.Matrix4(), lmi = new THREE.Matrix4(), O3 = new THREE.Vector3(), fwd3 = new THREE.Vector3(), fogTmp = new THREE.Color();
-  const sunEl = () => SUN_FIX ? SUN0 : SUN0 + (STYLE_ON ? 8 : 4.5) * Math.sin(H.t / 190); // golden hour, the sun drifts slowly (~20 min cycle)
+  const sunEl = () => SUN_FIX ? SUN0 : SUN0 + (mobile ? 0 : STYLE_ON ? 8 : 4.5) * Math.sin(H.t / 190) /* v41: phones keep a fixed sun (each sky re-bake is a hitch) */; // golden hour, the sun drifts slowly (~20 min cycle)
   const aces = x => { x *= GX.renderer.toneMappingExposure / .6; return Math.min(1, Math.max(0, x * (2.51 * x + .03) / (x * (2.43 * x + .59) + .14))); };
   function setupSky() {
     scene.userData.ownSky = true; scene.background = null; camera.near = .12; camera.far = 6000; camera.updateProjectionMatrix();
@@ -670,6 +670,13 @@ export function createHorseRider(ctx) {
       const li = ps.indexOf(GX.lens && GX.lens()); H.grade = new ShaderPass(STYLE_ON ? STYLE_GRADE : GRADE); GX.composer.insertPass(H.grade, li >= 0 ? li : ps.length); H.drunkPass = new ShaderPass(DRUNK); H.drunkPass.enabled = false; GX.composer.insertPass(H.drunkPass, GX.composer.passes.indexOf(H.grade) + 1); }
     envTick(0, true);
   }
+  // v41: walking up to the town used to stall while its shaders compiled and textures uploaded for the first time.
+  // Do all of that once, early (the title screen is still up): show every hidden mesh for one compile, upload every loaded texture.
+  function prewarm() { H.warm = true; const hid = []; try {
+      scene.traverse(o => { if (!o.visible && !o.isLight) { hid.push(o); o.visible = true; } });
+      GX.renderer.compile(scene, camera); const seen = new Set();
+      scene.traverse(o => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; for (const m of ms) for (const k in m) { const t = m[k]; if (t && t.isTexture && !seen.has(t) && t.image && (t.image.width || t.image.data)) { seen.add(t); GX.renderer.initTexture(t); } } });
+    } catch (e) { console.warn('prewarm', e); } for (const o of hid) o.visible = false; }
   function envTick(dt, force) {
     if (!sky) return; const el = sunEl(); sky.setSun(el, SUN_AZ);
     const env = sky.update(dt || 0, camera, force);
@@ -681,7 +688,7 @@ export function createHorseRider(ctx) {
     if (H.grassG) H.grassG.update(dt || 0, camera, sky.sunDir, sky.sunCol, .55 + .45 * Math.sin(H.t * .21) * Math.sin(H.t * .053 + 1));
   }
   function init() {
-    H.on = true; P.spawn.set(SPAWN.x, hAt(SPAWN.x, SPAWN.z), SPAWN.z); P.pos.copy(P.spawn); buildWorld(); spawnHorses();
+    H.on = true; P.spawn.set(SPAWN.x, hAt(SPAWN.x, SPAWN.z), SPAWN.z); if (mobile) H.zoom = 1.3; /* v41: phones cannot scroll-zoom; start pulled back so you can see around */ P.pos.copy(P.spawn); buildWorld(); spawnHorses();
     P.yaw = Math.atan2(SPAWN.x - PEN.x, SPAWN.z - PEN.z); P.pitch = -.05; P.hp = 100;
     GX.setLighting('day', false); setupSky();
     guns = H.guns = createGuns({ scene, camera, P, H, hAt, sfx, fx: ctx.fx, msg, mobile, input, keys, renderer: GX.renderer, rig: () => real() ? rider : null, aimBone, twistBone, RANGE, BASE, dev: new URLSearchParams(location.search).has('dev'), send: m => H.netShot && H.netShot(m), zombies: () => zombies });
@@ -819,6 +826,7 @@ export function createHorseRider(ctx) {
       if (held && dk > 1.5) sideIn += Math.sin(H.t * .9) * Math.min(.55, (dk - 1.5) * .09) + Math.sin(H.t * 2.3 + 1) * Math.min(.25, (dk - 1.5) * .04); } else { H.lagF = fwdIn; H.lagS = sideIn; }
     const run = !!keys.ShiftLeft || !!keys.ShiftRight || (stick > .92 && fwdIn > .6);
     const jump = keys.Space || input.jump;
+    if (!H.warm && H.t > 2.5 && H.models !== 'loading') prewarm();
     if (H.fallT > 0) H.fallT -= dt; PF.s('town'); if (town2) town2.tick(dt); PF.e('town'); PF.s('saloon'); if (H.saloon) H.saloon.tick(dt); PF.e('saloon'); PF.s('cave'); if (H.cave) H.cave.update(dt); if (H.temple) H.temple.update(dt); if (H.sun) H.sun.update(dt); PF.e('cave'); PF.s('build'); if (H.build) H.build.tick(dt); PF.e('build'); PF.s('player');
     if (H.dead) { H.fv.x = H.fv.y = 0; } else if (h) ride(h, dt, stick > .05 ? 0 : fwdIn, stick > .05 ? 0 : sideIn, stick, jump); else walk(dt, fwdIn, sideIn, stick, run, jump);
     PF.e('player'); PF.s('herd');

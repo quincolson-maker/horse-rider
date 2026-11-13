@@ -26,15 +26,16 @@ export const GUN_SETTINGS = {
   sniperAssistAngle: .9, sniperSticky: .35,
   // v33: Thompson-style SMG with a 100-round drum (full auto) and the Golden Buffalo rifle (huge variable zoom, sees across the map)
   tommyRounds: 100, tommyInterval: .075, reloadTommy: 2.6, tommyRange: 170, recoilTommy: .011, tommyHipSpread: 2.3,
+  gatlingRounds: 150, gatlingInterval: .045, reloadGatling: 3.4, gatlingRange: 165, recoilGatling: .0055, gatlingHipSpread: 2.6, // v41 hand-crank Gatling (spins up)
   goldRounds: 1, goldInterval: .7, reloadGold: 2, goldRange: 3200, goldVelocity: 900, goldFovMax: 8, goldFovMin: .22, recoilGold: .1,
   // upgrade tiers (index 0 = stock, 1 bronze, 2 silver, 3 gold): damage, magazine, reload time, time between shots
   tierDmg: [1, 1.25, 1.5, 2], tierMag: [1, 1.25, 1.5, 2], tierReload: [1, .85, .7, .55], tierRate: [1, .9, .8, .7],
 };
-export const PRICE = { tommy: 1500, gold: 3000 };
-export const UP_COST = { revolver: [300, 800, 1800], rifle: [400, 1000, 2200], sniper: [500, 1200, 2600], tommy: [600, 1500, 3200], gold: [800, 2000, 4000] };
+export const PRICE = { revolver: 0, rifle: 0, sniper: 0, tommy: 1500, gold: 3000, gatling: 5000 };
+export const UP_COST = { revolver: [300, 800, 1800], rifle: [400, 1000, 2200], sniper: [500, 1200, 2600], tommy: [600, 1500, 3200], gold: [800, 2000, 4000], gatling: [900, 2200, 4800] };
 export const SCOPED = w => w === 'sniper' || w === 'gold';
-export const WNAME = { revolver: 'SIX-SHOOTER', rifle: 'LEVER RIFLE', sniper: 'BUFFALO RIFLE', tommy: 'TOMMY GUN', gold: 'GOLDEN BUFFALO' };
-export const WCODE = { revolver: 1, rifle: 2, sniper: 3, tommy: 4, gold: 5 }, WBY = ['', 'revolver', 'rifle', 'sniper', 'tommy', 'gold'];
+export const WNAME = { revolver: 'SIX-SHOOTER', rifle: 'LEVER RIFLE', sniper: 'BUFFALO RIFLE', tommy: 'TOMMY GUN', gold: 'GOLDEN BUFFALO', gatling: 'GATLING GUN' };
+export const WCODE = { revolver: 1, rifle: 2, sniper: 3, tommy: 4, gold: 5, gatling: 6 }, WBY = ['', 'revolver', 'rifle', 'sniper', 'tommy', 'gold', 'gatling'];
 const S = GUN_SETTINGS, D2R = Math.PI / 180, UP = new THREE.Vector3(0, 1, 0), ZERO = new THREE.Vector3();
 
 // ---------------- procedural textures + materials ----------------
@@ -208,6 +209,27 @@ export function buildTommy() {
   return { group: g, muzzle: new THREE.Vector3(0, BY, -.565), drum, bolt, kind: 'tommy' };
 }
 // v33: the Golden Buffalo: the buffalo rifle in polished gold with ivory-white stock furniture kept walnut
+// v41: hand-crank Gatling gun — six rotating barrels in brass bands, a brass breech housing with a crank on the right,
+// a tall stick magazine on top, walnut grips. Barrels spin up while the trigger is held (see tick), fires once they are turning.
+export function buildGatling() {
+  const M = mats(), g = new THREE.Group(); g.name = 'GatlingGun'; const BY = .055;
+  const barrels = new THREE.Group(); barrels.position.set(0, BY, -.32); g.add(barrels);
+  for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2, x = Math.cos(a) * .028, y = Math.sin(a) * .028; barrels.add(mesh(tube(.0085, .5, 10), M.blued, x, y, 0)); barrels.add(mesh(new THREE.CircleGeometry(.0055, 8), M.dark, x, y, -.2505)).rotation.y = Math.PI; }
+  barrels.add(mesh(tube(.009, .5, 10), M.blued, 0, 0, 0));
+  for (const z of [-.23, -.06, .12]) barrels.add(mesh(tube(.043, .022, 20), M.brass, 0, 0, z)); // brass bands
+  g.add(mesh(tube(.052, .17, 22), M.brass, 0, BY, .0)); // breech housing
+  g.add(mesh(tube(.056, .02, 22), M.blued, 0, BY, -.085)); g.add(mesh(tube(.056, .02, 22), M.blued, 0, BY, .085));
+  g.add(mesh(new THREE.SphereGeometry(.05, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), M.brass, 0, BY, .085)).rotation.x = Math.PI / 2; // domed back
+  g.add(mesh(new THREE.BoxGeometry(.03, .16, .045), M.brass, 0, BY + .12, -.005)); // stick magazine
+  g.add(mesh(new THREE.BoxGeometry(.034, .01, .05), M.blued, 0, BY + .2, -.005));
+  const crank = new THREE.Group(); crank.position.set(.06, BY, .04); g.add(crank); crank.add(mesh(new THREE.BoxGeometry(.012, .075, .012), M.blued, 0, .033, 0)); crank.add(mesh(new THREE.CylinderGeometry(.009, .009, .04, 10).rotateZ(Math.PI / 2), M.walnut, .022, .07, 0));
+  crank.rotation.order = 'XYZ';
+  const pg = mesh(new THREE.BoxGeometry(.03, .09, .036), M.walnut, 0, -.03, .1); pg.rotation.x = -.25; g.add(pg); // rear pistol grip
+  const fg = mesh(new THREE.BoxGeometry(.03, .09, .034), M.walnut, 0, -.005, -.2); fg.rotation.x = .1; g.add(fg); // front handle
+  g.add(mesh(new THREE.BoxGeometry(.012, .03, .012), M.blued, 0, BY + .055, -.5)); // front sight
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  return { group: g, muzzle: new THREE.Vector3(0, BY, -.575), barrels, crank, kind: 'gatling' };
+}
 export function buildGold() { const m = buildSharps(), gold = new THREE.MeshPhysicalMaterial({ color: 0xffc23a, metalness: 1, roughness: .2, clearcoat: .6, clearcoatRoughness: .15, envMapIntensity: 1.6 }), M = mats();
   m.group.traverse(o => { if (o.isMesh && (o.material === M.blued || o.material === M.caseS || o.material === M.caseH || o.material === M.brass)) o.material = gold; }); m.group.name = 'GoldenBuffalo'; m.kind = 'gold'; return m; }
 
@@ -258,10 +280,10 @@ function raySeg(o, d, ax, az, bx, bz, y0, y1) { const ex = bx - ax, ez = bz - az
 // c: { scene, camera, P, H, hAt, sfx, fx, msg, mobile, input, keys, rig(), aimBone, twistBone, RANGE, BASE, dev, send(m), renderer }
 export function createGuns(c) {
   const { scene, camera, P, H, hAt, sfx, fx, mobile, input, keys } = c;
-  const state = { weapon: null, last: 'revolver', aiming: false, ammo: { revolver: S.revolverRounds, rifle: S.rifleRounds, sniper: S.sniperRounds, tommy: S.tommyRounds, gold: S.goldRounds }, owned: { revolver: true, rifle: true, sniper: true, tommy: false, gold: false }, up: { revolver: 0, rifle: 0, sniper: 0, tommy: 0, gold: 0 }, gz: S.goldFovMax, spent: 0, kills: 0, cocked: true, chambered: true, reloading: false, cycling: false, shots: 0, hits: 0, score: 0, lastHit: null, blocked: false, draw: 0, aimK: 0, scopeK: 0, breath: 1, winded: false, steady: false, scoped: false, scopeT: 0 };
+  const state = { weapon: null, last: 'revolver', aiming: false, ammo: { revolver: S.revolverRounds, rifle: S.rifleRounds, sniper: S.sniperRounds, tommy: S.tommyRounds, gold: S.goldRounds, gatling: S.gatlingRounds }, owned: { revolver: true, rifle: true, sniper: true, tommy: false, gold: false , gatling: false }, up: { revolver: 0, rifle: 0, sniper: 0, tommy: 0, gold: 0 , gatling: 0 }, gz: S.goldFovMax, spent: 0, kills: 0, cocked: true, chambered: true, reloading: false, cycling: false, shots: 0, hits: 0, score: 0, lastHit: null, blocked: false, draw: 0, aimK: 0, scopeK: 0, breath: 1, winded: false, steady: false, scoped: false, scopeT: 0 };
   const clock = { cooldown: 0, reload: 0, lever: 0, cock: 0, flash: 0, recoil: 0, rec: 0, sway: 0, idle: 0, draw: 0 };
   // v36: the Tommy replica is sized to our old Tommy (0.91 m; muzzle / stock / grip where the hands, FPV and holster expect them)
-  const models = { revolver: buildRevolver(), rifle: buildRifle(), sniper: buildSharps(), tommy: buildTommyReplica({ quality: mobile ? 'low' : 'high', fit: { s: .785, dz: -.1 } }), gold: buildGold() }; for (const m of Object.values(models)) { m.group.visible = false; scene.add(m.group); } // v33 regression fix: the held guns must be in the scene
+  const models = { revolver: buildRevolver(), rifle: buildRifle(), sniper: buildSharps(), tommy: buildTommyReplica({ quality: mobile ? 'low' : 'high', fit: { s: .785, dz: -.1 } }), gold: buildGold(), gatling: buildGatling() }; for (const m of Object.values(models)) { m.group.visible = false; scene.add(m.group); } // v33 regression fix: the held guns must be in the scene
 
   // v36 Tommy (ChatGPT 'Frontier' pack, adapted): pooled brass, suppressor (store item, 900 pts, saved), original synthesized WAVs
   // decoded once into the game's own AudioContext and played through its bus (positional for other riders; replaces the old
@@ -284,8 +306,8 @@ export function createGuns(c) {
   const light = mobile ? null : new THREE.PointLight(0xffb060, 0, 9, 2); if (light) scene.add(light); // always in the scene (intensity 0) so firing never recompiles shaders
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), v3 = new THREE.Vector3(), q1 = new THREE.Quaternion(), m1 = new THREE.Matrix4(), aimDir = new THREE.Vector3(0, 0, -1), muz = new THREE.Vector3();
   const remote = new Map(); let fireHeld = false, firePend = false, lastFire = false, aimHeld = false, reloadHeld = false, toast = 0, toastTxt = '';
-  const gun = () => state.weapon && models[state.weapon], baseAmmo = w => w === 'rifle' ? S.rifleRounds : w === 'sniper' ? S.sniperRounds : w === 'tommy' ? S.tommyRounds : w === 'gold' ? S.goldRounds : S.revolverRounds, tier = w => state.up[w] | 0,
-    maxAmmo = w => Math.max(1, Math.round(baseAmmo(w) * S.tierMag[tier(w)] - (SCOPED(w) && tier(w) < 3 ? .49 : 0))), rangeOf = w => w === 'rifle' ? S.rifleRange : w === 'sniper' ? S.sniperRange : w === 'tommy' ? S.tommyRange : w === 'gold' ? S.goldRange : S.revolverRange, dmgMul = w => S.tierDmg[tier(w)];
+  const gun = () => state.weapon && models[state.weapon], baseAmmo = w => w === 'rifle' ? S.rifleRounds : w === 'sniper' ? S.sniperRounds : w === 'tommy' ? S.tommyRounds : w === 'gatling' ? S.gatlingRounds : w === 'gold' ? S.goldRounds : S.revolverRounds, tier = w => state.up[w] | 0,
+    maxAmmo = w => Math.max(1, Math.round(baseAmmo(w) * S.tierMag[tier(w)] - (SCOPED(w) && tier(w) < 3 ? .49 : 0))), rangeOf = w => w === 'rifle' ? S.rifleRange : w === 'sniper' ? S.sniperRange : w === 'tommy' ? S.tommyRange : w === 'gatling' ? S.gatlingRange : w === 'gold' ? S.goldRange : S.revolverRange, dmgMul = w => S.tierDmg[tier(w)];
   const flights = []; // buffalo-rifle bullets in the air (impact after the flight time)
   const tone = (...a) => { if (sfx.ctx) sfx.tone(...a); }, nz = (...a) => { if (sfx.ctx) sfx.nz(...a); };
   const click = (f = 3200, v = .14) => nz('highpass', f, .7, v, .03);
@@ -303,9 +325,9 @@ export function createGuns(c) {
     state.weapon = w; state.last = w; state.reloading = false; state.cycling = false; clock.cooldown = .15; clock.draw = S.drawTime; state.cocked = true; state.chambered = state.ammo.rifle > 0; state.breath = 1; if (w === 'gold') state.gz = S.goldFovMax; state.winded = false;
     click(2400, .12); setTimeout(() => click(4200, .08), 120); syncUI(); return true; }
   function holster() { if (!state.weapon) return; state.weapon = null; state.aiming = false; state.reloading = false; input.ads = false; click(1800, .1); syncUI(); }
-  const ORDER = ['revolver', 'rifle', 'sniper', 'tommy', 'gold'], owned = () => ORDER.filter(w => state.owned[w]);
+  const ORDER = ['revolver', 'rifle', 'sniper', 'tommy', 'gold', 'gatling'], owned = () => ORDER.filter(w => state.owned[w]);
   function cycle() { const o = owned(); if (!state.weapon) draw(o[0]); else { const i = o.indexOf(state.weapon); if (i < 0 || i === o.length - 1) holster(); else draw(o[i + 1]); } } // phone: holstered -> six-shooter -> rifle -> buffalo -> (tommy, golden buffalo once owned) -> holstered
-  function reload() { const w = state.weapon; if (!w || state.reloading || state.cycling || state.ammo[w] >= maxAmmo(w)) return false; state.reloading = true; if (w === 'tommy') tommyWav('reload'); clock.reload = (H.reloadMul || 1) * (w === 'rifle' ? S.reloadRifle : w === 'sniper' ? S.reloadSniper : w === 'tommy' ? S.reloadTommy : w === 'gold' ? S.reloadGold : S.reloadRevolver) * S.tierReload[tier(w)]; state.rlLen = clock.reload; state.rlStep = 0; click(1500, .1); return true; }
+  function reload() { const w = state.weapon; if (!w || state.reloading || state.cycling || state.ammo[w] >= maxAmmo(w)) return false; state.reloading = true; if (w === 'tommy') tommyWav('reload'); clock.reload = (H.reloadMul || 1) * (w === 'rifle' ? S.reloadRifle : w === 'sniper' ? S.reloadSniper : w === 'tommy' ? S.reloadTommy : w === 'gatling' ? S.reloadGatling : w === 'gold' ? S.reloadGold : S.reloadRevolver) * S.tierReload[tier(w)]; state.rlLen = clock.reload; state.rlStep = 0; click(1500, .1); return true; }
 
   // ChatGPT's horseback arc clamp (kept): a direction behind the horse is turned back to the limit; returns whether it was clamped
   function clampHorse(dir) { const h = H.mounted; if (!h) return false; const fx_ = -Math.sin(h.yaw), fz = -Math.cos(h.yaw), hx = dir.x, hz = dir.z, l = Math.hypot(hx, hz); if (l < 1e-4) return false;
@@ -331,6 +353,7 @@ export function createGuns(c) {
     best.p = new THREE.Vector3().copy(d).multiplyScalar(best.t).add(o); return best; }
 
   function spreadDeg(fan) { const m = !!H.mounted, sp = Math.abs(m ? H.speed : H.fv.length()); let s = m ? S.swayHorse + sp * S.swayHorseSpeed : sp * S.swayWalk;
+    if (state.weapon === 'gatling') { s += state.aiming ? .7 : S.gatlingHipSpread; return s * (state.aiming ? S.adsSpreadMultiplier * 1.5 : 1); }
     if (state.weapon === 'tommy') { s += state.aiming ? .25 : S.tommyHipSpread; return s * (state.aiming ? S.adsSpreadMultiplier * 1.3 : 1); }
     if (SCOPED(state.weapon)) { s += state.aiming ? 0 : S.sniperHipSpread; if (state.weapon === 'gold' && state.aiming) s *= .4; if (state.aiming) s *= S.sniperScopeSpread * (state.steady ? .5 : 1); return s; }
     s += state.aiming ? 0 : S.hipSpread; if (state.aiming) s *= S.adsSpreadMultiplier; if (fan) s += S.fanSpread; return s; }
@@ -348,8 +371,8 @@ export function createGuns(c) {
     const w = state.weapon; if (!canFire()) return false;
     if (state.ammo[w] <= 0) { click(900, .2); clock.cooldown = .25; if (!state.reloading) reload(); return false; }
     if (state.reloading) state.reloading = false; // firing interrupts the reload (one round at a time)
-    state.ammo[w]--; state.shots++; clock.cooldown = (w === 'revolver' ? (fan ? S.fanInterval : S.revolverInterval) : w === 'sniper' ? S.sniperInterval : w === 'gold' ? S.goldInterval : w === 'tommy' ? S.tommyInterval : S.rifleInterval) * S.tierRate[tier(w)];
-    if (w === 'revolver') clock.cock = clock.cooldown * .85; else if (w === 'tommy') { if (models.tommy.bolt) models.tommy.bolt.position.z = .02; } else if (SCOPED(w)) state.cocked = false; else { state.chambered = false; if (state.ammo.rifle > 0) { state.cycling = true; clock.lever = S.leverDuration; } }
+    state.ammo[w]--; state.shots++; clock.cooldown = (w === 'revolver' ? (fan ? S.fanInterval : S.revolverInterval) : w === 'sniper' ? S.sniperInterval : w === 'gold' ? S.goldInterval : w === 'tommy' ? S.tommyInterval : w === 'gatling' ? S.gatlingInterval * (2.6 - 1.6 * (state.spin || 0)) : S.rifleInterval) * S.tierRate[tier(w)];
+    if (w === 'revolver') clock.cock = clock.cooldown * .85; else if (w === 'tommy') { if (models.tommy.bolt) models.tommy.bolt.position.z = .02; } else if (w === 'gatling') { /* belt-fed: nothing to cycle */ } else if (SCOPED(w)) state.cocked = false; else { state.chambered = false; if (state.ammo.rifle > 0) { state.cycling = true; clock.lever = S.leverDuration; } }
     // crosshair ray from the camera (skip the player in front of a third-person camera), then the real bullet from the muzzle
     camera.getWorldDirection(v1); const o = camera.position.clone(), eye = H.mounted ? H.mounted.pos : P.pos; const skip = Math.max(0, v2.copy(eye).sub(o).dot(v1) + .6);
     o.addScaledVector(v1, skip); let dir = assist(o, v1.clone()); const sw = swayVec(); dir.x += sw.x; dir.y += sw.y; dir.z += sw.z; dir.normalize();
@@ -359,8 +382,8 @@ export function createGuns(c) {
     const bd = aim.p.clone().sub(muz); const L = bd.length(); bd.multiplyScalar(1 / Math.max(L, .001)); const hit = L > .3 ? cast(muz.clone().addScaledVector(bd, .05), bd, L + .5) : aim;
     const mounted = !!H.mounted, land = () => { impact(hit, bd, w); state.lastHit = { kind: hit.kind, target: hit.T ? hit.T.kind : hit.kind === 'zombie' ? hit.Z.kind : null, head: !!hit.head, zr: hit.zr || null, point: hit.p.toArray().map(v => +v.toFixed(2)), mounted, weapon: w, dist: +hit.p.distanceTo(muz).toFixed(1) }; };
     if (SCOPED(w)) { const tt = hit.p.distanceTo(muz) / (w === 'gold' ? S.goldVelocity : S.sniperVelocity); effects(w, muz, bd, hit.p, false, tt); flights.push({ t: tt, land }); } else { effects(w, muz, bd, hit.p); land(); }
-    clock.recoil = 1; const k = w === 'rifle' ? S.recoilRifle : w === 'tommy' ? S.recoilTommy * (state.aiming ? .6 : 1) : SCOPED(w) ? (w === 'gold' ? S.recoilGold : S.recoilSniper) * (state.scoped ? .6 : 1) : S.recoilRevolver; P.pitch += k; clock.rec += k; H.shake = Math.max(H.shake || 0, SCOPED(w) ? .35 : w === 'rifle' ? .25 : w === 'tommy' ? .08 : .15);
-    if (w === 'tommy') tfx.emit(models.tommy); // v36: pooled brass from the ejection port (visual only: damage / ammo / cadence unchanged)
+    clock.recoil = 1; const k = w === 'rifle' ? S.recoilRifle : w === 'gatling' ? S.recoilGatling * (state.aiming ? .7 : 1) : w === 'tommy' ? S.recoilTommy * (state.aiming ? .6 : 1) : SCOPED(w) ? (w === 'gold' ? S.recoilGold : S.recoilSniper) * (state.scoped ? .6 : 1) : S.recoilRevolver; P.pitch += k; clock.rec += k; H.shake = Math.max(H.shake || 0, SCOPED(w) ? .35 : w === 'rifle' ? .25 : w === 'tommy' ? .08 : w === 'gatling' ? .1 : .15);
+    if (w === 'tommy') tfx.emit(models.tommy); else if (w === 'gatling' && fx && fx.shell && Math.random() < .5) { const m = models.gatling; v3.set(.05, m.muzzle.y, -.1); m.group.localToWorld(v3); fx.shell(v3.clone(), new THREE.Vector3(1.4, 1.2, 0).applyQuaternion(m.group.quaternion)); } // v36: pooled brass from the ejection port (visual only: damage / ammo / cadence unchanged)
     if (c.send) c.send({ t: 'sh', w: WCODE[w] || 1, o: muz.toArray().map(v => +v.toFixed(2)), e: hit.p.toArray().map(v => +v.toFixed(2)), ...(w === 'tommy' && tsup() ? { sp: 1 } : {}) });
     if (H.mounted && H.speed < .5) H.mounted.g.userData.spook = SCOPED(w) ? .7 : w === 'tommy' ? .25 : .4; // the horse flinches a little at the report
     return true; }
@@ -428,12 +451,13 @@ export function createGuns(c) {
       ik(root, B, 'Right', tgt, new THREE.Vector3().copy(right).multiplyScalar(.6).add(v3.set(0, -1, 0))); }
     else { const grip = k > .01 ? sh.clone().addScaledVector(dir, .34).addScaledVector(UP, -.05).addScaledVector(right, -.07) : sh.clone().addScaledVector(fwd, .25).addScaledVector(UP, -.35).addScaledVector(right, .05);
       const tgt = sh.clone().lerp(grip, 1); tgt.copy(sh.clone().addScaledVector(fwd, .25).addScaledVector(UP, -.35).addScaledVector(right, .05).lerp(grip.clone(), k)); ik(root, B, 'Right', tgt, new THREE.Vector3().copy(right).add(v3.set(0, -.8, 0)));
-      if (k > .3) { m1.lookAt(ZERO, dir, UP); q1.setFromRotationMatrix(m1); const fore = tgt.clone().add(new THREE.Vector3(0, -.01, SCOPED(w) ? -.42 : w === 'tommy' ? -.25 : -.36).applyQuaternion(q1)); ik(root, B, 'Left', fore, v3.set(0, -1, 0).addScaledVector(right, -.5).clone()); } }
+      if (k > .3) { m1.lookAt(ZERO, dir, UP); q1.setFromRotationMatrix(m1); const fore = tgt.clone().add(new THREE.Vector3(0, -.01, SCOPED(w) ? -.42 : w === 'tommy' ? -.25 : w === 'gatling' ? -.2 : -.36).applyQuaternion(q1)); ik(root, B, 'Left', fore, v3.set(0, -1, 0).addScaledVector(right, -.5).clone()); } }
     root.updateMatrixWorld(true); const hand = B.RightHand.getWorldPosition(new THREE.Vector3());
     m1.lookAt(ZERO, gd, UP); g.quaternion.setFromRotationMatrix(m1); g.position.copy(hand).add(new THREE.Vector3(0, -.01, -.035).applyQuaternion(g.quaternion)); g.scale.setScalar(SCOPED(w) ? 1.15 : 1.3); g.visible = true; return true; } // a touch over life-size so it reads from the chase camera
   function poseFP(model, k) { const g = model.group; camera.updateMatrixWorld(); const w = model.kind; const off = w !== 'revolver' ? [.11 * (1 - k), -.11 + .065 * k - .04 * (1 - k), -.32 - .05 * k] : [.16 * (1 - k), -.2 + .135 * k, -.4 - .05 * k];
     g.position.set(...off).applyMatrix4(camera.matrixWorld); g.quaternion.copy(camera.quaternion); g.scale.setScalar(1); if (k < 1) { q1.setFromAxisAngle(v1.set(1, 0, 0), -.35 * (1 - k)); g.quaternion.multiply(q1); } g.visible = true; }
   function animParts(m, rec, cock, lever) { if (m.kind === 'revolver') { m.hammer.rotation.x = cock ? -.55 : 0; m.cylinder.rotation.z = (state.shots % 6) * Math.PI / 3 * -1; m.group.rotateX(rec * .35); }
+    else if (m.kind === 'gatling') { m.group.rotateX(rec * .025); m.group.translateZ(rec * .012); }
     else if (m.kind === 'tommy') { if (m.bolt) m.bolt.position.z += (-.02 - m.bolt.position.z) * .35; m.group.rotateX(rec * .06); m.group.translateZ(rec * .015); }
     else if (m.kind === 'sniper' || m.kind === 'gold') { m.lever.rotation.x = lever * .75; m.block.position.y = -.024 * lever; m.hammer.rotation.x = state.cocked || lever > 0 ? -.5 : 0; m.group.rotateX(rec * .2); m.group.translateZ(rec * .06); }
     else { m.lever.rotation.x = lever * .95; m.hammer.rotation.x = -.45; m.group.rotateX(rec * .15); m.group.translateZ(rec * .04); } }
@@ -444,7 +468,7 @@ export function createGuns(c) {
 
   // ---- input (only while Horse Rider runs; nothing global outside the mode) ----
   const onKey = e => { if (!H.on || e.repeat || (e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) return; if (H.noGun || H.tool) return; // v35: fists / slots / dances / axe / build own the keys
-    if (e.code === 'Digit1') draw('revolver'); else if (e.code === 'Digit2') draw('rifle'); else if (e.code === 'Digit3') draw('sniper'); else if (e.code === 'Digit4') draw('tommy'); else if (e.code === 'Digit5') draw('gold'); else if (e.code === 'KeyQ') { const o = owned(); if (state.weapon) draw(o[(o.indexOf(state.weapon) + 1) % o.length]); else draw(state.last); }
+    if (e.code === 'Digit1') draw('revolver'); else if (e.code === 'Digit2') draw('rifle'); else if (e.code === 'Digit3') draw('sniper'); else if (e.code === 'Digit4') draw('tommy'); else if (e.code === 'Digit5') draw('gold'); else if (e.code === 'Digit6') draw('gatling'); else if (e.code === 'KeyQ') { const o = owned(); if (state.weapon) draw(o[(o.indexOf(state.weapon) + 1) % o.length]); else draw(state.last); }
     else if ((e.code === 'Equal' || e.code === 'NumpadAdd') && state.weapon === 'gold') zoom(1); else if ((e.code === 'Minus' || e.code === 'NumpadSubtract') && state.weapon === 'gold') zoom(-1);
     else if (e.code === 'KeyX') holster(); else if (e.code === 'KeyR') { reloadHeld = true; reload(); } };
   const onKeyUp = e => { if (e.code === 'KeyR') reloadHeld = false; };
@@ -457,7 +481,7 @@ export function createGuns(c) {
 
   // ---- HUD + phone buttons ----
   const $ = id => document.getElementById(id); let hudEl = null, crossEl = null, scopeEl = null;
-  function syncUI() { document.body.classList.toggle('hr-gun', !!state.weapon); const b = $('tGun'); if (b) b.innerHTML = !state.weapon ? '🔫<small>DRAW</small>' : state.weapon === 'revolver' ? '🔫<small>RIFLE</small>' : state.weapon === 'rifle' ? '🔭<small>BUFFALO</small>' : (() => { const o = owned(), n = o[o.indexOf(state.weapon) + 1]; return n === 'tommy' ? '🔫<small>TOMMY</small>' : n === 'gold' ? '🔭<small>GOLD</small>' : '🔫<small>HOLSTER</small>'; })(); if (!state.weapon) input.ads = false; }
+  function syncUI() { document.body.classList.toggle('hr-gun', !!state.weapon); const b = $('tGun'); if (b) b.innerHTML = !state.weapon ? '🔫<small>DRAW</small>' : state.weapon === 'revolver' ? '🔫<small>RIFLE</small>' : state.weapon === 'rifle' ? '🔭<small>BUFFALO</small>' : (() => { const o = owned(), n = o[o.indexOf(state.weapon) + 1]; return n === 'tommy' ? '🔫<small>TOMMY</small>' : n === 'gold' ? '🔭<small>GOLD</small>' : n === 'gatling' ? '🔫<small>GATLING</small>' : '🔫<small>HOLSTER</small>'; })(); if (!state.weapon) input.ads = false; }
   if (mobile && $('tGun')) { const b = $('tGun'); b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); cycle(); }); }
   if (mobile && $('tFire')) $('tFire').addEventListener('pointerdown', () => { if (H.on && state.weapon) firePend = true; }); // a quick tap between two frames still fires
   function hud() {
@@ -501,11 +525,12 @@ export function createGuns(c) {
     if (state.reloading && SCOPED(w)) { const ph = 1 - clock.reload / (state.rlLen || S.reloadSniper); // lever down + block drops, case out, fresh cartridge in, lever up
       if (state.rlStep === 0 && ph > .08) { state.rlStep = 1; click(1400, .16); } if (state.rlStep === 1 && ph > .25) { state.rlStep = 2; click(2600, .1); if (fx && fx.shell) { const g = models.sniper.group; v3.set(0, .05, -.03).applyMatrix4(g.matrixWorld); fx.shell(v3.clone(), new THREE.Vector3(.2, 1.4, 1.6).applyQuaternion(g.quaternion)); } }
       if (state.rlStep === 2 && ph > .6) { state.rlStep = 3; click(1900, .12); } if (state.rlStep === 3 && ph > .88) { state.rlStep = 4; click(3200, .14); state.cocked = true; } }
-    if (state.reloading) { clock.reload -= dt; if (clock.reload <= 0) { state.ammo[w] = w === 'tommy' ? maxAmmo(w) : Math.min(maxAmmo(w), state.ammo[w] + 1); click(2000 + Math.random() * 400, .12); state.reloading = false; if (SCOPED(w)) state.cocked = true; // exactly one cartridge per cycle
+    if (state.reloading) { clock.reload -= dt; if (clock.reload <= 0) { state.ammo[w] = w === 'tommy' || w === 'gatling' ? maxAmmo(w) : Math.min(maxAmmo(w), state.ammo[w] + 1); click(2000 + Math.random() * 400, .12); state.reloading = false; if (SCOPED(w)) state.cocked = true; // exactly one cartridge per cycle
         if (state.ammo[w] < maxAmmo(w) && (reloadHeld || mobile || state.autoRl)) reload(); else { state.autoRl = false; if (w === 'rifle' && !state.chambered) { state.cycling = true; clock.lever = S.leverDuration; } } } }
     if (state.cycling) { clock.lever -= dt; if (clock.lever <= 0) { state.cycling = false; state.chambered = state.ammo.rifle > 0; click(2600, .1); if (fx && fx.shell) { const m = models.rifle; v3.set(.03, .03, -.1).applyMatrix4(m.group.matrixWorld); fx.shell(v3.clone(), new THREE.Vector3(1.2, 2, .3).applyQuaternion(m.group.quaternion)); } }
       else if (Math.abs(clock.lever - S.leverDuration * .5) < dt) click(1700, .1); }
-    const fh = !!(fireHeld || input.fire), fan = w === 'revolver' && (keys.KeyF || (mobile && !state.aiming)), want = firePend || (fh && (!lastFire || fan || w === 'tommy')), fired = want ? shoot(fan) : false; lastFire = fh; if (fired || !state.weapon) firePend = false; else if (firePend && clock.cooldown <= 0 && !state.cycling && clock.draw <= 0) firePend = false;
+    { const held = !!(fireHeld || input.fire) && w === 'gatling' && !state.reloading; state.spin = Math.max(0, Math.min(1, (state.spin || 0) + (held ? dt * 1.8 : -dt * 1.1))); const G = models.gatling; if (G && G.barrels) { G.barrels.rotation.z += dt * state.spin * 38; G.crank.rotation.z = G.barrels.rotation.z * .5; } if (H.gatlingSpin) H.gatlingSpin(state.spin, held); }
+    const fh = !!(fireHeld || input.fire), fan = w === 'revolver' && (keys.KeyF || (mobile && !state.aiming)), want = (w !== 'gatling' || state.spin > .3) && (firePend || (fh && (!lastFire || fan || w === 'tommy' || w === 'gatling'))), fired = want ? shoot(fan) : false; lastFire = fh; if (fired || !state.weapon) firePend = false; else if (firePend && clock.cooldown <= 0 && !state.cycling && clock.draw <= 0) firePend = false;
     if (fired) clock.idle = 0; else clock.idle += dt;
     if (state.ammo[w] === 0 && !state.reloading && !state.cycling && clock.cooldown <= 0) { state.autoRl = true; reload(); }
     if (mobile && clock.idle > 2.5 && !state.reloading && state.ammo[w] < maxAmmo(w) && !state.aiming) { state.autoRl = true; reload(); }

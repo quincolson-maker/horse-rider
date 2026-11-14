@@ -3,11 +3,12 @@
 // by Quin (src/hrbanditcave.js, credited in CREDITS.md). This file places it in our world — a flattened notch in a hillside,
 // picked the same way on every machine — and wires it into our controller (walls + floors), guns (rock stops bullets),
 // host-authoritative co-op (the host runs the outlaws and the vault) and game points. Points are game points only.
+import { CAVE_CUT } from './hrworld.js?v=42j';
 import * as THREE from 'three';
-import { createHideout } from './hrhideout.js?v=42i';
-import { createFalls, baseZ } from './hrfalls.js?v=42i';
-import { makeFrontierCharacter } from './hrcharacters.js?v=42i';
-import { poseDoll } from './hrsaloon.js?v=42i';
+import { createHideout } from './hrhideout.js?v=42j';
+import { createFalls, baseZ } from './hrfalls.js?v=42j';
+import { makeFrontierCharacter } from './hrcharacters.js?v=42j';
+import { poseDoll } from './hrsaloon.js?v=42j';
 
 export const CAVE = { chest: 2500, dance: 50, slotBet: 10, outlaw: 60, outlawHead: 75 };
 const FU = 40, FV0 = -59, FV1 = 8, BL = 16, BS = 5; // footprint in the cave's own frame (u across, v out of the mouth); terrain blend: 16 m apron in front, 5 m to the sides and back (the hill meets the rock)
@@ -63,7 +64,8 @@ export function createCave(c) {
   // ---- collisions: height-aware walls, walkable box tops, bullets stop on rock ----
   out.wallHit = (x, z, r, y) => { if (falls.hit(x, z, r, y)) return true; if (x < ALL.min.x - r || x > ALL.max.x + r || z < ALL.min.z - r || z > ALL.max.z + r) return false;
     for (const b of WALLS) { if (b.isEmpty() || y + 1.7 < b.min.y || y + .4 > b.max.y) continue; const cx = Math.max(b.min.x, Math.min(x, b.max.x)), cz = Math.max(b.min.z, Math.min(z, b.max.z)); if ((x - cx) ** 2 + (z - cz) ** 2 < r * r) return true; } return false; };
-  const under = out.under = (x, z, y) => { const [u, v] = toLocal(S, x, z); return Math.abs(u) < FU && v < 2.2 && v > FV0 && y < c.hAt(x, z) - 1.5; };
+  CAVE_CUT.value.set(S.x, S.z, S.rot, S.y0);
+  const under = out.under = (x, z, y) => { const [u, v] = toLocal(S, x, z); if (Math.abs(u) < 3.4 && v < 1.6 && v > -15 && y < S.y0 + 4.8) return true; /* the entrance tunnel: indoors whatever the mountain above does */ return Math.abs(u) < FU && v < 2.2 && v > FV0 && y < c.hAt(x, z) - 1.5; };
   out.floorAt = (x, z, y, base) => { if (x < ALL.min.x || x > ALL.max.x || z < ALL.min.z || z > ALL.max.z) return base; const und = under(x, z, y); let f = und ? -1e9 : base;
     for (const b of BOX) { if (b.isEmpty() || x < b.min.x || x > b.max.x || z < b.min.z || z > b.max.z) continue; if (b.max.y <= y + .55 && b.max.y > f) f = b.max.y; } return f === -1e9 ? base : f; };
   out.groundAt = (x, z, y) => under(x, z, y) ? out.floorAt(x, z, y, -1e9) : null;

@@ -1,14 +1,16 @@
-import { STYLE_ON } from './stylize.js?v=42i';
+import { STYLE_ON } from './stylize.js?v=42j';
 // HORSE RIDER world graphics: large-scale terrain (domain-warped fBm hills, carved valleys, ridged-multifractal mountains out to ~4 km),
 // physically based sky (Preetham Rayleigh/Mie) with layered procedural clouds, sky-driven IBL + aerial haze, slow golden-hour time of day,
 // slope/height-blended PBR terrain (Poly Haven CC0), GPU instanced wind-blown grass with wildflowers, CC0 scanned boulders.
 import * as THREE from 'three';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42i';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42j';
 const sstep = (a, b, t) => { t = Math.min(1, Math.max(0, (t - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 // ---------------- noise (Perlin gradient noise, fBm, ridged multifractal) ----------------
 const PERM = new Uint8Array(512); { const p = [...Array(256).keys()]; let s = 1337; for (let i = 255; i > 0; i--) { s = (s * 16807) % 2147483647; const j = s % (i + 1); const t = p[i]; p[i] = p[j]; p[j] = t; } for (let i = 0; i < 512; i++) PERM[i] = p[i & 255]; }
 const GX_ = [1, -1, 1, -1, 1.414, -1.414, 0, 0], GZ_ = [1, 1, -1, -1, 0, 0, 1.414, -1.414];
+// v42: world-space cut for the Bandit Falls entrance tunnel (x, z, rot, ground y) — set by hrcave.js
+export const CAVE_CUT = { value: new THREE.Vector4(1e6, 1e6, 0, -1e6) }, CAVE_CUT_Y = { value: 0 };
 export function pn(x, z) {
   const X = Math.floor(x), Z = Math.floor(z), xf = x - X, zf = z - Z, xi = X & 255, zi = Z & 255;
   const u = xf * xf * xf * (xf * (xf * 6 - 15) + 10), v = zf * zf * zf * (zf * (zf * 6 - 15) + 10);
@@ -123,7 +125,7 @@ void main(){ vec3 dir=normalize(vWorldPosition-cameraPosition); vec3 sd=normaliz
 export function terrainMaterial(T, PEN, SEG, BASE, hq = true, o = {}) {
   const m = new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, normalMap: T.grass.n }); m.normalScale.set(1, 1); m.defines = {}; if (hq) m.defines.TERRAIN_HQ = '';
   if (o.hole) { m.defines.CHUNK_HOLE = ''; m.defines.CH_SIZE = o.CH.toFixed(1); m.defines.CH_LIM = o.LIM.toFixed(1); } // coarse terrain: sink + discard where the detail chunks are
-  const XU = { uMask: { value: o.mask || null }, uMH: { value: o.maskHalf || 1 }, uChunk: o.chunkU || { value: new THREE.Vector4(0, 0, -1, 0) } };
+  const XU = { uMask: { value: o.mask || null }, uMH: { value: o.maskHalf || 1 }, uChunk: o.chunkU || { value: new THREE.Vector4(0, 0, -1, 0) }, uCut: CAVE_CUT, uCutY: CAVE_CUT_Y };
   m.onBeforeCompile = sh => { Object.assign(sh.uniforms, { tG: { value: T.grass.d }, tGa: { value: T.grass.a }, tG2: { value: T.grass2.d }, tD: { value: T.dirt.d }, tDn: { value: T.dirt.n }, tTr: { value: T.trail.d },
       tR: { value: T.rock.d }, tRn: { value: T.rock.n }, tS: { value: T.snow.d }, tSn: { value: T.snow.n }, uPen: { value: new THREE.Vector4(PEN.x, PEN.z, PEN.hw, PEN.hd) }, uSeg: { value: SEG.map(s => new THREE.Vector4(...s)) }, uBase: { value: BASE } }, XU);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP; varying vec3 vWN; uniform vec4 uChunk;').replace('#include <begin_vertex>', `#include <begin_vertex>
@@ -132,11 +134,12 @@ export function terrainMaterial(T, PEN, SEG, BASE, hq = true, o = {}) {
 #endif
 vWP=(modelMatrix*vec4(transformed,1.)).xyz; vWN=normalize(mat3(modelMatrix)*normal);`);
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-varying vec3 vWP; varying vec3 vWN; uniform sampler2D tG,tGa,tG2,tD,tDn,tTr,tR,tRn,tS,tSn,uMask; uniform float uBase,uMH; uniform vec4 uChunk;
+varying vec3 vWP; varying vec3 vWN; uniform sampler2D tG,tGa,tG2,tD,tDn,tTr,tR,tRn,tS,tSn,uMask; uniform float uBase,uMH,uCutY; uniform vec4 uChunk,uCut;
 ${GLSL_NOISE}
 ${GLSL_TRAIL}
 vec3 tri(sampler2D t, vec3 p, vec3 w){ return texture2D(t,p.zy).rgb*w.x+texture2D(t,p.xz).rgb*w.y+texture2D(t,p.xy).rgb*w.z; }`)
       .replace('#include <map_fragment>', `
+{ vec2 dd=vWP.xz-uCut.xy; float cu=dd.x*cos(uCut.z)-dd.y*sin(uCut.z), cv=dd.x*sin(uCut.z)+dd.y*cos(uCut.z); if(abs(cu)<3.6&&cv<1.8&&cv>-15.&&vWP.y<uCut.w+6.4) discard; } // v42: the Bandit Falls tunnel cuts through the mountain
 #ifdef CHUNK_HOLE
 { vec2 cc=floor(vWP.xz/CH_SIZE); vec2 dc=abs(cc-uChunk.xy); if(uChunk.w>.5&&max(dc.x,dc.y)<=uChunk.z&&cc.x>=-CH_LIM&&cc.x<CH_LIM&&cc.y>=-CH_LIM&&cc.y<CH_LIM) discard; }
 #endif

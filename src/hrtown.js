@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42i';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42j';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,7 +47,7 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=42i';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=42j';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -366,21 +366,12 @@ export function createTown(c) {
 // skeleton, so it moves and bends with the rider instead of floating as stiff tubes. One atlas texture: the back print
 // (HORSE RIDER on charcoal with a gold stripe), the front (zipper, chest badge, pocket seams), plain fabric for sides and sleeves.
 let JK = null;
-function jacketMats() { if (JK) return JK; const c = document.createElement('canvas'); c.width = 1024; c.height = 512; const x = c.getContext('2d');
-  const fabric = (x0) => { const g = x.createLinearGradient(0, 0, 0, 512); g.addColorStop(0, '#24272d'); g.addColorStop(1, '#16181c'); x.fillStyle = g; x.fillRect(x0, 0, 512, 512);
-    for (let i = 0; i < 2600; i++) { x.fillStyle = `rgba(255,255,255,${Math.random() * .03})`; x.fillRect(x0 + Math.random() * 512, Math.random() * 512, 2, 1); } };
-  fabric(0); fabric(512);
-  // back (left half): gold yoke stripe, HORSE RIDER, small horseshoe
-  x.fillStyle = '#e8b23a'; x.fillRect(0, 352, 512, 22); x.fillStyle = '#1b1d21'; x.fillRect(0, 374, 512, 6);
-  x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = 'italic 900 92px Impact,"Arial Black",sans-serif'; x.lineWidth = 10; x.strokeStyle = '#0b0c0e';
-  for (const [t, y] of [['HORSE', 170], ['RIDER', 262]]) { x.strokeText(t, 256, y); x.fillStyle = '#f4f1ea'; x.fillText(t, 256, y); }
-  x.strokeStyle = '#e8b23a'; x.lineWidth = 9; x.beginPath(); x.arc(256, 82, 26, Math.PI * .15, Math.PI * .85, true); x.stroke();
-  // front (right half): zipper, gold stripe, chest badge, pocket seams, stitching
-  x.fillStyle = '#e8b23a'; x.fillRect(512, 352, 512, 22); x.fillStyle = '#9ea3aa'; x.fillRect(764, 0, 8, 512); x.fillStyle = '#3a3e44'; for (let y = 0; y < 512; y += 6) x.fillRect(762, y, 12, 2);
-  x.fillStyle = '#e8b23a'; x.beginPath(); x.arc(870, 290, 22, 0, Math.PI * 2); x.fill(); x.fillStyle = '#1b1d21'; x.font = '900 22px Impact,sans-serif'; x.fillText('HR', 870, 291);
-  x.strokeStyle = 'rgba(255,255,255,.12)'; x.lineWidth = 2; x.setLineDash([6, 5]); for (const px of [600, 940]) { x.beginPath(); x.moveTo(px - 40, 120); x.lineTo(px + 30, 60); x.stroke(); } x.setLineDash([]);
-  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
-  JK = { mat: new THREE.MeshStandardMaterial({ map: tex, roughness: .5, metalness: .05, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }) }; return JK; }
+function jacketMats() { if (JK) return JK;
+  const c = document.createElement('canvas'); c.width = 512; c.height = 384; const x = c.getContext('2d'); x.clearRect(0, 0, 512, 384);
+  x.fillStyle = '#ffffff'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '900 120px Impact,"Arial Black","Helvetica Neue",sans-serif';
+  x.fillText('HORSE', 256, 120); x.fillText('RIDER', 256, 262); const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  JK = { mat: new THREE.MeshStandardMaterial({ color: 0x0c0d0f, roughness: .55, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
+    print: new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: .6, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthWrite: false }) }; return JK; }
 const JACKET_BONES = ['Spine', 'Spine01', 'Spine02', 'LeftShoulder', 'RightShoulder', 'LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm', 'neck', 'Hips'];
 export function wearJacket(root, on) { if (!root || !root.userData) return false; if (root.userData.skin) on = false; // v36: Frontier characters wear their own coats
   if (root.userData.jacket) { for (const m of root.userData.jacket) m.visible = !!on; return true; } if (!on) return true;
@@ -395,13 +386,13 @@ export function wearJacket(root, on) { if (!root || !root.userData) return false
     for (let k = 0; k < 4; k++) { const b = si.getComponent(v, k), ww = sw.getComponent(v, k); if (iHand.includes(b)) hand += ww; if (!want.has(b)) continue; if (b === iH && P.y < hipY + (neckY - hipY) * .02) continue; if (b === iN && P.y > neckY + (neckY - hipY) * .05) continue; w += ww; }
     keepV[v] = hand > .3 ? 0 : w; }
   const index = G.index ? G.index.array : Array.from({ length: n }, (_, i) => i), tri = [];
-  for (let t = 0; t < index.length; t += 3) { const a = index[t], b = index[t + 1], c = index[t + 2]; if (keepV[a] > .55 && keepV[b] > .55 && keepV[c] > .55) tri.push(a, b, c); }
+  for (let t = 0; t < index.length; t += 3) { const a = index[t], b = index[t + 1], c = index[t + 2]; if (keepV[a] + keepV[b] + keepV[c] > 1.1 && Math.min(keepV[a], keepV[b], keepV[c]) > .15) tri.push(a, b, c); }
   if (tri.length < 60) return false;
   // bounds of the kept torso (bind space) for the print projection
   const armW = v => { let a = 0; for (let k = 0; k < 4; k++) { const b = si.getComponent(v, k); if (['LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm', 'LeftShoulder', 'RightShoulder'].map(idx).includes(b)) a += sw.getComponent(v, k); } return a; };
   const box = new THREE.Box3(); for (const v of tri) if (armW(v) < .3) box.expandByPoint(P.fromBufferAttribute(pos, v)); const cx = (box.min.x + box.max.x) / 2, W = box.max.x - box.min.x, y0 = Math.max(box.min.y, hipY - .05), H = Math.min(box.max.y, neckY) - y0;
   const used = [...new Set(tri)], remap = new Map(used.map((v, i) => [v, i])), m = used.length, nP = new Float32Array(m * 3), nN = new Float32Array(m * 3), nUV = new Float32Array(m * 2), nSI = new Uint16Array(m * 4), nSW = new Float32Array(m * 4), N = new THREE.Vector3();
-  used.forEach((v, i) => { P.fromBufferAttribute(pos, v); N.fromBufferAttribute(nor, v).normalize(); let arm = 0; for (let k = 0; k < 4; k++) if (armB.has(si.getComponent(v, k))) arm += sw.getComponent(v, k); const armish = arm > .45, push = armish ? .024 : .034 + .012 * Math.max(0, (P.y - y0) / H - .75);
+  used.forEach((v, i) => { P.fromBufferAttribute(pos, v); N.fromBufferAttribute(nor, v).normalize(); let arm = 0; for (let k = 0; k < 4; k++) if (armB.has(si.getComponent(v, k))) arm += sw.getComponent(v, k); const armish = arm > .45, push = armish ? .03 : .045 + .012 * Math.max(0, (P.y - y0) / H - .75);
     nP.set([P.x + N.x * push, P.y + N.y * push, P.z + N.z * push], i * 3); nN.set([N.x, N.y, N.z], i * 3);
     const uu = (P.x - cx) / (W * .95) + .5, vv = .06 + .9 * (P.y - y0) / H; let u, w;
     if (armish) { u = .52; w = .05; } else if (N.z < -.15) { u = Math.min(.98, Math.max(.02, uu)) * .5; w = vv; } else if (N.z > .15) { u = .5 + Math.min(.99, Math.max(.01, uu)) * .5; w = vv; } else { u = .52; w = .05; }
@@ -410,4 +401,14 @@ export function wearJacket(root, on) { if (!root || !root.userData) return false
   g.setAttribute('skinIndex', new THREE.BufferAttribute(nSI, 4)); g.setAttribute('skinWeight', new THREE.BufferAttribute(nSW, 4)); g.setIndex(tri.map(v => remap.get(v))); g.computeBoundingSphere();
   const J = jacketMats(), jm = new THREE.SkinnedMesh(g, J.mat); jm.name = 'HR jacket'; jm.castShadow = true; jm.frustumCulled = false;
   jm.position.copy(body.position); jm.quaternion.copy(body.quaternion); jm.scale.copy(body.scale); body.parent.add(jm); jm.bind(sk, body.bindMatrix);
-  root.userData.jacket = [jm]; return true; }
+  // white HORSE RIDER on the back: a patch on the upper spine, just outside the shell, facing away from the rider's front
+  const parts = [jm]; try { root.updateMatrixWorld(true); const bp = n => { const b = sk.bones.find(o => o.name === n); return b ? b.getWorldPosition(new THREE.Vector3()) : null; };
+    const hips = bp('Hips'), neck = bp('neck') || bp('Neck'), la = bp('LeftArm'), ra = bp('RightArm'), sp = sk.bones.find(o => o.name === 'Spine01') || sk.bones.find(o => o.name === 'Spine');
+    if (hips && neck && la && ra && sp) { const up = neck.clone().sub(hips).normalize(), rt = ra.clone().sub(la), sw = rt.length(); rt.normalize(); let back = new THREE.Vector3().crossVectors(up, rt).normalize();
+      const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(root.getWorldQuaternion(new THREE.Quaternion())); if (back.dot(fwd) > 0) back.negate();
+      // depth of the torso along the back direction: furthest shell vertex behind the spine line
+      const mid = hips.clone().lerp(neck, .6); let depth = .1; const wp = new THREE.Vector3(); jm.updateMatrixWorld(true);
+      for (let i = 0; i < nP.length; i += 9) { wp.set(nP[i], nP[i + 1], nP[i + 2]).applyMatrix4(jm.matrixWorld); const d = wp.clone().sub(mid); if (Math.abs(d.dot(rt)) < sw * .2 && Math.abs(d.dot(up)) < .08) depth = Math.max(depth, d.dot(back)); }
+      depth = Math.max(depth, sw * .62); const w = sw * .78, pl = new THREE.Mesh(new THREE.PlaneGeometry(w, w * .75), J.print); pl.position.copy(mid).addScaledVector(back, depth + .02);
+      pl.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(rt.clone().negate(), up, back)); pl.renderOrder = 2; sp.attach(pl); parts.push(pl); } } catch (_) {}
+  root.userData.jacket = parts; return true; }

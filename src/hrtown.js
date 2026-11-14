@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42g';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42h';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,7 +47,7 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=42g';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=42h';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -398,11 +398,12 @@ export function wearJacket(root, on) { if (!root || !root.userData) return false
   for (let t = 0; t < index.length; t += 3) { const a = index[t], b = index[t + 1], c = index[t + 2]; if (keepV[a] > .55 && keepV[b] > .55 && keepV[c] > .55) tri.push(a, b, c); }
   if (tri.length < 60) return false;
   // bounds of the kept torso (bind space) for the print projection
-  const box = new THREE.Box3(); for (const v of tri) box.expandByPoint(P.fromBufferAttribute(pos, v)); const cx = (box.min.x + box.max.x) / 2, W = box.max.x - box.min.x, y0 = Math.max(box.min.y, hipY - .05), H = Math.min(box.max.y, neckY) - y0;
+  const armW = v => { let a = 0; for (let k = 0; k < 4; k++) { const b = si.getComponent(v, k); if (['LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm', 'LeftShoulder', 'RightShoulder'].map(idx).includes(b)) a += sw.getComponent(v, k); } return a; };
+  const box = new THREE.Box3(); for (const v of tri) if (armW(v) < .3) box.expandByPoint(P.fromBufferAttribute(pos, v)); const cx = (box.min.x + box.max.x) / 2, W = box.max.x - box.min.x, y0 = Math.max(box.min.y, hipY - .05), H = Math.min(box.max.y, neckY) - y0;
   const used = [...new Set(tri)], remap = new Map(used.map((v, i) => [v, i])), m = used.length, nP = new Float32Array(m * 3), nN = new Float32Array(m * 3), nUV = new Float32Array(m * 2), nSI = new Uint16Array(m * 4), nSW = new Float32Array(m * 4), N = new THREE.Vector3();
   used.forEach((v, i) => { P.fromBufferAttribute(pos, v); N.fromBufferAttribute(nor, v).normalize(); let arm = 0; for (let k = 0; k < 4; k++) if (armB.has(si.getComponent(v, k))) arm += sw.getComponent(v, k); const armish = arm > .45, push = armish ? .024 : .034 + .012 * Math.max(0, (P.y - y0) / H - .75);
     nP.set([P.x + N.x * push, P.y + N.y * push, P.z + N.z * push], i * 3); nN.set([N.x, N.y, N.z], i * 3);
-    const uu = (P.x - cx) / (W * 1.05) + .5, vv = .06 + .9 * (P.y - y0) / H; let u, w;
+    const uu = (P.x - cx) / (W * .95) + .5, vv = .06 + .9 * (P.y - y0) / H; let u, w;
     if (armish) { u = .52; w = .05; } else if (N.z < -.15) { u = Math.min(.98, Math.max(.02, uu)) * .5; w = vv; } else if (N.z > .15) { u = .5 + Math.min(.99, Math.max(.01, uu)) * .5; w = vv; } else { u = .52; w = .05; }
     nUV.set([u, Math.min(.99, Math.max(.01, w))], i * 2); for (let k = 0; k < 4; k++) { nSI[i * 4 + k] = si.getComponent(v, k); nSW[i * 4 + k] = sw.getComponent(v, k); } });
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(nP, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nN, 3)); g.setAttribute('uv', new THREE.BufferAttribute(nUV, 2));

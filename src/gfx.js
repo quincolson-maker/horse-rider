@@ -12,7 +12,7 @@ import { STYLE_ON } from './stylize.js?v=43';
 // ---------------- Quality ----------------
 export const PRESETS = {
   low:    { pr: 0.75, shadow: 1024,    ao: false, bloom: false, msaa: 0, fxaa: false, trees: 70,  grass: 600,  particles: 500,  dist: 90,  light: false },
-  medium: { pr: 1.0,  shadow: 1024, ao: false, bloom: true,  msaa: 0, fxaa: true,  trees: 140, grass: 2500, particles: 1000, dist: 130, light: false },
+  medium: { pr: 1.35,  shadow: 1024, ao: false, bloom: true,  msaa: 0, fxaa: true,  trees: 140, grass: 2500, particles: 1000, dist: 130, light: false },
   high:   { pr: 1.5,  shadow: 4096, ao: true,  bloom: true,  msaa: 4, fxaa: false, trees: 220, grass: 9000, particles: 1800, dist: 190, light: true },
   ultra:  { pr: 2.0,  shadow: 4096, ao: true,  bloom: true,  msaa: 4, fxaa: false, trees: 320, grass: 16000, particles: 2600, dist: 250, light: true },
 };
@@ -22,7 +22,11 @@ export function autoQuality() {
   let gpu = '';
   try { const c = document.createElement('canvas').getContext('webgl'); const e = c.getExtension('WEBGL_debug_renderer_info'); gpu = e ? c.getParameter(e.UNMASKED_RENDERER_WEBGL) : ''; } catch (e) {}
   if (/swiftshader|llvmpipe|software/i.test(gpu)) return 'low';
-  if (IS_TOUCH) return (navigator.deviceMemory || 4) >= 6 && (navigator.hardwareConcurrency || 4) >= 8 ? 'medium' : 'low';
+  // v43: iPhones / iPads never report deviceMemory, so every one of them fell to 'low' (75% resolution, 512 px textures, no AA).
+  // Any Apple GPU with WebGL2 (iOS 15+, A12 or newer in practice) and any phone with 6+ GB or 8 cores starts on medium; the
+  // adaptive resolution in main.js still steps down if a phone can't hold 28 fps.
+  if (IS_TOUCH) { let gl2 = false; try { gl2 = !!document.createElement('canvas').getContext('webgl2'); } catch (_) {}
+    if (/apple/i.test(gpu) && gl2) return 'medium'; return (navigator.deviceMemory || 4) >= 6 || ((navigator.hardwareConcurrency || 4) >= 8 && gl2) ? 'medium' : 'low'; }
   return 'high';
 }
 export function pickQuality() {
@@ -35,7 +39,7 @@ const TL = new THREE.TextureLoader();
 export const MATDEF = { // name -> [Poly Haven id, tile size in metres, extra]
   rock: ['aerial_rocks_02', 5], hesco: ['hessian_230', 1.2], corrugated: ['corrugated_iron_02', 2], timber: ['brown_planks_05', 2], bark: ['bark_brown_02', 1.5] };
 export function loadPBR(renderer, hd) {
-  const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy()); const out = {};
+  const aniso = Math.min(16, renderer.capabilities.getMaxAnisotropy()); const out = {};
   const ld = (id, k, size, srgb) => { const t = TL.load(`assets/tex/${id}_${k}_${size}.webp`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
   for (const [name, [id, tile, ex]] of Object.entries(MATDEF)) {
     const set = { map: ld(id, 'diff', 512, true), normalMap: ld(id, 'nor', 512), arm: ld(id, 'arm', 512), tile, metal: ex?.metal || 0 };

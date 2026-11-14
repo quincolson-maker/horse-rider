@@ -8,6 +8,7 @@
 //   - drifting mist, a faint rainbow in the spray, mossy boulders around the pool and along the cliff foot
 // Local frame (same as the cave): x = across the mouth, +z = out of the mouth, y = up from the ground at the mouth.
 import * as THREE from 'three';
+import { loadRockModels } from './hrworld.js?v=43';
 
 const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 function hash(x, y) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
@@ -52,6 +53,37 @@ function buildCliff(high) {
   g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   return g;
 }
+
+
+// v43: real rock on the cliff and boulders — the game's own CC0 scanned rock textures, sampled triplanar in the rock's local space
+// (no UVs needed, no stretching on the steep faces) and multiplied into the painted vertex colours, so the moss / wet / strata
+// tints stay; a cheap bump from the texture's brightness gives the face real grain. Not run through the stylized mip bias: crisp.
+const TXL = new THREE.TextureLoader(), txCache = {};
+function rockTex(id, sz) { const k = id + sz; if (!txCache[k]) { const t = TXL.load(`assets/tex/${id}_diff_${sz}.webp`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; txCache[k] = t; } return txCache[k]; }
+function triplanarRock(m, tA, tB, scale, key) {
+  m.onBeforeCompile = sh => { sh.uniforms.tRA = { value: tA }; sh.uniforms.tRB = { value: tB }; sh.uniforms.rSc = { value: scale };
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vRP; varying vec3 vRN;').replace('#include <begin_vertex>', `#include <begin_vertex>
+vec4 rp4 = vec4(transformed, 1.);
+#ifdef USE_INSTANCING
+rp4 = instanceMatrix * rp4;
+#endif
+vec3 rn = objectNormal;
+#ifdef USE_INSTANCING
+rn = mat3(instanceMatrix) * rn;
+#endif
+vRP = rp4.xyz; vRN = normalize(rn);`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+uniform sampler2D tRA, tRB; uniform float rSc; varying vec3 vRP; varying vec3 vRN; float rLum;
+vec3 triR(sampler2D t, vec3 p, vec3 w) { return texture2D(t, p.zy).rgb * w.x + texture2D(t, p.xz).rgb * w.y + texture2D(t, p.xy).rgb * w.z; }`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+{ vec3 w = pow(abs(normalize(vRN)), vec3(4.)); w /= (w.x + w.y + w.z); vec3 p = vRP * rSc;
+  vec3 a = triR(tRA, p, w), b = triR(tRB, p * .37 + 3.1, w); float mixAB = smoothstep(.35, .65, texture2D(tRB, p.xz * .05).g);
+  vec3 r = mix(a, b, mixAB * .6); float lum = dot(r, vec3(.333)); rLum = dot(b, vec3(.333));
+  vec3 tint = mix(vec3(1.), r / max(.2, lum), .3); diffuseColor.rgb *= clamp(tint * (.62 + lum * .85), 0., 1.6); }`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+{ float hx = dFdx(rLum), hy = dFdy(rLum); vec3 dpx = dFdx(-vViewPosition), dpy = dFdy(-vViewPosition); vec3 r1 = cross(dpy, normal), r2 = cross(normal, dpx); float det = dot(dpx, r1);
+  vec3 grad = sign(det) * (hx * r1 + hy * r2); normal = normalize(abs(det) * normal - grad * .7); }`); };
+  m.customProgramCacheKey = () => 'hr-trirock-' + key; return m; }
 
 // falls: a curved curtain + spill over the lip (uv.y: 0 at the pool .. 1 over the lip)
 function buildSheet(w0, w1, top, z0, bulge, segX, segY) {
@@ -125,7 +157,8 @@ export function createFalls({ position, rot, high = true }) {
   const group = new THREE.Group(); group.name = 'Bandit Falls scenery'; group.position.copy(position); group.rotation.y = rot;
   const U = { fT: { value: 0 }, pL: { value: new THREE.Vector3(0, -99, 99) } }, geos = [], mats = [], keep = (g, m) => (geos.push(g), mats.push(m), new THREE.Mesh(g, m));
   // cliff
-  const rockM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, metalness: 0 });
+  const SZ = high ? '1k' : '512', tRock = rockTex('rock_face', SZ), tAer = rockTex('aerial_rocks_02', SZ);
+  const rockM = triplanarRock(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .88, metalness: 0 }), tRock, tAer, .14, 'cliff');
   const cliff = keep(buildCliff(high), rockM); cliff.castShadow = true; cliff.receiveShadow = true; group.add(cliff);
   // main falls (front curtain + slower sheet behind) and two side trickles
   const HN = topH(0) - .4;
@@ -146,7 +179,7 @@ export function createFalls({ position, rot, high = true }) {
   const rbM = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: .16, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
   const rainbow = keep(rbG, rbM); rainbow.position.set(0, -1.4, 6.4); rainbow.renderOrder = 4; group.add(rainbow);
   // mossy boulders round the pool and along the cliff foot (the front of the pool stays open: that is the way in)
-  const bG = boulderGeo(high ? 3 : 2), bM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9 }); geos.push(bG); mats.push(bM);
+  const bG = boulderGeo(high ? 4 : 3), bM = triplanarRock(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .85 }), tAer, tRock, .55, 'boulder'); geos.push(bG); mats.push(bM);
   const spots = []; let sd = 7; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
   for (let i = 0; i < 16; i++) { const a = Math.PI * (1.08 + .84 * i / 15) + (rnd() - .5) * .12; spots.push([Math.cos(a) * (PRX + 1.2 + rnd()), PZ + Math.sin(a) * (PRZ + .8 + rnd() * .8), .9 + rnd() * 1.6]); }
   for (let i = 0; i < 14; i++) { const u = (rnd() < .5 ? -1 : 1) * (11 + rnd() * 34); spots.push([u, baseZ(u) + 1.6 + rnd() * 3.5, 1.2 + rnd() * 2.6]); }
@@ -154,6 +187,10 @@ export function createFalls({ position, rot, high = true }) {
   const boulders = new THREE.InstancedMesh(bG, bM, spots.length), M = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), S = new THREE.Vector3(), V = new THREE.Vector3();
   spots.forEach(([x, z, s], i) => { E.set((rnd() - .5) * .3, rnd() * 6.28, (rnd() - .5) * .3); Q.setFromEuler(E); M.compose(V.set(x, s * .25 - .3, z), Q, S.set(s * (1 + rnd() * .5), s, s * (1 + rnd() * .4))); boulders.setMatrixAt(i, M); });
   boulders.castShadow = true; boulders.receiveShadow = true; group.add(boulders);
+  // v43: swap the stand-in boulders for the same scanned CC0 boulders the meadow uses, once they have loaded (same spots)
+  let scanned = []; loadRockModels().then(R => { const per = R.map(() => []); spots.forEach((sp, i) => per[i % R.length].push([sp, i]));
+    R.forEach((r, k) => { if (!per[k].length) return; const im = new THREE.InstancedMesh(r.geo, r.mat, per[k].length); per[k].forEach(([[x, z, sc], i], j) => { boulders.getMatrixAt(i, M); M.decompose(V, Q, S); const s2 = sc * 2.1; M.compose(V.set(x, -.35, z), Q, S.set(s2, s2 * .8, s2)); im.setMatrixAt(j, M); });
+      im.castShadow = true; im.receiveShadow = true; group.add(im); scanned.push(im); }); boulders.visible = false; }).catch(() => {});
   // stylized pines along the top of the cliff
   const pineParts = [], pc = []; { const tr = new THREE.CylinderGeometry(.18, .26, 1.6, 6); tr.translate(0, .8, 0); pineParts.push([tr, 0x6a4a2c]); for (let k = 0; k < 3; k++) { const co = new THREE.ConeGeometry(1.7 - k * .42, 2.2, 8); co.translate(0, 1.9 + k * 1.15, 0); pineParts.push([co, [0x2f6a34, 0x3a7a3c, 0x4a8a44][k]]); } }
   const pinePos = [], pineCol = [], pineIdx = []; let off = 0; for (const [g0, hex] of pineParts) { const gi = g0.toNonIndexed(), p = gi.attributes.position; C.setHex(hex); for (let k = 0; k < p.count; k++) { pinePos.push(p.getX(k), p.getY(k), p.getZ(k)); pineCol.push(C.r, C.g, C.b); } g0.dispose(); gi.dispose(); }
@@ -221,6 +258,6 @@ export function createFalls({ position, rot, high = true }) {
     for (let i = 0; i < flames.length; i++) { const f = flames[i], k = 1 + .14 * Math.sin(t * 13 + i * 2.1) + .08 * Math.sin(t * 29 + i); if (i % 2 === 0) f.scale.set(.55 * k, 1.1 * k, 1); else f.material.opacity = .38 + .1 * k; }
     for (let i = 0; i < MN; i++) { const [ph, x, z, sp] = mseed[i], life = (t * .16 * sp + ph) % 1; mp[i * 3] = x * (.7 + life * .5); mp[i * 3 + 1] = .2 + life * 6.5; mp[i * 3 + 2] = 1.8 + z + life * 2.4; }
     mistG.attributes.position.needsUpdate = true; mistM.opacity = .28; }
-  function dispose() { group.removeFromParent(); for (const g of geos) g.dispose(); for (const m of mats) m.dispose(); dot.dispose(); glowT.dispose(); flameT.dispose(); for (const m of mats) if (m.userData.tex) m.userData.tex.dispose(); boulders.dispose(); pines.dispose(); }
+  function dispose() { group.removeFromParent(); for (const g of geos) g.dispose(); for (const m of mats) m.dispose(); dot.dispose(); glowT.dispose(); flameT.dispose(); for (const m of mats) if (m.userData.tex) m.userData.tex.dispose(); boulders.dispose(); pines.dispose(); for (const im of scanned) im.dispose(); }
   return { group, update, hit, dispose, segs };
 }

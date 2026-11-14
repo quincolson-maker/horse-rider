@@ -17,7 +17,7 @@ if (IS_TOUCH) document.body.classList.add('touch');
 const QNAME = pickQuality();
 let GX; try { GX = createGraphics(QNAME); } catch (e) { window.__bootFail && window.__bootFail('gpu', e); throw e; } // v36: no black page
 const { renderer, scene, camera } = GX;
-const PBRS = loadPBR(renderer, QNAME == 'high' || QNAME == 'ultra');
+const PBRS = loadPBR(renderer, QNAME != 'low'); // v43: medium (most phones now) gets the 1K prop textures too
 const sfx = new SFX();
 const G = { mode: 'horse', phase: 'menu', t: 0, over: false };
 const P = { pos: new THREE.Vector3(), vel: new THREE.Vector3(), yaw: 0, pitch: 0, hp: 100, dead: 0, onGround: false, spawn: new THREE.Vector3(), recoil: 0, bob: 0 };

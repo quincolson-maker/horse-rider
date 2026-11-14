@@ -199,7 +199,7 @@ diffuseColor.rgb*=col;`)
   return m;
 }
 export function loadTerrainTextures(renderer, hd) {
-  const L = new THREE.TextureLoader(), aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy()), sz = hd ? '1k' : '512';
+  const L = new THREE.TextureLoader(), aniso = Math.min(16, renderer.capabilities.getMaxAnisotropy()), sz = hd ? '1k' : '512';
   const ld = (id, k, srgb) => { const t = L.load(`assets/tex/${id}_${k}_${sz}.webp`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso; if (srgb) t.colorSpace = THREE.SRGBColorSpace; return t; };
   return { grass: { d: ld('leafy_grass', 'diff', true), n: ld('leafy_grass', 'nor'), a: ld('leafy_grass', 'arm') }, grass2: { d: ld('sparse_grass', 'diff', true) }, dirt: { d: ld('dirt', 'diff', true), n: ld('dirt', 'nor') },
     trail: { d: ld('rocky_trail', 'diff', true) }, rock: { d: ld('rock_face', 'diff', true), n: ld('rock_face', 'nor') }, snow: { d: ld('snow_02', 'diff', true), n: ld('snow_02', 'nor') } };

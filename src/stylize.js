@@ -11,7 +11,7 @@ import * as THREE from 'three';
 
 export const STYLE_ON = new URLSearchParams(location.search).get('style') !== 'real';
 
-export const STYLE = { toon: .62, rim: .55, sat: 1.22, lift: .02, bias: .9, nrm: .55 };
+export const STYLE = { toon: .62, rim: .55, sat: 1.22, lift: .02, bias: .35, nrm: .8 }; // v43: much less texture blur (bias .9 -> .35 mip) and deeper normals (.55 -> .8): crisper surfaces, same painted look
 
 if (STYLE_ON) {
   const C = THREE.ShaderChunk;

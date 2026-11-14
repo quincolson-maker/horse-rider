@@ -12,6 +12,12 @@ mapping, new colour grade, blue-and-yellow HUD and a title screen. `?style=real`
   flank the mouth, stepping stones lead across the pool, a sign by the pool says where to go, droplets splash where the water lands,
   ferns line the pool and the cliff foot. Inside: the outdoor haze no longer washes the cave out, and warm dust and embers drift through
   the torch light of the hall and up out of the chasm.
+- **Sharper everywhere:** iPhones never report `deviceMemory`, so every iPhone was auto-picked as `low` (75 % resolution, 512 px
+  textures, no anti-aliasing); Apple GPUs with WebGL2 and 6 GB / 8-core phones now start on `medium` (1.35× resolution, 1K ground and
+  prop textures, FXAA, bloom) and the adaptive resolution still steps down if one can't hold 28 fps. The stylized pipeline blurs far less
+  (mip bias .9 → .35, normal depth .55 → .8), and anisotropic filtering goes up to 16×.
+- **Bandit Falls rock:** the cliff and pool rocks now use the game's scanned CC0 rock textures (triplanar, with grain), and the
+  stand-in boulders are swapped for the same scanned boulders as the meadow.
 - **World map** (`src/hrmap.js`): **M** or the 🗺 button. A real top-down map baked from the terrain height field (hill shading, trails,
   water) with every POI at its true position — pen, town, Bandit Falls (pinned at the mouth), the Hollow Sun, both lookouts, the
   shooting range — you as an arrow facing where the camera looks, and the other riders.

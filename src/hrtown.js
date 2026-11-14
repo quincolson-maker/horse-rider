@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42l';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42m';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,7 +47,7 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=42l';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=42m';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -367,11 +367,12 @@ export function createTown(c) {
 // (HORSE RIDER on charcoal with a gold stripe), the front (zipper, chest badge, pocket seams), plain fabric for sides and sleeves.
 let JK = null;
 function jacketMats() { if (JK) return JK;
-  const c = document.createElement('canvas'); c.width = 512; c.height = 384; const x = c.getContext('2d'); x.clearRect(0, 0, 512, 384);
-  x.fillStyle = '#ffffff'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '900 120px Impact,"Arial Black","Helvetica Neue",sans-serif';
-  x.fillText('HORSE', 256, 120); x.fillText('RIDER', 256, 262); const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 768; const x = c.getContext('2d'); x.clearRect(0, 0, 1024, 768);
+  x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '900 250px Impact,"Arial Black","Helvetica Neue",sans-serif'; x.lineJoin = 'round';
+  for (const [t, y] of [['HORSE', 236], ['RIDER', 530]]) { x.lineWidth = 18; x.strokeStyle = '#0c0d0f'; x.strokeText(t, 512, y); x.fillStyle = '#ffffff'; x.fillText(t, 512, y); }
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 16; tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter;
   JK = { mat: new THREE.MeshStandardMaterial({ color: 0x0c0d0f, roughness: .55, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
-    print: new THREE.MeshStandardMaterial({ map: tex, transparent: true, roughness: .6, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthWrite: false }) }; return JK; }
+    print: new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: .35, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthWrite: false }) }; JK.print.defines = { STY_SHARP: '' }; return JK; } // crisp: no painterly blur, unlit white
 const JACKET_BONES = ['Spine', 'Spine01', 'Spine02', 'LeftShoulder', 'RightShoulder', 'LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm', 'neck', 'Hips'];
 export function wearJacket(root, on) { if (!root || !root.userData) return false; if (root.userData.skin) on = false; // v36: Frontier characters wear their own coats
   if (root.userData.jacket) { for (const m of root.userData.jacket) m.visible = !!on; return true; } if (!on) return true;
@@ -392,7 +393,10 @@ export function wearJacket(root, on) { if (!root || !root.userData) return false
   const armW = v => { let a = 0; for (let k = 0; k < 4; k++) { const b = si.getComponent(v, k); if (['LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm', 'LeftShoulder', 'RightShoulder'].map(idx).includes(b)) a += sw.getComponent(v, k); } return a; };
   const box = new THREE.Box3(); for (const v of tri) if (armW(v) < .3) box.expandByPoint(P.fromBufferAttribute(pos, v)); const cx = (box.min.x + box.max.x) / 2, W = box.max.x - box.min.x, y0 = Math.max(box.min.y, hipY - .05), H = Math.min(box.max.y, neckY) - y0;
   const used = [...new Set(tri)], remap = new Map(used.map((v, i) => [v, i])), m = used.length, nP = new Float32Array(m * 3), nN = new Float32Array(m * 3), nUV = new Float32Array(m * 2), nSI = new Uint16Array(m * 4), nSW = new Float32Array(m * 4), N = new THREE.Vector3();
-  used.forEach((v, i) => { P.fromBufferAttribute(pos, v); N.fromBufferAttribute(nor, v).normalize(); let arm = 0; for (let k = 0; k < 4; k++) if (armB.has(si.getComponent(v, k))) arm += sw.getComponent(v, k); const armish = arm > .45, push = armish ? .03 : .045 + .012 * Math.max(0, (P.y - y0) / H - .75);
+  // weld: vertices that share a position push out along the SAME averaged normal, so seams never crack open
+  const keyOf = v => { P.fromBufferAttribute(pos, v); return Math.round(P.x * 2000) + ',' + Math.round(P.y * 2000) + ',' + Math.round(P.z * 2000); }, avgN = new Map();
+  for (const v of used) { const k = keyOf(v), a = avgN.get(k) || new THREE.Vector3(); a.add(N.fromBufferAttribute(nor, v)); avgN.set(k, a); } for (const a of avgN.values()) a.normalize();
+  used.forEach((v, i) => { const wk = keyOf(v); P.fromBufferAttribute(pos, v); N.copy(avgN.get(wk)); let arm = 0; for (let k = 0; k < 4; k++) if (armB.has(si.getComponent(v, k))) arm += sw.getComponent(v, k); const armish = arm > .45, push = armish ? .03 : .045 + .012 * Math.max(0, (P.y - y0) / H - .75);
     nP.set([P.x + N.x * push, P.y + N.y * push, P.z + N.z * push], i * 3); nN.set([N.x, N.y, N.z], i * 3);
     const uu = (P.x - cx) / (W * .95) + .5, vv = .06 + .9 * (P.y - y0) / H; let u, w;
     if (armish) { u = .52; w = .05; } else if (N.z < -.15) { u = Math.min(.98, Math.max(.02, uu)) * .5; w = vv; } else if (N.z > .15) { u = .5 + Math.min(.99, Math.max(.01, uu)) * .5; w = vv; } else { u = .52; w = .05; }

@@ -2,9 +2,9 @@
 // Detailed procedural art, not a scanned/photoreal human. Adult characters only.
 import * as THREE from 'three';
 export const PLAYER_VARIANTS = Object.freeze([
- {id:'isaiah',name:'Isaiah Reed',kind:'player',sex:'male',skin:0x482a20,hair:0x15100e,top:0xd5c7ac,bottom:0x343e43,coat:0x393024,hatC:0x32271e,bandana:0x934532,curls:true},
+ {id:'isaiah',name:'Isaiah Reed',kind:'player',sex:'male',skin:0x4e2e20,hair:0x120d0b,hairStyle:'fade',beard:true,nose:1.35,lips:1.55,top:0xd5c7ac,bottom:0x343e43,coat:0x393024,hatC:0x32271e,bandana:0x934532,curls:true},
  {id:'cole',name:'Cole Mercer',kind:'player',sex:'male',skin:0xd5a080,hair:0x533a27,top:0xd8c6a2,bottom:0x343e43,coat:0x65503b,hatC:0x564431,bandana:0x934532},
- {id:'june',name:'June Reed',kind:'player',sex:'female',skin:0x573329,hair:0x15100f,top:0xd5c7ac,bottom:0x343e43,coat:0x393024,hatC:0x32271e,bandana:0x934532,curls:true,long:true},
+ {id:'june',name:'June Reed',kind:'player',sex:'female',skin:0x5c3626,hair:0x130e0c,hairStyle:'afro',nose:1.25,lips:1.5,top:0xd5c7ac,bottom:0x343e43,coat:0x393024,hatC:0x32271e,bandana:0x934532,curls:true,long:true},
  {id:'clara',name:'Clara Mercer',kind:'player',sex:'female',skin:0xe0ad8e,hair:0x533a27,top:0xd8c6a2,bottom:0x343e43,coat:0x65503b,hatC:0x564431,bandana:0x934532,long:true},
 ]);
 export function playerVariant(index=0){return PLAYER_VARIANTS[((index|0)%4+4)%4];}
@@ -28,7 +28,8 @@ export function makeFrontierCharacter(o={}) {
   B.Head.getWorldPosition(hc);hc.y+=.14;
   for(let i=0;i<pp.count;i++){const X=pp.getX(i),Y=pp.getY(i),Z=pp.getZ(i);p.push(X,Y,Z);n.push(nn.getX(i),nn.getY(i),nn.getZ(i));let gr=1+.025*Math.sin(X*130+Y*173),cr=C.r,cg=C.g,cb=C.b;
    if(tag===4){const ang=Math.atan2(X-hc.x,Z-hc.z),st=Math.sin(ang*46+Y*30)*.5+.5;gr=.8+.3*st*st;}
-   else if(tag===1&&b===B.Head){const ly=Y-hc.y+.14-.12,ax=Math.abs(X-hc.x),fz=Z-hc.z;if(fz>.03){const ch=Math.exp(-((ax-.055)**2+(ly+.02)**2)/.0007);const bk=female?.07:.035;cr+=bk*ch;cg-=bk*.25*ch;cb-=bk*.12*ch;}}
+   else if(tag===7){const q=Math.sin(X*610+Y*37)*Math.sin(Y*590+Z*41)*Math.sin(Z*630+X*29);gr=.72+.42*(q*.5+.5)+.1*Math.sin(X*170+Z*160);} // tight coils: fine speckled texture, no straight streaks
+   else if(tag===1&&b===B.Head){const ly=Y-hc.y+.14-.12,ax=Math.abs(X-hc.x),fz=Z-hc.z;if(fz>.03){const ch=Math.exp(-((ax-.055)**2+(ly+.02)**2)/.0007);const bk=(female?.07:.035)/.07;cr*=1+.35*bk*ch;cg*=1-.06*bk*ch;cb*=1-.08*bk*ch;} /* warmth relative to the skin (no red patch on deep skin) */}
    c.push(cr*gr,cg*gr,cb*gr);tags.push(tag);part.push(pid);
    let w0=1,j1=0,w1=0;for(const [j,o,r] of nb){const d=bw.set(X,Y,Z).distanceTo(o);if(d<r){const t=1-d/r,w=.5*t*t*(3-2*t);if(w>w1){w1=w;j1=j;}}}
    if(w1>0){w0=1-w1;joints.push(bi,j1,0,0);weights.push(w0,w1,0,0);}else{joints.push(bi,0,0,0);weights.push(1,0,0,0);}}a.dispose();
@@ -57,17 +58,29 @@ export function makeFrontierCharacter(o={}) {
   tube(head,0x39271e,[[s*.016,.154,.1],[s*.039,.16,.105],[s*.062,.153,.094]],.0015,4);
   ball(head,0x56332b,s*.009,.093,.110,.004,.002,.004,1);
  }
- ball(head,skin,0,.106,.112,.014,.012,.013,1);for(const s of [-1,1])ball(head,skin,s*.012,.1,.106,.008,.007,.008,1);
- tube(head,female?0xa55e59:0x916252,[[-.027,.068,.093],[-.012,.07,.101],[0,.068,.104],[.012,.07,.101],[.027,.068,.093]],.0033,1);
- tube(head,female?0xb8736d:0xa87665,[[-.025,.065,.094],[0,.060,.102],[.025,.065,.094]],.0035,1);
+ const NW=o.nose||1,LP=o.lips||1;ball(head,skin,0,.106,.112,.014*NW,.012,.013,1);for(const s of [-1,1])ball(head,skin,s*.012*NW,.1,.106,.008*(.6+.4*NW),.007,.008*(.7+.3*NW),1);
+ const skC=new THREE.Color(skin),skL=skC.r*.3+skC.g*.59+skC.b*.11,lipU=skL<.12?new THREE.Color(skin).multiplyScalar(.72).lerp(new THREE.Color(0x4a2228),.25).getHex():(female?0xa55e59:0x916252),lipL=skL<.12?new THREE.Color(skin).multiplyScalar(.95).lerp(new THREE.Color(0x7a3a3e),.3).getHex():(female?0xb8736d:0xa87665);
+ tube(head,lipU,[[-.027*LP**.3,.068,.093],[-.012,.07+.002*(LP-1),.101+.002*(LP-1)],[0,.068+.0015*(LP-1),.104+.003*(LP-1)],[.012,.07+.002*(LP-1),.101+.002*(LP-1)],[.027*LP**.3,.068,.093]],.0033*LP,1);
+ tube(head,lipL,[[-.025*LP**.3,.065-.002*(LP-1),.094],[0,.060-.004*(LP-1),.102+.004*(LP-1)],[.025*LP**.3,.065-.002*(LP-1),.094]],.0035*LP,1);
  tube(head,0x5a3c32,[[-.022,.066,.098],[0,.065,.104],[.022,.066,.098]],.0009,1);
  // Hair cap plus sculpted strands/curls; no expensive transparent hair cards.
- const cap=new THREE.SphereGeometry(1,high?24:14,high?14:8,0,Math.PI*2,0,Math.PI*.44);cap.scale(.113,.12,.11);add(cap,head,hair,0,.16,-.01,1,1,1,0,0,0,4);
- for(let i=0;i<(high?30:14);i++){const a=i/(high?30:14)*Math.PI*2,x=Math.cos(a)*.09,z=Math.sin(a)*.085-.015;
+ const HS=o.hairStyle||(o.curls?'coils':'');
+ if(HS==='afro'||HS==='fade'||HS==='coils'){ // v42 natural textured hair: a sculpted volume with bumpy coils and fine speckle shading
+  const vol=HS==='afro'?[.16,.15,.155,.2]:HS==='fade'?[.112,.105,.11,.165]:[.12,.115,.118,.17];const g=new THREE.SphereGeometry(1,high?40:20,high?26:12,0,Math.PI*2,0,Math.PI*(HS==='afro'?.62:.5)),gp=g.attributes.position;
+  for(let k=0;k<gp.count;k++){const x=gp.getX(k),y=gp.getY(k),z=gp.getZ(k),bump=1+.06*Math.sin(x*41+z*7)*Math.sin(y*43+x*5)*Math.sin(z*39+y*3)+.03*Math.sin(x*97+y*89);gp.setXYZ(k,x*bump,y*bump,z*bump);} g.computeVertexNormals();
+  add(g,head,hair,0,vol[3]-.02,-.012,vol[0],vol[1],vol[2],0,0,0,7);
+  if(HS==='fade'){const lo=new THREE.SphereGeometry(1,high?28:16,high?16:8,0,Math.PI*2,Math.PI*.38,Math.PI*.2);add(lo,head,new THREE.Color(hair).lerp(new THREE.Color(skin),.35).getHex(),0,.135,-.012,.106,.1,.108,0,0,0,7);}
+  if(HS==='afro'&&high)for(let k=0;k<26;k++){const a=k/26*Math.PI*2,r=.13+.015*Math.sin(k*2.3);ball(head,hair,Math.cos(a)*r,.2+.04*Math.sin(k*1.7),Math.sin(a)*r*.95-.015,.035,.033,.035,7);}
+ } else if(HS==='braids'||HS==='locs'){const cap=new THREE.SphereGeometry(1,high?24:14,high?14:8,0,Math.PI*2,0,Math.PI*.5);cap.scale(.114,.12,.112);add(cap,head,hair,0,.155,-.01,1,1,1,0,0,0,7);
+  const n=high?16:9;for(let k=0;k<n;k++){const a=Math.PI*.15+k/(n-1)*Math.PI*1.7,x=Math.cos(a+Math.PI/2)*.1,z=Math.sin(a+Math.PI/2)*.095-.02,L=HS==='locs'?.26:.32;
+   tube(head,hair,[[x*.8,.22,z*.8],[x*1.05,.13,z*1.05],[x*1.1,.02,z*1.08-.01],[x*1.05,-.1-L*.2,z*1.02-.03]],HS==='locs'?.016:.011,7);}
+ } else { const cap=new THREE.SphereGeometry(1,high?24:14,high?14:8,0,Math.PI*2,0,Math.PI*.44);cap.scale(.113,.12,.11);add(cap,head,hair,0,.16,-.01,1,1,1,0,0,0,4); }
+ if(o.beard){const bd=new THREE.SphereGeometry(1,high?28:14,high?16:8,0,Math.PI*2,Math.PI*.5,Math.PI*.42);add(bd,head,hair,0,.1,.012,.1,.085,.098,0,0,0,7);tube(head,hair,[[-.03,.083,.1],[0,.088,.108],[.03,.083,.1]],.006,7);}
+ if(!HS)for(let i=0;i<(high?30:14);i++){const a=i/(high?30:14)*Math.PI*2,x=Math.cos(a)*.09,z=Math.sin(a)*.085-.015;
   if(o.curls){ball(head,hair,x,.225+(i%3)*.012,z,.025,.023,.025,4);if(female)ball(head,hair,x*1.1,.07,z-.05,.025,.06,.027,4);}
   else tube(head,hair,[[x*.5,.27,z*.5],[x,.21,z],[x*1.04,.13,z*1.05]],high?.005:.007,4);
  }
- if(female){for(const s of [-1,1])for(let k=0;k<(high?5:3);k++){const t=k/(high?4:2);tube(head,hair,[[s*.01,.255,.07],[s*(.05+t*.03),.235-t*.02,.098],[s*(.088+t*.012),.17-t*.04,.07],[s*(.1+t*.005),.1-t*.04,.03]],.011,4);}ball(head,hair,0,.105,-.09,.085,.13,.05,4);if(o.long)for(let i=0;i<(high?12:6);i++){const x=(i/((high?12:6)-1)-.5)*.18;tube(head,hair,[[x,.14,-.08],[x*.9,-.02,-.10],[x*.8,-.12,-.075]],.012,4);}else ball(head,hair,0,.15,-.13,.06,.06,.05,4);}
+ if(female&&!HS){for(const s of [-1,1])for(let k=0;k<(high?5:3);k++){const t=k/(high?4:2);tube(head,hair,[[s*.01,.255,.07],[s*(.05+t*.03),.235-t*.02,.098],[s*(.088+t*.012),.17-t*.04,.07],[s*(.1+t*.005),.1-t*.04,.03]],.011,4);}ball(head,hair,0,.105,-.09,.085,.13,.05,4);if(o.long)for(let i=0;i<(high?12:6);i++){const x=(i/((high?12:6)-1)-.5)*.18;tube(head,hair,[[x,.14,-.08],[x*.9,-.02,-.10],[x*.8,-.12,-.075]],.012,4);}else ball(head,hair,0,.15,-.13,.06,.06,.05,4);}
  // Articulated limbs, leather boots, fitted cuffs, individual fingers/thumbs.
  for(let i=0;i<2;i++){const [a,b]=arms[i],[u,l]=legs[i],hand=hands[i],side=i?1:-1;
   const lathe=(bn,col,len,r0,r1,tag)=>{const pts=[];for(let k=0;k<=8;k++){const t=k/8,bulge=Math.sin(Math.PI*Math.min(1,t*1.3))*.12;pts.push(new THREE.Vector2(Math.max(.002,(r0+(r1-r0)*(1-t))*(1+bulge)),-len*(1-t)));}add(new THREE.LatheGeometry(pts,high?18:10),bn,col,0,0,0,1,1,1,0,0,0,tag);ball(bn,col,0,0,0,r0*1.02,r0*1.02,r0*1.02,tag);};
@@ -105,7 +118,7 @@ export function makeFrontierCharacter(o={}) {
  if(o.kind==='barmaid')for(const h of hands){add(new THREE.CylinderGeometry(.045,.045,.115,12),h,0xc19a58,0,-.02,.08,1,1,1,0,0,0,7);add(new THREE.CylinderGeometry(.047,.047,.018,12),h,0xefe7d6,0,.045,.08,1,1,1,0,0,0,0);}
  { // contact shading: vertices whose normal runs into another part get darker (collars, armpits, under the hat, skirt tops);
   // cached per body shape (same kind / options = same geometry), typed-array spatial hash
-  const N=part.length,sig=[o.kind,high,female,!!o.long,!!o.curls,!!o.glove,!!o.rifle,N].join();let AO=AO_CACHE.get(sig);
+  const N=part.length,sig=[o.kind,high,female,!!o.long,!!o.curls,!!o.glove,!!o.rifle,N,o.hairStyle||'',!!o.beard,o.nose||1,o.lips||1].join();let AO=AO_CACHE.get(sig);
   if(!AO){AO=new Float32Array(N);const cs=.018,SZ=1<<20,MK=SZ-1,K=new Int32Array(SZ),Pt=new Int32Array(SZ),used=new Uint8Array(SZ);
    const hk=(x,y,z)=>((Math.floor(x/cs)+512)&1023)|(((Math.floor(y/cs)+512)&1023)<<10)|(((Math.floor(z/cs)+512)&1023)<<20); // exact cell (unique within ±9 m)
    const foreign=(a,b)=>a!==b&&(pBone[a]!==pBone[b]||pTag[a]!==pTag[b]); // same bone + same surface (lips on the skull, ball on its sleeve) never shades

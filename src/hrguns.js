@@ -3,7 +3,7 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=42h'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=42i'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -67,6 +67,7 @@ function mats() {
     steel: P({ color: 0xe9e5da, roughness: .55, metalness: .25 }), chain: new THREE.MeshStandardMaterial({ color: 0x3a3632, metalness: .8, roughness: .5 }),
     flash: new THREE.MeshBasicMaterial({ map: flash, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, side: THREE.DoubleSide }),
     glass: [0x2e6b3c, 0x7a4a16, 0xa8c8c0].map(c => P({ color: c, roughness: .06, metalness: 0, transparent: true, opacity: .62, clearcoat: 1, envMapIntensity: 1.6 })) };
+  for (const m of Object.values(MATS)) if (m && m.isMaterial) { m.defines = Object.assign(m.defines || {}, { STY_SHARP: '' }); m.needsUpdate = true; } // v42: guns stay crisp (no painterly texture blur)
   return MATS;
 }
 
@@ -455,8 +456,14 @@ export function createGuns(c) {
       if (k > .3) { m1.lookAt(ZERO, dir, UP); q1.setFromRotationMatrix(m1); const fore = tgt.clone().add(new THREE.Vector3(0, -.01, SCOPED(w) ? -.42 : w === 'tommy' ? -.25 : w === 'gatling' ? -.2 : -.36).applyQuaternion(q1)); ik(root, B, 'Left', fore, v3.set(0, -1, 0).addScaledVector(right, -.5).clone()); } }
     root.updateMatrixWorld(true); const hand = B.RightHand.getWorldPosition(new THREE.Vector3());
     m1.lookAt(ZERO, gd, UP); g.quaternion.setFromRotationMatrix(m1); g.position.copy(hand).add(new THREE.Vector3(0, -.01, -.035).applyQuaternion(g.quaternion)); g.scale.setScalar(SCOPED(w) ? 1.15 : 1.3); g.visible = true; return true; } // a touch over life-size so it reads from the chase camera
-  function poseFP(model, k) { const g = model.group; camera.updateMatrixWorld(); const w = model.kind; const off = w !== 'revolver' ? [.11 * (1 - k), -.11 + .065 * k - .04 * (1 - k), -.32 - .05 * k] : [.16 * (1 - k), -.2 + .135 * k, -.4 - .05 * k];
-    g.position.set(...off).applyMatrix4(camera.matrixWorld); g.quaternion.copy(camera.quaternion); g.scale.setScalar(1); if (k < 1) { q1.setFromAxisAngle(v1.set(1, 0, 0), -.35 * (1 - k)); g.quaternion.multiply(q1); } g.visible = true; }
+  // v42: chunky, fully on-screen first-person viewmodels (per weapon), angled in toward the crosshair; ADS lines the sights up
+  const FPV = { revolver: [.14, -.125, -.34, 1, .12], rifle: [.12, -.115, -.36, 1, .07], sniper: [.12, -.115, -.38, 1, .06], gold: [.12, -.115, -.38, 1, .06], tommy: [.13, -.125, -.36, 1, .08], gatling: [.16, -.175, -.44, .9, .07] };
+  const ADS = { revolver: [0, -.066, -.36], rifle: [0, -.065, -.37], sniper: [0, -.065, -.37], gold: [0, -.065, -.37], tommy: [0, -.065, -.37], gatling: [0, -.075, -.4] };
+  function poseFP(model, k) { const g = model.group; camera.updateMatrixWorld(); const w = model.kind, F = FPV[w] || FPV.rifle, A = ADS[w] || ADS.rifle;
+    const nar = Math.min(1, Math.max(0, (1.6 - camera.aspect) / .9)), hx = F[0] * (1 - .35 * nar), sc = F[3] * (1 - .12 * nar) * (1 - k) + k;
+    const bob = Math.sin((P.bob || 0) * 2) * .006 * (1 - k), sway = Math.cos(P.bob || 0) * .005 * (1 - k);
+    g.position.set(hx * (1 - k) + A[0] * k + sway, F[1] * (1 - k) + A[1] * k + bob, F[2] * (1 - k) + A[2] * k).applyMatrix4(camera.matrixWorld); g.quaternion.copy(camera.quaternion); g.scale.setScalar(sc);
+    if (k < 1) { q1.setFromAxisAngle(v1.set(0, 1, 0), F[4] * (1 - k)); g.quaternion.multiply(q1); q1.setFromAxisAngle(v1.set(1, 0, 0), .04 * (1 - k)); g.quaternion.multiply(q1); } g.visible = true; }
   function animParts(m, rec, cock, lever) { if (m.kind === 'revolver') { m.hammer.rotation.x = cock ? -.55 : 0; m.cylinder.rotation.z = (state.shots % 6) * Math.PI / 3 * -1; m.group.rotateX(rec * .35); }
     else if (m.kind === 'gatling') { m.group.rotateX(rec * .025); m.group.translateZ(rec * .012); }
     else if (m.kind === 'tommy') { if (m.bolt) m.bolt.position.z += (-.02 - m.bolt.position.z) * .35; m.group.rotateX(rec * .06); m.group.translateZ(rec * .015); }

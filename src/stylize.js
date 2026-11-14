@@ -18,7 +18,7 @@ if (STYLE_ON) {
   C.common = `#define STY_TOON ${STYLE.toon.toFixed(3)}\n#define STY_RIM ${STYLE.rim.toFixed(3)}\n#define STY_SAT ${STYLE.sat.toFixed(3)}\n#define STY_LIFT ${STYLE.lift.toFixed(3)}\n#define STY_BIAS ${STYLE.bias.toFixed(3)}\n#define STY_NRM ${STYLE.nrm.toFixed(3)}\n` + C.common;
 
   // painterly albedo: photo detail softened by sampling a blurrier mip (lit materials only, so UI sprites / text stay sharp)
-  C.map_fragment = C.map_fragment.replace('texture2D( map, vMapUv )', '\n#ifdef STANDARD\ntexture( map, vMapUv, STY_BIAS )\n#else\ntexture2D( map, vMapUv )\n#endif\n');
+  C.map_fragment = C.map_fragment.replace('texture2D( map, vMapUv )', '\n#if defined(STANDARD) && !defined(STY_SHARP)\ntexture( map, vMapUv, STY_BIAS )\n#else\ntexture2D( map, vMapUv )\n#endif\n');
   // calmer normal maps (stylized surfaces read as big shapes, not micro-detail)
   C.normal_fragment_maps = C.normal_fragment_maps.replace('mapN.xy *= normalScale;', 'mapN.xy *= normalScale * STY_NRM;');
 

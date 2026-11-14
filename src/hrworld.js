@@ -1,9 +1,9 @@
-import { STYLE_ON } from './stylize.js?v=42d';
+import { STYLE_ON } from './stylize.js?v=42e';
 // HORSE RIDER world graphics: large-scale terrain (domain-warped fBm hills, carved valleys, ridged-multifractal mountains out to ~4 km),
 // physically based sky (Preetham Rayleigh/Mie) with layered procedural clouds, sky-driven IBL + aerial haze, slow golden-hour time of day,
 // slope/height-blended PBR terrain (Poly Haven CC0), GPU instanced wind-blown grass with wildflowers, CC0 scanned boulders.
 import * as THREE from 'three';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42d';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42e';
 const sstep = (a, b, t) => { t = Math.min(1, Math.max(0, (t - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 // ---------------- noise (Perlin gradient noise, fBm, ridged multifractal) ----------------
@@ -29,6 +29,10 @@ export function makeRawH(EDGE) {
     const m = sstep(EDGE - 90, EDGE + 330, r);
     if (m > 0) { const R = ridged(wx * .0011 + 1.3, wz * .0011 - .7, r > 900 ? 6 : 5); h += m * (30 + R * (150 + 560 * sstep(600, 2300, r))); }
     if (r > 600) { const k = sstep(600, 1250, r); h += k * (40 + ridged(wx * .0021 + 4.1, wz * .0021 - 2.6, 4) * 300); } // a taller second range behind the first ridge (outside the walkable area): layered skyline, snow caps
+    // v42: a third, giant range beyond the rideable world (r > 1150 m, so trails and sites are untouched): jagged, snow-capped
+    // spires and knife-edge ridges for a dramatic skyline, with sharp secondary peaks and eroded gullies
+    if (r > 1400) { const k3 = sstep(1400, 2800, r), R3 = ridged(wx * .0009 + 8.3, wz * .0009 - 6.1, 5), sp = ridged(wx * .0018 - 1.9, wz * .0018 + 5.5, 3);
+      h += k3 * (Math.pow(R3, 2.2) * 520 + Math.pow(sp, 2.5) * 140 * R3); }
     return h;
   };
 }
@@ -176,7 +180,8 @@ float fd=smoothstep(30.,260.,dist); if(fd>0.){ vec2 q=xz*.022; float c0=fbm3(q),
 
 #ifdef STY_TOON
 { float gW=(1.-dm)*(1.-path)*(1.-rockW)*(1.-snowW)*(1.-forest*.8)*(1.-belt*.85); vec3 lush=mix(vec3(.06,.22,.03),vec3(.17,.38,.045),vn(xz*.025))*(.88+.24*vn(xz*.35))*mix(1.,.8,smoothstep(.15,.35,slope)); col=mix(col,lush,gW*.78);
-  col=mix(col,col*vec3(1.12,1.,.82),path*.6); col=mix(col,vec3(.93,.96,1.04),snowW*.5); }
+  col=mix(col,col*vec3(1.12,1.,.82),path*.6); col=mix(col,vec3(.93,.96,1.04),snowW*.5);
+  col*=.9+.2*vn(xz*.85+7.)*(1.-snowW); col=mix(col,col*vec3(1.1,1.,.84),rockW*(1.-snowW)*.45); col=mix(col,col*vec3(1.08,1.1,.86),gW*smoothstep(.55,.8,vn(xz*.012+11.))*.5); }
 #endif
 diffuseColor.rgb*=col;`)
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = tRough;').replace('#include <opaque_fragment>', `#if NUM_DIR_LIGHTS > 0

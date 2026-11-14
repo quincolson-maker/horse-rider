@@ -4,10 +4,10 @@
 // picked the same way on every machine — and wires it into our controller (walls + floors), guns (rock stops bullets),
 // host-authoritative co-op (the host runs the outlaws and the vault) and game points. Points are game points only.
 import * as THREE from 'three';
-import { createHideout } from './hrhideout.js?v=42d';
-import { createFalls, baseZ } from './hrfalls.js?v=42d';
-import { makeFrontierCharacter } from './hrcharacters.js?v=42d';
-import { poseDoll } from './hrsaloon.js?v=42d';
+import { createHideout } from './hrhideout.js?v=42e';
+import { createFalls, baseZ } from './hrfalls.js?v=42e';
+import { makeFrontierCharacter } from './hrcharacters.js?v=42e';
+import { poseDoll } from './hrsaloon.js?v=42e';
 
 export const CAVE = { chest: 2500, dance: 50, slotBet: 10, outlaw: 60, outlawHead: 75 };
 const FU = 40, FV0 = -59, FV1 = 8, BL = 16, BS = 5; // footprint in the cave's own frame (u across, v out of the mouth); terrain blend: 16 m apron in front, 5 m to the sides and back (the hill meets the rock)

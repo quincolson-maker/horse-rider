@@ -5,27 +5,27 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=42d';
-import { PF } from './perf.js?v=42d';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=42e';
+import { PF } from './perf.js?v=42e';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=42d';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=42d';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42d';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42d';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=42d';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=42d';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=42d';
-import { createGuns } from './hrguns.js?v=42d';
-import { createHrZombies } from './hrzombies.js?v=42d';
-import { createFlora } from './hrflora.js?v=42d';
-import { createTown, wearJacket } from './hrtown.js?v=42d';
-import { createSaloon } from './hrsaloon.js?v=42d';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=42d';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=42d';
-import { createSunItem } from './hrsunweapon.js?v=42d';
-import { createBuild } from './hrbuild.js?v=42d';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=42d';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=42d';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=42e';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=42e';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42e';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42e';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=42e';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=42e';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=42e';
+import { createGuns } from './hrguns.js?v=42e';
+import { createHrZombies } from './hrzombies.js?v=42e';
+import { createFlora } from './hrflora.js?v=42e';
+import { createTown, wearJacket } from './hrtown.js?v=42e';
+import { createSaloon } from './hrsaloon.js?v=42e';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=42e';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=42e';
+import { createSunItem } from './hrsunweapon.js?v=42e';
+import { createBuild } from './hrbuild.js?v=42e';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=42e';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=42e';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent

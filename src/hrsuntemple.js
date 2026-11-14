@@ -303,7 +303,7 @@ export function createSunPyramidWeapon(){
 }
 
 /* Usage: your page resolves 'three' via its existing import map.
-import {createSunTemple,createSunPyramidWeapon} from './suntemple.js?v=42e';
+import {createSunTemple,createSunPyramidWeapon} from './suntemple.js?v=42f';
 const temple=createSunTemple({position:[0,0,0],quality:'high'});scene.add(temple.group);
 const off=temple.onEvent(e=>{ // synchronous, reused event: copy fields to retain
   if(e.type==='pickup') grantPickup(e.playerId,e.id,e.value); // host authority!

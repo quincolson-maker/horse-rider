@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42b';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42c';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -19,8 +19,17 @@ function mats() { if (MATS) return MATS;
   const plank = canvasTex(256, 256, (x, w, h) => { const r = rng(11); for (let i = 0; i < 8; i++) { const l = 30 + r() * 12; x.fillStyle = `hsl(${24 + r() * 8},${32 + r() * 10}%,${l}%)`; x.fillRect(0, i * h / 8, w, h / 8 - 2); x.fillStyle = 'rgba(20,10,4,.6)'; x.fillRect(0, i * h / 8 + h / 8 - 2, w, 2);
     for (let k = 0; k < 14; k++) { x.strokeStyle = `rgba(40,22,10,${.12 + r() * .15})`; x.beginPath(); const y = i * h / 8 + r() * h / 8; x.moveTo(0, y); x.bezierCurveTo(w * .3, y + r() * 6 - 3, w * .7, y + r() * 6 - 3, w, y); x.stroke(); } x.fillStyle = 'rgba(15,8,3,.55)'; x.fillRect(((r() * 4) | 0) * w / 4, i * h / 8, 2, h / 8); } });
   plank.wrapS = plank.wrapT = THREE.RepeatWrapping;
+  // v42 saloon facade: faded barn-red lap siding (shadow line under each board, grain, weathering) and cedar shingles
+  const siding = canvasTex(256, 256, (x, w, h) => { const r = rng(23); for (let i = 0; i < 8; i++) { const y0 = i * h / 8, l = 30 + r() * 7; x.fillStyle = `hsl(${4 + r() * 5},${48 + r() * 12}%,${l}%)`; x.fillRect(0, y0, w, h / 8);
+      const gr = x.createLinearGradient(0, y0, 0, y0 + h / 8); gr.addColorStop(0, 'rgba(255,220,200,.16)'); gr.addColorStop(.75, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(40,6,4,.55)'); x.fillStyle = gr; x.fillRect(0, y0, w, h / 8);
+      for (let k = 0; k < 10; k++) { x.strokeStyle = `rgba(60,14,8,${.1 + r() * .14})`; x.beginPath(); const y = y0 + 3 + r() * (h / 8 - 6); x.moveTo(0, y); x.bezierCurveTo(w * .3, y + r() * 4 - 2, w * .7, y + r() * 4 - 2, w, y); x.stroke(); }
+      for (let k = 0; k < 4; k++) { x.fillStyle = `rgba(230,200,170,${.05 + r() * .08})`; x.fillRect(r() * w, y0 + 2, 20 + r() * 60, h / 8 - 6); } x.fillStyle = 'rgba(30,6,4,.6)'; x.fillRect(((r() * 4) | 0) * w / 4, y0, 2, h / 8); } });
+  siding.wrapS = siding.wrapT = THREE.RepeatWrapping;
+  const shingle = canvasTex(256, 256, (x, w, h) => { const r = rng(5); for (let j = 0; j < 8; j++) for (let i = 0; i < 6; i++) { const ox = (i + (j % 2) * .5) * w / 6; x.fillStyle = `hsl(${12 + r() * 10},${30 + r() * 10}%,${22 + r() * 9}%)`; x.fillRect(ox, j * h / 8, w / 6 - 2, h / 8); x.fillRect(ox - w, j * h / 8, w / 6 - 2, h / 8);
+      x.fillStyle = 'rgba(10,4,2,.55)'; x.fillRect(ox, j * h / 8 + h / 8 - 3, w / 6, 3); } }); shingle.wrapS = shingle.wrapT = THREE.RepeatWrapping;
   const S = o => new THREE.MeshStandardMaterial(o);
-  MATS = { plank: S({ map: plank, roughness: .88 }), dark: S({ color: 0x4a3322, roughness: .9 }), roof: S({ color: 0x5a5048, roughness: .75, metalness: .25 }), glass: new THREE.MeshPhysicalMaterial({ color: 0x9fb8c4, roughness: .05, transparent: true, opacity: .35, envMapIntensity: 1.5 }),
+  MATS = { side: S({ map: siding, roughness: .85 }), trim: S({ color: 0x3a2416, roughness: .85 }), cream: S({ color: 0xe6d6b2, roughness: .8 }), shingle: S({ map: shingle, roughness: .9 }), lamp: S({ color: 0xffd890, emissive: 0xffb050, emissiveIntensity: 1.6 }),
+    plank: S({ map: plank, roughness: .88 }), dark: S({ color: 0x4a3322, roughness: .9 }), roof: S({ color: 0x5a5048, roughness: .75, metalness: .25 }), glass: new THREE.MeshPhysicalMaterial({ color: 0x9fb8c4, roughness: .05, transparent: true, opacity: .35, envMapIntensity: 1.5 }),
     iron: S({ color: 0x30302e, roughness: .5, metalness: .8 }), steel: S({ color: 0xaeb4b8, roughness: .42, metalness: .85 }), grate: S({ color: 0x8d9296, roughness: .55, metalness: .8 }), concrete: S({ color: 0x9c9a94, roughness: .96 }), wood: S({ map: plank, color: 0xb8b0a4, roughness: .92 }), red: S({ color: 0x8a2a20, roughness: .8 }), crate: S({ map: plank, color: 0xc9a070, roughness: .9 }), felt: S({ color: 0x2c4a2a, roughness: 1 }), brass: S({ color: 0xc9a245, roughness: .3, metalness: .9 }), mirror: S({ color: 0x5a5448, roughness: .16, metalness: .9 }), bGreen: S({ color: 0x2f5a30, roughness: .15, metalness: .1 }), bAmber: S({ color: 0x8a4a12, roughness: .15, metalness: .1 }), bone: S({ color: 0xe8dcc0, roughness: .7 }), black: S({ color: 0x15110e, roughness: .35, metalness: .1 }), ivory: S({ color: 0xf4efe0, roughness: .4 }), lamp: new THREE.MeshBasicMaterial({ color: 0xffd38a }) };
   return MATS; }
 function signTex(txt, bg = '#3a2414', fg = '#f1dfb0', w = 512, h = 128, font = 'bold 64px Georgia,serif') { return canvasTex(w, h, (x) => { x.fillStyle = bg; x.fillRect(0, 0, w, h); x.strokeStyle = fg; x.lineWidth = 6; x.strokeRect(8, 8, w - 16, h - 16); x.fillStyle = fg; x.font = font; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, w / 2, h / 2 + 4); }); }
@@ -38,7 +47,7 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=42b';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=42c';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -116,6 +125,67 @@ export function createTown(c) {
     const lab = new THREE.Mesh(new THREE.PlaneGeometry(1.8, .45), new THREE.MeshStandardMaterial({ map: signTex(kind === 'armory' ? 'LOOKOUT No.1' : 'LOOKOUT No.2'), roughness: .8 })); lab.position.set(-4.3, 2.75, A); lab.rotation.y = -Math.PI / 2; box(s, M.steel, -4.25, 2.75, A, .06, .5, 2.2); g.add(lab); // sign at the stair foot
     return s; }
 
+  // ---- v42 SALOON FACADE (exterior only; walls, floors and collisions are unchanged) ----
+  // Barn-red lap siding all round, a tall stepped false front with a cornice on brackets and a big carved SALOON board, a
+  // wraparound upstairs balcony (front + west side) on turned posts with balustrades and a shingled roof, cream window trim
+  // with muntins, porch lanterns, a shingled gable roof behind the false front, barrels and a bench on the boardwalk.
+  function addGeo(s, mat, g) { (s.geo.get(mat) || s.geo.set(mat, []).get(mat)).push(g); }
+  function sidePanel(s, ax, bx, y0, y1, z, holes, depth = .05, alongZ = false) { // flat siding panel on a wall plane, with rectangular holes
+    const xs = [ax, bx, ...holes.flatMap(h => [h[0], h[1]])].filter(x => x >= ax && x <= bx).sort((a, b) => a - b);
+    for (let k = 0; k < xs.length - 1; k++) { const l = xs[k], r = xs[k + 1]; if (r - l < .01) continue; const open = holes.filter(h => h[0] < (l + r) / 2 && h[1] > (l + r) / 2).sort((a, b) => a[2] - b[2]); let y = y0;
+      const put = (ya, yb) => { if (yb - ya < .01) return; if (alongZ) box(s, M.side, z, (ya + yb) / 2, (l + r) / 2, depth, yb - ya, r - l); else box(s, M.side, (l + r) / 2, (ya + yb) / 2, z, r - l, yb - ya, depth); };
+      for (const h of open) { if (h[2] > y) put(y, h[2]); y = Math.max(y, h[3]); } put(y, y1); } }
+  function winTrim(s, x, y0, y1, w, z) { const t = .14, c = (x0, y, w2, h) => box(s, M.cream, x0, y, z, w2, h, .1);
+    c(x, y1 + t / 2, w + 2 * t + .1, t * 1.4); c(x, y0 - t / 2, w + 2 * t + .2, t); c(x - w / 2 - t / 2, (y0 + y1) / 2, t, y1 - y0); c(x + w / 2 + t / 2, (y0 + y1) / 2, t, y1 - y0);
+    box(s, M.trim, x, (y0 + y1) / 2, z + .02, .05, y1 - y0, .04); for (const f of [1 / 3, 2 / 3]) box(s, M.trim, x, y0 + (y1 - y0) * f, z + .02, w, .05, .04); }
+  function saloonFacade(s, x0, x1, D, door, F, HT, Y2) {
+    const mx = (x0 + x1) / 2, top = F + HT, FF = top + 2.7, FC = top + 3.8, Z = -.11;
+    const gWin = [x0 + 1.6, x1 - 1.6].filter(x => x < door[0] - .8 || x > door[1] + .8), uWin = [-15.5, -12.5, -9.5, -3.5];
+    const holes = [[door[0], door[1], F, F + 2.9], ...gWin.map(x => [x - .7, x + .7, F + 1.1, F + 2.3]), ...uWin.map(x => [x - .6, x + .6, Y2 + .95, Y2 + 2.05])];
+    sidePanel(s, x0 - .12, x1 + .12, F - .1, top, Z, holes);                                             // front wall
+    sidePanel(s, -.1, D + .1, F - .1, top, x0 - .11, [], .05, true); sidePanel(s, -.1, D + .1, F - .1, top, x1 + .11, [], .05, true); // sides
+    box(s, M.side, mx, (F + top) / 2, D + .11, x1 - x0 + .3, top - F + .1, .05);                           // back
+    // false front: full width to FF, raised centre to FC, cornice + brackets on both tiers
+    box(s, M.side, mx, (top + FF) / 2, Z, x1 - x0 + .3, FF - top, .18); box(s, M.side, mx, (FF + FC) / 2, Z, 7.2, FC - FF, .18);
+    for (const [cx, cw, cy] of [[mx, x1 - x0 + .7, FF], [mx, 7.6, FC]]) { box(s, M.trim, cx, cy + .12, Z - .12, cw, .24, .5); box(s, M.trim, cx, cy - .1, Z - .06, cw - .2, .16, .32);
+      for (let x = cx - cw / 2 + .5; x <= cx + cw / 2 - .4; x += 1.1) if (cy === FC || Math.abs(x - mx) > 3.7) box(s, M.trim, x, cy - .32, Z - .12, .14, .32, .28); }
+    for (const sx of [-1, 1]) { box(s, M.trim, mx + sx * 3.6, (FF + FC) / 2, Z - .03, .26, FC - FF + .2, .24); box(s, M.trim, mx + sx * 3.6, FC + .5, Z - .03, .32, .5, .3); }
+    for (const x of [x0 - .1, x1 + .1]) box(s, M.trim, x, (F + FF) / 2, Z - .02, .26, FF - F, .26);         // corner boards
+    box(s, M.trim, mx, top - .1, Z - .05, x1 - x0 + .3, .2, .2);
+    // carved SALOON board
+    const sign = canvasTex(1024, 256, (x, w, h) => { const r = rng(4); for (let i = 0; i < 5; i++) { x.fillStyle = `hsl(${30 + r() * 6},${38 + r() * 8}%,${62 + r() * 8}%)`; x.fillRect(0, i * h / 5, w, h / 5); x.fillStyle = 'rgba(70,40,20,.4)'; x.fillRect(0, (i + 1) * h / 5 - 3, w, 3);
+        for (let k = 0; k < 16; k++) { x.strokeStyle = `rgba(110,70,40,${.1 + r() * .15})`; x.beginPath(); const y = i * h / 5 + r() * h / 5; x.moveTo(0, y); x.bezierCurveTo(w * .3, y + 4 - r() * 8, w * .7, y + 4 - r() * 8, w, y); x.stroke(); } }
+      x.strokeStyle = '#4a2a14'; x.lineWidth = 14; x.strokeRect(10, 10, w - 20, h - 20); x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = 'bold 178px Rockwell, "Roboto Slab", "Courier New", Georgia, serif';
+      x.fillStyle = 'rgba(255,240,210,.55)'; x.fillText('SALOON', w / 2 - 4, h / 2 + 4); x.fillStyle = '#3a1e0c'; x.fillText('SALOON', w / 2 + 5, h / 2 + 13); x.fillStyle = '#6a3a1a'; x.fillText('SALOON', w / 2, h / 2 + 8);
+      x.lineWidth = 3; x.strokeStyle = 'rgba(30,14,4,.8)'; x.strokeText('SALOON', w / 2, h / 2 + 8); });
+    const SY = (top + FF) / 2 + .1, sg = new THREE.Mesh(new THREE.PlaneGeometry(9, 2.25), new THREE.MeshStandardMaterial({ map: sign, roughness: .75 })); sg.position.set(mx, SY, Z - .2); sg.rotation.y = Math.PI; (s.signs = s.signs || []).push(sg);
+    box(s, M.trim, mx, SY, Z - .1, 9.4, 2.6, .12); for (const sx of [-1, 1]) box(s, M.trim, mx + sx * 4.85, SY - 1.25, Z - .25, .18, .5, .3);
+    // windows: cream trim + muntins
+    for (const x of gWin) winTrim(s, x, F + 1.1, F + 2.3, 1.4, Z - .04); for (const x of uWin) winTrim(s, x, Y2 + .95, Y2 + 2.05, 1.2, Z - .04);
+    box(s, M.cream, (door[0] + door[1]) / 2, F + 3.0, Z - .05, door[1] - door[0] + .5, .18, .1); for (const x of door) box(s, M.cream, x + (x === door[0] ? -.08 : .08), F + 1.45, Z - .05, .16, 2.9, .1);
+    // wraparound balcony: front (z -2.6..0) and west side (x x0-2.2..x0), deck at Y2, posts from the ground, balustrade, shingled roof
+    const BZ = -2.6, BX = x0 - 2.2, DY = Y2, RY = Y2 + 2.95, postH = (y0, y1, x, z) => { box(s, M.trim, x, (y0 + y1) / 2, z, .2, y1 - y0, .2); box(s, M.trim, x, y0 + .15, z, .28, .3, .28); };
+    box(s, M.plank, (BX + x1 + .3) / 2, DY - .06, BZ / 2, x1 + .3 - BX, .14, -BZ + .1); box(s, M.plank, (BX + x0) / 2, DY - .06, (BZ + D) / 2, x0 - BX, .14, D - BZ);
+    box(s, M.trim, (BX + x1 + .3) / 2, DY - .26, BZ + .08, x1 + .3 - BX, .28, .16); box(s, M.trim, BX + .08, DY - .26, (BZ + D) / 2, .16, .28, D - BZ);
+    const posts = []; for (let x = x1 + .15; x > BX; x -= 2.75) posts.push([x, BZ + .15]); posts.push([BX + .15, BZ + .15]); for (let z = BZ + 2.9; z < D; z += 2.75) posts.push([BX + .15, z]); posts.push([BX + .15, D - .1]);
+    for (const [x, z] of posts) { const onDeck = x > x0 - .3; postH(onDeck ? F : -2.6, RY, x, z); }
+    const rail = (ax, az, bx, bz) => { const L = Math.hypot(bx - ax, bz - az), along = Math.abs(bx - ax) > Math.abs(bz - az); for (const y of [DY + .95, DY + .18]) box(s, M.trim, (ax + bx) / 2, y, (az + bz) / 2, along ? L : .1, .09, along ? .1 : L);
+      for (let t = .25; t < L; t += .26) box(s, M.cream, ax + (bx - ax) * t / L, DY + .56, az + (bz - az) * t / L, .05, .74, .05); };
+    rail(x1 + .25, BZ + .15, BX + .15, BZ + .15); rail(BX + .15, BZ + .15, BX + .15, D - .1); rail(x1 + .25, BZ + .15, x1 + .25, -.1);
+    { const L = -BZ + .5, ang = Math.atan2(.35, L), g = new THREE.PlaneGeometry(x1 + .6 - BX, L / Math.cos(ang)); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (x1 + .6 - BX) / 2.5, uv.getY(i) * L / 2.5);
+      g.rotateX(-Math.PI / 2 - ang); g.translate((BX + x1 + .6) / 2, RY + .12, (BZ - .25) / 2); addGeo(s, M.shingle, g); }
+    { const L = x0 - BX + .4, ang = Math.atan2(.35, L), g = new THREE.PlaneGeometry(D - BZ + .3, L / Math.cos(ang)); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (D - BZ) / 2.5, uv.getY(i) * L / 2.5);
+      g.rotateX(-Math.PI / 2 - ang); g.rotateY(Math.PI / 2); g.translate((BX - .2 + x0) / 2, RY + .12, (BZ + D) / 2); addGeo(s, M.shingle, g); }
+    box(s, M.trim, (BX + x1 + .6) / 2, RY - .02, BZ - .12, x1 + .6 - BX, .22, .14); box(s, M.trim, BX - .12, RY - .02, (BZ + D) / 2, .14, .22, D - BZ);
+    // gable roof behind the false front (ridge front-to-back)
+    for (const sx of [-1, 1]) { const half = (x1 - x0) / 2 + .5, rise = 2.1, L = Math.hypot(half, rise), g = new THREE.PlaneGeometry(L, D + .6); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * L / 2.5, uv.getY(i) * D / 2.5);
+      g.rotateX(-Math.PI / 2); g.rotateZ(sx * Math.atan2(rise, half) * -1); g.translate(mx + sx * half / 2, top + .3 + rise / 2, D / 2); addGeo(s, M.shingle, g); }
+    box(s, M.side, mx, top + 1.2, D + .12, x1 - x0 + 1, 2.2, .1); box(s, M.trim, mx, top + 2.42, D / 2, .3, .2, D + .7);
+    // porch life: lanterns by the door, barrels, a bench
+    for (const x of [door[0] - .7, door[1] + .7]) { box(s, M.trim, x, F + 2.3, Z - .25, .08, .08, .4); box(s, M.lamp, x, F + 2.05, Z - .45, .22, .34, .22); box(s, M.trim, x, F + 2.26, Z - .45, .3, .06, .3); }
+    for (const [x, z] of [[x0 + .7, -1.6], [x0 + 1.4, -1.9], [x1 - .8, -1.7]]) { cyl(s, M.crate, x, F + .5, z, .38, 1, 12); cyl(s, M.trim, x, F + .18, z, .4, .06, 12); cyl(s, M.trim, x, F + .82, z, .4, .06, 12); }
+    box(s, M.plank, -10.5, F + .45, -1.9, 2.4, .1, .5); for (const x of [-11.5, -9.5]) box(s, M.trim, x, F + .22, -1.9, .1, .44, .45);
+  }
   // ---- the town: saloon + general store side by side, boardwalk porch, hitching rail ----
   function town(cx, cz, rot) {
     let gMax = -1e9; for (let x = -18; x <= 11; x += 1.5) for (let z = -4; z <= 11; z += 1.5) { const [wx, wz] = [cx + x * Math.cos(rot) + z * Math.sin(rot), cz - x * Math.sin(rot) + z * Math.cos(rot)]; gMax = Math.max(gMax, hAt(wx, wz)); }
@@ -126,12 +196,12 @@ export function createTown(c) {
     for (const [x0, x1, door, name, D, HT] of [[-17, -1, [-6.8, -5.2], 'SALOON', 10, 7.6], [1, 10, [4.7, 6.3], 'GENERAL STORE', 8, WH]]) { const mx = (x0 + x1) / 2, w = x1 - x0, sal = name === 'SALOON';
       for (const [ax, az, bx, bz] of [[x0, D, x1, D], [x0, 0, x0, D], [x1, 0, x1, D], [x0, 0, door[0], 0], [door[1], 0, x1, 0]]) { wall(s, ax, az, bx, bz, F, F + HT); if(az===0&&bz===0){const holes=[];for(const x of [x0+1.6,x1-1.6])if(x<door[0]-.8||x>door[1]+.8)holes.push([x-.7,x+.7,F+1.1,F+2.3]);if(sal)for(const x of [-15.5,-12.5,-9.5,-3.5])holes.push([x-.6,x+.6,Y2+.95,Y2+2.05]);const cuts=[ax,bx,...holes.flatMap(h=>[Math.max(ax,h[0]),Math.min(bx,h[1])]).filter(x=>x>ax&&x<bx)].sort((a,b)=>a-b);for(let k=0;k<cuts.length-1;k++){const l=cuts[k],r=cuts[k+1];if(r-l<.001)continue;const open=holes.filter(h=>h[0]<(l+r)/2&&h[1]>(l+r)/2).sort((a,b)=>a[2]-b[2]);let y=F;for(const h of open){if(h[2]>y)box(s,M.plank,(l+r)/2,(y+h[2])/2,0,r-l,h[2]-y,.16);y=Math.max(y,h[3]);}if(y<F+HT)box(s,M.plank,(l+r)/2,(y+F+HT)/2,0,r-l,F+HT-y,.16);}}else box(s,M.plank,(ax+bx)/2,F+HT/2,(az+bz)/2,Math.abs(bx-ax)+.16,HT,Math.abs(bz-az)+.16); }
       if (sal) box(s, M.plank, (door[0] + door[1]) / 2, F + 2.9 + (HT - 2.9) / 2, 0, door[1] - door[0] + .2, HT - 2.9, .16); // wall above the door
-      box(s, M.plank, mx, F + HT + 1.2, 0, w + .2, 2.4, .2); box(s, M.roof, mx, F + HT + .15, D / 2, w + .6, .2, D + .6); box(s, M.dark, mx, F + 2.9, -1.3, w + .2, .12, 2.6); // false front, roof, porch roof
-      for (const x of [x0 + .2, mx, x1 - .2]) box(s, M.dark, x, F + 1.4, -2.3, .14, 2.9, .14);
+      box(s, M.roof, mx, F + HT + .15, D / 2, w + .6, .2, D + .6); if (!sal) { box(s, M.plank, mx, F + HT + 1.2, 0, w + .2, 2.4, .2); box(s, M.dark, mx, F + 2.9, -1.3, w + .2, .12, 2.6); // false front, porch roof
+      for (const x of [x0 + .2, mx, x1 - .2]) box(s, M.dark, x, F + 1.4, -2.3, .14, 2.9, .14); } else saloonFacade(s, x0, x1, D, door, F, HT, Y2);
       for (const x of [x0 + 1.6, x1 - 1.6]) if (x < door[0] - .8 || x > door[1] + .8) box(s, M.glass, x, F + 1.7, -.02, 1.4, 1.2, .06);
       if (sal) for (const x of [-15.5, -12.5, -9.5, -3.5]) box(s, M.glass, x, Y2 + 1.5, -.02, 1.2, 1.1, .06); // upstairs windows
       if (!sal) for (const k of [0, 1]) box(s, M.dark, door[k] + (k ? -.38 : .38), F + 1.25, -.05, .72, 1.1, .05); // batwing doors (the saloon's swing: src/hrsaloon.js)
-      const sg = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w - 1, 7.5), 1.1), new THREE.MeshStandardMaterial({ map: signTex(name, sal ? '#5a1a12' : '#1a2a3a'), roughness: .8 })); sg.position.set(mx, F + HT + 1.2, -.12); sg.rotation.y = Math.PI; (s.signs = s.signs || []).push(sg); }
+      if (sal) continue; const sg = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w - 1, 7.5), 1.1), new THREE.MeshStandardMaterial({ map: signTex(name, sal ? '#5a1a12' : '#1a2a3a'), roughness: .8 })); sg.position.set(mx, F + HT + 1.2, -.12); sg.rotation.y = Math.PI; (s.signs = s.signs || []).push(sg); }
     // ---- v35 saloon interior: upper floor (mezzanine) over the left third, a stair up along its edge, balcony rail; the back bar with mirror + bottles
     floor(s, -17, -11.5, 0, 10, Y2); box(s, M.plank, -14.25, Y2 - .1, 5, 5.5, .2, 10); for (const z of [1, 3.5, 6, 8.5]) box(s, M.dark, -14.25, Y2 - .32, z, 5.5, .24, .2); // floor + joists
     for (const z of [.25, 2.8]) box(s, M.dark, -11.55, F + (Y2 - F) / 2, z, .22, Y2 - F, .22); // posts

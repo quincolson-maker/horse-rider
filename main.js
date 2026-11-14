@@ -1,15 +1,15 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=42f';
-import './src/hraudio.js?v=42f';
-import './src/stylize.js?v=42f'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=42f';
-import { FX, SFX } from './src/fx.js?v=42f';
-import { initTouch } from './src/touch.js?v=42f';
-import { createHorseRider } from './src/horse.js?v=42f';
-import { createHorseNet } from './src/horsenet.js?v=42f';
+import './src/assetshim.js?v=42g';
+import './src/hraudio.js?v=42g';
+import './src/stylize.js?v=42g'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=42g';
+import { FX, SFX } from './src/fx.js?v=42g';
+import { initTouch } from './src/touch.js?v=42g';
+import { createHorseRider } from './src/horse.js?v=42g';
+import { createHorseNet } from './src/horsenet.js?v=42g';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=42f';
+import { PF, initPerf } from './src/perf.js?v=42g';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -88,6 +88,14 @@ const KEYS = IS_TOUCH ? 'CONTROLS\nLeft side: move / steer · right side: look\n
 $('keys').textContent = KEYS; $('keys').onclick = () => { $('keys').hidden = true; };
 if (!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)) $('mFs').style.display = 'none';
 // ---------------- v36 settings: field of view (desktop ⚙ / O, phones ⋯ > Settings) ----------------
+// v42: developer MAX CHAOS button (shown only on a device unlocked with the bank code)
+function devChaosBtn() { let on = false; try { on = localStorage.getItem('hr_dev') === '1'; } catch (_) {} if (!on || document.getElementById('devChaos')) return;
+  const b = document.createElement('button'); b.id = 'devChaos'; b.textContent = '☠ MAX CHAOS'; b.style.cssText = 'position:fixed;left:10px;top:118px;z-index:40;padding:8px 12px;font:900 italic 13px system-ui;color:#fff;background:linear-gradient(180deg,#e0302a,#8a0f0b);border:0;border-radius:6px;box-shadow:0 3px 0 #4a0806;letter-spacing:.04em;pointer-events:auto';
+  const sync = () => { const Zs = horse.state.zombies; const m = !!(Zs && Zs.maxChaos); b.textContent = m ? '☠ CHAOS: MAX (tap to stop)' : '☠ MAX CHAOS'; b.style.filter = m ? 'brightness(1.25)' : ''; };
+  b.onclick = e => { e.stopPropagation(); const Zs = horse.state.zombies; if (!Zs || !Zs.setMaxChaos) { msg('Zombies are off in this game', 2); return; } if (horse.state.netRole && horse.state.netRole() === 'client') { msg('Only the host can start chaos', 2); return; }
+    Zs.setMaxChaos(!Zs.maxChaos); sync(); syncChaos(); msg(Zs.maxChaos ? '☠ MAX CHAOS — the horde is coming' : 'Chaos stopped', 2.5); };
+  ['pointerdown', 'touchstart'].forEach(ev => b.addEventListener(ev, e => e.stopPropagation(), { passive: true })); document.body.appendChild(b); sync(); }
+addEventListener('hr-dev', devChaosBtn); setTimeout(devChaosBtn, 1500);
 function syncChaos() { const Zs = horse.state.zombies, b = $('chaosBtn'); if (!Zs || !b) return; const cl = !!(horse.state.netRole && horse.state.netRole() === 'client'), on = cl ? Zs.chaos : Zs.wantChaos;
   b.textContent = '☠ Chaos mode: ' + (on ? 'ON' : 'OFF') + (cl ? ' (host decides)' : ''); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.disabled = cl; }
 function openSettings(on) { const el = $('hrSettings'); el.hidden = !on; const H = horse.state; H.uiOpen = on ? true : !!(H.town2 && H.town2.ui) || !!(H.saloon && H.saloon.isOpen() && !H.seated); if (on) { if (document.pointerLockElement) document.exitPointerLock(); syncFov(); syncChaos(); } }

@@ -3,7 +3,7 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=42f'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=42g'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -595,7 +595,7 @@ export function createGuns(c) {
   (async () => { try { const q = new URLSearchParams(location.search).get('bank'); if (!q) return;
     const h = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(q.trim())))].map(b => b.toString(16).padStart(2, '0')).join('');
     try { const u = new URL(location.href); u.searchParams.delete('bank'); history.replaceState(null, '', u); } catch (_) {} if (h !== '1b144a6455fb9c64d85df2180f375a7f888aae345fe69cd52dd9c068f6c24958') return;
-    const MAX = 99999999; state.score = (state.spent || 0) + MAX; save(); say('💰 Dev bank: ' + MAX.toLocaleString() + ' points'); } catch (_) {} })();
+    const MAX = 99999999; state.score = (state.spent || 0) + MAX; save(); try { localStorage.setItem('hr_dev', '1'); } catch (_) {} dispatchEvent(new Event('hr-dev')); say('💰 Dev bank: ' + MAX.toLocaleString() + ' points'); } catch (_) {} })();
   (async () => { try { const q = new URLSearchParams(location.search).get('gift'); if (!q || localStorage.getItem('hr_gift1')) return;
     const h = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(q.trim())))].map(b => b.toString(16).padStart(2, '0')).join('');
     if (h !== 'e227ccc2d932947105dde37dc13a8c35b84d604dade5ca3b3391f78c85b7c36c') return;

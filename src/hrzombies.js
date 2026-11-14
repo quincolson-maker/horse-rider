@@ -5,7 +5,7 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=42f';
+import { PF } from './perf.js?v=42g';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -25,7 +25,7 @@ export function createHrZombies(c) {
     hp: ZSET.playerHp, hurtT: -99, dead: 0, deaths: 0, flash: 0, t: 0, snapT: 0, role: c.role || (() => 'solo'), chaos: false, groanTok: 4 };
   // v37 CHAOS MODE: ten times the dead (420 on a desktop host, 180 on a phone host). The host's switch decides for everyone in
   // co-op (it rides in the snapshot); a client's own switch only matters once it hosts or plays solo.
-  const capOf = on => on ? (mobile ? ZSET.chaosPhone : ZSET.chaosDesktop) : (mobile ? ZSET.capPhone : ZSET.capDesktop);
+  const capOf = on => on ? (Z.maxChaos ? (mobile ? 280 : 720) : (mobile ? ZSET.chaosPhone : ZSET.chaosDesktop)) : (mobile ? ZSET.capPhone : ZSET.capDesktop); // v42: dev MAX chaos
   Z.wantChaos = Q.get('chaos') === '1' || (Q.get('chaos') !== '0' && (() => { try { return localStorage.getItem('hr_chaos') === '1'; } catch (_) { return false; } })());
   function setChaos(on, save = true) { Z.wantChaos = !!on; if (save) try { localStorage.setItem('hr_chaos', on ? '1' : '0'); } catch (_) {} if (Z.role() !== 'client') applyChaos(Z.wantChaos); return Z.wantChaos; }
   function applyChaos(on) { on = !!on; if (on === Z.chaos && Z.cap === capOf(on)) return; const was = Z.chaos; Z.chaos = on; Z.cap = capOf(on);
@@ -316,6 +316,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     const hh = h ? Math.round(100 * (h.hp ?? ZSET.horseHp) / ZSET.horseHp) : null;
     const html = `<b class="hp"><i style="width:${Math.round(Z.hp)}%"></i></b>${hh != null ? `<b class="hp horse"><i style="width:${hh}%"></i></b>` : ''}<span>${Z.chaos ? '<b class="chaos">CHAOS</b> ' : ''}☠ WAVE ${Z.wave} · ${live} near · ${Z.kills} down${Z.heads ? ` (${Z.heads} ◉)` : ''}</span>${Z.dead > 0 ? '<em>OVERRUN</em>' : inTown(P.pos.x, P.pos.z) ? `<em class="safe">${inTown(P.pos.x, P.pos.z).label || '🛡 SAFE ZONE · TOWN'}</em>` : inPenSafe(P.pos.x, P.pos.z) && !h ? '<em class="safe">SAFE IN THE PEN</em>' : ''}`; if (html !== el.__h) { el.__h = html; el.innerHTML = html; } }
   const netState = () => ({ dd: Z.dead > 0 ? 1 : 0 });
-  return { spawnOutlaw, outlaws: () => Z.list.filter(o => o.kind === 'outlaw'), setChaos, get chaos() { return Z.chaos; }, get wantChaos() { return Z.wantChaos; }, state: Z, list: Z.list, settings: ZSET, kinds: ZKINDS, tick, spawn, damage, onHit, rayHit, assistPoints, headPos, snap, apply, remoteHit, remoteHurt, confirmKill, hurtMe, netState, inPenRect, inPenSafe, inSafeZone, inTown, despawn,
+  function setMaxChaos(on) { Z.maxChaos = !!on; Z.cap = -1; return setChaos(!!on); }
+  return { setMaxChaos, get maxChaos() { return !!Z.maxChaos; }, spawnOutlaw, outlaws: () => Z.list.filter(o => o.kind === 'outlaw'), setChaos, get chaos() { return Z.chaos; }, get wantChaos() { return Z.wantChaos; }, state: Z, list: Z.list, settings: ZSET, kinds: ZKINDS, tick, spawn, damage, onHit, rayHit, assistPoints, headPos, snap, apply, remoteHit, remoteHurt, confirmKill, hurtMe, netState, inPenRect, inPenSafe, inSafeZone, inTown, despawn,
     clear() { for (const o of [...Z.list]) despawn(o); } };
 }

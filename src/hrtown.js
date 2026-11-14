@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42f';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42g';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,7 +47,7 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=42f';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=42g';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -361,27 +361,52 @@ export function createTown(c) {
   return T;
 }
 
-// ---- the HORSE RIDER windbreaker: rigid panels on the rig's bones (torso on the spine, sleeves on the arms), white block letters on the back ----
+// v42 jacket: a FITTED windbreaker skinned to the rider's own skeleton. The rider's body mesh is copied, every triangle on the
+// torso / shoulders / arms (down to the wrists, down to the belt) is kept, pushed out along its normals and re-bound to the same
+// skeleton, so it moves and bends with the rider instead of floating as stiff tubes. One atlas texture: the back print
+// (HORSE RIDER on charcoal with a gold stripe), the front (zipper, chest badge, pocket seams), plain fabric for sides and sleeves.
 let JK = null;
-function jacketMats() { if (JK) return JK; const back = (() => { const c = document.createElement('canvas'); c.width = 512; c.height = 512; const x = c.getContext('2d'); x.fillStyle = '#0d0e10'; x.fillRect(0, 0, 512, 512);
-    for (let i = 0; i < 1600; i++) { x.fillStyle = `rgba(255,255,255,${Math.random() * .025})`; x.fillRect(Math.random() * 512, Math.random() * 512, 2, 2); }
-    x.fillStyle = '#ffffff'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '900 104px Impact,"Arial Black",sans-serif'; x.fillText('HORSE', 256, 196); x.fillText('RIDER', 256, 318); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; })();
-  const nylon = new THREE.MeshPhysicalMaterial({ color: 0x0f1012, roughness: .42, clearcoat: .35, clearcoatRoughness: .5, sheen: .3, sheenColor: new THREE.Color(0x30343a) });
-  JK = { nylon, back: new THREE.MeshPhysicalMaterial({ map: back, roughness: .42, clearcoat: .35, clearcoatRoughness: .5 }), zip: new THREE.MeshStandardMaterial({ color: 0x8a8d90, metalness: .9, roughness: .3 }) }; return JK; }
-export function wearJacket(root, on) { const B = root && root.userData && root.userData.B; if (!B) return false; if (root.userData.skin) on = false; // v36: Frontier characters wear their own coats
+function jacketMats() { if (JK) return JK; const c = document.createElement('canvas'); c.width = 1024; c.height = 512; const x = c.getContext('2d');
+  const fabric = (x0) => { const g = x.createLinearGradient(0, 0, 0, 512); g.addColorStop(0, '#24272d'); g.addColorStop(1, '#16181c'); x.fillStyle = g; x.fillRect(x0, 0, 512, 512);
+    for (let i = 0; i < 2600; i++) { x.fillStyle = `rgba(255,255,255,${Math.random() * .03})`; x.fillRect(x0 + Math.random() * 512, Math.random() * 512, 2, 1); } };
+  fabric(0); fabric(512);
+  // back (left half): gold yoke stripe, HORSE RIDER, small horseshoe
+  x.fillStyle = '#e8b23a'; x.fillRect(0, 352, 512, 22); x.fillStyle = '#1b1d21'; x.fillRect(0, 374, 512, 6);
+  x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = 'italic 900 92px Impact,"Arial Black",sans-serif'; x.lineWidth = 10; x.strokeStyle = '#0b0c0e';
+  for (const [t, y] of [['HORSE', 170], ['RIDER', 262]]) { x.strokeText(t, 256, y); x.fillStyle = '#f4f1ea'; x.fillText(t, 256, y); }
+  x.strokeStyle = '#e8b23a'; x.lineWidth = 9; x.beginPath(); x.arc(256, 82, 26, Math.PI * .15, Math.PI * .85, true); x.stroke();
+  // front (right half): zipper, gold stripe, chest badge, pocket seams, stitching
+  x.fillStyle = '#e8b23a'; x.fillRect(512, 352, 512, 22); x.fillStyle = '#9ea3aa'; x.fillRect(764, 0, 8, 512); x.fillStyle = '#3a3e44'; for (let y = 0; y < 512; y += 6) x.fillRect(762, y, 12, 2);
+  x.fillStyle = '#e8b23a'; x.beginPath(); x.arc(870, 290, 22, 0, Math.PI * 2); x.fill(); x.fillStyle = '#1b1d21'; x.font = '900 22px Impact,sans-serif'; x.fillText('HR', 870, 291);
+  x.strokeStyle = 'rgba(255,255,255,.12)'; x.lineWidth = 2; x.setLineDash([6, 5]); for (const px of [600, 940]) { x.beginPath(); x.moveTo(px - 40, 120); x.lineTo(px + 30, 60); x.stroke(); } x.setLineDash([]);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  JK = { mat: new THREE.MeshStandardMaterial({ map: tex, roughness: .5, metalness: .05, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }) }; return JK; }
+const JACKET_BONES = ['Spine', 'Spine01', 'Spine02', 'LeftShoulder', 'RightShoulder', 'LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm', 'neck', 'Hips'];
+export function wearJacket(root, on) { if (!root || !root.userData) return false; if (root.userData.skin) on = false; // v36: Frontier characters wear their own coats
   if (root.userData.jacket) { for (const m of root.userData.jacket) m.visible = !!on; return true; } if (!on) return true;
-  const J = jacketMats(), parts = []; root.updateMatrixWorld(true); const P = n => B[n] && B[n].getWorldPosition(new THREE.Vector3());
-  const hips = P('Hips'), neck = P('neck') || P('Neck'), la = P('LeftArm'), ra = P('RightArm'), lf = P('LeftForeArm'), rf = P('RightForeArm'), lh = P('LeftHand'), rh = P('RightHand'); if (!hips || !neck || !la || !ra) return false;
-  const q = root.getWorldQuaternion(new THREE.Quaternion()), fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(q), up = neck.clone().sub(hips).normalize(), side = ra.clone().sub(la), sw = side.length(), rt = side.normalize();
-  const len = neck.distanceTo(hips) * 1.22, wdt = sw * 1.3, dep = sw * .98, mid = hips.clone().lerp(neck, .5).addScaledVector(up, len * .06);
-  const basis = new THREE.Matrix4().makeBasis(rt, up, rt.clone().cross(up).negate().multiplyScalar(-1)), torsoQ = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(rt, up, new THREE.Vector3().crossVectors(rt, up)));
-  const front = new THREE.Vector3().crossVectors(rt, up); if (front.dot(fwd) < 0) front.negate();
-  const torsoG = new THREE.CylinderGeometry(wdt * .56, wdt * .47, len, 18, 1, true); torsoG.scale(1, 1, dep / wdt); const torso = new THREE.Mesh(torsoG, J.nylon); torso.position.copy(mid); torso.quaternion.copy(torsoQ); torso.material.side = THREE.DoubleSide;
-  const shoulder = new THREE.Mesh(new THREE.SphereGeometry(wdt * .56, 18, 8, 0, TAU, 0, Math.PI / 2).scale(1, .42, dep / wdt), J.nylon); shoulder.position.copy(mid).addScaledVector(up, len / 2); shoulder.quaternion.copy(torsoQ);
-  const backP = new THREE.Mesh(new THREE.PlaneGeometry(wdt * .9, len * .8), J.back); backP.position.copy(mid).addScaledVector(front, -dep * .5 - .012).addScaledVector(up, len * .06); backP.lookAt(backP.position.clone().addScaledVector(front, -1));
-  const zip = new THREE.Mesh(new THREE.BoxGeometry(.008, len * .95, .006), J.zip); zip.position.copy(mid).addScaledVector(front, dep * .5 + .004); zip.quaternion.copy(torsoQ);
-  const collar = new THREE.Mesh(new THREE.TorusGeometry(wdt * .2, .022, 6, 16), J.nylon); collar.position.copy(neck).addScaledVector(up, -.02); collar.quaternion.copy(torsoQ).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2));
-  const spine = B.Spine02 || B.Spine01 || B.Spine || B.Hips; for (const m of [torso, shoulder, backP, zip, collar]) { m.castShadow = true; spine.attach(m); parts.push(m); }
-  const sleeve = (a, b, bone, r0, r1) => { if (!a || !b || !bone) return; const L = a.distanceTo(b), g = new THREE.CylinderGeometry(r1, r0, L * 1.02, 12, 1, true), m = new THREE.Mesh(g, J.nylon); m.material.side = THREE.DoubleSide; m.position.copy(a).lerp(b, .5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); m.castShadow = true; bone.attach(m); parts.push(m); };
-  const ar = sw * .3; sleeve(la, lf, B.LeftArm, ar, ar * .85); sleeve(ra, rf, B.RightArm, ar, ar * .85); sleeve(lf, lh, B.LeftForeArm, ar * .85, ar * .7); sleeve(rf, rh, B.RightForeArm, ar * .85, ar * .7);
-  root.userData.jacket = parts; return true; }
+  let body = null; root.traverse(o => { if (o.isSkinnedMesh && (!body || o.geometry.attributes.position.count > body.geometry.attributes.position.count)) body = o; }); if (!body) return false;
+  const sk = body.skeleton, G = body.geometry, pos = G.attributes.position, nor = G.attributes.normal, si = G.attributes.skinIndex, sw = G.attributes.skinWeight; if (!nor || !si || !sw) return false;
+  const idx = n => sk.bones.findIndex(b => b.name === n), armB = new Set(['LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm', 'LeftShoulder', 'RightShoulder'].map(idx)), want = new Set(JACKET_BONES.map(idx).filter(i => i >= 0)), iH = idx('Hips'), iN = idx('neck'), iHand = [idx('LeftHand'), idx('RightHand')];
+  const bindPos = i => new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().copy(sk.boneInverses[i]).invert());
+  const hipY = iH >= 0 ? bindPos(iH).y : -1e9, neckY = iN >= 0 ? bindPos(iN).y : 1e9;
+  // per-vertex: share of weight on jacket bones (hips only above the belt, neck only near the collar)
+  const n = pos.count, keepV = new Float32Array(n), P = new THREE.Vector3();
+  for (let v = 0; v < n; v++) { P.fromBufferAttribute(pos, v); let w = 0, hand = 0;
+    for (let k = 0; k < 4; k++) { const b = si.getComponent(v, k), ww = sw.getComponent(v, k); if (iHand.includes(b)) hand += ww; if (!want.has(b)) continue; if (b === iH && P.y < hipY + (neckY - hipY) * .02) continue; if (b === iN && P.y > neckY + (neckY - hipY) * .05) continue; w += ww; }
+    keepV[v] = hand > .3 ? 0 : w; }
+  const index = G.index ? G.index.array : Array.from({ length: n }, (_, i) => i), tri = [];
+  for (let t = 0; t < index.length; t += 3) { const a = index[t], b = index[t + 1], c = index[t + 2]; if (keepV[a] > .55 && keepV[b] > .55 && keepV[c] > .55) tri.push(a, b, c); }
+  if (tri.length < 60) return false;
+  // bounds of the kept torso (bind space) for the print projection
+  const box = new THREE.Box3(); for (const v of tri) box.expandByPoint(P.fromBufferAttribute(pos, v)); const cx = (box.min.x + box.max.x) / 2, W = box.max.x - box.min.x, y0 = Math.max(box.min.y, hipY - .05), H = Math.min(box.max.y, neckY) - y0;
+  const used = [...new Set(tri)], remap = new Map(used.map((v, i) => [v, i])), m = used.length, nP = new Float32Array(m * 3), nN = new Float32Array(m * 3), nUV = new Float32Array(m * 2), nSI = new Uint16Array(m * 4), nSW = new Float32Array(m * 4), N = new THREE.Vector3();
+  used.forEach((v, i) => { P.fromBufferAttribute(pos, v); N.fromBufferAttribute(nor, v).normalize(); let arm = 0; for (let k = 0; k < 4; k++) if (armB.has(si.getComponent(v, k))) arm += sw.getComponent(v, k); const armish = arm > .45, push = armish ? .024 : .034 + .012 * Math.max(0, (P.y - y0) / H - .75);
+    nP.set([P.x + N.x * push, P.y + N.y * push, P.z + N.z * push], i * 3); nN.set([N.x, N.y, N.z], i * 3);
+    const uu = (P.x - cx) / (W * 1.05) + .5, vv = .06 + .9 * (P.y - y0) / H; let u, w;
+    if (armish) { u = .52; w = .05; } else if (N.z < -.15) { u = Math.min(.98, Math.max(.02, uu)) * .5; w = vv; } else if (N.z > .15) { u = .5 + Math.min(.99, Math.max(.01, uu)) * .5; w = vv; } else { u = .52; w = .05; }
+    nUV.set([u, Math.min(.99, Math.max(.01, w))], i * 2); for (let k = 0; k < 4; k++) { nSI[i * 4 + k] = si.getComponent(v, k); nSW[i * 4 + k] = sw.getComponent(v, k); } });
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(nP, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nN, 3)); g.setAttribute('uv', new THREE.BufferAttribute(nUV, 2));
+  g.setAttribute('skinIndex', new THREE.BufferAttribute(nSI, 4)); g.setAttribute('skinWeight', new THREE.BufferAttribute(nSW, 4)); g.setIndex(tri.map(v => remap.get(v))); g.computeBoundingSphere();
+  const J = jacketMats(), jm = new THREE.SkinnedMesh(g, J.mat); jm.name = 'HR jacket'; jm.castShadow = true; jm.frustumCulled = false;
+  jm.position.copy(body.position); jm.quaternion.copy(body.quaternion); jm.scale.copy(body.scale); body.parent.add(jm); jm.bind(sk, body.bindMatrix);
+  root.userData.jacket = [jm]; return true; }

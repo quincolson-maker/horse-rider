@@ -5,27 +5,27 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=42f';
-import { PF } from './perf.js?v=42f';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=42g';
+import { PF } from './perf.js?v=42g';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=42f';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=42f';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42f';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42f';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=42f';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=42f';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=42f';
-import { createGuns } from './hrguns.js?v=42f';
-import { createHrZombies } from './hrzombies.js?v=42f';
-import { createFlora } from './hrflora.js?v=42f';
-import { createTown, wearJacket } from './hrtown.js?v=42f';
-import { createSaloon } from './hrsaloon.js?v=42f';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=42f';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=42f';
-import { createSunItem } from './hrsunweapon.js?v=42f';
-import { createBuild } from './hrbuild.js?v=42f';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=42f';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=42f';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=42g';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=42g';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42g';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42g';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=42g';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=42g';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=42g';
+import { createGuns } from './hrguns.js?v=42g';
+import { createHrZombies } from './hrzombies.js?v=42g';
+import { createFlora } from './hrflora.js?v=42g';
+import { createTown, wearJacket } from './hrtown.js?v=42g';
+import { createSaloon } from './hrsaloon.js?v=42g';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=42g';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=42g';
+import { createSunItem } from './hrsunweapon.js?v=42g';
+import { createBuild } from './hrbuild.js?v=42g';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=42g';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=42g';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -804,7 +804,7 @@ export function createHorseRider(ctx) {
     const v = H.fv.length(), ox0 = P.pos.x, oz0 = P.pos.z, gy0 = hAt(ox0, oz0), onS = town2 && town2.onStruct(ox0, oz0, P.pos.y); H.curY = P.pos.y; moveCircle(P.pos, H.fv.x * dt, H.fv.y * dt, .35, null); H.curY = null;
     const nT = town2 && town2.towers.some(t => Math.hypot(P.pos.x - t.cx, P.pos.z - t.cz) < 22); // v34: you can always scramble up to a lookout, from any side
     if (!onS && !(town2 && town2.onStruct(P.pos.x, P.pos.z, P.pos.y)) && !(H.temple && H.temple.under(P.pos.x, P.pos.z, P.pos.y)) && !(H.cave && H.cave.under && H.cave.under(P.pos.x, P.pos.z, P.pos.y)) && (nT ? Math.hypot(H.fv.x, H.fv.y) > 2.2 && P.pos.y - gy0 > dt * 2.2 && H.fv.multiplyScalar(.97) && false : slopeGate(P.pos, ox0, oz0, gy0, 1.3, .35, null))) H.fv.multiplyScalar(.9); // scrambling up: only up to ~52 degrees
-    let g0 = town2 ? town2.floorAt(P.pos.x, P.pos.z, P.pos.y) : hAt(P.pos.x, P.pos.z); if (H.cave) g0 = H.cave.floorAt(P.pos.x, P.pos.z, P.pos.y, g0); if (H.temple) { const tg = H.temple.groundAt(P.pos.x, P.pos.z, P.pos.y); if (tg !== null) g0 = tg; } // v39: under the mound the temple's floors decide if (jump && H.ground) { H.vy = 7; H.ground = false; }
+    let g0 = town2 ? town2.floorAt(P.pos.x, P.pos.z, P.pos.y) : hAt(P.pos.x, P.pos.z); if (H.cave) g0 = H.cave.floorAt(P.pos.x, P.pos.z, P.pos.y, g0); if (H.temple) { const tg = H.temple.groundAt(P.pos.x, P.pos.z, P.pos.y); if (tg !== null) g0 = tg; } /* v39: under the mound the temple's floors decide */ if (jump && H.ground) { H.vy = 7; H.ground = false; }
     H.vy -= 22 * dt; P.pos.y += H.vy * dt; if (P.pos.y <= g0) { P.pos.y = g0; H.vy = 0; H.ground = true; }
     const ob = P.bob; P.bob += dt * v * 1.6; if (H.ground && v > .5 && Math.floor(ob / Math.PI) !== Math.floor(P.bob / Math.PI)) sfx.step && sfx.step(false);
     if (H.gunFace != null) H.bodyYaw += wrapA(H.gunFace - H.bodyYaw) * Math.min(1, dt * 14); else if (v > .3) { const wy = Math.atan2(-H.fv.x, -H.fv.y); H.bodyYaw += wrapA(wy - H.bodyYaw) * Math.min(1, dt * 10); }

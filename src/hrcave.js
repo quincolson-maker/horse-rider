@@ -4,10 +4,10 @@
 // picked the same way on every machine — and wires it into our controller (walls + floors), guns (rock stops bullets),
 // host-authoritative co-op (the host runs the outlaws and the vault) and game points. Points are game points only.
 import * as THREE from 'three';
-import { createHideout } from './hrhideout.js?v=42c';
-import { createFalls, baseZ } from './hrfalls.js?v=42c';
-import { makeFrontierCharacter } from './hrcharacters.js?v=42c';
-import { poseDoll } from './hrsaloon.js?v=42c';
+import { createHideout } from './hrhideout.js?v=42d';
+import { createFalls, baseZ } from './hrfalls.js?v=42d';
+import { makeFrontierCharacter } from './hrcharacters.js?v=42d';
+import { poseDoll } from './hrsaloon.js?v=42d';
 
 export const CAVE = { chest: 2500, dance: 50, slotBet: 10, outlaw: 60, outlawHead: 75 };
 const FU = 40, FV0 = -59, FV1 = 8, BL = 16, BS = 5; // footprint in the cave's own frame (u across, v out of the mouth); terrain blend: 16 m apron in front, 5 m to the sides and back (the hill meets the rock)
@@ -68,6 +68,7 @@ export function createCave(c) {
     for (const b of BOX) { if (b.isEmpty() || x < b.min.x || x > b.max.x || z < b.min.z || z > b.max.z) continue; if (b.max.y <= y + .55 && b.max.y > f) f = b.max.y; } return f === -1e9 ? base : f; };
   out.groundAt = (x, z, y) => under(x, z, y) ? out.floorAt(x, z, y, -1e9) : null;
   const cDir = new THREE.Vector3();
+  const fireW = cave.fireAt ? cave.fireAt() : null, riverW = cave.riverAt ? cave.riverAt() : null; out.fireAt = () => fireW; out.riverAt = () => riverW;
   out.camClip = (from, to) => { if (!out.underP && !under(from.x, from.z, from.y)) return; cDir.subVectors(to, from); const L = cDir.length(); if (L < .05) return; cDir.divideScalar(L);
     const t = out.rayHit(from, cDir, L); if (t > 0) to.copy(from).addScaledVector(cDir, Math.max(.3, t - .35));
     const cl = cave.ceilAt(to.x, to.y, to.z); if (to.y > cl - .25) to.y = Math.max(from.y - .3, cl - .25); };

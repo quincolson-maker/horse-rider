@@ -330,6 +330,7 @@ export function createHideout({ position, rotationY = 0, quality = 'high', viewD
       if (id === 'vault-key') { if (!keyHook.active) return { ok: false }; keyHook.active = false; keyG.visible = false; result.state.hasKey = true; return { ok: true, type: 'key' }; }
       if (id === 'vault-gate') { if (!result.state.hasKey) return { ok: false }; result.state.vaultOpen = true; gateBox.makeEmpty(); for (const l of lootPoints) l.locked = false; return { ok: true, type: 'gate' }; }
       return { ok: true, type: h.type, hook: h }; },
+    fireAt: () => W(-2, .6, -24), riverAt: () => W(28, -16, -39.5),
     openChest(id) { const i = +String(id).split('-')[1]; if (lids[i]) lids[i].userData.open = true; },
     // ceiling height over a point (for the camera), or Infinity outside the hideout's spaces
     ceilAt(x, y, z) { tmp.set(x, y, z).applyMatrix4(inv); let best = Infinity;

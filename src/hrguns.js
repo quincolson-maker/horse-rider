@@ -3,7 +3,7 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=42c'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=42d'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -347,7 +347,7 @@ export function createGuns(c) {
     if (H.cave) { const t = H.cave.rayHit(o, d, best.t); if (t > 0 && t < best.t) best = { t, kind: 'rock' }; } // v38: the hideout's rock walls stop bullets
     if (H.temple) { const t = H.temple.rayHit(o, d, best.t); if (t > 0 && t < best.t) best = { t, kind: 'rock' }; } // v39: temple walls too
     for (const f of H.fence) { const t = raySeg(o, d, f[0], f[1], f[2], f[3], c.BASE, c.BASE + 1.45); if (t > 0 && t < best.t) best = { t, kind: 'wood' }; }
-    const TP = H.temple, gH = (x, y, z) => { if (TP) { const k = TP.cell(x, y, z); if (k === 1) return 1; if (k === 2) return -1; } return y - hAt(x, z); }; // v39: inside the temple's halls the mound above is air; above the halls it is rock
+    const TP = H.temple, CV = H.cave, gH = (x, y, z) => { if (CV && CV.under && CV.under(x, z, y)) return 1; if (TP) { const k = TP.cell(x, y, z); if (k === 1) return 1; if (k === 2) return -1; } return y - hAt(x, z); }; // v39: inside the temple's halls the mound above is air; above the halls it is rock
     let pt = 0, ph = gH(o.x, o.y, o.z); for (let t = 1; t <= best.t; t += t < 40 ? 1 : 2.5) { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t, hh = gH(x, y, z);
       if (hh < 0) { let a = pt, b = t; for (let k = 0; k < 7; k++) { const m = (a + b) / 2; if (gH(o.x + d.x * m, o.y + d.y * m, o.z + d.z * m) < 0) b = m; else a = m; } if (b < best.t) best = { t: b, kind: 'ground' }; break; } pt = t; ph = hh; }
     best.p = new THREE.Vector3().copy(d).multiplyScalar(best.t).add(o); return best; }
@@ -399,7 +399,7 @@ export function createGuns(c) {
         for (let i = 0; i < 4; i++) fx.smoke.emit(p.x - d.x * .5 - wx * .4, p.y - .3, p.z - d.z * .5 - wz * .4, wx + (Math.random() - .5) * .6, .15, wz + (Math.random() - .5) * .6, .76, .74, .7, .45, 3.2, 1, -.02, .28); } } // big black-powder cloud that hangs around the shooter
     else if (fx) { fx.tracer && fx.tracer(p.clone().addScaledVector(d, .4), end, 0xffd890, .05); fx.muzzle && fx.muzzle(p, [1, .75, .4], 1.2);
       if (fx.smoke) for (let i = 0; i < 3; i++) fx.smoke.emit(p.x + d.x * (.15 + i * .3), p.y + d.y * (.15 + i * .3), p.z + d.z * (.15 + i * .3), d.x * (1.6 - i * .4) + (Math.random() - .5) * .3, .2 + Math.random() * .2, d.z * (1.6 - i * .4) + (Math.random() - .5) * .3, .78, .76, .72, .18 + i * .08, 1.4 + i * .4, .8, -.04, .32); } // black-powder smoke
-    const shot = () => { if (w === 'tommy' && tommyWav(remoteShot ? !!remoteSp : tsup())) return; sfx.shot(big ? [800, 55, 1] : w === 'rifle' ? [1300, 95, .8] : w === 'tommy' ? [1900, 140, .38] : [1650, 120, .65]); if (big) { tone('sine', 90, 38, .7, .5); nz('lowpass', 420, .8, .45, .9); setTimeout(() => nz('lowpass', 520, .7, .18, .7), 420); setTimeout(() => nz('lowpass', 380, .7, .1, .9), 1100); } }; // deep boom + valley echoes
+    const shot = () => { if (w === 'tommy' && tommyWav(remoteShot ? !!remoteSp : tsup())) return; if (sfx.gun && sfx.gun(w === 'gold' ? 'gold' : w)) return; sfx.shot(big ? [800, 55, 1] : w === 'rifle' ? [1300, 95, .8] : w === 'tommy' ? [1900, 140, .38] : [1650, 120, .65]); if (big) { tone('sine', 90, 38, .7, .5); nz('lowpass', 420, .8, .45, .9); setTimeout(() => nz('lowpass', 520, .7, .18, .7), 420); setTimeout(() => nz('lowpass', 380, .7, .1, .9), 1100); } }; // deep boom + valley echoes
     if (remoteShot && sfx.at) sfx.at(p, shot, .6); else if (sfx.shot) shot(); }
 
   function impact(hit, d, w) {

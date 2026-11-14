@@ -1,14 +1,15 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=42b';
-import './src/stylize.js?v=42b'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=42b';
-import { FX, SFX } from './src/fx.js?v=42b';
-import { initTouch } from './src/touch.js?v=42b';
-import { createHorseRider } from './src/horse.js?v=42b';
-import { createHorseNet } from './src/horsenet.js?v=42b';
+import './src/assetshim.js?v=43';
+import './src/stylize.js?v=43'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=43';
+import { FX, SFX } from './src/fx.js?v=43';
+import { initTouch } from './src/touch.js?v=43';
+import { createHorseRider } from './src/horse.js?v=43';
+import { createHorseNet } from './src/horsenet.js?v=43';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=42b';
+import { PF, initPerf } from './src/perf.js?v=43';
+import { createMap } from './src/hrmap.js?v=43';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -53,13 +54,17 @@ function update(dt) { if (G.phase == 'menu') return; G.t += dt; horse.tick(dt); 
 // ---------------- HUD ----------------
 let hudT = 0, hurtFlash = 0;
 const CMP = (() => { let h = ''; for (let d = -360; d <= 720; d += 15) { const n = ((d % 360) + 360) % 360; const lab = { 0: 'N', 45: 'NE', 90: 'E', 135: 'SE', 180: 'S', 225: 'SW', 270: 'W', 315: 'NW' }[n]; h += `<span class="${lab ? 'c' : ''}">${lab || n}</span>`; } return h; })();
-const PINS = [['pen', '🐎'], ['town', '🏠'], ['cave', '💧'], ['temple', '☀️']];
-function pins(hd) { const box = $('cpins'); if (!box || !horse.state.places) return; const H = horse.state, pl = H.places, w = box.parentNode.clientWidth || 300;
-  if (!box.dataset.on) { box.dataset.on = 1; box.innerHTML = PINS.map(([k, ic]) => `<i data-k="${k}">${ic}<b></b></i>`).join(''); }
-  for (const el of box.children) { const k = el.dataset.k, t = k === 'pen' ? [horse.PEN.x, horse.PEN.z] : k === 'town' ? pl.town : pl[k] ? [pl[k].x, pl[k].z] : null; if (!t) { el.style.display = 'none'; continue; }
-    const dx = t[0] - P.pos.x, dz = t[1] - P.pos.z, d = Math.hypot(dx, dz), b = Math.atan2(dx, -dz) * 180 / Math.PI; let dl = ((b - hd) % 360 + 540) % 360 - 180; const x = dl / 15 * 40;
-    if (d < 25 || Math.abs(x) > w / 2 - 10) { el.style.display = 'none'; continue; } el.style.display = ''; el.style.transform = `translateX(${x.toFixed(0)}px)`; el.lastChild.textContent = d > 999 ? (d / 1000).toFixed(1) + 'k' : Math.round(d) + 'm'; } }
-function compass() { const el = $('cstrip'); if (!el) return; if (!el.innerHTML) el.innerHTML = CMP; const hd = ((-P.yaw * 180 / Math.PI) % 360 + 360) % 360; el.style.transform = `translateX(${-(hd + 360) / 15 * 40 - 20}px)`; $('chead').textContent = Math.round(hd); pins(hd); }
+// v43: the compass pins come from the same POI list as the map (Bandit Falls at its mouth, both lookouts, the range), the heading
+// is the camera's real view direction (it used to be the input yaw, which drifts from the view while the chase camera swings round),
+// and a POI outside the strip parks at its edge with an arrow instead of vanishing
+const camDir = new THREE.Vector3();
+function pins(hd) { const box = $('cpins'); const H = horse.state; if (!box || !H.pois) return; const L = H.pois(), w = box.parentNode.clientWidth || 300, half = w / 2 - 16;
+  if (box.dataset.n != L.length) { box.dataset.n = L.length; box.innerHTML = L.map(p => `<i title="${p.n}">${p.ic}<b></b></i>`).join(''); }
+  L.forEach((p, i) => { const el = box.children[i]; if (!el) return; const dx = p.x - P.pos.x, dz = p.z - P.pos.z, d = Math.hypot(dx, dz), b = Math.atan2(dx, -dz) * 180 / Math.PI; const dl = ((b - hd) % 360 + 540) % 360 - 180; let x = dl / 15 * 40;
+    const set = (k, v, f) => { if (el['_' + k] !== v) { el['_' + k] = v; f(v); } }; // v43: touch the DOM only when something changed (no per-frame style churn)
+    if (d < 20) { set('d', 'none', v => el.style.display = v); return; } const edge = Math.abs(x) > half; if (edge) x = Math.sign(x) * half; set('d', '', v => el.style.display = v); set('e', edge, v => el.classList.toggle('edge', v));
+    set('x', Math.round(x), v => el.style.transform = `translateX(${v}px)`); set('t', edge ? (x < 0 ? '◀' : '▶') : d > 999 ? (d / 1000).toFixed(1) + 'k' : Math.round(d) + 'm', v => el.lastChild.textContent = v); }); }
+function compass() { const el = $('cstrip'); if (!el) return; if (!el.innerHTML) el.innerHTML = CMP; camera.getWorldDirection(camDir); const hd = ((Math.atan2(camDir.x, -camDir.z) * 180 / Math.PI) % 360 + 360) % 360; const tx = Math.round(-(hd + 360) / 15 * 40 - 20), hr = Math.round(hd); if (el._tx !== tx) { el._tx = tx; el.style.transform = `translateX(${tx}px)`; } if (el._hd !== hr) { el._hd = hr; $('chead').textContent = hr; } pins(hd); }
 function hud(dt) { compass(); hurtFlash = Math.max(0, hurtFlash - dt * 1.5); $('vign').style.opacity = hurtFlash;
   hudT -= dt; if (hudT > 0) return; hudT = .1; uiSync(); horse.hud(); }
 function uiSync() { if (!IS_TOUCH) return; const a = $('tAct'), lab = horse.touchLabel(); a.hidden = !lab; if (lab && a.innerHTML !== lab) a.innerHTML = lab; }
@@ -82,8 +87,8 @@ $('ioshintx').onclick = () => { localStorage.setItem('vr_ioshint', '1'); $('iosh
 $('vMute').onclick = e => { e.preventDefault(); hnet.voice.toggle(); };
 $('vMute').addEventListener('pointerdown', e => e.stopPropagation());
 $('fps').hidden = !(localStorage.getItem('vr_fps') === '1' || Q.get('fps') === '1');
-const KEYS = IS_TOUCH ? 'CONTROLS\nLeft side: move / steer · right side: look\nRIDE / GET OFF appears near a horse · 🔫 draws a gun, FIRE shoots, ADS aims\n⋯ menu: controls, fullscreen\nTap here to close'
-  : 'CONTROLS\nWASD walk / ride · mouse look · E mount / dismount · Shift faster (hold: gallop) · C slower\nF draw / cycle guns · LMB fire · RMB aim · wheel zoom · V mute voice · H this help · Esc release mouse';
+const KEYS = IS_TOUCH ? 'CONTROLS\nLeft side: move / steer · right side: look\nRIDE / GET OFF appears near a horse · 🔫 draws a gun, FIRE shoots, ADS aims\n🗺 map · ⋯ menu: controls, fullscreen\nTap here to close'
+  : 'CONTROLS\nWASD walk / ride · mouse look · E mount / dismount · Shift faster (hold: gallop) · C slower\nF draw / cycle guns · LMB fire · RMB aim · wheel zoom · V mute voice · M map · H this help · Esc release mouse';
 $('keys').textContent = KEYS; $('keys').onclick = () => { $('keys').hidden = true; };
 if (!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)) $('mFs').style.display = 'none';
 // ---------------- v36 settings: field of view (desktop ⚙ / O, phones ⋯ > Settings) ----------------
@@ -99,6 +104,7 @@ function syncChar() { const H = horse.state, row = $('charRow'); if (!row || !H.
 // ---------------- Start: the link opens straight into Horse Rider (joins an open room with a free slot, else hosts one) ----------------
 function start() { G.phase = 'ride'; document.body.classList.add('ingame', 'horse-mode'); $('hud').style.display = ''; horse.init(); }
 hnet.prime(); start(); hnet.auto(Q.get('room') || undefined);
+const worldMap = createMap({ H: horse.state, P, camera, PEN: horse.PEN, mobile: IS_TOUCH }); window.__map = worldMap; // v43 world map (M / 🗺)
 window.__t0 = performance.now(); // v34 reopen: the world is playable at once; the lobby joins / rejoins in the background
 // iOS / Android resume: a page restored from the back-forward cache (or a home-screen app brought back) has dead WebGL / WebRTC
 // state, so start fresh; after a long background stay, re-find a lobby if the link dropped

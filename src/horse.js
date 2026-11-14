@@ -5,27 +5,27 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=42b';
-import { PF } from './perf.js?v=42b';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=43';
+import { PF } from './perf.js?v=43';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=42b';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=42b';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42b';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42b';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=42b';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=42b';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=42b';
-import { createGuns } from './hrguns.js?v=42b';
-import { createHrZombies } from './hrzombies.js?v=42b';
-import { createFlora } from './hrflora.js?v=42b';
-import { createTown, wearJacket } from './hrtown.js?v=42b';
-import { createSaloon } from './hrsaloon.js?v=42b';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=42b';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=42b';
-import { createSunItem } from './hrsunweapon.js?v=42b';
-import { createBuild } from './hrbuild.js?v=42b';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=42b';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=42b';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=43';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=43';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=43';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=43';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=43';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=43';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=43';
+import { createGuns } from './hrguns.js?v=43';
+import { createHrZombies } from './hrzombies.js?v=43';
+import { createFlora } from './hrflora.js?v=43';
+import { createTown, wearJacket } from './hrtown.js?v=43';
+import { createSaloon } from './hrsaloon.js?v=43';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=43';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=43';
+import { createSunItem } from './hrsunweapon.js?v=43';
+import { createBuild } from './hrbuild.js?v=43';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=43';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=43';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -354,6 +354,8 @@ export function createHorseRider(ctx) {
     H.hAt = hAt; if (!CAVE_SITE && !NOCAVE) { CAVE_SITE = pickCaveSite(hAt, F, { PEN, WALK, avoid: (x, z) => (Math.abs(x - PEN.x) < 120 && Math.abs(z - PEN.z) < 120) || clearing(x, z, 10) || inRange(x, z, 14) || trailDist(x, z) < 8 }); if (CAVE_SITE) CAVEPAD = makePad(CAVE_SITE); }
     if (!TEMPLE_SITE && !NOTEMPLE) { const cq = CAVE_SITE ? caveRect(CAVE_SITE, 60, 30) : null; TEMPLE_SITE = pickTempleSite(hAt, F, { PEN, WALK, avoid: (x, z) => (Math.abs(x - PEN.x) < 150 && Math.abs(z - PEN.z) < 150) || clearing(x, z, 10) || inRange(x, z, 14) || trailDist(x, z) < 8 || (cq && Math.abs(x - cq.x) < cq.hw && Math.abs(z - cq.z) < cq.hd) }); if (TEMPLE_SITE) TEMPLEPAD = makeTemplePad(TEMPLE_SITE); }
     const T = loadTerrainTextures(GX.renderer, HQ), XO = { mask: H.mask, maskHalf: MASK_HALF, chunkU: { value: new THREE.Vector4(0, 0, -1, 0) }, CH: CHUNK, LIM: CH_LIM };
+    if (CAVE_SITE) { const S = CAVE_SITE, a = [[-3.4, -.6], [3.4, -9.2]].map(([u, v]) => [S.x + u * Math.cos(S.rot) + v * Math.sin(S.rot), S.z - u * Math.sin(S.rot) + v * Math.cos(S.rot)]); // v43: tunnel box (rotation is a multiple of 90 degrees)
+      XO.tun = { value: new THREE.Vector4((a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2, Math.abs(a[0][0] - a[1][0]) / 2, Math.abs(a[0][1] - a[1][1]) / 2) }; XO.tunY = { value: S.y0 + 6.2 }; }
     const mat = terrainMat2(T, PEN, SEG, BASE, HQ, XO), holeMat = terrainMat2(T, PEN, SEG, BASE, HQ, { ...XO, hole: true });
     // coarse inner square + far ring everywhere, streamed detail chunks (1.6-3.1 m grid) in a square around the player
     const seg = Q.shadow >= 2048 && !mobile ? 200 : HQ ? 180 : mobile ? 100 : 150;
@@ -387,7 +389,7 @@ export function createHorseRider(ctx) {
     createSaloon({ scene, H, P, T: town2, camera, sfx, msg, mobile, input, keys, fx: ctx.fx, canvas: GX.renderer.domElement, makeHorse: () => makeHorse(...PROC_COATS[(Math.random() * 5) | 0]), procAnim, blocked: (x, z, r) => blocked(x, z, r), groundAt: (x, z, y) => town2.floorAt(x, z, y) }); // v35
     if (CAVE_SITE) H.cave = createCave({ scene, H, P, T: town2, hAt, sfx, msg, mobile, low: !HQ, site: CAVE_SITE, role: () => H.netRole ? H.netRole() : 'solo', send: m => H.zSend && H.zSend(m), remotes: () => H.netRemotes ? H.netRemotes() : [] }); // v38 Bandit Falls
     if (TEMPLE_SITE) H.temple = createTemple({ scene, H, P, T: town2, hAt, sfx, msg, mobile, low: !HQ, site: TEMPLE_SITE, role: () => H.netRole ? H.netRole() : 'solo', send: m => H.zSend && H.zSend(m), remotes: () => H.netRemotes ? H.netRemotes() : [] }); // v39 The Hollow Sun
-    H.obstWalls = town2.walls; H.places = { temple: H.temple ? H.temple.info() : null, cave: H.cave ? H.cave.info() : null, towers: tw, town, tops: [tops[A], tops[B]].map(t => [Math.round(t[0]), Math.round(t[1]), Math.round(t[2] - BASE)]), townFlat: +ts.toFixed(2) }; }
+    H.RANGE = RANGE; H.obstWalls = town2.walls; H.places = { temple: H.temple ? H.temple.info() : null, cave: H.cave ? H.cave.info() : null, towers: tw, town, tops: [tops[A], tops[B]].map(t => [Math.round(t[0]), Math.round(t[1]), Math.round(t[2] - BASE)]), townFlat: +ts.toFixed(2) }; }
   // woods: conifers + broadleaf trees, instanced, with a near (detailed) / far (low-poly) LOD swapped around the player
   function buildTrees() {
     const nT = Math.round(Q.trees * (mobile ? 2.2 : 3));
@@ -672,18 +674,24 @@ export function createHorseRider(ctx) {
   }
   // v41: walking up to the town used to stall while its shaders compiled and textures uploaded for the first time.
   // Do all of that once, early (the title screen is still up): show every hidden mesh for one compile, upload every loaded texture.
-  function prewarm() { H.warm = true; const hid = []; try {
+  // v43: the shaders now link in parallel (compileAsync, KHR_parallel_shader_compile) and the texture uploads are spread over frames,
+  // so warming no longer freezes the page; the title screen's PLAY waits for it (window.__hrReady), so the first seconds in are smooth
+  function prewarm() { H.warm = true; const hid = [], R = GX.renderer, done = () => { window.__hrReady = true; window.dispatchEvent(new Event('hr-ready')); }; let pr = null; try {
       scene.traverse(o => { if (!o.visible && !o.isLight) { hid.push(o); o.visible = true; } });
-      GX.renderer.compile(scene, camera); const seen = new Set();
-      scene.traverse(o => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; for (const m of ms) for (const k in m) { const t = m[k]; if (t && t.isTexture && !seen.has(t) && t.image && (t.image.width || t.image.data)) { seen.add(t); GX.renderer.initTexture(t); } } });
-    } catch (e) { console.warn('prewarm', e); } for (const o of hid) o.visible = false; }
+      pr = R.compileAsync ? R.compileAsync(scene, camera) : (R.compile(scene, camera), null);
+    } catch (e) { console.warn('prewarm', e); } for (const o of hid) o.visible = false;
+    const seen = new Set(), tex = []; scene.traverse(o => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; for (const m of ms) for (const k in m) { const t = m[k]; if (t && t.isTexture && !seen.has(t) && t.image && (t.image.width || t.image.data)) { seen.add(t); tex.push(t); } } });
+    const up = () => { const t0 = performance.now(); while (tex.length && performance.now() - t0 < 8) { try { R.initTexture(tex.pop()); } catch (_) {} } if (tex.length) requestAnimationFrame(up); else Promise.resolve(pr).catch(() => {}).then(done); };
+    requestAnimationFrame(up); }
+  const CAVE_FOG = new THREE.Color(0x1a120c);
   function envTick(dt, force) {
     if (!sky) return; const el = sunEl(); sky.setSun(el, SUN_AZ);
     const env = sky.update(dt || 0, camera, force);
     if (env) { scene.environment = env; scene.environmentIntensity = STYLE_ON ? 1.35 : 1; GX.hemi.color.copy(sky.zenith);
-      fog.color.copy(sky.horizon).lerp(sky.sunSide, .25); if (!GX.composer) { fogTmp.copy(fog.color); fog.color.setRGB(aces(fogTmp.r), aces(fogTmp.g), aces(fogTmp.b), THREE.SRGBColorSpace); } }
+      fog.color.copy(sky.horizon).lerp(sky.sunSide, .25); if (!GX.composer) { fogTmp.copy(fog.color); fog.color.setRGB(aces(fogTmp.r), aces(fogTmp.g), aces(fogTmp.b), THREE.SRGBColorSpace); } (H.fogOut || (H.fogOut = new THREE.Color())).copy(fog.color); }
     if (scene.background) scene.background = null;
     const day = sstep(-1, 9, el); GX.sunDir.copy(sky.sunDir); GX.sun.color.copy(sky.sunCol); GX.sun.intensity = 3.6 * day; GX.hemi.intensity = .1 + .08 * day;
+    { const cd = Math.max(H.caveDark || 0, H.templeDark || 0); if (H.fogBase == null) H.fogBase = fog.near; fog.near = H.fogBase * (1 - .9 * cd); if (!H.fogOut) H.fogOut = fog.color.clone(); if (cd > .01 || H.fogDk) { fog.color.copy(H.fogOut).lerp(CAVE_FOG, cd * .85); H.fogDk = cd > .01; } } // v43: no outdoor haze washing out the caves
     { const cd = H.caveDark || 0; GX.sun.intensity *= 1 - .92 * cd; GX.hemi.intensity *= 1 - .85 * cd; if (scene.environment) scene.environmentIntensity = (STYLE_ON ? 1.35 : 1) * (1 - .85 * cd); } // v42: dark inside Bandit Falls
     fog.far = Math.floor((((SUN_AZ % TAU) + TAU) % TAU) * 100) + Math.min(.999, Math.max(0, sky.sunDir.y));
     if (H.grassG) H.grassG.update(dt || 0, camera, sky.sunDir, sky.sunCol, .55 + .45 * Math.sin(H.t * .21) * Math.sin(H.t * .053 + 1));
@@ -828,7 +836,7 @@ export function createHorseRider(ctx) {
       if (held && dk > 1.5) sideIn += Math.sin(H.t * .9) * Math.min(.55, (dk - 1.5) * .09) + Math.sin(H.t * 2.3 + 1) * Math.min(.25, (dk - 1.5) * .04); } else { H.lagF = fwdIn; H.lagS = sideIn; }
     const run = !!keys.ShiftLeft || !!keys.ShiftRight || (stick > .92 && fwdIn > .6);
     const jump = keys.Space || input.jump;
-    if (!H.warm && H.t > 2.5 && H.models !== 'loading') prewarm();
+    if (!H.warm && H.t > .6 && H.models !== 'loading') prewarm();
     if (H.fallT > 0) H.fallT -= dt; PF.s('town'); if (town2) town2.tick(dt); PF.e('town'); PF.s('saloon'); if (H.saloon) H.saloon.tick(dt); PF.e('saloon'); PF.s('cave'); if (H.cave) H.cave.update(dt); if (H.temple) H.temple.update(dt); if (H.sun) H.sun.update(dt); PF.e('cave'); PF.s('build'); if (H.build) H.build.tick(dt); PF.e('build'); PF.s('player');
     if (H.dead) { H.fv.x = H.fv.y = 0; } else if (h) ride(h, dt, stick > .05 ? 0 : fwdIn, stick > .05 ? 0 : sideIn, stick, jump); else walk(dt, fwdIn, sideIn, stick, run, jump);
     PF.e('player'); PF.s('herd');

@@ -4,10 +4,10 @@
 // picked the same way on every machine — and wires it into our controller (walls + floors), guns (rock stops bullets),
 // host-authoritative co-op (the host runs the outlaws and the vault) and game points. Points are game points only.
 import * as THREE from 'three';
-import { createHideout } from './hrhideout.js?v=42b';
-import { createFalls, baseZ } from './hrfalls.js?v=42b';
-import { makeFrontierCharacter } from './hrcharacters.js?v=42b';
-import { poseDoll } from './hrsaloon.js?v=42b';
+import { createHideout } from './hrhideout.js?v=43';
+import { createFalls, baseZ } from './hrfalls.js?v=43';
+import { makeFrontierCharacter } from './hrcharacters.js?v=43';
+import { poseDoll } from './hrsaloon.js?v=43';
 
 export const CAVE = { chest: 2500, dance: 50, slotBet: 10, outlaw: 60, outlawHead: 75 };
 const FU = 40, FV0 = -59, FV1 = 8, BL = 16, BS = 5; // footprint in the cave's own frame (u across, v out of the mouth); terrain blend: 16 m apron in front, 5 m to the sides and back (the hill meets the rock)
@@ -63,7 +63,10 @@ export function createCave(c) {
   // ---- collisions: height-aware walls, walkable box tops, bullets stop on rock ----
   out.wallHit = (x, z, r, y) => { if (falls.hit(x, z, r, y)) return true; if (x < ALL.min.x - r || x > ALL.max.x + r || z < ALL.min.z - r || z > ALL.max.z + r) return false;
     for (const b of WALLS) { if (b.isEmpty() || y + 1.7 < b.min.y || y + .4 > b.max.y) continue; const cx = Math.max(b.min.x, Math.min(x, b.max.x)), cz = Math.max(b.min.z, Math.min(z, b.max.z)); if ((x - cx) ** 2 + (z - cz) ** 2 < r * r) return true; } return false; };
-  const under = out.under = (x, z, y) => { const [u, v] = toLocal(S, x, z); return Math.abs(u) < FU && v < 2.2 && v > FV0 && y < c.hAt(x, z) - 1.5; };
+  // v43: the mouth tunnel counts as "inside" from the pool edge on, whatever the hill above does — the hill used to rise over the
+  // tunnel mouth before you were 1.5 m under it, so the slope gate stopped everyone at the back of the falls (no way in)
+  const tunnel = (u, v, y) => Math.abs(u) < 2.9 && v < 1.6 && v > -13.5 && y < S.y0 + 3.5;
+  const under = out.under = (x, z, y) => { const [u, v] = toLocal(S, x, z); return Math.abs(u) < FU && v < 2.2 && v > FV0 && (tunnel(u, v, y) || y < c.hAt(x, z) - 1.5); };
   out.floorAt = (x, z, y, base) => { if (x < ALL.min.x || x > ALL.max.x || z < ALL.min.z || z > ALL.max.z) return base; const und = under(x, z, y); let f = und ? -1e9 : base;
     for (const b of BOX) { if (b.isEmpty() || x < b.min.x || x > b.max.x || z < b.min.z || z > b.max.z) continue; if (b.max.y <= y + .55 && b.max.y > f) f = b.max.y; } return f === -1e9 ? base : f; };
   out.groundAt = (x, z, y) => under(x, z, y) ? out.floorAt(x, z, y, -1e9) : null;
@@ -133,6 +136,14 @@ export function createCave(c) {
       if (ph === 2 && out.state.phase < 2) msg('The last outlaw dropped the vault key', 2.5);
       if (ph === 3 && out.state.phase < 3) { showOpen(); msg('The vault gate grinds open', 3); }
       out.state.phase = ph; out.state.left = Number.isFinite(m.n) ? m.n : 0; } };
+  // v43: warm dust and embers drifting through the torch light of the hall and over the chasm (one Points draw, animated only when near)
+  const DN = mobile || c.low ? 90 : 220, dp = new Float32Array(DN * 3), ds = []; for (let i = 0; i < DN; i++) { const ch = i % 4 === 0; ds.push(ch ? [28 + (Math.random() - .5) * 16, -40 + (Math.random() - .5) * 26, -14 + Math.random() * 18] : [-3 + (Math.random() - .5) * 26, -23 + (Math.random() - .5) * 21, .3 + Math.random() * 9], Math.random() * 6.28, .2 + Math.random() * .5); }
+  const dG = new THREE.BufferGeometry(); dG.setAttribute('position', new THREE.BufferAttribute(dp, 3));
+  const dT = (() => { const cv = document.createElement('canvas'); cv.width = cv.height = 32; const x = cv.getContext('2d'), gr = x.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, 'rgba(255,220,160,1)'); gr.addColorStop(.4, 'rgba(255,160,70,.5)'); gr.addColorStop(1, 'rgba(255,120,40,0)'); x.fillStyle = gr; x.fillRect(0, 0, 32, 32); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+  const dust = new THREE.Points(dG, new THREE.PointsMaterial({ map: dT, size: .16, sizeAttenuation: true, transparent: true, opacity: .8, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+  dust.frustumCulled = false; dust.renderOrder = 6; cave.group.add(dust); let dustT = 0;
+  function dustTick(dt) { dustT += dt; for (let i = 0; i < DN; i++) { const q = ds[i * 3], ph = ds[i * 3 + 1], sp = ds[i * 3 + 2], ch = i % 4 === 0, rise = ((dustT * sp * (ch ? .7 : .25) + ph) % 1);
+      dp[i * 3] = q[0] + Math.sin(dustT * .3 * sp + ph) * 1.2; dp[i * 3 + 1] = ch ? q[2] + rise * 12 : q[2] + Math.sin(dustT * .2 + ph) * .8; dp[i * 3 + 2] = q[1] + Math.cos(dustT * .25 * sp + ph * 2) * 1.2; } dG.attributes.position.needsUpdate = true; }
   const cp = new THREE.Vector3(), fallP = cave.group.localToWorld(new THREE.Vector3(0, 3, 2));
   // v38.1: the falls roar — one looped noise source (low rumble + hiss), loudness by distance, built only within 90 m
   let wl = null; out.water = () => wl ? +wl.v.toFixed(3) : 0; // the loudness it is heading for (tests: a suspended context never ramps)
@@ -141,10 +152,11 @@ export function createCave(c) {
       const hg = ac.createGain(); hg.gain.value = .35; const g = ac.createGain(); g.gain.value = 0; src.connect(lo); lo.connect(g); src.connect(hi); hi.connect(hg); hg.connect(g); g.connect(sfx.master); src.start(); wl = { src, g, nodes: [lo, hi, hg] }; }
     if (!wl) return; const k = Math.max(0, 1 - d / 85), v = .2 * k * k; wl.v = v; wl.g.gain.setTargetAtTime(v, ac.currentTime, .25);
     if (d > 100) { const w = wl; wl = null; w.g.gain.setTargetAtTime(0, ac.currentTime, .1); setTimeout(() => { try { w.src.stop(); w.src.disconnect(); w.g.disconnect(); w.nodes.forEach(n => n.disconnect()); } catch (_) {} }, 600); } }
-  out.update = dt => { cp.copy(P.pos); if (H.mounted) cp.copy(H.mounted.pos); cave.update(dt, null, cp); const near = cave.group.visible && cp.distanceToSquared(cave.entrance) < 70 * 70; falls.group.visible = cave.group.visible || cp.distanceToSquared(cave.entrance) < 600 * 600; falls.update(dt, cp.distanceToSquared(cave.entrance) < 160 * 160); waterSound(cp.distanceTo(fallP));
+  out.update = dt => { cp.copy(P.pos); if (H.mounted) cp.copy(H.mounted.pos); cave.update(dt, null, cp); const near = cave.group.visible && cp.distanceToSquared(cave.entrance) < 70 * 70; falls.group.visible = cave.group.visible || cp.distanceToSquared(cave.entrance) < 600 * 600; falls.update(dt, cp.distanceToSquared(cave.entrance) < 160 * 160, cp); waterSound(cp.distanceTo(fallP));
     if (!near) for (const l of cave.lights) l.intensity = 0; // lamps stay in the scene (no shader rebuilds), dark when you are away
     { const und = !H.mounted && under(P.pos.x, P.pos.z, P.pos.y); out.underP = und; const [, lv] = toLocal(S, P.pos.x, P.pos.z), tgt = und ? sstep(-2, -13, lv) : 0; H.caveDark = (H.caveDark || 0) + (tgt - (H.caveDark || 0)) * Math.min(1, dt * 2.5);
       if (und && P.pos.y < S.y0 - 16) { const [x, z] = toWorld(S, 28, -29.5); P.pos.set(x, S.y0 - 6 + .1, z); H.vy = 0; const Z = H.zombies; if (Z && Z.hurtMe) Z.hurtMe(20, 0); msg('You fell into the river — the current washed you back to the ledge', 3); } }
+    dust.visible = near; if (near) dustTick(dt);
     for (const D of dancers) { D.g.visible = near; if (!near) continue; D.cheer = Math.max(0, D.cheer - dt); poseDoll(D, dt, D.cheer > 0 ? 'cheer' : 'dance'); }
     if (c.role() !== 'client') { const st = out.state;
       if (st.phase === 0 && everyone().some(([x, z]) => deep(x, z))) startFight();
@@ -152,6 +164,7 @@ export function createCave(c) {
         if (n === 0) { dropKey(lastDown || cave.entrance.clone()); st.phase = 2; msg('The last outlaw drops the vault key!', 3); bc(); } }
       if ((bcT += dt) > 2) bc(); }
     labels(); };
+  out.mouth = () => toWorld(S, 0, 1.5); // v43: where the way in is (map + compass pins point here)
   out.info = () => ({ x: +S.x.toFixed(1), z: +S.z.toFixed(1), y0: +S.y0.toFixed(2), rot: S.rot, rise: S.rise, range: S.range, pass: S.pass, phase: PH[out.state.phase], left: out.state.left, key: out.state.key, open: cave.state.vaultOpen, loot: { ...loot } });
   labels(); return out;
 }

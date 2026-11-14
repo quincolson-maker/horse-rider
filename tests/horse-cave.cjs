@@ -29,13 +29,13 @@ const at = (p, u, v) => p.evaluate((u, v) => { const H = __horse.state, S = H.ca
         wallHit: C.wallHit(wall[0], wall[1], .35, wall[2]), wallHitAbove: C.wallHit(wall[0], wall[1], .35, wall[2] + 40), floorHall: +(C.floorAt(...W(0, -30), S.y0 + .2, S.y0 - 5) - S.y0).toFixed(2),
         noZ: !!H.zombies.inTown(...W(0, -30)), goodGround: H.zombies.state.goodGround(...W(0, -30)), grassCave }; });
     assert.ok(R.site.info.x !== undefined && R.site.info.pass === 0, 'a strict site'); assert.deepEqual(R.site.town, [55, -95]); assert.deepEqual(R.site.towers, [[-973, -995], [847, 935]]);
-    assert.ok(R.site.pad.slice(0, 4).every(h => Math.abs(h + .08) < .02), 'flat pad ' + R.site.pad); assert.ok(Math.abs(R.site.pool + .45) < .02, 'pool dip'); assert.equal(R.site.wallHit, true); assert.equal(R.site.wallHitAbove, false);
+    assert.ok(R.site.pad.slice(0, 4).every(h => h > 14) && Math.abs(R.site.pad[4] + .08) < .02, 'v42+: the hideout is inside the mountain (ground over it), flat apron in front ' + R.site.pad); assert.ok(Math.abs(R.site.pool + .45) < .02, 'pool dip'); assert.equal(R.site.wallHit, true); assert.equal(R.site.wallHitAbove, false);
     assert.ok(Math.abs(R.site.floorHall) < .02, 'hall floor'); assert.equal(R.site.noZ, true); assert.ok(R.site.grassCave && R.site.grassCave[2] > 30, 'no grass inside the hideout'); assert.equal(R.site.goodGround, false);
     // walking in starts the fight: 10 outlaws, not counted as zombies, the HUD banner, they shoot
     await at(d, 0, -8); await until(d, () => __horse.state.cave.state.phase === 1, null, 30000);
     R.fight = await d.evaluate(() => { const Z = __horse.state.zombies; return { outlaws: Z.outlaws().filter(o => o.alive).length, live: Z.state.live, hud: document.getElementById('hrZ').textContent }; });
     assert.equal(R.fight.outlaws, 10); assert.equal(R.fight.live, 0); assert.match(R.fight.hud, /BANDIT FALLS/);
-    await at(d, 0, -20); await sleep(9000); R.fight.shots = await d.evaluate(() => [__horse.state.zombies.state.outlawShots || 0, __horse.state.zombies.state.outlawHits || 0]); assert.ok(R.fight.shots[0] >= 2, 'outlaws shoot ' + R.fight.shots);
+    await at(d, 0, -20); await d.evaluate(() => __horse.state.cave.provoke()); /* v41+: the outlaws leave you be until someone starts shooting */ await sleep(9000); R.fight.shots = await d.evaluate(() => [__horse.state.zombies.state.outlawShots || 0, __horse.state.zombies.state.outlawHits || 0]); assert.ok(R.fight.shots[0] >= 2, 'outlaws shoot ' + R.fight.shots);
     // points: an outlaw pays 60 (75 headshot), a zombie still 10
     R.pts = await d.evaluate(() => { const G = __horse.state.guns, s0 = G.state.score; G.credit(false, 'outlaw'); const a = G.state.score - s0; G.credit(true, 'outlaw'); const b = G.state.score - s0 - a; G.credit(false); return [a, b, G.state.score - s0 - a - b]; }); assert.deepEqual(R.pts, [60, 75, 10]);
     // a rock wall stops a shot: cast from the hall toward the side wall

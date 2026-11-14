@@ -3,11 +3,11 @@
 // bandit or a random brawl), the dealer in the dark corner (snow = fast, green = slow), three slot machines upstairs (seated
 // first-person view, 10/50/100 bets, jackpot 6000), swinging batwing doors, warm lamps, light shafts and dust.
 import * as THREE from 'three';
-import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=42b';
-import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=42b';
-import {createCasino} from './hrcasino.js?v=42b';
-import {createSaloonDecor} from './hrsaloondecor.js?v=42b';
-import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=42b';
+import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=43';
+import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=43';
+import {createCasino} from './hrcasino.js?v=43';
+import {createSaloonDecor} from './hrsaloondecor.js?v=43';
+import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=43';
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
 // ---------------- slots: pure math (tests use it) ----------------
 export const SLOT = { NAMES: ['cactus', 'cherry', 'horseshoe', 'bell', 'buffalo'], W: [10, 9, 7, 4, 2], THREE: [0, 5, 10, 25, 60], TWO_CHERRY: 3, ONE_CHERRY: 1, BETS: [10, 50, 100] };
@@ -207,7 +207,7 @@ export function createSaloon(c) {
         const g = B.D.g; g.position.lerp(tmpV.set(q[0], q[1], q[2]), Math.min(1, dt * 8)); g.rotation.y = q[3]; const mode = q[4] === 1 ? 'walk' : q[4] === 2 ? 'aim' : q[4] === 3 ? 'ko' : 'idle'; if (mode === 'ko') B.D.koT = Math.min(1, (B.D.koT || 0) + dt * 2); poseDoll(B.D, dt, q[5] ? 'sit' : mode, 3); });
       if (Array.isArray(st.dn) && !S.dance) { const D = S.dancers[st.dn[0] | 0]; if (D) D.remoteDance = 1; } }
     for (const [id, E] of S.remote) if (!seen.has(id)) { for (const B of E.list) scene.remove(B.D.g); S.remote.delete(id); } }
-  const tagSprite = txt => { const sp2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: tagTex(txt), depthTest: false, transparent: true })); sp2.scale.set(.8, .2, 1); sp2.position.y = 2.15; sp2.renderOrder = 9; return sp2; };
+  const tagSprite = txt => { const sp2 = new THREE.Sprite(new THREE.SpriteMaterial({ fog: false, map: tagTex(txt), depthTest: false, transparent: true })); sp2.scale.set(.8, .2, 1); sp2.position.y = 2.15; sp2.renderOrder = 9; return sp2; };
   // ---- bandits for hire ----
   function hire() { if (S.bandits.length >= PRICES.maxBandits) { msg('Five is a posse — that is the limit', 2); return false; } if (!spend(PRICES.bandit)) return false; const look = S.bandits.length % 4, D = makeDoll({ kind: 'bandit', ...BANDIT_LOOKS[look] }); const p = Lh(-12.6, F, 6.2 + (S.bandits.length - 2) * .5);
     D.g.position.copy(p); ownedDolls.add(D);scene.add(D.g); D.g.add(tagSprite((H.me || 'P1') + "'s gun")); const B = { D, hp: 100, cd: 1 + Math.random(), look, slot: S.bandits.length, stuckT: 0, anim: 'idle', kills: 0 }; S.bandits.push(B); S.hired = (S.hired || 0) + 1;

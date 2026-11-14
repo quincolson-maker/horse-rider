@@ -1,9 +1,9 @@
-import { STYLE_ON } from './stylize.js?v=42b';
+import { STYLE_ON } from './stylize.js?v=43';
 // HORSE RIDER world graphics: large-scale terrain (domain-warped fBm hills, carved valleys, ridged-multifractal mountains out to ~4 km),
 // physically based sky (Preetham Rayleigh/Mie) with layered procedural clouds, sky-driven IBL + aerial haze, slow golden-hour time of day,
 // slope/height-blended PBR terrain (Poly Haven CC0), GPU instanced wind-blown grass with wildflowers, CC0 scanned boulders.
 import * as THREE from 'three';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42b';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=43';
 const sstep = (a, b, t) => { t = Math.min(1, Math.max(0, (t - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 // ---------------- noise (Perlin gradient noise, fBm, ridged multifractal) ----------------
@@ -119,7 +119,7 @@ void main(){ vec3 dir=normalize(vWorldPosition-cameraPosition); vec3 sd=normaliz
 export function terrainMaterial(T, PEN, SEG, BASE, hq = true, o = {}) {
   const m = new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, normalMap: T.grass.n }); m.normalScale.set(1, 1); m.defines = {}; if (hq) m.defines.TERRAIN_HQ = '';
   if (o.hole) { m.defines.CHUNK_HOLE = ''; m.defines.CH_SIZE = o.CH.toFixed(1); m.defines.CH_LIM = o.LIM.toFixed(1); } // coarse terrain: sink + discard where the detail chunks are
-  const XU = { uMask: { value: o.mask || null }, uMH: { value: o.maskHalf || 1 }, uChunk: o.chunkU || { value: new THREE.Vector4(0, 0, -1, 0) } };
+  const XU = { uMask: { value: o.mask || null }, uMH: { value: o.maskHalf || 1 }, uChunk: o.chunkU || { value: new THREE.Vector4(0, 0, -1, 0) }, uTun: o.tun || { value: new THREE.Vector4(1e6, 1e6, 0, 0) }, uTunY: o.tunY || { value: -1e9 } };
   m.onBeforeCompile = sh => { Object.assign(sh.uniforms, { tG: { value: T.grass.d }, tGa: { value: T.grass.a }, tG2: { value: T.grass2.d }, tD: { value: T.dirt.d }, tDn: { value: T.dirt.n }, tTr: { value: T.trail.d },
       tR: { value: T.rock.d }, tRn: { value: T.rock.n }, tS: { value: T.snow.d }, tSn: { value: T.snow.n }, uPen: { value: new THREE.Vector4(PEN.x, PEN.z, PEN.hw, PEN.hd) }, uSeg: { value: SEG.map(s => new THREE.Vector4(...s)) }, uBase: { value: BASE } }, XU);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP; varying vec3 vWN; uniform vec4 uChunk;').replace('#include <begin_vertex>', `#include <begin_vertex>
@@ -128,7 +128,7 @@ export function terrainMaterial(T, PEN, SEG, BASE, hq = true, o = {}) {
 #endif
 vWP=(modelMatrix*vec4(transformed,1.)).xyz; vWN=normalize(mat3(modelMatrix)*normal);`);
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-varying vec3 vWP; varying vec3 vWN; uniform sampler2D tG,tGa,tG2,tD,tDn,tTr,tR,tRn,tS,tSn,uMask; uniform float uBase,uMH; uniform vec4 uChunk;
+varying vec3 vWP; varying vec3 vWN; uniform sampler2D tG,tGa,tG2,tD,tDn,tTr,tR,tRn,tS,tSn,uMask; uniform float uBase,uMH,uTunY; uniform vec4 uChunk,uTun;
 ${GLSL_NOISE}
 ${GLSL_TRAIL}
 vec3 tri(sampler2D t, vec3 p, vec3 w){ return texture2D(t,p.zy).rgb*w.x+texture2D(t,p.xz).rgb*w.y+texture2D(t,p.xy).rgb*w.z; }`)
@@ -136,6 +136,7 @@ vec3 tri(sampler2D t, vec3 p, vec3 w){ return texture2D(t,p.zy).rgb*w.x+texture2
 #ifdef CHUNK_HOLE
 { vec2 cc=floor(vWP.xz/CH_SIZE); vec2 dc=abs(cc-uChunk.xy); if(uChunk.w>.5&&max(dc.x,dc.y)<=uChunk.z&&cc.x>=-CH_LIM&&cc.x<CH_LIM&&cc.y>=-CH_LIM&&cc.y<CH_LIM) discard; }
 #endif
+if (abs(vWP.x-uTun.x)<uTun.z && abs(vWP.z-uTun.y)<uTun.w && vWP.y<uTunY) discard; // v43: the hill over the Bandit Falls tunnel mouth stays out of the tunnel
 float dist=length(vWP-cameraPosition); vec2 xz=vWP.xz; float slope=1.-vWN.y; float hgt=vWP.y-uBase; float r0=length(xz);
 float mv=vn(xz*.035)*.55+vn(xz*.17)*.3+vn(xz*.9)*.15; float macro=fbm3(xz*.0035);
 vec2 uvG=xz/3.2; vec3 gA=texture2D(tG,uvG).rgb, gB=texture2D(tG,mat2(.8,-.6,.6,.8)*xz/11.+.37).rgb, g2=texture2D(tG2,xz/4.3).rgb;

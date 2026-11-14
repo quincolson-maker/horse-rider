@@ -5,6 +5,27 @@ Open-world horse riding game in the browser (Three.js). Forked from `quincolson-
 **v40 — Stylized:** new art pipeline (`src/stylize.js`): soft cel-style light ramp, character rim light, vibrant painted
 albedo, softened photo textures, midday sun with deep-blue sky, lush meadow / grass / wildflower palette, neutral tone
 mapping, new colour grade, blue-and-yellow HUD and a title screen. `?style=real` restores the v39 realistic look.
+**v43 — Launch update:**
+- **Bandit Falls, you can get in now:** the way in is straight through the main curtain of the falls. The hill above the tunnel used to
+  count as solid ground before you were under it, so everyone stopped at the back of the pool; the tunnel is now inside from the pool edge
+  on. The curtain parts round you as you walk through it, the dark arch and lantern glow of the mouth show through the water, torches
+  flank the mouth, stepping stones lead across the pool, a sign by the pool says where to go, droplets splash where the water lands,
+  ferns line the pool and the cliff foot. Inside: the outdoor haze no longer washes the cave out, and warm dust and embers drift through
+  the torch light of the hall and up out of the chasm.
+- **World map** (`src/hrmap.js`): **M** or the 🗺 button. A real top-down map baked from the terrain height field (hill shading, trails,
+  water) with every POI at its true position — pen, town, Bandit Falls (pinned at the mouth), the Hollow Sun, both lookouts, the
+  shooting range — you as an arrow facing where the camera looks, and the other riders.
+- **Compass:** heading comes from the camera's real view direction (it used the input yaw, which drifts from the view while the chase
+  camera swings round), pins come from the same list as the map (lookouts and the range added), a POI off the strip parks at its edge
+  with ◀ / ▶ instead of vanishing, the pins are no longer clipped on phones, and the strip only touches the DOM when something changed.
+- **Title screen:** the HORSE RIDER logo no longer clips (room for the italic overhang; Safari clips `background-clip:text` at the box)
+  and scales to the screen width. **PLAY waits for the world to be ready** ("Loading…"), so the start isn't a stutter.
+- **Load hitch:** shaders now link in parallel (`compileAsync`) and texture uploads are spread over frames instead of one frozen frame.
+- **Launch:** description / social preview tags, a real favicon, a `<noscript>` note, and `sw.js` — a service worker (https only) that
+  keeps the big never-changing assets (models, textures, audio, three.js) cached, so a second visit loads fast. `?nosw=1` removes it.
+  Bump `CACHE` in `sw.js` whenever a file under `assets/` changes.
+- Fixed: sprites with scene fog failed to compile against the custom fog chunk (saloon name tags).
+
 No build step: `index.html` loads `main.js` as an ES module through an import map. Serve the folder statically
 (`python3 -m http.server 8767`) or host on GitHub Pages.
 

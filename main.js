@@ -1,15 +1,15 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=42m';
-import './src/hraudio.js?v=42m';
-import './src/stylize.js?v=42m'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=42m';
-import { FX, SFX } from './src/fx.js?v=42m';
-import { initTouch } from './src/touch.js?v=42m';
-import { createHorseRider } from './src/horse.js?v=42m';
-import { createHorseNet } from './src/horsenet.js?v=42m';
+import './src/assetshim.js?v=42n';
+import './src/hraudio.js?v=42n';
+import './src/stylize.js?v=42n'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=42n';
+import { FX, SFX } from './src/fx.js?v=42n';
+import { initTouch } from './src/touch.js?v=42n';
+import { createHorseRider } from './src/horse.js?v=42n';
+import { createHorseNet } from './src/horsenet.js?v=42n';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=42m';
+import { PF, initPerf } from './src/perf.js?v=42n';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -32,7 +32,8 @@ window.__inputResets = window.__inputResets || [];
 const dropInput = () => { for (const k in keys) keys[k] = false; input.mx = input.mz = 0; input.fire = input.jump = input.use = input.ads = false; P.lookPend = null; window.__touchReset && window.__touchReset(); for (const f of window.__inputResets) { try { f(); } catch (_) {} } window.__inputDrops = (window.__inputDrops || 0) + 1; };
 addEventListener('blur', dropInput); addEventListener('pagehide', dropInput); document.addEventListener('visibilitychange', () => { if (document.hidden) dropInput(); }); window.__dropInput = dropInput;
 const locked = () => document.pointerLockElement === renderer.domElement;
-document.addEventListener('mousemove', e => { if (!locked()) return; look(e.movementX * .0022, e.movementY * .0022); });
+const lookSens = () => { try { return (+localStorage.getItem('hr_sens') || 100) / 100; } catch (_) { return 1; } }; window.__lookSens = lookSens;
+document.addEventListener('mousemove', e => { if (!locked()) return; const k = lookSens(); look(e.movementX * .0022 * k, e.movementY * .0022 * k); });
 function look(dx, dy, src) { const ls = P.lookScale || 1; dx *= ls; dy *= ls; P.swX = (P.swX || 0) + dx; P.swY = (P.swY || 0) + dy;
   if (src === 'touch' && P.lookSmooth) { const q = P.lookPend || (P.lookPend = { x: 0, y: 0 }); q.x += dx; q.y += dy; return; } // in the rifle scope a finger's look is low-pass filtered (drained per frame by hrguns)
   P.yaw -= dx; P.pitch = Math.max(-1.553, Math.min(1.553, P.pitch - dy)); }
@@ -99,7 +100,17 @@ addEventListener('hr-dev', devChaosBtn); setTimeout(devChaosBtn, 1500);
 function syncChaos() { const Zs = horse.state.zombies, b = $('chaosBtn'); if (!Zs || !b) return; const cl = !!(horse.state.netRole && horse.state.netRole() === 'client'), on = cl ? Zs.chaos : Zs.wantChaos;
   b.textContent = '☠ Chaos mode: ' + (on ? 'ON' : 'OFF') + (cl ? ' (host decides)' : ''); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.disabled = cl; }
 function openSettings(on) { const el = $('hrSettings'); el.hidden = !on; const H = horse.state; H.uiOpen = on ? true : !!(H.town2 && H.town2.ui) || !!(H.saloon && H.saloon.isOpen() && !H.seated); if (on) { if (document.pointerLockElement) document.exitPointerLock(); syncFov(); syncChaos(); } }
-function syncFov() { const v = horse.state.fovH; $('fovRange').value = v; $('fovVal').textContent = v + '°'; syncChar(); }
+// v42 settings extras: look speed, volume, graphics quality, controls list
+function setupSettingsX() { const st = (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} }, gt = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch (_) { return d; } };
+  const sr = $('sensRange'), vr = $('volRange'); if (!sr || sr.dataset.on) return; sr.dataset.on = 1;
+  const syncS = () => { sr.value = gt('hr_sens', 100); $('sensVal').textContent = sr.value + '%'; }; sr.oninput = () => { st('hr_sens', sr.value); syncS(); }; syncS();
+  const syncV = () => { const v = +gt('hr_vol', 50); vr.value = v; $('volVal').textContent = v + '%'; sfx.vol = v / 100; if (sfx.master) sfx.master.gain.value = sfx.vol; }; vr.oninput = () => { st('hr_vol', vr.value); syncV(); }; syncV();
+  const cur = gt('vr_quality', 'auto'); for (const b of $('qSeg').children) { b.classList.toggle('on', b.dataset.q === cur); b.onclick = () => { if (b.dataset.q === gt('vr_quality', 'auto')) return; st('vr_quality', b.dataset.q); const u = new URL(location.href); u.searchParams.delete('q'); location.href = u.toString(); }; }
+  const touch = matchMedia('(pointer: coarse)').matches, rows = touch ? [['Left thumb', 'move / steer'], ['Right thumb', 'look around'], ['RIDE / USE', 'mount a horse, talk, buy'], ['DRAW', 'take out a gun'], ['FIRE / AIM', 'shoot / zoom'], ['🧨', 'hold to aim dynamite, let go to throw'], ['JUMP', 'jump'], ['⋯', 'more: settings, fullscreen']]
+    : [['W A S D', 'move / steer'], ['Mouse', 'look'], ['Shift', 'gallop / run'], ['E', 'mount, use, buy'], ['F / 1–6', 'draw a gun / pick one'], ['Click / Right-click', 'shoot / aim'], ['R', 'reload'], ['G (hold)', 'aim dynamite, release to throw'], ['Space', 'jump'], ['O', 'settings']];
+  $('ctlList').innerHTML = rows.map(([k, v]) => `<b>${k}</b><span>${v}</span>`).join(''); }
+setTimeout(() => { try { const v = +(localStorage.getItem('hr_vol') ?? 50); sfx.vol = v / 100; if (sfx.master) sfx.master.gain.value = sfx.vol; } catch (_) {} }, 0);
+function syncFov() { setupSettingsX(); const v = horse.state.fovH; $('fovRange').value = v; $('fovVal').textContent = v + '°'; syncChar(); }
 function syncChar() { const H = horse.state, row = $('charRow'); if (!row || !H.characters) return; if (row.children.length !== H.characters.length) { row.innerHTML = ''; H.characters.forEach((n, i) => { const b = document.createElement('button'); b.textContent = i ? n.split(' ')[0] : 'Classic'; b.title = n; b.dataset.cv = i; b.onclick = () => { H.setCharacter(i); syncChar(); }; row.appendChild(b); }); } for (const b of row.children) b.classList.toggle('on', +b.dataset.cv === (H.cv | 0)); } // v36 character picker (saved; sent to the lobby)
 { const el = $('hrSettings'), r = $('fovRange'), stop = e => e.stopPropagation(); document.body.appendChild(el); document.body.appendChild($('setBtn')); // own stacking context: above the touch look layer
   for (const ev of ['pointerdown', 'mousedown', 'touchstart', 'click', 'wheel']) { el.addEventListener(ev, stop); $('setBtn').addEventListener(ev, stop); }

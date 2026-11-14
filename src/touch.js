@@ -4,7 +4,7 @@
 // add up: the newest drag steers, and when it lifts the older one takes over again from where it is (no jump).
 export function initTouch(input, look, act, unlockAudio) {
   const $ = id => document.getElementById(id); const joy = $('joy'), stick = $('stick'), knob = $('knob'), lookEl = $('look');
-  const R = 55, sens = () => 0.0055 * 900 / Math.max(600, innerWidth);
+  const R = 55, sens = () => 0.0055 * 900 / Math.max(600, innerWidth) * (window.__lookSens ? window.__lookSens() : 1);
   const cap = (el, e) => { try { el.setPointerCapture(e.pointerId); } catch (_) {} };
   let jid = null, jx = 0, jy = 0;
   const showStick = (x, y) => { stick.style.left = x + 'px'; stick.style.top = y + 'px'; stick.classList.add('active'); knob.style.transform = ''; };

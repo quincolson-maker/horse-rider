@@ -208,6 +208,26 @@ body.sty.touch #hrPrompt{font-size:.85em;top:auto;bottom:18%}
 body.sty.touch #hrLB{top:8px;right:8px;font-size:10px;padding:3px 6px;background:rgba(8,24,74,.45)}body.sty.touch #hrLB b{display:none}
 #cpins{position:absolute;left:50%;top:0;width:0;height:100%}#cpins i{position:absolute;left:-14px;top:17px;width:28px;text-align:center;font-style:normal;font-size:13px;line-height:1;filter:drop-shadow(0 1px 1px #000)}#cpins i b{display:block;font:700 9px system-ui;color:#fff;text-shadow:0 1px 2px #000}
 body.sty #compass{height:44px}
+
+/* v42 settings: scrollable sheet, sticky header with a big close button, sections */
+#hrSettings{position:fixed!important;z-index:70;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;width:min(94vw,440px)!important;min-width:0!important;max-height:min(92vh,640px);display:flex;flex-direction:column;padding:0!important;background:linear-gradient(180deg,rgba(16,40,110,.97),rgba(8,20,64,.97))!important;color:#fff!important;border:0!important;border-radius:14px!important;box-shadow:0 10px 40px #000a;font:600 15px system-ui!important;touch-action:pan-y!important;overflow:hidden}
+#hrSettings[hidden]{display:none!important}
+#hrSettings .sHead{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 10px 18px;background:rgba(0,0,0,.25);border-bottom:3px solid #ffe11a;flex:none}
+#hrSettings h3{margin:0!important;font:900 italic 20px system-ui;letter-spacing:.06em}
+#hrSettings #setClose{width:46px;height:46px;border-radius:50%!important;font-size:22px!important;padding:0!important;background:#ffe11a!important;color:#10183a!important;box-shadow:0 3px 0 #a88a00!important;transform:none!important}
+#hrSettings .sBody{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 16px 18px;touch-action:pan-y}
+#hrSettings section{background:rgba(255,255,255,.07);border-radius:10px;padding:10px 12px;margin-top:10px}
+#hrSettings .sT{font:900 italic 14px system-ui;letter-spacing:.08em;text-transform:uppercase;color:#ffe11a;margin-bottom:6px}
+#hrSettings .sRow{display:flex!important;justify-content:space-between;align-items:center;font-size:15px}#hrSettings .sRow b{color:#ffe11a}
+#hrSettings input[type=range]{display:block;width:100%;height:36px;margin:2px 0;accent-color:#ffe11a;touch-action:pan-x}
+#hrSettings .hint{font-size:12px!important;opacity:.75;margin:2px 0 8px}
+#hrSettings .link{background:none!important;box-shadow:none!important;color:#7fd4ff!important;padding:0 0 0 6px!important;font:700 12px system-ui!important;text-transform:none!important;text-decoration:underline;transform:none!important}
+#hrSettings .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+#hrSettings .seg button,#hrSettings #charRow button,#hrSettings .tog{min-height:44px;padding:.4em .5em!important;font-size:14px!important;transform:none!important;background:rgba(255,255,255,.12)!important;box-shadow:none!important;color:#fff!important;border-radius:8px!important}
+#hrSettings .seg button.on,#hrSettings #charRow button.on,#hrSettings .tog[aria-pressed=true]{background:#ffe11a!important;color:#10183a!important}
+#hrSettings .tog{width:100%}
+#hrSettings #charRow{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+#hrSettings .ctl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px}#hrSettings .ctl b{color:#ffe11a;white-space:nowrap}
 /* title screen */
 #fnSplash{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2vmin;
  background:radial-gradient(ellipse at 50% 38%,rgba(90,200,255,.25),rgba(10,30,110,.55) 60%,rgba(6,12,50,.88));-webkit-backdrop-filter:blur(6px) saturate(1.3);backdrop-filter:blur(6px) saturate(1.3);transition:opacity .45s,transform .45s}
@@ -224,7 +244,7 @@ body.sty #compass{height:44px}
 </style>
 </head><body>
 <div id="fnSplash"><div class="logo">Horse<br>Rider</div><div class="tag">Wild Frontier · Season 1</div><button class="play" id="fnPlay">Play</button>
-<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v42m · updated Nov 14</div></div>
+<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v42n · updated Nov 14</div></div>
 <script>(function(){var q=new URLSearchParams(location.search);var real=q.get('style')==='real';if(!real)document.body.classList.add('sty');var sp=document.getElementById('fnSplash');
 if(real||q.has('dev')||q.has('auto')||q.get('splash')==='0'){sp.remove();return;}
 if(matchMedia('(pointer: coarse)').matches)document.getElementById('fnHint').textContent='Left side: move & steer · right side: look · tap RIDE near a horse';
@@ -234,7 +254,16 @@ document.getElementById('fnPlay').addEventListener('click',go);addEventListener(
 <div id="hud" style="display:none">
 <div id="vign"></div><div id="nums"></div>
  <div id="top" class="pill"><div class="row"><span id="mode"></span><span id="timer"></span><span id="stars"></span></div><div id="sub" style="font-size:.8em;opacity:.85"></div><div class="bar"><i id="dbar"></i></div></div>
- <div id="compass"><div id="cstrip"></div><div id="cpins"></div><div id="chead"></div></div><div id="hitm">✕</div><div id="msg"></div><div id="hrPrompt" hidden></div><button id="setBtn" title="Settings (O)">⚙</button><div id="hrSettings" hidden><h3>SETTINGS</h3><label>Field of view <b id="fovVal">70°</b><input id="fovRange" type="range" min="55" max="100" step="1" value="70"></label><div class="hint">Narrower = more zoomed in. Scopes scale with it.</div><div class="clbl">Zombies</div><div class="row"><button id="chaosBtn" aria-pressed="false">☠ Chaos mode: OFF</button></div><div class="hint" id="chaosHint">Ten times the dead: 420 on a computer, 180 on a phone. In co-op the host decides.</div><div class="clbl">Character</div><div id="charRow"></div><div class="row"><button id="fovReset">Default (70°)</button><button id="setClose">✕ Close</button></div></div>
+ <div id="compass"><div id="cstrip"></div><div id="cpins"></div><div id="chead"></div></div><div id="hitm">✕</div><div id="msg"></div><div id="hrPrompt" hidden></div><button id="setBtn" title="Settings (O)">⚙</button><div id="hrSettings" hidden><div class="sHead"><h3>⚙ SETTINGS</h3><button id="setClose" aria-label="Close settings">✕</button></div><div class="sBody">
+<section><div class="sT">🎮 Gameplay</div>
+<label class="sRow"><span>Field of view</span><b id="fovVal">70°</b></label><input id="fovRange" type="range" min="55" max="100" step="1" value="70"><div class="hint">Lower = more zoomed in. <button id="fovReset" class="link">Reset to 70°</button></div>
+<label class="sRow"><span>Look speed</span><b id="sensVal">100%</b></label><input id="sensRange" type="range" min="30" max="250" step="5" value="100"><div class="hint">How fast the camera turns when you drag or move the mouse.</div></section>
+<section><div class="sT">🔊 Sound</div><label class="sRow"><span>Volume</span><b id="volVal">50%</b></label><input id="volRange" type="range" min="0" max="100" step="5" value="50"></section>
+<section><div class="sT">✨ Graphics</div><div class="seg" id="qSeg"><button data-q="low">Low</button><button data-q="medium">Medium</button><button data-q="high">High</button><button data-q="auto">Auto</button></div><div class="hint">Low runs smoothest on older phones. Changing this reloads the game.</div></section>
+<section><div class="sT">☠ Zombies</div><button id="chaosBtn" class="tog" aria-pressed="false">☠ Chaos mode: OFF</button><div class="hint" id="chaosHint">Ten times the dead: 420 on a computer, 180 on a phone. In co-op the host decides.</div></section>
+<section><div class="sT">🤠 Character</div><div id="charRow"></div></section>
+<section><div class="sT">❓ Controls</div><div class="ctl" id="ctlList"></div></section>
+</div></div>
  <div id="vitals" class="pill"><div class="bar" id="hpbar"><i id="hp"></i></div><div id="ammo"></div><div id="res"></div></div>
  <div id="right" class="pill"></div><div id="fps" hidden></div><div id="keyhint">H · controls</div><div id="keys" class="pill" hidden></div>
 </div>
@@ -279,5 +308,5 @@ document.getElementById('fnPlay').addEventListener('click',go);addEventListener(
 </script>
 <script src="./vendor/peerjs.min.js"></script>
 <script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
-<script type="module" src="./main.js?v=42m" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
+<script type="module" src="./main.js?v=42n" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
 </body></html>

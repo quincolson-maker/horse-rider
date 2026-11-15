@@ -5,11 +5,11 @@
 // lobby. Transport is the existing PeerJS co-op star (src/coop.js); voice is the existing mesh (src/voice.js).
 // Synced: each rider's position / facing / walking speed, which horse they ride and its pose; the host is the authority
 // for the free herd (clients mirror it). Guns: other riders see your drawn gun, aim and shots (tracer, flash, smoke, sound) — visual only, no combat.
-import { createNet, MAX_PLAYERS } from './coop.js?v=53';
-import { PERF } from './perfopts.js?v=53';
-import { validCv } from './hrskin.js?v=53';
-import { createVoice } from './voice.js?v=53';
-import { createAdvert, LOBBY_URL } from './lobby.js?v=53';
+import { createNet, MAX_PLAYERS } from './coop.js?v=54';
+import { PERF } from './perfopts.js?v=54';
+import { validCv } from './hrskin.js?v=54';
+import { createVoice } from './voice.js?v=54';
+import { createAdvert, LOBBY_URL } from './lobby.js?v=54';
 const $ = id => document.getElementById(id);
 const QS = new URLSearchParams(location.search);
 const LOOP = QS.get('loopnet') === '1', LOCAL = /^(localhost|127\.|\[::1\])/.test(location.hostname);
@@ -94,6 +94,7 @@ export function createHorseNet({ horse, P, msg }) {
       case 'tms': if (isClient() && H.temple) H.temple.netIn(m); break; // the host's ordered action log
       case 'dyn': { const id = isHost() ? S.peers.get(from) : m.id; if (!id || id === S.me) break; H.dyn && H.dyn.remote(m); if (isHost()) net.send({ t: 'dyn', p: m.p, v: m.v, f: m.f, id }, null, from); break; }
       case 'sun': { const id = isHost() ? S.peers.get(from) : m.id; if (!id || id === S.me) break; H.sun && H.sun.remote(m); if (isHost()) net.send({ t: 'sun', o: m.o, e: m.e, id }, null, from); break; } // a Sun Pyramid beam (visual)
+      case 'rc': { const id = isHost() ? S.peers.get(from) : m.id; if (!id || id === S.me) break; H.race && H.race.netIn(m, id); if (isHost()) net.send({ t: 'rc', k: m.k, n: m.n, tm: m.tm, id }, null, from); break; } // v54 races
       case 'cv': if (isClient() && H.cave) H.cave.netIn(m); break; // v38 Bandit Falls: the host's hideout state
       case 'cvk': if (isHost() && H.cave) H.cave.netIn(m, S.peers.get(from)); break; // a client took the vault key // a zombie hit me (host decides)
       case 'join': if (isClient()) addRemote(m.id); break;

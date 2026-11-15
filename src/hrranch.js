@@ -55,9 +55,11 @@ export function createRanch({ scene, H, P, T, hAt, msg, sfx, makeRealHorse, real
   const puffT = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(220,220,220,.7)'); gr.addColorStop(1, 'rgba(220,220,220,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
   const PN = 14; function makePuffs() { const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(PN * 3), 3)); const pu = new THREE.Points(pg, new THREE.PointsMaterial({ map: puffT, size: 2.4, transparent: true, depthWrite: false, opacity: .55 })); pu.frustumCulled = false; scene.add(pu); return pu; }
   // ranch horses (wait for the models)
-  function stockCorral(hs) { const horses = hs.horses, site = hs.site; if (horses.length || !H.A || !makeRealHorse) return; const coat = hs.mine && H.myCoat ? H.myCoat() : hs.site.c ?? -1; for (let i = 0; i < 2; i++) { const g = makeRealHorse(H.A, 0); if (H.applyCoat) { g.userData.kind = 'real'; }
-      const [cu, cv] = hs.corral, [hx, hz] = hs.W(cu - 2 + i * 4, cv + (i ? 1.5 : -1.5)); g.position.set(hx, hAt(hx, hz), hz); g.rotation.y = site.rot + i * 2.2; scene.add(g); horses.push({ g, t: Math.random() * 9, ci: coat >= 0 ? coat : (i ? 3 : 0) });
-      const ci = horses[i].ci; if (H.A.matN && H.A.matN[ci]) { g.userData.near.material = H.A.matN[ci]; g.userData.far.material = H.A.matF[ci]; } } }
+  function stockCorral(hs) { const horses = hs.horses; if (horses.length || !H.A || !makeRealHorse) return; const coat = hs.mine && H.myCoat ? H.myCoat() : hs.site.c ?? -1;
+    const list = [coat >= 0 ? coat : 0, coat >= 0 ? coat : 3, ...(hs.mine ? (H.tamed || []).slice(-4) : [])]; // v60: tamed mustangs live here too
+    list.forEach((ci, i) => { const g = makeRealHorse(H.A, 0), [cu, cv] = hs.corral, col = i % 3, row = Math.floor(i / 3), [hx, hz] = hs.W(cu - 4 + col * 4, cv - 2 + row * 3.6);
+      g.position.set(hx, hAt(hx, hz), hz); g.rotation.y = hs.site.rot + i * 2.2; scene.add(g); if (H.A.matN && H.A.matN[ci]) { g.userData.near.material = H.A.matN[ci]; g.userData.far.material = H.A.matF[ci]; } horses.push({ g, t: Math.random() * 9, ci }); }); }
+  function addHorse() { if (!mine) return; for (const h of mine.horses) h.g.removeFromParent(); mine.horses.length = 0; }
   // store deed
   const deed = { state: { id: 'ranch-deed', get name() { return site ? '🏠 Ranch Deed · yours! (compass: RANCH)' : '🏠 Ranch Deed · your own homestead, cabin & corral'; }, price: 5000, get owned() { return !!site; }, get maxed() { return !!site; }, equipped: false, get label() { return site ? 'OWNED' : null; } },
     buy() { if (site) return; const g = H.guns; if (!g || g.pts() < 5000) { msg('Not enough points', 1.5); return; } const st = pickSite(); if (!st) { msg('No free land found — try again from town', 2); return; }
@@ -76,5 +78,5 @@ export function createRanch({ scene, H, P, T, hAt, msg, sfx, makeRealHorse, real
     others.set(id, homestead(st, name || 'A rider', false)); msg(`🏠 ${name || 'A rider'}'s ranch is on your compass`, 2.5); }
   function drop(id) { const o = others.get(id); if (o) { o.dispose(); others.delete(id); } }
   const netSite = () => site ? [+site.x.toFixed(1), +site.z.toFixed(1), +site.rot.toFixed(3), H.myCoat ? H.myCoat() : -1] : null;
-  return { update, remote, drop, netSite, get owned() { return !!site; }, get site() { return site; }, others };
+  return { update, remote, drop, netSite, addHorse, get owned() { return !!site; }, get site() { return site; }, others };
 }

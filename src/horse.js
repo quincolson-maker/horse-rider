@@ -5,41 +5,42 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=59';
-import { PERF } from './perfopts.js?v=59';
-import { PF } from './perf.js?v=59';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=60';
+import { PERF } from './perfopts.js?v=60';
+import { PF } from './perf.js?v=60';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=59';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=59';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=59';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=59';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=59';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=59';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=59';
-import { createGuns } from './hrguns.js?v=59';
-import { createHrZombies } from './hrzombies.js?v=59';
-import { createFlora } from './hrflora.js?v=59';
-import { createBounty } from './hrbounty.js?v=59';
-import { createNuggets } from './hrnuggets.js?v=59';
-import { createStable } from './hrstable.js?v=59';
-import { createLeaderboard } from './hrlb.js?v=59';
-import { createNight } from './hrnight.js?v=59';
-import { createRace } from './hrrace.js?v=59';
-import { buildPalisade } from './hrpalisade.js?v=59';
-import { createWeather } from './hrweather.js?v=59';
-import { createMusic } from './hrmusic.js?v=59';
-import { createTownLife } from './hrtownlife.js?v=59';
-import { createRanch } from './hrranch.js?v=59';
-import { createEvents } from './hrevents.js?v=59';
-import { createTown, wearJacket, townNight } from './hrtown.js?v=59';
-import { createSaloon } from './hrsaloon.js?v=59';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=59';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=59';
-import { createDynamite } from './hrdynamite.js?v=59';
-import { createSunItem } from './hrsunweapon.js?v=59';
-import { createBuild } from './hrbuild.js?v=59';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=59';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=59';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=60';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=60';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=60';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=60';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=60';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=60';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=60';
+import { createGuns } from './hrguns.js?v=60';
+import { createHrZombies } from './hrzombies.js?v=60';
+import { createFlora } from './hrflora.js?v=60';
+import { createBounty } from './hrbounty.js?v=60';
+import { createNuggets } from './hrnuggets.js?v=60';
+import { createStable } from './hrstable.js?v=60';
+import { createLeaderboard } from './hrlb.js?v=60';
+import { createNight } from './hrnight.js?v=60';
+import { createRace } from './hrrace.js?v=60';
+import { buildPalisade } from './hrpalisade.js?v=60';
+import { createWeather } from './hrweather.js?v=60';
+import { createMusic } from './hrmusic.js?v=60';
+import { createTownLife } from './hrtownlife.js?v=60';
+import { createRanch } from './hrranch.js?v=60';
+import { createEvents } from './hrevents.js?v=60';
+import { createWild } from './hrwild.js?v=60';
+import { createTown, wearJacket, townNight } from './hrtown.js?v=60';
+import { createSaloon } from './hrsaloon.js?v=60';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=60';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=60';
+import { createDynamite } from './hrdynamite.js?v=60';
+import { createSunItem } from './hrsunweapon.js?v=60';
+import { createBuild } from './hrbuild.js?v=60';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=60';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=60';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -574,7 +575,7 @@ export function createHorseRider(ctx) {
     ci = ci % 5; H.A = A; const sk = new THREE.Skeleton(bones), near = new THREE.SkinnedMesh(A.gN, A.matN[ci]), far = new THREE.SkinnedMesh(A.gF, A.matF[ci]);
     for (const m of [near, far]) { mdl.add(m); m.bind(sk); m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; }
     far.visible = false; const sad = makeSaddle(PBRS); mdl.add(sad); g.updateMatrixWorld(true); bones[1].attach(sad); // follow the trunk bone
-    g.userData = { kind: 'real', bones, near, far, mdl, phase: rnd(), seed: rnd() * 10, bodyY: bones[1].position.y, coat: COATS[ci].n };
+    g.userData = { kind: 'real', bones, near, far, mdl, phase: rnd(), seed: rnd() * 10, bodyY: bones[1].position.y, coat: COATS[ci].n, saddle: sad };
     return g;
   }
   function spawnHorses() {
@@ -752,6 +753,7 @@ export function createHorseRider(ctx) {
     guns = H.guns = createGuns({ scene, camera, P, H, hAt, sfx, fx: ctx.fx, msg, mobile, input, keys, renderer: GX.renderer, rig: () => real() ? rider : null, aimBone, twistBone, RANGE, BASE, dev: new URLSearchParams(location.search).has('dev'), send: m => H.netShot && H.netShot(m), zombies: () => zombies });
     if (typeof window !== 'undefined') window.__hrH = H; // v44: touch whistle button
     try { H.nightEv = createNight({ scene, H, P, hAt, sfx, msg, makeRealHorse, realAnim, riderPose, saveRest, cloneSkinned, meSeat: me.seat, WALK }); } catch (e) { console.warn('night events', e); } // v50
+    try { H.wild = createWild({ scene, H, P, hAt, msg, sfx, makeRealHorse, realAnim, mobile }); } catch (e) { console.warn('wild', e); } // v60
     try { H.events = createEvents({ scene, H, P, T: town2, hAt, msg, sfx, send: m => H.zSend && H.zSend(m), role: () => H.netRole ? H.netRole() : 'solo' }); } catch (e) { console.warn('events', e); } // v58
     try { H.ranch = createRanch({ scene, H, P, T: town2, hAt, msg, sfx, makeRealHorse, realAnim, PEN }); } catch (e) { console.warn('ranch', e); } // v57
     try { H.townLife = createTownLife({ scene, H, P, T: town2, hAt, msg, makeRealHorse, realAnim, PEN, mobile }); } catch (e) { console.warn('town life', e); } // v56
@@ -762,7 +764,7 @@ export function createHorseRider(ctx) {
     try { H.nuggets = createNuggets({ scene, H, P, hAt, WALK, sfx, msg }); } catch (e) { console.warn('nuggets', e); } // v43
     try { H.bounty = createBounty({ H, P, T: town2, msg, sfx, PEN }); } catch (e) { console.warn('bounty', e); } // v43 bounty board
     H.gatlingSpin = (k, held) => sfx.spin && sfx.spin(k, held);
-    H.onGunShot = (w, o, dir) => { if (H.cave && H.cave.inside(P.pos.x, P.pos.z)) H.cave.provoke(); if (H.nightEv) H.nightEv.shot(o, dir); }; // v41: a shot fired inside Bandit Falls starts the gunfight
+    H.onGunShot = (w, o, dir) => { if (H.cave && H.cave.inside(P.pos.x, P.pos.z)) H.cave.provoke(); if (H.nightEv) H.nightEv.shot(o, dir); for (const f of (H.shotHooks || [])) try { f(o, dir, w); } catch (_) {} }; // v41: a shot fired inside Bandit Falls starts the gunfight
     H.dyn = createDynamite({ scene, H, P, camera, sfx, msg, mobile, input: ctx.input, fx: ctx.fx, role: () => H.netRole ? H.netRole() : 'solo', send: m => H.zSend && H.zSend(m),
       ground: (x, z, y) => { let g = town2 ? town2.floorAt(x, z, y) : hAt(x, z); if (H.cave) { const cg = H.cave.groundAt ? H.cave.groundAt(x, z, y) : null; g = cg !== null && cg !== undefined ? cg : H.cave.floorAt(x, z, y, g); } if (H.temple) { const tg = H.temple.groundAt(x, z, y); if (tg !== null) g = tg; } return g; } }); // v42 dynamite
     try { const has = () => { try { return localStorage.getItem('hr_coatkit') === '1'; } catch (_) { return false; } }; // v47 Coat Kit
@@ -910,7 +912,7 @@ export function createHorseRider(ctx) {
     if (!H.warm && H.t > 2.5 && H.models !== 'loading') prewarm();
     if (sfx.amb) { const C = H.cave, e = C && C.cave ? C.cave.entrance : null, fire = C && C.fireAt ? C.fireAt() : null, river = C && C.riverAt ? C.riverAt() : null, inSal = !!(H.saloon && H.saloon.inside && H.saloon.inside());
       sfx.amb(dt, { outdoors: true, day: 1, saloon: inSal, cave: H.caveDark || 0, falls: e ? Math.hypot(P.pos.x - e.x, P.pos.y - e.y, P.pos.z - e.z) : null, fire: fire ? P.pos.distanceTo(fire) : null, river: river ? P.pos.distanceTo(river) : null }); }
-    if (H.fallT > 0) H.fallT -= dt; PF.s('town'); if (town2) town2.tick(dt); if (H.nuggets) H.nuggets.update(dt); if (H.nightEv) H.nightEv.update(dt); if (H.race) H.race.update(dt); if (H.weather) H.weather.update(dt); if (H.music) H.music.update(dt); if (H.townLife) H.townLife.update(dt); if (H.ranch) H.ranch.update(dt); if (H.events) H.events.update(dt); if (H.bounty) H.bounty.update(dt); PF.e('town'); PF.s('saloon'); if (H.saloon) H.saloon.tick(dt); PF.e('saloon'); PF.s('cave'); if (H.cave) H.cave.update(dt); if (H.temple) H.temple.update(dt); if (H.sun) H.sun.update(dt); if (H.dyn) H.dyn.update(dt); PF.e('cave'); PF.s('build'); if (H.build) H.build.tick(dt); PF.e('build'); PF.s('player');
+    if (H.fallT > 0) H.fallT -= dt; PF.s('town'); if (town2) town2.tick(dt); if (H.nuggets) H.nuggets.update(dt); if (H.nightEv) H.nightEv.update(dt); if (H.race) H.race.update(dt); if (H.weather) H.weather.update(dt); if (H.music) H.music.update(dt); if (H.townLife) H.townLife.update(dt); if (H.ranch) H.ranch.update(dt); if (H.events) H.events.update(dt); if (H.wild) H.wild.update(dt); if (H.bounty) H.bounty.update(dt); PF.e('town'); PF.s('saloon'); if (H.saloon) H.saloon.tick(dt); PF.e('saloon'); PF.s('cave'); if (H.cave) H.cave.update(dt); if (H.temple) H.temple.update(dt); if (H.sun) H.sun.update(dt); if (H.dyn) H.dyn.update(dt); PF.e('cave'); PF.s('build'); if (H.build) H.build.tick(dt); PF.e('build'); PF.s('player');
     if (H.dead) { H.fv.x = H.fv.y = 0; } else if (!h && H.pass) passenger(dt); else if (h) ride(h, dt, stick > .05 ? 0 : fwdIn, stick > .05 ? 0 : sideIn, stick, jump); else walk(dt, fwdIn, sideIn, stick, run, jump);
     PF.e('player'); PF.s('herd');
     for (const o of H.horses) { if (o === h) continue;

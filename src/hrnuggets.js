@@ -24,7 +24,7 @@ export function createNuggets({ scene, H, P, hAt, WALK, sfx, msg }) {
   function update(dt) { if (!built) { if (!H.places) return; build(); } t += dt; spark.material.size = .9 + .45 * Math.abs(Math.sin(t * 2.6)); mat.emissiveIntensity = .45 + .35 * Math.abs(Math.sin(t * 2.6));
     const px = (H.mounted ? H.mounted.pos : P.pos).x, pz = (H.mounted ? H.mounted.pos : P.pos).z, py = (H.mounted ? H.mounted.pos : P.pos).y, R = H.mounted ? 2.6 : 1.7;
     for (const s of spots) { if (found.has(s.id) || Math.abs(s.x - px) > R || Math.abs(s.z - pz) > R || Math.abs(s.y - py) > 3) continue; if (Math.hypot(s.x - px, s.z - pz) > R) continue;
-      found.add(s.id); save(); refresh(); const g = H.guns && H.guns.state; if (g) { g.score += NUGGET_PTS; H.guns.save && H.guns.save(); }
+      found.add(s.id); save(); refresh(); const g = H.guns && H.guns.state; if (g) { g.score += NUGGET_PTS; H.guns.save && H.guns.save(); } H.lb && H.lb.add(NUGGET_PTS);
       msg && msg(`Gold nugget! +${NUGGET_PTS} pts  (${found.size} / ${NUGGET_N})`, 2.2); if (sfx && sfx.ctx && sfx.tone) [1568, 2093, 2637].forEach((f, i) => setTimeout(() => sfx.tone('sine', f, f, .18, .14), i * 70)); } }
   return { update, get found() { return found.size; }, total: NUGGET_N, spots, nearest() { let b = null, bd = 1e9; for (const s of spots) { if (found.has(s.id)) continue; const d = Math.hypot(s.x - P.pos.x, s.z - P.pos.z); if (d < bd) { bd = d; b = s; } } return b; } };
 }

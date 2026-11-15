@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=48';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=48';
-import './src/hraudio.js?v=48';
-import './src/stylize.js?v=48'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=48';
-import { FX, SFX } from './src/fx.js?v=48';
-import { initTouch } from './src/touch.js?v=48';
-import { createHorseRider } from './src/horse.js?v=48';
-import { createHorseNet } from './src/horsenet.js?v=48';
+import './src/assetshim.js?v=49';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=49';
+import './src/hraudio.js?v=49';
+import './src/stylize.js?v=49'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=49';
+import { FX, SFX } from './src/fx.js?v=49';
+import { initTouch } from './src/touch.js?v=49';
+import { createHorseRider } from './src/horse.js?v=49';
+import { createHorseNet } from './src/horsenet.js?v=49';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=48';
+import { PF, initPerf } from './src/perf.js?v=49';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -43,7 +43,7 @@ addEventListener('contextmenu', e => e.preventDefault());
 const input = { mx: 0, mz: 0, fire: false, jump: false, ads: false };
 const act = { settings: () => openSettings(true), build: () => horse.use(), ads() { input.ads = !input.ads; }, help() { const k = $('keys'); k.hidden = !k.hidden; },
   fs() { if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else goFullscreen(); } };
-function onKey(c) { if (G.phase == 'menu') return; if (c == 'KeyO') openSettings($('hrSettings').hidden); if (c == 'KeyE') horse.use(); if (c == 'KeyZ' && horse.state.whistle) horse.state.whistle(); if (c == 'KeyH') act.help(); if (c == 'KeyV') hnet.voice.toggle(); }
+function onKey(c) { if (G.phase == 'menu') return; if (c == 'KeyO') openSettings($('hrSettings').hidden); if (c == 'KeyE') horse.use(); if (c == 'KeyL' && horse.state.lb) horse.state.lb.open(); if (c == 'KeyZ' && horse.state.whistle) horse.state.whistle(); if (c == 'KeyH') act.help(); if (c == 'KeyV') hnet.voice.toggle(); }
 // first tap / click / key: unlock audio, re-ask for the mic if it was refused without a gesture, phones go fullscreen
 let gestured = false; function gesture() { sfx.init(); if (gestured) return; gestured = true; hnet.prime(); if (IS_TOUCH) goFullscreen(); }
 addEventListener('pointerdown', gesture, true); addEventListener('keydown', gesture, true);
@@ -105,6 +105,7 @@ function devChaosBtn() { let on = false; try { on = localStorage.getItem('hr_dev
   b.onclick = e => { e.stopPropagation(); const Zs = horse.state.zombies; if (!Zs || !Zs.setMaxChaos) { msg('Zombies are off in this game', 2); return; } if (horse.state.netRole && horse.state.netRole() === 'client') { msg('Only the host can start chaos', 2); return; }
     Zs.setMaxChaos(!Zs.maxChaos); sync(); syncChaos(); msg(Zs.maxChaos ? '☠ MAX CHAOS — the horde is coming' : 'Chaos stopped', 2.5); };
   ['pointerdown', 'touchstart'].forEach(ev => b.addEventListener(ev, e => e.stopPropagation(), { passive: true })); document.body.appendChild(b); sync(); }
+{ const b = document.getElementById('mLB'); if (b) b.onclick = () => { const m = $('uiMore'); if (m) m.hidden = true; horse.state.lb && horse.state.lb.open(); }; } // v49
 function chaosToMenu() { const b = $('devChaos'), m = $('uiMore'); if (!IS_TOUCH || !b || !m || $('mChaos')) return; b.style.setProperty('display', 'none', 'important'); // v45: on phones MAX CHAOS lives in the ⋯ menu
   const mb = document.createElement('button'); mb.id = 'mChaos'; mb.style.color = '#ffb3a8'; const lab = () => { const Z = horse.state.zombies; mb.textContent = Z && Z.maxChaos ? '☠ Stop chaos' : '☠ Max Chaos'; }; lab(); mb.onclick = e => { b.click(); lab(); }; m.insertBefore(mb, m.lastChild); }
 addEventListener('hr-dev', () => setTimeout(chaosToMenu, 50)); setTimeout(chaosToMenu, 1600);

@@ -3,12 +3,12 @@
 // by Quin (src/hrbanditcave.js, credited in CREDITS.md). This file places it in our world — a flattened notch in a hillside,
 // picked the same way on every machine — and wires it into our controller (walls + floors), guns (rock stops bullets),
 // host-authoritative co-op (the host runs the outlaws and the vault) and game points. Points are game points only.
-import { CAVE_CUT } from './hrworld.js?v=48';
+import { CAVE_CUT } from './hrworld.js?v=49';
 import * as THREE from 'three';
-import { createHideout } from './hrhideout.js?v=48';
-import { createFalls, baseZ } from './hrfalls.js?v=48';
-import { makeFrontierCharacter } from './hrcharacters.js?v=48';
-import { poseDoll } from './hrsaloon.js?v=48';
+import { createHideout } from './hrhideout.js?v=49';
+import { createFalls, baseZ } from './hrfalls.js?v=49';
+import { makeFrontierCharacter } from './hrcharacters.js?v=49';
+import { poseDoll } from './hrsaloon.js?v=49';
 
 export const CAVE = { chest: 2500, dance: 50, slotBet: 10, outlaw: 60, outlawHead: 75 };
 const FU = 40, FV0 = -59, FV1 = 8, BL = 16, BS = 5; // footprint in the cave's own frame (u across, v out of the mouth); terrain blend: 16 m apron in front, 5 m to the sides and back (the hill meets the rock)

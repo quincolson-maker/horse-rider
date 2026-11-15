@@ -3,7 +3,7 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=48'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=49'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -332,11 +332,11 @@ export function createGuns(c) {
     const bonus = stN * 5; state.score += bonus; [0, 90, 180].slice(0, Math.min(3, 1 + (stN >= 5) + (stN >= 8))).forEach((d, i) => setTimeout(() => tone('square', 660 * (1 + i * .26), 990 * (1 + i * .26), .12, .12), d)); }
   function award(head, kind) { const ST = H.stats || (H.stats = (() => { try { return JSON.parse(localStorage.getItem('hr_stats') || '{}'); } catch (_) { return {}; } })()); // v47 lifetime stats for bounties
     const bump = k => { ST[k] = (ST[k] || 0) + 1; try { localStorage.setItem('hr_stats', JSON.stringify(ST)); } catch (_) {} };
-    if (kind === 'outlawBoss') { const p = head ? 1500 : 1200; state.score += p; state.outlaws = (state.outlaws || 0) + 1; bump('diablo'); say(`EL DIABLO IS DOWN  +${p}`); save(); return p; }
+    if (kind === 'outlawBoss') { const p = head ? 1500 : 1200; state.score += p; H.lb && H.lb.add(p, 'boss'); state.outlaws = (state.outlaws || 0) + 1; bump('diablo'); say(`EL DIABLO IS DOWN  +${p}`); save(); return p; }
     if (kind === 'boss') bump('hulk'); else if (kind !== 'outlaw' && (H.night || 0) > .5) bump('nightKills');
-    if (kind !== 'outlaw') streak(); if (kind === 'outlaw') { const p = head ? 75 : 60; state.score += p; state.outlaws = (state.outlaws || 0) + 1; say(head ? `Headshot! Outlaw down  +${p}` : `Outlaw down  +${p}`); save(); return p; } // v38 Bandit Falls guards
-    if (kind === 'boss') { const p = head ? 750 : 500; state.score += p; state.kills = (state.kills || 0) + 1; say(`THE HULKING DEAD IS DOWN  +${p}`); save(); return p; } // v43
-    const pts = head ? 15 : 10; state.score += pts; state.kills = (state.kills || 0) + 1; say(head ? `Headshot! Zombie down  +${pts}` : `Zombie down  +${pts}`); save(); return pts; } // host-authoritative in co-op (the host sends 'zk')
+    if (kind !== 'outlaw') streak(); if (kind === 'outlaw') { const p = head ? 75 : 60; state.score += p; H.lb && H.lb.add(p, 'kill'); state.outlaws = (state.outlaws || 0) + 1; say(head ? `Headshot! Outlaw down  +${p}` : `Outlaw down  +${p}`); save(); return p; } // v38 Bandit Falls guards
+    if (kind === 'boss') { const p = head ? 750 : 500; state.score += p; H.lb && H.lb.add(p, 'boss'); state.kills = (state.kills || 0) + 1; say(`THE HULKING DEAD IS DOWN  +${p}`); save(); return p; } // v43
+    const pts = head ? 15 : 10; state.score += pts; H.lb && H.lb.add(pts, 'kill'); state.kills = (state.kills || 0) + 1; say(head ? `Headshot! Zombie down  +${pts}` : `Zombie down  +${pts}`); save(); return pts; } // host-authoritative in co-op (the host sends 'zk')
   function save() { try { localStorage.setItem('hr_v33', JSON.stringify({ score: state.score, kills: state.kills || 0, spent: state.spent || 0, owned: state.owned, up: state.up, att: state.att })); } catch (_) {} }
 
   function draw(w) { if (!models[w] || !state.owned[w]) return false; if (H.dyn && H.dyn.equipped()) H.dyn.equip(false); if (H.mountT > 0 || H.dismT > 0) return false; if (state.weapon === w) return true;

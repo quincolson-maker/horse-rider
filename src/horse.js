@@ -5,35 +5,35 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=50';
-import { PERF } from './perfopts.js?v=50';
-import { PF } from './perf.js?v=50';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=51';
+import { PERF } from './perfopts.js?v=51';
+import { PF } from './perf.js?v=51';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=50';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=50';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=50';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=50';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=50';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=50';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=50';
-import { createGuns } from './hrguns.js?v=50';
-import { createHrZombies } from './hrzombies.js?v=50';
-import { createFlora } from './hrflora.js?v=50';
-import { createBounty } from './hrbounty.js?v=50';
-import { createNuggets } from './hrnuggets.js?v=50';
-import { createStable } from './hrstable.js?v=50';
-import { createLeaderboard } from './hrlb.js?v=50';
-import { createNight } from './hrnight.js?v=50';
-import { createRace } from './hrrace.js?v=50';
-import { createTown, wearJacket, townNight } from './hrtown.js?v=50';
-import { createSaloon } from './hrsaloon.js?v=50';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=50';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=50';
-import { createDynamite } from './hrdynamite.js?v=50';
-import { createSunItem } from './hrsunweapon.js?v=50';
-import { createBuild } from './hrbuild.js?v=50';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=50';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=50';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=51';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=51';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=51';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=51';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=51';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=51';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=51';
+import { createGuns } from './hrguns.js?v=51';
+import { createHrZombies } from './hrzombies.js?v=51';
+import { createFlora } from './hrflora.js?v=51';
+import { createBounty } from './hrbounty.js?v=51';
+import { createNuggets } from './hrnuggets.js?v=51';
+import { createStable } from './hrstable.js?v=51';
+import { createLeaderboard } from './hrlb.js?v=51';
+import { createNight } from './hrnight.js?v=51';
+import { createRace } from './hrrace.js?v=51';
+import { createTown, wearJacket, townNight } from './hrtown.js?v=51';
+import { createSaloon } from './hrsaloon.js?v=51';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=51';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=51';
+import { createDynamite } from './hrdynamite.js?v=51';
+import { createSunItem } from './hrsunweapon.js?v=51';
+import { createBuild } from './hrbuild.js?v=51';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=51';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=51';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -130,12 +130,16 @@ function coatMaterial(base, coat, hq) {
       sheen: .45, sheenRoughness: .55, sheenColor: new THREE.Color(coat.c ? coat.c : 0xb07040).multiplyScalar(.9) });
     if (base.normalMap) pm.normalScale.copy(base.normalScale); m = pm; }
   if (!coat.c) return m;
-  const uC = { value: new THREE.Color(coat.c) }, uM = { value: new THREE.Color(coat.m) };
-  m.onBeforeCompile = sh => { sh.uniforms.uCoat = uC; sh.uniforms.uMane = uM;
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uCoat, uMane;').replace('#include <color_fragment>', `#include <color_fragment>
-  { float l = dot(diffuseColor.rgb, vec3(.2126, .7152, .0722)); float t = smoothstep(.008, .035, l);
-    diffuseColor.rgb = mix(uMane * clamp(l / .01, .45, 1.6), uCoat * clamp(l / .065, .35, 1.7), t); }`); };
-  m.customProgramCacheKey = () => 'coat'; return m;
+  const uC = { value: new THREE.Color(coat.c) }, uM = { value: new THREE.Color(coat.m) }, pat = coat.pat || 0, uP = { value: new THREE.Color(coat.p || 0xf4efe6) };
+  m.onBeforeCompile = sh => { sh.uniforms.uCoat = uC; sh.uniforms.uMane = uM; sh.uniforms.uPat = uP;
+    if (pat) sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vHP;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHP = position;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uCoat, uMane, uPat;' + (pat ? `\nvarying vec3 vHP; float hh3(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
+  float vn3(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(hh3(i),hh3(i+vec3(1,0,0)),f.x),mix(hh3(i+vec3(0,1,0)),hh3(i+vec3(1,1,0)),f.x),f.y),mix(mix(hh3(i+vec3(0,0,1)),hh3(i+vec3(1,0,1)),f.x),mix(hh3(i+vec3(0,1,1)),hh3(i+vec3(1,1,1)),f.x),f.y),f.z);}` : '')).replace('#include <color_fragment>', `#include <color_fragment>
+  { float l = dot(diffuseColor.rgb, vec3(.2126, .7152, .0722)); float t = smoothstep(.008, .035, l); vec3 body = uCoat * clamp(l / .065, .35, 1.7);
+    ${pat === 1 ? /* paint: big irregular white patches, more on the belly and legs */ `vec3 q = vHP * 3.2; float n = vn3(q) * .6 + vn3(q * 2.3) * .3 + vn3(q * 5.1) * .1; float lo = smoothstep(.9, .2, vHP.y / max(.001, 1.6)); float w = smoothstep(.5, .54, n + lo * .22 - .06); body = mix(body, uPat * clamp(l / .065, .5, 1.5), w);` : ''}
+    ${pat === 2 ? /* appaloosa: white blanket over the hindquarters scattered with dark spots */ `float bl = smoothstep(.15, .35, -vHP.z + vn3(vHP * 4.) * .25) * smoothstep(.75, 1.05, vHP.y + vn3(vHP * 3.) * .15); vec3 c = vHP * 14.; vec3 ci = floor(c); vec3 cf = fract(c) - .5; float rr = hh3(ci); float sp = smoothstep(.32, .26, length(cf + (vec3(hh3(ci + 1.3), hh3(ci + 2.7), hh3(ci + 4.1)) - .5) * .35)) * step(.35, rr); vec3 wb = mix(uPat * clamp(l / .065, .5, 1.5), uCoat * .55 * clamp(l / .065, .35, 1.7), sp); body = mix(body, wb, bl); body = mix(body, uCoat * .5 * clamp(l / .065, .35, 1.7), sp * step(.75, rr) * (1. - bl) * .8);` : ''}
+    diffuseColor.rgb = mix(uMane * clamp(l / .01, .45, 1.6), body, t); }`); };
+  m.customProgramCacheKey = () => 'coat' + pat; return m;
 }
 // curved sheet wrapped over the horse's back (model space): a = angle from the spine, z along the back
 function drapeGeo(a0, a1, z0, z1, R, lift, na = 14, nz = 8) {
@@ -325,7 +329,7 @@ const GRADE = { uniforms: { tDiffuse: { value: null }, uAmt: { value: 1 } }, ver
 void main(){ vec4 c=texture2D(tDiffuse,vUv); vec3 x=c.rgb; float l=dot(x,vec3(.2126,.7152,.0722));
  x=mix(vec3(l),x,1.+.1*uAmt); x+=mix(vec3(-.014,.0,.018),vec3(.03,.01,-.025),smoothstep(.1,.8,l))*uAmt;
  x=mix(x,x*x*(3.-2.*x),.18*uAmt); vec2 d=vUv-.5; x*=1.-dot(d,d)*.28*uAmt; gl_FragColor=vec4(clamp(x,0.,1.),c.a); }` };
-const COATS = [{ n: 'Bay' }, { n: 'Chestnut', c: 0xa04a1c, m: 0x6a2c10 }, { n: 'Grey', c: 0xd8d2c8, m: 0x8e8882 }, { n: 'Black', c: 0x2e2826, m: 0x161312 }, { n: 'Palomino', c: 0xd9a656, m: 0xf1e3c2 }, { n: 'Blue Roan', c: 0x5d6572, m: 0x202329 }, { n: 'Red Dun', c: 0xc27a42, m: 0x5a2a12 }, { n: 'Cremello', c: 0xefe2c6, m: 0xf7f0e2 }]; // v47: three new coats for the Coat Kit
+const COATS = [{ n: 'Bay' }, { n: 'Chestnut', c: 0xa04a1c, m: 0x6a2c10 }, { n: 'Grey', c: 0xd8d2c8, m: 0x8e8882 }, { n: 'Black', c: 0x2e2826, m: 0x161312 }, { n: 'Palomino', c: 0xd9a656, m: 0xf1e3c2 }, { n: 'Blue Roan', c: 0x5d6572, m: 0x202329 }, { n: 'Red Dun', c: 0xc27a42, m: 0x5a2a12 }, { n: 'Cremello', c: 0xefe2c6, m: 0xf7f0e2 }, { n: 'Paint', c: 0x7a4422, m: 0x2a1a10, pat: 1, p: 0xf6f1e8 }, { n: 'Appaloosa', c: 0x5a3a26, m: 0x2a1c14, pat: 2, p: 0xf2ece0 }]; // v47: three new coats for the Coat Kit
 const PROC_COATS = [[0x6b4226, 0x241812, 0x4a2c18], [0xa04a1c, 0x6a2c10, 0x3a2a1c], [0xd8d2c8, 0x8e8882, 0x7a4a24], [0x2a2220, 0x111111, 0x7a4a24], [0xd9a656, 0xf0e2c0, 0x4a2c18]];
 const MODEL_URL = { horse: 'assets/horses/horse.glb', mid: 'assets/horses/horse_mid.glb', far: 'assets/horses/horse_far.glb', rider: 'assets/horses/rider.glb', riderHQ: 'assets/horses/rider_hq.glb' };
 let ASSETS = null;
@@ -748,7 +752,7 @@ export function createHorseRider(ctx) {
     H.dyn = createDynamite({ scene, H, P, camera, sfx, msg, mobile, input: ctx.input, fx: ctx.fx, role: () => H.netRole ? H.netRole() : 'solo', send: m => H.zSend && H.zSend(m),
       ground: (x, z, y) => { let g = town2 ? town2.floorAt(x, z, y) : hAt(x, z); if (H.cave) { const cg = H.cave.groundAt ? H.cave.groundAt(x, z, y) : null; g = cg !== null && cg !== undefined ? cg : H.cave.floorAt(x, z, y, g); } if (H.temple) { const tg = H.temple.groundAt(x, z, y); if (tg !== null) g = tg; } return g; } }); // v42 dynamite
     try { const has = () => { try { return localStorage.getItem('hr_coatkit') === '1'; } catch (_) { return false; } }; // v47 Coat Kit
-      const kit = { state: { id: 'coat-kit', get name() { const c = H.myCoat(); return '🎨 Coat Kit' + (c >= 0 ? ` · ${COATS[c].n} (tap to change)` : ' · ride in any of 8 coats'); }, price: 2500, get owned() { return has(); }, equipped: false, get label() { return has() ? 'NEXT COAT' : null; } },
+      const kit = { state: { id: 'coat-kit', get name() { const c = H.myCoat(); return '🎨 Coat Kit' + (c >= 0 ? ` · ${COATS[c].n} (tap to change)` : ' · ride in any of 10 coats'); }, price: 2500, get owned() { return has(); }, equipped: false, get label() { return has() ? 'NEXT COAT' : null; } },
         buy() { const g = H.guns; if (has()) return kit.toggle(); if (!g || g.pts() < 2500) { msg('Not enough points', 1.5); return; } g.state.spent += 2500; g.save && g.save(); try { localStorage.setItem('hr_coatkit', '1'); localStorage.setItem('hr_coat', '3'); } catch (_) {} msg('🎨 Coat Kit — your horses now wear Black. Tap NEXT COAT to change', 3); if (H.mounted) applyCoat(H.mounted, 3); },
         toggle() { if (!has()) return kit.buy(); const n = (H.myCoat() + 1) % COATS.length; try { localStorage.setItem('hr_coat', String(n)); } catch (_) {} if (H.mounted) applyCoat(H.mounted, n); msg('🎨 Coat: ' + COATS[n].n, 1.4); } };
       if (town2 && town2.registerStoreItem) town2.registerStoreItem(kit); } catch (e) { console.warn('coat kit', e); }

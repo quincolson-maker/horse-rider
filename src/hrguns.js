@@ -3,7 +3,7 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=43c'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=44'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -595,7 +595,7 @@ export function createGuns(c) {
   const fin = (a, n) => Array.isArray(a) && a.length === n && a.every(v => typeof v === 'number' && isFinite(v) && Math.abs(v) < 6000);
   function remoteShot(id, msg) { if (!msg || !fin(msg.o, 3) || !fin(msg.e, 3) || !WBY[msg.w]) return; const R = remote.get(id) || {}; const now = performance.now(); if (R.t && now - R.t < 90) return; R.t = now; remote.set(id, R);
     const o = new THREE.Vector3(...msg.o), e = new THREE.Vector3(...msg.e); if (o.distanceTo(camera.position) > 600) return; const d = e.clone().sub(o).normalize(); effects(WBY[msg.w], o, d, e, true, undefined, msg.sp === 1); state.remoteShots = (state.remoteShots || 0) + 1; }
-  function netState() { return { ...(state.weapon === 'tommy' && tsup() ? { sp: 1 } : {}), g: WCODE[state.weapon] || 0, k: state.kills || 0, pt: state.score, a: state.aiming ? 1 : 0, ap: +P.pitch.toFixed(2) }; }
+  function netState() { return { ...(state.weapon === 'tommy' && tsup() ? { sp: 1 } : {}), g: WCODE[state.weapon] || 0, k: state.kills || 0, pt: state.score, bd: H.bounty ? H.bounty.state.done.length : 0, a: state.aiming ? 1 : 0, ap: +P.pitch.toFixed(2) }; }
   function poseRemote(av, s, root, mounted) { // av: remote avatar; s: last net state
     if (!av.guns) { av.guns = {}; for (const k of ORDER) av.guns[k] = { ...models[k], group: models[k].group.clone() }; for (const m of Object.values(av.guns)) { m.group.visible = false; scene.add(m.group); } }
     const w = s && WBY[s.g] || null; for (const [k, m] of Object.entries(av.guns)) if (k !== w) m.group.visible = false; if (!w || !root || !root.visible) { if (w) av.guns[w].group.visible = false; return; }

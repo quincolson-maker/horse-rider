@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=43c';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=43c';
-import './src/hraudio.js?v=43c';
-import './src/stylize.js?v=43c'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=43c';
-import { FX, SFX } from './src/fx.js?v=43c';
-import { initTouch } from './src/touch.js?v=43c';
-import { createHorseRider } from './src/horse.js?v=43c';
-import { createHorseNet } from './src/horsenet.js?v=43c';
+import './src/assetshim.js?v=44';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=44';
+import './src/hraudio.js?v=44';
+import './src/stylize.js?v=44'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=44';
+import { FX, SFX } from './src/fx.js?v=44';
+import { initTouch } from './src/touch.js?v=44';
+import { createHorseRider } from './src/horse.js?v=44';
+import { createHorseNet } from './src/horsenet.js?v=44';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=43c';
+import { PF, initPerf } from './src/perf.js?v=44';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -43,7 +43,7 @@ addEventListener('contextmenu', e => e.preventDefault());
 const input = { mx: 0, mz: 0, fire: false, jump: false, ads: false };
 const act = { settings: () => openSettings(true), build: () => horse.use(), ads() { input.ads = !input.ads; }, help() { const k = $('keys'); k.hidden = !k.hidden; },
   fs() { if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else goFullscreen(); } };
-function onKey(c) { if (G.phase == 'menu') return; if (c == 'KeyO') openSettings($('hrSettings').hidden); if (c == 'KeyE') horse.use(); if (c == 'KeyH') act.help(); if (c == 'KeyV') hnet.voice.toggle(); }
+function onKey(c) { if (G.phase == 'menu') return; if (c == 'KeyO') openSettings($('hrSettings').hidden); if (c == 'KeyE') horse.use(); if (c == 'KeyZ' && horse.state.whistle) horse.state.whistle(); if (c == 'KeyH') act.help(); if (c == 'KeyV') hnet.voice.toggle(); }
 // first tap / click / key: unlock audio, re-ask for the mic if it was refused without a gesture, phones go fullscreen
 let gestured = false; function gesture() { sfx.init(); if (gestured) return; gestured = true; hnet.prime(); if (IS_TOUCH) goFullscreen(); }
 addEventListener('pointerdown', gesture, true); addEventListener('keydown', gesture, true);

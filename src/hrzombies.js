@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=43c';
-import { PERF } from './perfopts.js?v=43c';
+import { PF } from './perf.js?v=44';
+import { PERF } from './perfopts.js?v=44';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -144,14 +144,14 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
   // ---- damage to players and horses ----
   function hurtMe(d, horseD) {
     if (Z.dead > 0) return; const h = H.mounted;
-    if (h && horseD) { h.hp = (h.hp ?? ZSET.horseHp) - horseD; if (h.hp <= 0) horsePanic(h); }
+    if (h && horseD) { h.hp = (h.hp ?? ZSET.horseHp) - horseD * (H.horseArmor || 1); if (h.hp <= 0) horsePanic(h); }
     Z.hp -= d; Z.hurtT = Z.t; Z.flash = Math.min(1, Z.flash + d / 25); if (sfx.hurt && sfx.ctx) sfx.hurt();
     if (Z.hp <= 0) { Z.hp = 0; Z.dead = ZSET.respawn; Z.deaths++; if (H.mounted && c.dismount) c.dismount(); c.msg && c.msg('You were overrun — back at the pen in a moment', ZSET.respawn); } }
   function horsePanic(h) { h.hp = 0; h.panic = 8; if (h === H.mounted && c.dismount) { c.dismount(); c.msg && c.msg('Your horse bolted for the pen!', 2.5); }
     h.inPen = true; h.wait = 0; const gz = PEN.z + PEN.hd + 4, inside = [PEN.x + (rnd() - .5) * 6, PEN.z + (rnd() - .5) * 4]; // round to the gate (south side), then inside
     if (inPenSafe(h.pos.x, h.pos.z)) { h.tgt = inside; h.path = []; return; } const path = [];
     if (h.pos.z < PEN.z + PEN.hd + 1) path.push([PEN.x + Math.sign(h.pos.x - PEN.x || 1) * (PEN.hw + 4), gz]); path.push([PEN.x, gz], [PEN.x, PEN.z + PEN.hd - 2], inside); h.tgt = path.shift(); h.path = path; }
-  function hurtHorse(h, d) { h.hp = (h.hp ?? ZSET.horseHp) - d; if (h.hp <= 0) horsePanic(h); if (sfx.at && sfx.ctx) sfx.at(h.pos, () => sfx.tone('sawtooth', 520, 260, .14, .35), .3); }
+  function hurtHorse(h, d) { h.hp = (h.hp ?? ZSET.horseHp) - d * (H.horseArmor || 1); if (h.hp <= 0) horsePanic(h); if (sfx.at && sfx.ctx) sfx.at(h.pos, () => sfx.tone('sawtooth', 520, 260, .14, .35), .3); }
 
   // ---- shots (from hrguns): hit tests against the dead, then damage ----
   const HEAD = new THREE.Vector3();

@@ -50,7 +50,7 @@ export function initTouch(input, look, act, unlockAudio) {
     for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) el.addEventListener(ev, u);
     btns.push(() => { if (pid === null) return; pid = null; el.classList.remove('down'); up && up(); }); };
   btn('tFire', () => input.fire = true, () => input.fire = false, true);
-  btn('tJump', () => input.jump = true, () => input.jump = false);
+  btn('tJump', () => input.jump = true, () => input.jump = false); btn('tCall', () => { const H = window.__hrH; if (H && H.whistle) H.whistle(); }, () => {});
   btn('tAct', () => { input.use = true; act.build(); }, () => input.use = false); btn('tReload', act.reload); btn('tPiece', act.piece); btn('tMat', act.mat); btn('tSkip', act.skip); btn('tAds', act.ads); btn('tSwap', act.swap);
   // the ⋯ menu holds everything that is not needed every second
   const more = $('uiMore'), setMore = v => { more.hidden = !v; $('tMore').classList.toggle('down', v); };

@@ -5,28 +5,28 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=42n';
-import { PF } from './perf.js?v=42n';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=42o';
+import { PF } from './perf.js?v=42o';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=42n';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=42n';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42n';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42n';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=42n';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=42n';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=42n';
-import { createGuns } from './hrguns.js?v=42n';
-import { createHrZombies } from './hrzombies.js?v=42n';
-import { createFlora } from './hrflora.js?v=42n';
-import { createTown, wearJacket } from './hrtown.js?v=42n';
-import { createSaloon } from './hrsaloon.js?v=42n';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=42n';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=42n';
-import { createDynamite } from './hrdynamite.js?v=42n';
-import { createSunItem } from './hrsunweapon.js?v=42n';
-import { createBuild } from './hrbuild.js?v=42n';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=42n';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=42n';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=42o';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=42o';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42o';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42o';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=42o';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=42o';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=42o';
+import { createGuns } from './hrguns.js?v=42o';
+import { createHrZombies } from './hrzombies.js?v=42o';
+import { createFlora } from './hrflora.js?v=42o';
+import { createTown, wearJacket } from './hrtown.js?v=42o';
+import { createSaloon } from './hrsaloon.js?v=42o';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=42o';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=42o';
+import { createDynamite } from './hrdynamite.js?v=42o';
+import { createSunItem } from './hrsunweapon.js?v=42o';
+import { createBuild } from './hrbuild.js?v=42o';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=42o';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=42o';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -906,9 +906,9 @@ export function createHorseRider(ctx) {
   // v36 field of view setting (Settings menu): horizontal degrees 55-100 (default 70), saved; turned into the vertical FOV for the
   // current screen shape. Every view (on foot 68, riding 70, first person 75 at the old setting), the sprint / gallop kick, the aim
   // pull-in and the scopes scale by the same factor, so their feel relative to the chosen FOV is unchanged.
-  H.fovH = Math.max(55, Math.min(100, +localStorage.getItem('hr_fov_h') || 70));
-  H.setFov = v => { H.fovH = Math.max(55, Math.min(100, Math.round(+v) || 70)); try { localStorage.setItem('hr_fov_h', H.fovH); } catch (_) {} };
-  H.fovK = () => { const a = camera.aspect || 16 / 9, v = 2 * Math.atan(Math.tan(H.fovH * Math.PI / 360) / a) * 180 / Math.PI; return Math.max(30, Math.min(80, v)) / 68; };
+  H.fovH = Math.max(50, Math.min(120, +localStorage.getItem('hr_fov_h') || 70));
+  H.setFov = v => { H.fovH = Math.max(50, Math.min(120, Math.round(+v) || 70)); try { localStorage.setItem('hr_fov_h', H.fovH); } catch (_) {} };
+  H.fovK = () => { const a = camera.aspect || 16 / 9, v = 2 * Math.atan(Math.tan(H.fovH * Math.PI / 360) / a) * 180 / Math.PI; return Math.max(16, Math.min(95, v)) / 68; }; // v42: wide clamp so every notch of the slider changes the view on wide phone screens too
   function camRig(dt) {
     const h = H.mounted, FK = H.fovK();
     if (!h && (H.fp || !real())) { const ff = 75 * FK; if (Math.abs(camera.fov - ff) > .01) { camera.fov = ff; camera.updateProjectionMatrix(); } camera.position.set(P.pos.x, P.pos.y + (H.seated ? 1.12 : 1.62) + (H.ground && !H.seated ? Math.abs(Math.cos(P.bob)) * .04 : 0), P.pos.z); camera.rotation.set(P.pitch, P.yaw, 0, 'YXZ'); H.camInit = false; drunkCam(h); return; }

@@ -1,15 +1,15 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=42n';
-import './src/hraudio.js?v=42n';
-import './src/stylize.js?v=42n'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=42n';
-import { FX, SFX } from './src/fx.js?v=42n';
-import { initTouch } from './src/touch.js?v=42n';
-import { createHorseRider } from './src/horse.js?v=42n';
-import { createHorseNet } from './src/horsenet.js?v=42n';
+import './src/assetshim.js?v=42o';
+import './src/hraudio.js?v=42o';
+import './src/stylize.js?v=42o'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=42o';
+import { FX, SFX } from './src/fx.js?v=42o';
+import { initTouch } from './src/touch.js?v=42o';
+import { createHorseRider } from './src/horse.js?v=42o';
+import { createHorseNet } from './src/horsenet.js?v=42o';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=42n';
+import { PF, initPerf } from './src/perf.js?v=42o';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -148,8 +148,9 @@ function loop(t) { requestAnimationFrame(loop); window.__frames = (window.__fram
   } catch (e) { if (!window.__loopErr) { window.__loopErr = e; console.error('frame error', e); } if (/render|WebGL|shader/i.test(String(e && e.stack)) && GX.composer) { GX.composer = null; } }
   if (PF.on) PF.frameEnd(rawMs, performance.now() - c0);
   fAcc += rdt; fN++; if (fAcc > 2) { const fps = fN / fAcc; $('fps').textContent = Math.round(fps) + ' fps · ' + QNAME;
-    if (fps > 55 && pr < PR_MAX - .01) { if (++hiT >= 3) { hiT = 0; pr = Math.min(PR_MAX, pr + .1); GX.setPR(pr); fx.setScale(); } } else hiT = 0; // v33: adaptive both ways (sharper when there is headroom)
-    if (fps < 28) { lowT++; if (lowT >= 2) { lowT = 0; if (GX.aoPass && GX.aoPass.enabled) GX.disableAO(); else if (pr > .55) { pr = Math.max(.5, pr - .15); GX.setPR(pr); fx.setScale(); } } } else lowT = 0;
+    const SM = IS_TOUCH; // v42: phones keep 50+ fps — trade a little sharpness early instead of stuttering
+    if (fps > 57 && pr < PR_MAX - .01) { if (++hiT >= 3) { hiT = 0; pr = Math.min(PR_MAX, pr + .1); GX.setPR(pr); fx.setScale(); } } else hiT = 0; // v33: adaptive both ways (sharper when there is headroom)
+    if (fps < (SM ? 46 : 28)) { lowT++; if (lowT >= (SM ? 1 : 2)) { lowT = 0; if (SM && pr > .8) { pr = Math.max(.8, pr - (fps < 30 ? .2 : .1)); GX.setPR(pr); fx.setScale(); } else if (GX.aoPass && GX.aoPass.enabled) GX.disableAO(); else if (pr > .55) { pr = Math.max(.5, pr - .15); GX.setPR(pr); fx.setScale(); } } } else lowT = 0;
     fAcc = 0; fN = 0; }
   }
 requestAnimationFrame(loop);

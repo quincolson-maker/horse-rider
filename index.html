@@ -244,7 +244,7 @@ body.sty #compass{height:44px}
 </style>
 </head><body>
 <div id="fnSplash"><div class="logo">Horse<br>Rider</div><div class="tag">Wild Frontier · Season 1</div><button class="play" id="fnPlay">Play</button>
-<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v42n · updated Nov 14</div></div>
+<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v42o · updated Nov 14</div></div>
 <script>(function(){var q=new URLSearchParams(location.search);var real=q.get('style')==='real';if(!real)document.body.classList.add('sty');var sp=document.getElementById('fnSplash');
 if(real||q.has('dev')||q.has('auto')||q.get('splash')==='0'){sp.remove();return;}
 if(matchMedia('(pointer: coarse)').matches)document.getElementById('fnHint').textContent='Left side: move & steer · right side: look · tap RIDE near a horse';
@@ -256,7 +256,7 @@ document.getElementById('fnPlay').addEventListener('click',go);addEventListener(
  <div id="top" class="pill"><div class="row"><span id="mode"></span><span id="timer"></span><span id="stars"></span></div><div id="sub" style="font-size:.8em;opacity:.85"></div><div class="bar"><i id="dbar"></i></div></div>
  <div id="compass"><div id="cstrip"></div><div id="cpins"></div><div id="chead"></div></div><div id="hitm">✕</div><div id="msg"></div><div id="hrPrompt" hidden></div><button id="setBtn" title="Settings (O)">⚙</button><div id="hrSettings" hidden><div class="sHead"><h3>⚙ SETTINGS</h3><button id="setClose" aria-label="Close settings">✕</button></div><div class="sBody">
 <section><div class="sT">🎮 Gameplay</div>
-<label class="sRow"><span>Field of view</span><b id="fovVal">70°</b></label><input id="fovRange" type="range" min="55" max="100" step="1" value="70"><div class="hint">Lower = more zoomed in. <button id="fovReset" class="link">Reset to 70°</button></div>
+<label class="sRow"><span>Field of view</span><b id="fovVal">70°</b></label><input id="fovRange" type="range" min="50" max="120" step="1" value="70"><div class="hint">Lower = more zoomed in. <button id="fovReset" class="link">Reset to 70°</button></div>
 <label class="sRow"><span>Look speed</span><b id="sensVal">100%</b></label><input id="sensRange" type="range" min="30" max="250" step="5" value="100"><div class="hint">How fast the camera turns when you drag or move the mouse.</div></section>
 <section><div class="sT">🔊 Sound</div><label class="sRow"><span>Volume</span><b id="volVal">50%</b></label><input id="volRange" type="range" min="0" max="100" step="5" value="50"></section>
 <section><div class="sT">✨ Graphics</div><div class="seg" id="qSeg"><button data-q="low">Low</button><button data-q="medium">Medium</button><button data-q="high">High</button><button data-q="auto">Auto</button></div><div class="hint">Low runs smoothest on older phones. Changing this reloads the game.</div></section>
@@ -308,5 +308,5 @@ document.getElementById('fnPlay').addEventListener('click',go);addEventListener(
 </script>
 <script src="./vendor/peerjs.min.js"></script>
 <script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
-<script type="module" src="./main.js?v=42n" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
+<script type="module" src="./main.js?v=42o" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
 </body></html>

@@ -5,32 +5,32 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=45';
-import { PERF } from './perfopts.js?v=45';
-import { PF } from './perf.js?v=45';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=45b';
+import { PERF } from './perfopts.js?v=45b';
+import { PF } from './perf.js?v=45b';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=45';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=45';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=45';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=45';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=45';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=45';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=45';
-import { createGuns } from './hrguns.js?v=45';
-import { createHrZombies } from './hrzombies.js?v=45';
-import { createFlora } from './hrflora.js?v=45';
-import { createBounty } from './hrbounty.js?v=45';
-import { createNuggets } from './hrnuggets.js?v=45';
-import { createStable } from './hrstable.js?v=45';
-import { createTown, wearJacket } from './hrtown.js?v=45';
-import { createSaloon } from './hrsaloon.js?v=45';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=45';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=45';
-import { createDynamite } from './hrdynamite.js?v=45';
-import { createSunItem } from './hrsunweapon.js?v=45';
-import { createBuild } from './hrbuild.js?v=45';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=45';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=45';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=45b';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=45b';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=45b';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=45b';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=45b';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=45b';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=45b';
+import { createGuns } from './hrguns.js?v=45b';
+import { createHrZombies } from './hrzombies.js?v=45b';
+import { createFlora } from './hrflora.js?v=45b';
+import { createBounty } from './hrbounty.js?v=45b';
+import { createNuggets } from './hrnuggets.js?v=45b';
+import { createStable } from './hrstable.js?v=45b';
+import { createTown, wearJacket } from './hrtown.js?v=45b';
+import { createSaloon } from './hrsaloon.js?v=45b';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=45b';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=45b';
+import { createDynamite } from './hrdynamite.js?v=45b';
+import { createSunItem } from './hrsunweapon.js?v=45b';
+import { createBuild } from './hrbuild.js?v=45b';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=45b';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=45b';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -643,6 +643,7 @@ export function createHorseRider(ctx) {
     if (!H.on || H.cd > 0) return false;
     if (H.saloon && H.saloon.isOpen()) { H.saloon.close(); H.cd = COOLDOWN; return true; } if (H.saloon && H.saloon.dance) { H.saloon.endDance(); H.cd = COOLDOWN; return true; } // v35: E stands up / leaves
     if (H.mounted) { if (H.mountT > 0 || H.dismT > 0) return false; H.wantOff = true; H.cd = COOLDOWN; return true; } // rein in, then step down
+    if (H.pass) { hopOff(); return true; } { const ht = hopTarget(); if (ht) { hopOn(ht); return true; } }
     if (town2 && town2.use()) { H.cd = COOLDOWN; return true; }
     const h = nearestHorse(); if (!h) { msg('Walk up to a horse to ride it', 1.5); return false; }
     const rx = Math.cos(h.yaw), rz = -Math.sin(h.yaw); H.side = (P.pos.x - h.pos.x) * rx + (P.pos.z - h.pos.z) * rz > 0 ? -1 : 1; // mount from the side you stand on (+1 = horse's left)
@@ -650,6 +651,19 @@ export function createHorseRider(ctx) {
     h.speed = 0; h.tgt = null; h.graze = false; P.yaw = h.yaw; P.pitch = -.15; H.lookT = 9; H.swLast = P.swX || 0; H.recenter = false; attachRider(h); if (H.mountT) mountPose(h, 0);
     H.mounts++; sfx.ui && sfx.ui(); msg(mobile ? 'Riding! Push the stick to go · all the way to gallop' : 'Riding! W go · tap Shift to speed up a gait · hold Shift to gallop · C slow down · E get off', 3); return true;
   }
+  // v45 RIDE DOUBLE: hop on behind a buddy's horse (they steer; you look around and shoot). Net: my state carries pa = horse id.
+  const BACK = new THREE.Vector3(0, -.03, -.52); H.passengers = new Map(); H.pass = null;
+  function hopTarget() { if (H.mounted || H.pass || H.dead) return null; let best = null, bd = MOUNT_R + .6; for (const h of H.horses) { if (!H.ridden.has(h) || H.passengers.has(h)) continue; const d = Math.hypot(h.pos.x - P.pos.x, h.pos.z - P.pos.z); if (d < bd) { bd = d; best = h; } } return best; }
+  H.hopTarget = hopTarget;
+  function hopOn(h) { H.pass = { h, owner: H.ridden.get(h) }; attachRider(h); if (rider.parent) rider.position.add(BACK); for (const r of reins) r.visible = false; P.yaw = h.yaw; P.pitch = -.12; H.vy = 0; H.cd = COOLDOWN; sfx.ui && sfx.ui(); msg(`Riding double with ${H.pass.owner} — they steer, you shoot`, 2.5); }
+  function hopOff(quiet) { const h = H.pass && H.pass.h; if (!h) return; H.pass = null; detachRider(); const fx = -Math.sin(h.yaw), fz = -Math.cos(h.yaw);
+    let spot = [h.pos.x - fx * 2.4, h.pos.z - fz * 2.4]; for (const [ox, oz] of [[-fz * 1.6, fx * 1.6], [fz * 1.6, -fx * 1.6], [-fx * 2.6, -fz * 2.6]]) { const x = h.pos.x + ox, z = h.pos.z + oz; if (!blocked(x, z, .35, h)) { spot = [x, z]; break; } }
+    P.pos.set(spot[0], hAt(spot[0], spot[1]), spot[1]); H.vy = 0; H.cd = COOLDOWN; if (!quiet) msg('Hopped off', 1.2); }
+  H.hopOff = hopOff;
+  function passenger(dt) { const h = H.pass.h; if (!H.ridden.has(h)) { hopOff(true); msg('Your rider got off', 1.6); return; }
+    P.pos.set(h.pos.x + Math.sin(h.yaw) * .5, h.pos.y + 1.0, h.pos.z + Math.cos(h.yaw) * .5); H.fv.x = H.fv.y = 0;
+    if (rider.parent && rider.userData.B && h.g.userData.kind === 'real') { const sp = Math.max(0, (h.net && h.net.sp) || 0), gal = sstep(10, 15.5, sp), ph = h.g.userData.phase || 0;
+      riderPose(rider, { sit: 1, k: sstep(.3, 2, sp), ph, gal, lean: .02 + .2 * gal, rein: 0 }); rider.position.copy(me.seat).add(BACK); rider.position.y += gal * .05 * Math.abs(Math.sin(ph * TAU)); } }
   function dismount() { // immediate (net conflicts, tests); the E / GET OFF path animates first via H.wantOff
     const h = H.mounted; if (!h) return false; const fx = -Math.sin(h.yaw), fz = -Math.cos(h.yaw), rx = -fz, rz = fx, sd = H.side || 1;
     const tries = [[-rx * 1.5 * sd, -rz * 1.5 * sd], [rx * 1.5 * sd, rz * 1.5 * sd], [-fx * 2.4, -fz * 2.4], [fx * 2.4, fz * 2.4], [-rx * 2.6, -rz * 2.6], [rx * 2.6, rz * 2.6]];
@@ -855,7 +869,7 @@ export function createHorseRider(ctx) {
     if (sfx.amb) { const C = H.cave, e = C && C.cave ? C.cave.entrance : null, fire = C && C.fireAt ? C.fireAt() : null, river = C && C.riverAt ? C.riverAt() : null, inSal = !!(H.saloon && H.saloon.inside && H.saloon.inside());
       sfx.amb(dt, { outdoors: true, day: 1, saloon: inSal, cave: H.caveDark || 0, falls: e ? Math.hypot(P.pos.x - e.x, P.pos.y - e.y, P.pos.z - e.z) : null, fire: fire ? P.pos.distanceTo(fire) : null, river: river ? P.pos.distanceTo(river) : null }); }
     if (H.fallT > 0) H.fallT -= dt; PF.s('town'); if (town2) town2.tick(dt); if (H.nuggets) H.nuggets.update(dt); if (H.bounty) H.bounty.update(dt); PF.e('town'); PF.s('saloon'); if (H.saloon) H.saloon.tick(dt); PF.e('saloon'); PF.s('cave'); if (H.cave) H.cave.update(dt); if (H.temple) H.temple.update(dt); if (H.sun) H.sun.update(dt); if (H.dyn) H.dyn.update(dt); PF.e('cave'); PF.s('build'); if (H.build) H.build.tick(dt); PF.e('build'); PF.s('player');
-    if (H.dead) { H.fv.x = H.fv.y = 0; } else if (h) ride(h, dt, stick > .05 ? 0 : fwdIn, stick > .05 ? 0 : sideIn, stick, jump); else walk(dt, fwdIn, sideIn, stick, run, jump);
+    if (H.dead) { H.fv.x = H.fv.y = 0; } else if (!h && H.pass) passenger(dt); else if (h) ride(h, dt, stick > .05 ? 0 : fwdIn, stick > .05 ? 0 : sideIn, stick, jump); else walk(dt, fwdIn, sideIn, stick, run, jump);
     PF.e('player'); PF.s('herd');
     for (const o of H.horses) { if (o === h) continue;
       if (o.called > 0) { o.called -= dt; const d = Math.hypot(o.pos.x - P.pos.x, o.pos.z - P.pos.z); if (d < 2.1 || H.mounted) { o.called = 0; o.tgt = null; o.path = null; o.wait = 8; o.speed = 0; } else { o.tgt = [P.pos.x, P.pos.z]; o.path = null; o.wait = 0; } } // v44 whistle
@@ -1014,6 +1028,12 @@ export function createHorseRider(ctx) {
       else { av.walker = makeProcRider(color); av.walker.position.y = .55; av.walker.rotation.y = Math.PI; av.sitter = makeProcRider(color); av.W = null; }
       av.g.add(av.walker); av.sitter.visible = false; if (av.horse) seat(av.horse, av.sitter); };
     av.update = (dt, s) => { if (!s) return; const was = av.horse, h = s.m >= 0 ? H.horses[s.m] : null;
+      { const ph = s.pa >= 0 && s.m < 0 ? H.horses[s.pa] : null; // v45: a buddy riding double behind someone
+        if (av.paH && av.paH !== ph) { if (H.passengers.get(av.paH) === av.id) H.passengers.delete(av.paH); if (av.sitter.parent) av.sitter.parent.remove(av.sitter); av.paH = null; if (av.pa === H.mounted) av.pa = null; }
+        if (ph) { if (H.pass && H.pass.h === ph && String(av.id) < String(H.me || 'P9')) hopOff(true); if (!av.paH) { av.paH = ph; seat(ph, av.sitter); } H.passengers.set(ph, av.id);
+          if (av.sitter.userData.B && ph.g.userData.kind === 'real') { const sp = Math.max(0, (ph.net && ph.net.sp) || (ph === H.mounted ? H.speed : 0)), gal = sstep(10, 15.5, sp), pp = ph.g.userData.phase || 0;
+            riderPose(av.sitter, { sit: 1, k: sstep(.3, 2, sp), ph: pp, gal, lean: .02 + .2 * gal, rein: 0 }); av.sitter.position.copy(me.seat).add(BACK); }
+          av.walker.visible = false; av.g.position.set(ph.pos.x, ph.pos.y + 1.1, ph.pos.z); av.tag.position.y = 1.55; return; } }
       if (was && was !== h) { release(was); if (av.sitter.parent) av.sitter.parent.remove(av.sitter); av.horse = null; }
       if (h) { if (h === H.mounted) { if (String(av.id) < String(H.me || 'P9')) dismount(); else return; } // two riders grabbed one horse: lower id keeps it
         if (!av.horse) { av.horse = h; H.ridden.set(h, av.id); seat(h, av.sitter); } h.net = { x: s.x, y: s.y, z: s.z, yaw: s.hy, sp: s.sp };
@@ -1030,7 +1050,7 @@ export function createHorseRider(ctx) {
     av.update = (dt, s) => { if ((H.remoteCvs.get(av.id) || 0) !== (av.cv || 0) || av.skRoot !== av.walker) reskin(); up0(dt, s); if (guns) guns.poseRemote(av, s, av.horse ? av.sitter : av.walker, !!av.horse); const jk = !!(s && s.jk); if (av.jk !== jk || av.jkRoot !== av.walker) { if (wearJacket(av.walker, jk) | (av.sitter && wearJacket(av.sitter, jk))) { av.jk = jk; av.jkRoot = av.walker; } } }; av.dispose = () => { if (guns) guns.disposeRemote(av); for (const k of av.skins) { skins.delete(k); k.dispose(); } av.skins = []; dp0(); };
     av.rebuild(); avatars.add(av); return av;
   }
-  const touchLabel = () => H.mounted ? 'GET OFF' : H.saloon && H.seated ? 'STAND UP' : H.saloon && H.saloon.dance ? 'STOP<small>SHOW</small>' : H.saloon && H.saloon.isOpen() ? 'CLOSE' : H.spot ? town2.touchLabel(H.spot) : H.near ? 'RIDE' : '';
+  const touchLabel = () => H.mounted ? 'GET OFF' : H.pass ? 'HOP OFF' : hopTarget() && !H.spot ? 'HOP ON' : H.saloon && H.seated ? 'STAND UP' : H.saloon && H.saloon.dance ? 'STOP<small>SHOW</small>' : H.saloon && H.saloon.isOpen() ? 'CLOSE' : H.spot ? town2.touchLabel(H.spot) : H.near ? 'RIDE' : '';
   const stats = () => { const i = GX.renderer.info; i.autoReset = false; i.reset(); GX.renderer.render(scene, camera); i.autoReset = true; return { calls: i.render.calls, triangles: i.render.triangles, geometries: i.memory.geometries, textures: i.memory.textures }; };
   const syncAll = dt => { syncCamera(dt); envTick(dt); };
   const gunNet = () => Object.assign(guns ? guns.netState() : { g: 0 }, { jk: town2 && town2.jacket && town2.wear ? 1 : 0 }), remoteShot = (id, m) => guns && guns.remoteShot(id, m);

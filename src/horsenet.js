@@ -5,11 +5,11 @@
 // lobby. Transport is the existing PeerJS co-op star (src/coop.js); voice is the existing mesh (src/voice.js).
 // Synced: each rider's position / facing / walking speed, which horse they ride and its pose; the host is the authority
 // for the free herd (clients mirror it). Guns: other riders see your drawn gun, aim and shots (tracer, flash, smoke, sound) — visual only, no combat.
-import { createNet, MAX_PLAYERS } from './coop.js?v=45';
-import { PERF } from './perfopts.js?v=45';
-import { validCv } from './hrskin.js?v=45';
-import { createVoice } from './voice.js?v=45';
-import { createAdvert, LOBBY_URL } from './lobby.js?v=45';
+import { createNet, MAX_PLAYERS } from './coop.js?v=45b';
+import { PERF } from './perfopts.js?v=45b';
+import { validCv } from './hrskin.js?v=45b';
+import { createVoice } from './voice.js?v=45b';
+import { createAdvert, LOBBY_URL } from './lobby.js?v=45b';
 const $ = id => document.getElementById(id);
 const QS = new URLSearchParams(location.search);
 const LOOP = QS.get('loopnet') === '1', LOCAL = /^(localhost|127\.|\[::1\])/.test(location.hostname);
@@ -140,7 +140,7 @@ export function createHorseNet({ horse, P, msg }) {
       else { const L = [...S.remotes.values()].map(R => [R.id, R.s && Number.isFinite(R.s.x) ? Math.hypot(R.s.x - x, R.s.z - z) : 1e9]).sort((a, b) => a[1] - b[1] || (a[0] < b[0] ? -1 : 1)); // v36: nearest first, deterministic
         for (const [id, d] of L) if (voice.links.has(id) && d > VOICE_FAR) voice.drop(id); for (const [id, d] of L) if (!voice.links.has(id) && d < VOICE_NEAR && voice.links.size < VOICE_MESH) voice.peer(id); } }
     if (net.open && S.netT <= 0) { S.netT = rate;
-      const st = { t: 'p', x: +x.toFixed(2), y: +(h ? h.pos.y : P.pos.y).toFixed(2), z: +z.toFixed(2), yw: +(h ? P.yaw : (H.bodyYaw ?? P.yaw)).toFixed(3), m: h ? h.id : -1, hy: h ? +h.yaw.toFixed(3) : 0, sp: +(h ? H.speed : S.footSp).toFixed(2) };
+      const st = { t: 'p', x: +x.toFixed(2), y: +(h ? h.pos.y : P.pos.y).toFixed(2), z: +z.toFixed(2), yw: +(h ? P.yaw : (H.bodyYaw ?? P.yaw)).toFixed(3), m: h ? h.id : -1, pa: !h && H.pass ? H.pass.h.id : -1, hy: h ? +h.yaw.toFixed(3) : 0, sp: +(h ? H.speed : S.footSp).toFixed(2) };
       if (horse.gunNet) Object.assign(st, horse.gunNet()); if (H.saloon) Object.assign(st, H.saloon.netState()); st.n = callsign().slice(0, 14); if (H.dead) st.dd = 1; if (isHost()) st.id = 'P1'; net.send(st); }
     if (isHost() && net.open && S.herdT <= 0) { S.herdT = .25; net.send({ t: 'herd', h: horse.herd() }); }
     if (isHost() && S.code && (S.hbT = (S.hbT || 0) - dt) <= 0) { S.hbT = 5; try { localStorage.setItem('hr_mycode', JSON.stringify({ code: S.code, t: Date.now() })); } catch (_) {} }

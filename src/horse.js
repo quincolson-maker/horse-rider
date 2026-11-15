@@ -5,35 +5,36 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=51';
-import { PERF } from './perfopts.js?v=51';
-import { PF } from './perf.js?v=51';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=52';
+import { PERF } from './perfopts.js?v=52';
+import { PF } from './perf.js?v=52';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=51';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=51';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=51';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=51';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=51';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=51';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=51';
-import { createGuns } from './hrguns.js?v=51';
-import { createHrZombies } from './hrzombies.js?v=51';
-import { createFlora } from './hrflora.js?v=51';
-import { createBounty } from './hrbounty.js?v=51';
-import { createNuggets } from './hrnuggets.js?v=51';
-import { createStable } from './hrstable.js?v=51';
-import { createLeaderboard } from './hrlb.js?v=51';
-import { createNight } from './hrnight.js?v=51';
-import { createRace } from './hrrace.js?v=51';
-import { createTown, wearJacket, townNight } from './hrtown.js?v=51';
-import { createSaloon } from './hrsaloon.js?v=51';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=51';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=51';
-import { createDynamite } from './hrdynamite.js?v=51';
-import { createSunItem } from './hrsunweapon.js?v=51';
-import { createBuild } from './hrbuild.js?v=51';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=51';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=51';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=52';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=52';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=52';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=52';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=52';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=52';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=52';
+import { createGuns } from './hrguns.js?v=52';
+import { createHrZombies } from './hrzombies.js?v=52';
+import { createFlora } from './hrflora.js?v=52';
+import { createBounty } from './hrbounty.js?v=52';
+import { createNuggets } from './hrnuggets.js?v=52';
+import { createStable } from './hrstable.js?v=52';
+import { createLeaderboard } from './hrlb.js?v=52';
+import { createNight } from './hrnight.js?v=52';
+import { createRace } from './hrrace.js?v=52';
+import { buildPalisade } from './hrpalisade.js?v=52';
+import { createTown, wearJacket, townNight } from './hrtown.js?v=52';
+import { createSaloon } from './hrsaloon.js?v=52';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=52';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=52';
+import { createDynamite } from './hrdynamite.js?v=52';
+import { createSunItem } from './hrsunweapon.js?v=52';
+import { createBuild } from './hrbuild.js?v=52';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=52';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=52';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -399,6 +400,7 @@ export function createHorseRider(ctx) {
     createSaloon({ scene, H, P, T: town2, camera, sfx, msg, mobile, input, keys, fx: ctx.fx, canvas: GX.renderer.domElement, makeHorse: () => makeHorse(...PROC_COATS[(Math.random() * 5) | 0]), procAnim, blocked: (x, z, r) => blocked(x, z, r), groundAt: (x, z, y) => town2.floorAt(x, z, y) }); // v35
     if (CAVE_SITE) H.cave = createCave({ scene, H, P, T: town2, hAt, sfx, msg, mobile, low: !HQ, site: CAVE_SITE, role: () => H.netRole ? H.netRole() : 'solo', send: m => H.zSend && H.zSend(m), remotes: () => H.netRemotes ? H.netRemotes() : [] }); // v38 Bandit Falls
     if (TEMPLE_SITE) H.temple = createTemple({ scene, H, P, T: town2, hAt, sfx, msg, mobile, low: !HQ, site: TEMPLE_SITE, role: () => H.netRole ? H.netRole() : 'solo', send: m => H.zSend && H.zSend(m), remotes: () => H.netRemotes ? H.netRemotes() : [] }); // v39 The Hollow Sun
+    try { H.palisade = buildPalisade({ scene, T: town2, H, hAt }); } catch (e) { console.warn('palisade', e); } // v52 stake fence
     H.obstWalls = town2.walls; H.places = { temple: H.temple ? H.temple.info() : null, cave: H.cave ? H.cave.info() : null, towers: tw, town, tops: [tops[A], tops[B]].map(t => [Math.round(t[0]), Math.round(t[1]), Math.round(t[2] - BASE)]), townFlat: +ts.toFixed(2) }; }
   // woods: conifers + broadleaf trees, instanced, with a near (detailed) / far (low-poly) LOD swapped around the player
   function buildTrees() {

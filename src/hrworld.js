@@ -1,9 +1,9 @@
-import { STYLE_ON } from './stylize.js?v=42q';
+import { STYLE_ON } from './stylize.js?v=42r';
 // HORSE RIDER world graphics: large-scale terrain (domain-warped fBm hills, carved valleys, ridged-multifractal mountains out to ~4 km),
 // physically based sky (Preetham Rayleigh/Mie) with layered procedural clouds, sky-driven IBL + aerial haze, slow golden-hour time of day,
 // slope/height-blended PBR terrain (Poly Haven CC0), GPU instanced wind-blown grass with wildflowers, CC0 scanned boulders.
 import * as THREE from 'three';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42q';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42r';
 const sstep = (a, b, t) => { t = Math.min(1, Math.max(0, (t - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 // ---------------- noise (Perlin gradient noise, fBm, ridged multifractal) ----------------

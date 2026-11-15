@@ -1,15 +1,15 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=42q';
-import './src/hraudio.js?v=42q';
-import './src/stylize.js?v=42q'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=42q';
-import { FX, SFX } from './src/fx.js?v=42q';
-import { initTouch } from './src/touch.js?v=42q';
-import { createHorseRider } from './src/horse.js?v=42q';
-import { createHorseNet } from './src/horsenet.js?v=42q';
+import './src/assetshim.js?v=42r';
+import './src/hraudio.js?v=42r';
+import './src/stylize.js?v=42r'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=42r';
+import { FX, SFX } from './src/fx.js?v=42r';
+import { initTouch } from './src/touch.js?v=42r';
+import { createHorseRider } from './src/horse.js?v=42r';
+import { createHorseNet } from './src/horsenet.js?v=42r';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=42q';
+import { PF, initPerf } from './src/perf.js?v=42r';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -91,7 +91,7 @@ if (!(document.documentElement.requestFullscreen || document.documentElement.web
 // ---------------- v36 settings: field of view (desktop ⚙ / O, phones ⋯ > Settings) ----------------
 // v42: developer MAX CHAOS button (shown only on a device unlocked with the bank code)
 function devChaosBtn() { let on = false; try { on = localStorage.getItem('hr_dev') === '1'; } catch (_) {} if (!on || document.getElementById('devChaos')) return;
-  const b = document.createElement('button'); b.id = 'devChaos'; b.textContent = '☠ MAX CHAOS'; b.style.cssText = 'position:fixed;left:10px;top:150px;z-index:40;padding:6px 10px;font:900 italic 13px system-ui;color:#fff;background:linear-gradient(180deg,#e0302a,#8a0f0b);border:0;border-radius:6px;box-shadow:0 3px 0 #4a0806;letter-spacing:.04em;pointer-events:auto';
+  const b = document.createElement('button'); b.id = 'devChaos'; b.textContent = '☠ MAX CHAOS'; b.style.cssText = 'position:fixed;left:10px;top:150px;z-index:41;padding:6px 10px;font:900 italic 13px system-ui;color:#fff;background:linear-gradient(180deg,#e0302a,#8a0f0b);border:0;border-radius:6px;box-shadow:0 3px 0 #4a0806;letter-spacing:.04em;pointer-events:auto';
   const sync = () => { const Zs = horse.state.zombies; const m = !!(Zs && Zs.maxChaos); b.textContent = m ? '☠ CHAOS: MAX (tap to stop)' : '☠ MAX CHAOS'; b.style.filter = m ? 'brightness(1.25)' : ''; };
   b.onclick = e => { e.stopPropagation(); const Zs = horse.state.zombies; if (!Zs || !Zs.setMaxChaos) { msg('Zombies are off in this game', 2); return; } if (horse.state.netRole && horse.state.netRole() === 'client') { msg('Only the host can start chaos', 2); return; }
     Zs.setMaxChaos(!Zs.maxChaos); sync(); syncChaos(); msg(Zs.maxChaos ? '☠ MAX CHAOS — the horde is coming' : 'Chaos stopped', 2.5); };
@@ -107,7 +107,7 @@ function setupSettingsX() { const st = (k, v) => { try { localStorage.setItem(k,
   const syncV = () => { const v = +gt('hr_vol', 50); vr.value = v; $('volVal').textContent = v + '%'; sfx.vol = v / 100; if (sfx.master) sfx.master.gain.value = sfx.vol; }; vr.oninput = () => { st('hr_vol', vr.value); syncV(); }; syncV();
   const cur = gt('vr_quality', 'auto'); for (const b of $('qSeg').children) { b.classList.toggle('on', b.dataset.q === cur); b.onclick = () => { if (b.dataset.q === gt('vr_quality', 'auto')) return; st('vr_quality', b.dataset.q); const u = new URL(location.href); u.searchParams.delete('q'); location.href = u.toString(); }; }
   const touch = matchMedia('(pointer: coarse)').matches, rows = touch ? [['Left thumb', 'move / steer'], ['Right thumb', 'look around'], ['RIDE / USE', 'mount a horse, talk, buy'], ['DRAW', 'take out a gun'], ['FIRE / AIM', 'shoot / zoom'], ['🧨', 'hold to aim dynamite, let go to throw'], ['JUMP', 'jump'], ['⋯', 'more: settings, fullscreen']]
-    : [['W A S D', 'move / steer'], ['Mouse', 'look'], ['Shift', 'gallop / run'], ['E', 'mount, use, buy'], ['F / 1–6', 'draw a gun / pick one'], ['Click / Right-click', 'shoot / aim'], ['R', 'reload'], ['G (hold)', 'aim dynamite, release to throw'], ['Space', 'jump'], ['O', 'settings']];
+    : [['W A S D', 'move / steer'], ['Mouse', 'look'], ['Shift', 'gallop / run'], ['E', 'mount, use, buy'], ['F / 1–6', 'draw a gun / pick one'], ['Click / Right-click', 'shoot / aim'], ['R', 'reload'], ['T (hold)', 'aim dynamite, release to throw'], ['Space', 'jump'], ['O', 'settings']];
   $('ctlList').innerHTML = rows.map(([k, v]) => `<b>${k}</b><span>${v}</span>`).join(''); }
 setTimeout(() => { try { const v = +(localStorage.getItem('hr_vol') ?? 50); sfx.vol = v / 100; if (sfx.master) sfx.master.gain.value = sfx.vol; } catch (_) {} }, 0);
 function syncFov() { setupSettingsX(); const v = horse.state.fovH; $('fovRange').value = v; $('fovVal').textContent = v + '°'; syncChar(); }

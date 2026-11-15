@@ -47,8 +47,8 @@ export function createDynamite(c) {
     S.count--; save(); S.thrown++; const g = stick(), sp = new THREE.Sprite(sparkM); sp.scale.setScalar(.12); sp.position.set(.03, .13, 0); g.add(sp); origin(g.position); scene.add(g);
     live.push({ g, sp, v: velocity(k, new THREE.Vector3()), w: new THREE.Vector3(8 + Math.random() * 6, Math.random() * 4, 4 + Math.random() * 4), t: S.lit, rest: false });
     if (sfx.ctx) sfx.nz('bandpass', 700, 1, .25, .12); c.send && c.send({ t: 'dyn', p: g.position.toArray().map(v => +v.toFixed(2)), v: live[live.length - 1].v.toArray().map(v => +v.toFixed(2)), f: +(DYN.fuse - S.lit).toFixed(2) }); }
-  addEventListener('keydown', e => { if (e.code === 'KeyG' && !e.repeat) start(); });
-  addEventListener('keyup', e => { if (e.code === 'KeyG') release(); });
+  addEventListener('keydown', e => { if (e.code === 'KeyT' && !e.repeat) start(); });
+  addEventListener('keyup', e => { if (e.code === 'KeyT') release(); });
   let btn = null; function ui() { if (!mobile || btn) return; btn = document.createElement('div'); btn.id = 'tDyn'; btn.innerHTML = '🧨<small></small>';
     btn.style.cssText = 'position:fixed;right:92px;bottom:calc(30% + 70px);width:50px;height:50px;box-sizing:border-box;border-radius:50%;border:2px solid #ffb35a;background:rgba(110,20,10,.62);color:#fff;font-size:24px;z-index:40;touch-action:none;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;cursor:pointer';
     const sm = btn.querySelector('small'); sm.style.cssText = 'position:absolute;right:-4px;bottom:-4px;background:#c4231c;border-radius:9px;padding:1px 5px;font:800 11px system-ui';
@@ -90,8 +90,8 @@ export function createDynamite(c) {
   // another rider's stick (visual + sound only; their blast's damage reaches the host as normal checked hits)
   function remote(m) { if (!m || !Array.isArray(m.p) || !Array.isArray(m.v) || ![...m.p, ...m.v].every(Number.isFinite)) return; const g = stick(), sp = new THREE.Sprite(sparkM); sp.scale.setScalar(.12); sp.position.set(.03, .13, 0); g.add(sp);
     g.position.fromArray(m.p); scene.add(g); live.push({ g, sp, v: new THREE.Vector3().fromArray(m.v), w: new THREE.Vector3(10, 2, 5), t: DYN.fuse - Math.max(.3, Math.min(DYN.fuse, +m.f || DYN.fuse)), rest: false, remote: true }); }
-  const storeItem = { state: { id: 'dynamite', get name() { return `🧨 Dynamite ×${DYN.pack} · you have ${S.count} (G / 🧨: hold to aim, release to throw)`; }, price: DYN.price, owned: false, equipped: false },
-    buy() { const g = H.guns; if (!g || g.pts() < DYN.price) { msg('Not enough points', 1.5); return; } g.state.spent += DYN.price; g.save && g.save(); S.count += DYN.pack; save(); msg(`🧨 +${DYN.pack} dynamite (${S.count}) — hold G (or the 🧨 button) to aim, release to throw`, 3.5); },
+  const storeItem = { state: { id: 'dynamite', get name() { return `🧨 Dynamite ×${DYN.pack} · you have ${S.count} (T / 🧨: hold to aim, release to throw)`; }, price: DYN.price, owned: false, equipped: false },
+    buy() { const g = H.guns; if (!g || g.pts() < DYN.price) { msg('Not enough points', 1.5); return; } g.state.spent += DYN.price; g.save && g.save(); S.count += DYN.pack; save(); msg(`🧨 +${DYN.pack} dynamite (${S.count}) — hold T (or the 🧨 button) to aim, release to throw`, 3.5); },
     toggle() { this.buy(); } };
   return { state: S, update, remote, storeItem, start, release, explode, settings: DYN };
 }

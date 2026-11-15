@@ -5,7 +5,7 @@
 // wires it into our controller (underground floors under the mound, walls, falls), guns, host-authoritative co-op (the host
 // orders every puzzle action and replays the log to everyone) and game points. The civilization and its glyphs are fictional.
 import * as THREE from 'three';
-import { createSunTemple } from './hrsuntemple.js?v=42v';
+import { createSunTemple } from './hrsuntemple.js?v=42w';
 
 export const TEMPLE = { gold: 100000, top: 18.5, trap: { rolling_boulder: 40, dart_wall: 12, swinging_blade: 30 } };
 const IU = 27, IV0 = -77, IV1 = -4.5, DU = 16.5, AV1 = 9, MB = 30; // interior / mound half-width + depth, doorway half-width, apron front, mound blend
@@ -54,6 +54,7 @@ export function createTemple(c) {
   const saveClaims = () => { try { localStorage.setItem('hr_temple', JSON.stringify(out.claims)); } catch (_) {} };
   // ---- where the halls are: inside the interior rectangle and below the mound's surface ----
   out.inFoot = (x, z, m = 0) => { const [u, v] = toLocal(S, x, z); return Math.abs(u) <= IU + m && v >= IV0 - m && v <= IV1 + 1 + m; };
+  out.inDoor = (x, z) => { const [u, v] = toLocal(S, x, z); return Math.abs(u) <= 6 && v > IV1 - 1.5 && v < IV1 + 3; }; // v42w: the seal doorway (the mound face starts here: no slope check)
   out.under = (x, z, y) => { const [u, v] = toLocal(S, x, z); return Math.abs(u) <= IU - .5 && v >= IV0 + .5 && v <= IV1 + .5 && y < hAt(x, z) - 1.5; };
   out.floorAt = (x, z, y) => { toL(x, y, z); const u = L.x, v = L.z, yl = L.y; let f = -1e9;
     for (const q of tm.floorList) { if (Math.abs(u - q.x) > q.w / 2 || Math.abs(v - q.z) > q.d / 2) continue; const fy = q.y === null ? rampY(v) : q.y; if (fy <= yl + .55 && fy > f) f = fy; }

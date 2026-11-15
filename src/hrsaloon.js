@@ -3,12 +3,12 @@
 // bandit or a random brawl), the dealer in the dark corner (snow = fast, green = slow), three slot machines upstairs (seated
 // first-person view, 10/50/100 bets, jackpot 6000), swinging batwing doors, warm lamps, light shafts and dust.
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=42v';
-import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=42v';
-import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=42v';
-import {createCasino} from './hrcasino.js?v=42v';
-import {createSaloonDecor} from './hrsaloondecor.js?v=42v';
-import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=42v';
+import { PERF } from './perfopts.js?v=42w';
+import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=42w';
+import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=42w';
+import {createCasino} from './hrcasino.js?v=42w';
+import {createSaloonDecor} from './hrsaloondecor.js?v=42w';
+import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=42w';
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
 // ---------------- slots: pure math (tests use it) ----------------
 export const SLOT = { NAMES: ['cactus', 'cherry', 'horseshoe', 'bell', 'buffalo'], W: [10, 9, 7, 4, 2], THREE: [0, 5, 10, 25, 60], TWO_CHERRY: 3, ONE_CHERRY: 1, BETS: [10, 50, 100] };
@@ -178,7 +178,7 @@ export function createSaloon(c) {
   S.bet = 10;
 
   // ---- the town's E / tap hook ----
-  T.onUse = o => { if (o.kind === 'bandits') { open('bandits'); return true; } if (o.kind === 'dance') { open('dance'); return true; } if (o.kind === 'dealer') { open('dealer'); return true; } if (o.kind === 'slot') { sit(S.slots.find(M => M.spot === o)); return true; } return false; };
+  T.onUse = o => { if (o.kind === 'bandits') { open('bandits'); return true; } if (o.kind === 'dance') { open('dance'); return true; } if (o.kind === 'dealer') { open('dealer'); return true; } if (o.kind === 'slot') { sit(S.slots.find(M => M.spot === o)); return true; } return originalTownUse ? originalTownUse(o) : false; }; /* v42w: chain on — this used to swallow the temple seal, cave chest, etc. */
   const casino=createCasino({scene,H,P,T,camera,mobile,msg,beforeOpen:()=>{close();endDance();endFight(false,true);}});S.casino=casino;
   const decor=createSaloonDecor({scene,T,mobile});
   // ---- slots: seated first-person view with limited free look ----

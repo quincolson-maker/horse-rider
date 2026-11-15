@@ -8,7 +8,8 @@
 //   - drifting mist, a faint rainbow in the spray, mossy boulders around the pool and along the cliff foot
 // Local frame (same as the cave): x = across the mouth, +z = out of the mouth, y = up from the ground at the mouth.
 import * as THREE from 'three';
-import { rockDetail } from './hrhideout.js?v=42t';
+import { PERF } from './perfopts.js?v=42u';
+import { rockDetail } from './hrhideout.js?v=42u';
 
 const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 function hash(x, y) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
@@ -135,12 +136,12 @@ export function createFalls({ position, rot, high = true }) {
   const MN = high ? 46 : 20, mp = new Float32Array(MN * 3), mseed = []; for (let i = 0; i < MN; i++) mseed.push([Math.random(), (Math.random() - .5) * 12, Math.random() * 2.5, .5 + Math.random()]);
   const mistG = new THREE.BufferGeometry(); mistG.setAttribute('position', new THREE.BufferAttribute(mp, 3));
   const dot = softDot(), mistM = new THREE.PointsMaterial({ map: dot, size: high ? 5.5 : 4.5, sizeAttenuation: true, transparent: true, opacity: .28, depthWrite: false, color: 0xf2fbff });
-  const mist = new THREE.Points(mistG, mistM); mist.frustumCulled = false; group.add(mist); geos.push(mistG); mats.push(mistM);
+  const mist = new THREE.Points(mistG, mistM); mist.frustumCulled = false; mist.visible = PERF.fx; group.add(mist); geos.push(mistG); mats.push(mistM);
   // rainbow in the spray
   const rbG = new THREE.RingGeometry(6.2, 7.4, 64, 6, 0, Math.PI), rc = [], C = new THREE.Color(); { const p = rbG.attributes.position; for (let k = 0; k < p.count; k++) { const r = (Math.hypot(p.getX(k), p.getY(k)) - 6.2) / 1.2; C.setHSL(.83 * (1 - r) * .95, 1, .55); const e = Math.sin(Math.PI * Math.min(1, Math.max(0, r))); rc.push(C.r * e, C.g * e, C.b * e); } }
   rbG.setAttribute('color', new THREE.Float32BufferAttribute(rc, 3));
   const rbM = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: .16, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
-  const rainbow = keep(rbG, rbM); rainbow.position.set(0, -1.4, 6.4); rainbow.renderOrder = 4; group.add(rainbow);
+  const rainbow = keep(rbG, rbM); rainbow.position.set(0, -1.4, 6.4); rainbow.renderOrder = 4; rainbow.visible = PERF.fx; group.add(rainbow);
   // mossy boulders round the pool and along the cliff foot (the front of the pool stays open: that is the way in)
   const bG = boulderGeo(high ? 3 : 2), bM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9 }); geos.push(bG); mats.push(bM);
   const spots = []; let sd = 7; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;

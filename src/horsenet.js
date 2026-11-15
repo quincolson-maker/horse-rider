@@ -5,10 +5,11 @@
 // lobby. Transport is the existing PeerJS co-op star (src/coop.js); voice is the existing mesh (src/voice.js).
 // Synced: each rider's position / facing / walking speed, which horse they ride and its pose; the host is the authority
 // for the free herd (clients mirror it). Guns: other riders see your drawn gun, aim and shots (tracer, flash, smoke, sound) — visual only, no combat.
-import { createNet, MAX_PLAYERS } from './coop.js?v=42t';
-import { validCv } from './hrskin.js?v=42t';
-import { createVoice } from './voice.js?v=42t';
-import { createAdvert, LOBBY_URL } from './lobby.js?v=42t';
+import { createNet, MAX_PLAYERS } from './coop.js?v=42u';
+import { PERF } from './perfopts.js?v=42u';
+import { validCv } from './hrskin.js?v=42u';
+import { createVoice } from './voice.js?v=42u';
+import { createAdvert, LOBBY_URL } from './lobby.js?v=42u';
 const $ = id => document.getElementById(id);
 const QS = new URLSearchParams(location.search);
 const LOOP = QS.get('loopnet') === '1', LOCAL = /^(localhost|127\.|\[::1\])/.test(location.hostname);
@@ -109,12 +110,12 @@ export function createHorseNet({ horse, P, msg }) {
     if (S.gen !== g) return false; clearTimeout(tm); tm = setTimeout(() => { if (S.gen === g && hiWait) hiWait(null); }, 6000); // connected: the host says hi within 6 s
     const ok = await hiP;
     if (S.gen !== g) return false; if (!ok) { reset(); return false; }
-    S.code = code; voice.start(S.remotes.size + 1 <= VOICE_MESH ? [...S.remotes.keys()] : []); msg('Joined a Horse Rider lobby — voice is on', 3); return true;
+    S.code = code; if (PERF.voice) voice.start(S.remotes.size + 1 <= VOICE_MESH ? [...S.remotes.keys()] : []); msg('Joined a Horse Rider lobby — voice is on', 3); return true;
   }
   async function host() {
     reset(); S.role = 'host'; S.me = H.me = 'P1'; S.status = 'hosting'; const g = S.gen;
     try { const code = await withTimeout(net.host(), 20000, 'host timeout'); if (S.gen !== g) return false; S.code = code; } catch (e) { if (S.gen !== g) return false; reset(); S.status = 'offline'; msg('Multiplayer unavailable — riding solo', 3); return false; }
-    S.hbT = 0; advertise(); voice.start([]); msg('Horse Rider lobby open — other riders join automatically', 3); return true;
+    S.hbT = 0; advertise(); if (PERF.voice) voice.start([]); msg('Horse Rider lobby open — other riders join automatically', 3); return true;
   }
   // HORSE RIDER tap (or a lobby row): join an open Horse Rider lobby with a free slot, else host one
   async function auto(prefer) {

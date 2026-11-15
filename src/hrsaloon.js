@@ -3,11 +3,12 @@
 // bandit or a random brawl), the dealer in the dark corner (snow = fast, green = slow), three slot machines upstairs (seated
 // first-person view, 10/50/100 bets, jackpot 6000), swinging batwing doors, warm lamps, light shafts and dust.
 import * as THREE from 'three';
-import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=42t';
-import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=42t';
-import {createCasino} from './hrcasino.js?v=42t';
-import {createSaloonDecor} from './hrsaloondecor.js?v=42t';
-import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=42t';
+import { PERF } from './perfopts.js?v=42u';
+import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=42u';
+import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=42u';
+import {createCasino} from './hrcasino.js?v=42u';
+import {createSaloonDecor} from './hrsaloondecor.js?v=42u';
+import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=42u';
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
 // ---------------- slots: pure math (tests use it) ----------------
 export const SLOT = { NAMES: ['cactus', 'cherry', 'horseshoe', 'bell', 'buffalo'], W: [10, 9, 7, 4, 2], THREE: [0, 5, 10, 25, 60], TWO_CHERRY: 3, ONE_CHERRY: 1, BETS: [10, 50, 100] };
@@ -103,7 +104,7 @@ export function createSaloon(c) {
   // switch to a low-detail body (same skeleton, a third of the triangles) beyond 13 m, and cast sun shadows only while you
   // are inside (out in the street they stand under the roof's shadow anyway). Phones already build the low body.
   for (const D of staticNPCs) if (D.body) { D.body.frustumCulled = true; D.body.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, .85, 0), 1.45); }
-  let lodQ = mobile ? staticNPCs.length : 0, wasIn = null; const LOD_D2 = 13 * 13;
+  let lodQ = mobile ? staticNPCs.length : 0, wasIn = null; const LOD_D2 = PERF.lod ? 13 * 13 : 8 * 8;
   let lodT = -3; function lodBuild(dt) { if (lodQ >= staticNPCs.length || (lodT += dt) < .25) return; lodT = 0; const D = staticNPCs[lodQ++]; if (D.body) addLowLOD(D); } // spread out from boot, never in a burst
   function npcLOD() {
     const inn = S.inside(); if (inn !== wasIn) { wasIn = inn; for (const D of staticNPCs) { if (D.body) D.body.castShadow = inn; if (D.lod) D.lod.castShadow = inn; } }

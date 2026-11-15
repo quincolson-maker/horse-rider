@@ -5,28 +5,29 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=42t';
-import { PF } from './perf.js?v=42t';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=42u';
+import { PERF } from './perfopts.js?v=42u';
+import { PF } from './perf.js?v=42u';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=42t';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=42t';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42t';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42t';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=42t';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=42t';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=42t';
-import { createGuns } from './hrguns.js?v=42t';
-import { createHrZombies } from './hrzombies.js?v=42t';
-import { createFlora } from './hrflora.js?v=42t';
-import { createTown, wearJacket } from './hrtown.js?v=42t';
-import { createSaloon } from './hrsaloon.js?v=42t';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=42t';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=42t';
-import { createDynamite } from './hrdynamite.js?v=42t';
-import { createSunItem } from './hrsunweapon.js?v=42t';
-import { createBuild } from './hrbuild.js?v=42t';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=42t';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=42t';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=42u';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=42u';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42u';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42u';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=42u';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=42u';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=42u';
+import { createGuns } from './hrguns.js?v=42u';
+import { createHrZombies } from './hrzombies.js?v=42u';
+import { createFlora } from './hrflora.js?v=42u';
+import { createTown, wearJacket } from './hrtown.js?v=42u';
+import { createSaloon } from './hrsaloon.js?v=42u';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=42u';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=42u';
+import { createDynamite } from './hrdynamite.js?v=42u';
+import { createSunItem } from './hrsunweapon.js?v=42u';
+import { createBuild } from './hrbuild.js?v=42u';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=42u';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=42u';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -346,7 +347,7 @@ export function createHorseRider(ctx) {
   const H = { on: false, horses: [], mounted: null, cd: 0, prompt: '', obst: [], fence: [], speed: 0, t: 0, near: null, vy: 0, ground: true, riddenT: 0, mounts: 0, models: 'loading', trees: [], lodT: 0, ridden: new Map(), follow: false, online: '',
     stam: 100, winded: 0, cruise: 2, shiftT: 0, yawRate: 0, roll: 0, pitchK: 0, mountT: 0, dismT: 0, wantOff: false, side: 1, lookT: 9, recenter: false, shake: 0, fv: new THREE.Vector2(), bodyYaw: 0, fp: false, gait: 'Standing', zoom: 1 };
   const rnd = mulberry(42), Q = GX.Q, mobile = !!ctx.mobile;
-  const LOD_HORSE = mobile ? 9 : 14, LOD_TREE = mobile ? 70 : 125;
+  const LOD_HORSE = (mobile ? 9 : 14) * (PERF.lod ? 1 : .65), LOD_TREE = mobile ? 70 : 125;
   const up = new THREE.Vector3(0, 1, 0), m4 = new THREE.Matrix4(), qq = new THREE.Quaternion(), v3 = new THREE.Vector3(), sc3 = new THREE.Vector3(), col = new THREE.Color();
   const pbr = (k, o = {}) => PBRS && PBRS[k] ? new THREE.MeshStandardMaterial({ map: PBRS[k].map, normalMap: PBRS[k].normalMap, roughness: 1, metalness: 0, ...o }) : std(o.color ?? 0x7a5634);
   const HQ = !mobile && Q.shadow > 0; // desktop medium / high / ultra: full sky + terrain detail
@@ -391,7 +392,7 @@ export function createHorseRider(ctx) {
     H.obstWalls = town2.walls; H.places = { temple: H.temple ? H.temple.info() : null, cave: H.cave ? H.cave.info() : null, towers: tw, town, tops: [tops[A], tops[B]].map(t => [Math.round(t[0]), Math.round(t[1]), Math.round(t[2] - BASE)]), townFlat: +ts.toFixed(2) }; }
   // woods: conifers + broadleaf trees, instanced, with a near (detailed) / far (low-poly) LOD swapped around the player
   function buildTrees() {
-    const nT = Math.round(Q.trees * (mobile ? 2.2 : 3));
+    const nT = Math.round(Q.trees * (mobile ? 2.2 : 3) * (PERF.flora ? 1 : .65));
     for (let i = 0; i < nT * 8 && H.trees.length < nT; i++) { const x = (rnd() - .5) * 2 * (EDGE + 30), z = (rnd() - .5) * 2 * (EDGE + 30);
       if (Math.hypot(x - PEN.x, z - PEN.z) < 36 || Math.hypot(x - SPAWN.x, z - SPAWN.z) < 12 || clearing(x, z, 4) || trailDist(x, z) < 3.5 || inRange(x, z, 4)) continue; if (rnd() > .3 + .7 * (Math.sin(x * .02) * Math.cos(z * .025) * .5 + .5)) continue;
       const y = hAt(x, z); if (y - BASE > 44) continue; const s = .75 + rnd() * .65, conif = rnd() < (y - BASE > 12 ? .85 : .55);
@@ -668,7 +669,7 @@ export function createHorseRider(ctx) {
       sn.position.copy(sunTmp).addScaledVector(sky.sunDir, 200); sn.target.position.copy(sunTmp); sn.target.updateMatrixWorld(); };
     GX.setLens(false); // the shared cinematic lens pass desaturates; Horse Rider uses its own grade below
     if (GX.composer) { const ps = GX.composer.passes; for (const p of ps) if (p.strength != null && p.radius != null) { p.strength = STYLE_ON ? .22 : .24; p.radius = STYLE_ON ? .55 : .5; p.threshold = STYLE_ON ? .93 : .88; }
-      const li = ps.indexOf(GX.lens && GX.lens()); H.grade = new ShaderPass(STYLE_ON ? STYLE_GRADE : GRADE); GX.composer.insertPass(H.grade, li >= 0 ? li : ps.length); H.drunkPass = new ShaderPass(DRUNK); H.drunkPass.enabled = false; GX.composer.insertPass(H.drunkPass, GX.composer.passes.indexOf(H.grade) + 1); }
+      const li = ps.indexOf(GX.lens && GX.lens()); H.grade = new ShaderPass(STYLE_ON ? STYLE_GRADE : GRADE); GX.composer.insertPass(H.grade, li >= 0 ? li : ps.length); H.grade.enabled = PERF.grade; H.drunkPass = new ShaderPass(DRUNK); H.drunkPass.enabled = false; GX.composer.insertPass(H.drunkPass, GX.composer.passes.indexOf(H.grade) + 1); }
     envTick(0, true);
   }
   // v41: walking up to the town used to stall while its shaders compiled and textures uploaded for the first time.

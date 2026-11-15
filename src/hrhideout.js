@@ -13,6 +13,7 @@
 // multiple of 90 degrees), floors are box tops (stairs are 0.3 m steps), walls are rings of small boxes.
 // API matches the old createBanditCave (src/hrbanditcave.js) so src/hrcave.js drives the fight, key, vault and loot.
 import * as THREE from 'three';
+import { PERF } from './perfopts.js?v=42u';
 
 const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 function hash(x, y) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
@@ -305,9 +306,9 @@ export function createHideout({ position, rotationY = 0, quality = 'high', viewD
   const flames = flameSpots.map(([x, y, z, s]) => { const sp = new THREE.Sprite(flameM); sp.position.set(x, y + .25 * s, z); sp.scale.set(.5 * s, .9 * s, 1); sp.userData = { x, y, z, s, ph: rnd() * 9 }; group.add(sp); return sp; });
   const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.4, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })(); texs.push(glowTex);
   const pts = (n, color, size, op) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); const m = new THREE.PointsMaterial({ map: glowTex, color, size, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true }); geos.push(g); mats.push(m); const p = new THREE.Points(g, m); p.frustumCulled = false; group.add(p); return p; };
-  const EN = high ? 60 : 26, embers = pts(EN, 0xffa040, .12, .9), eSeed = Array.from({ length: EN }, () => [rnd(), rnd(), rnd()]);
-  const MN = high ? 40 : 18, riverMist = pts(MN, 0x7af8e0, 3.2, .16), mSeed = Array.from({ length: MN }, () => [rnd(), rnd(), rnd()]);
-  const DN = high ? 70 : 30, dust = pts(DN, 0xfff0c8, .09, .7), dSeed = Array.from({ length: DN }, () => [rnd(), rnd(), rnd()]);
+  const FXK = PERF.fx ? 1 : 0; const EN = Math.max(1, (high ? 60 : 26) * FXK), embers = pts(EN, 0xffa040, .12, .9), eSeed = Array.from({ length: EN }, () => [rnd(), rnd(), rnd()]);
+  const MN = Math.max(1, (high ? 40 : 18) * FXK), riverMist = pts(MN, 0x7af8e0, 3.2, .16), mSeed = Array.from({ length: MN }, () => [rnd(), rnd(), rnd()]);
+  const DN = Math.max(1, (high ? 70 : 30) * FXK), dust = pts(DN, 0xfff0c8, .09, .7), dSeed = Array.from({ length: DN }, () => [rnd(), rnd(), rnd()]); if (!FXK) embers.visible = riverMist.visible = dust.visible = false;
   const glows = pts(flameSpots.length + CL.length, 0xffa860, 1.8, .45); { const a = glows.geometry.attributes.position; flameSpots.forEach(([x, y, z, s], i) => a.setXYZ(i, x, y + .3 * s, z)); CL.forEach(([x, y, z], i) => a.setXYZ(flameSpots.length + i, x, y + .6, z)); }
   // the underground river: glowing teal water flowing along the bottom of the chasm
   const RU = { t: { value: 0 } };

@@ -1,15 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=42t';
-import './src/hraudio.js?v=42t';
-import './src/stylize.js?v=42t'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=42t';
-import { FX, SFX } from './src/fx.js?v=42t';
-import { initTouch } from './src/touch.js?v=42t';
-import { createHorseRider } from './src/horse.js?v=42t';
-import { createHorseNet } from './src/horsenet.js?v=42t';
+import './src/assetshim.js?v=42u';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=42u';
+import './src/hraudio.js?v=42u';
+import './src/stylize.js?v=42u'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=42u';
+import { FX, SFX } from './src/fx.js?v=42u';
+import { initTouch } from './src/touch.js?v=42u';
+import { createHorseRider } from './src/horse.js?v=42u';
+import { createHorseNet } from './src/horsenet.js?v=42u';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=42t';
+import { PF, initPerf } from './src/perf.js?v=42u';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -106,6 +107,7 @@ function setupSettingsX() { const st = (k, v) => { try { localStorage.setItem(k,
   const sr = $('sensRange'), vr = $('volRange'); if (!sr || sr.dataset.on) return; sr.dataset.on = 1;
   const syncS = () => { sr.value = gt('hr_sens', 100); $('sensVal').textContent = sr.value + '%'; }; sr.oninput = () => { st('hr_sens', sr.value); syncS(); }; syncS();
   const syncV = () => { const v = +gt('hr_vol', 50); vr.value = v; $('volVal').textContent = v + '%'; sfx.vol = v / 100; if (sfx.master) sfx.master.gain.value = sfx.vol; }; vr.oninput = () => { st('hr_vol', vr.value); syncV(); }; syncV();
+  { const pl = $('perfList'); if (pl) for (const [k, label] of PERF_ITEMS) { const b = document.createElement('button'); b.className = 'tog'; b.setAttribute('aria-pressed', PERF[k]); b.textContent = label + ': ' + (PERF[k] ? 'ON' : 'OFF'); b.onclick = () => { setPerf(k, !PERF[k]); location.reload(); }; pl.appendChild(b); } } // v42u
   { const gb = $('grassBtn'), on = gt('hr_grass', '0') === '1'; gb.textContent = '🌿 Grass blades: ' + (on ? 'ON' : 'OFF'); gb.setAttribute('aria-pressed', on); gb.onclick = () => { st('hr_grass', on ? '0' : '1'); location.reload(); }; }
   const cur = gt('vr_quality', 'auto'); for (const b of $('qSeg').children) { b.classList.toggle('on', b.dataset.q === cur); b.onclick = () => { if (b.dataset.q === gt('vr_quality', 'auto')) return; st('vr_quality', b.dataset.q); const u = new URL(location.href); u.searchParams.delete('q'); location.href = u.toString(); }; }
   const touch = matchMedia('(pointer: coarse)').matches, rows = touch ? [['Left thumb', 'move / steer'], ['Right thumb', 'look around'], ['RIDE / USE', 'mount a horse, talk, buy'], ['DRAW', 'take out a gun'], ['FIRE / AIM', 'shoot / zoom'], ['Gun swap', 'cycles guns, then 🧨 dynamite (hold FIRE to aim, let go to throw)'], ['JUMP', 'jump'], ['⋯', 'more: settings, fullscreen']]

@@ -1,9 +1,10 @@
-import { STYLE_ON } from './stylize.js?v=42t';
+import { STYLE_ON } from './stylize.js?v=42u';
+import { PERF } from './perfopts.js?v=42u';
 // HORSE RIDER world graphics: large-scale terrain (domain-warped fBm hills, carved valleys, ridged-multifractal mountains out to ~4 km),
 // physically based sky (Preetham Rayleigh/Mie) with layered procedural clouds, sky-driven IBL + aerial haze, slow golden-hour time of day,
 // slope/height-blended PBR terrain (Poly Haven CC0), GPU instanced wind-blown grass with wildflowers, CC0 scanned boulders.
 import * as THREE from 'three';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42t';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42u';
 const sstep = (a, b, t) => { t = Math.min(1, Math.max(0, (t - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 // ---------------- noise (Perlin gradient noise, fBm, ridged multifractal) ----------------
@@ -33,7 +34,7 @@ export function makeRawH(EDGE) {
     if (r > 600) { const k = sstep(600, 1250, r); h += k * (40 + ridged(wx * .0021 + 4.1, wz * .0021 - 2.6, 4) * 300); } // a taller second range behind the first ridge (outside the walkable area): layered skyline, snow caps
     // v42: a third, giant range beyond the rideable world (r > 1150 m, so trails and sites are untouched): jagged, snow-capped
     // spires and knife-edge ridges for a dramatic skyline, with sharp secondary peaks and eroded gullies
-    if (r > 1400) { const k3 = sstep(1400, 2800, r), R3 = ridged(wx * .0009 + 8.3, wz * .0009 - 6.1, 5), sp = ridged(wx * .0018 - 1.9, wz * .0018 + 5.5, 3);
+    if (r > 1400 && PERF.farMtn) { const k3 = sstep(1400, 2800, r), R3 = ridged(wx * .0009 + 8.3, wz * .0009 - 6.1, 5), sp = ridged(wx * .0018 - 1.9, wz * .0018 + 5.5, 3);
       h += k3 * (Math.pow(R3, 2.2) * 520 + Math.pow(sp, 2.5) * 140 * R3); }
     return h;
   };

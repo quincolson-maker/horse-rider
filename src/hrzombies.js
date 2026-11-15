@@ -5,7 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=42t';
+import { PF } from './perf.js?v=42u';
+import { PERF } from './perfopts.js?v=42u';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -25,7 +26,7 @@ export function createHrZombies(c) {
     hp: ZSET.playerHp, hurtT: -99, dead: 0, deaths: 0, flash: 0, t: 0, snapT: 0, role: c.role || (() => 'solo'), chaos: false, groanTok: 4 };
   // v37 CHAOS MODE: ten times the dead (420 on a desktop host, 180 on a phone host). The host's switch decides for everyone in
   // co-op (it rides in the snapshot); a client's own switch only matters once it hosts or plays solo.
-  const capOf = on => on ? (Z.maxChaos ? (mobile ? 280 : 720) : (mobile ? ZSET.chaosPhone : ZSET.chaosDesktop)) : (mobile ? ZSET.capPhone : ZSET.capDesktop); // v42: dev MAX chaos
+  const capOf = on => on ? (Z.maxChaos ? (PERF.chaos ? (mobile ? 280 : 720) : (mobile ? 150 : 380)) : (mobile ? ZSET.chaosPhone : ZSET.chaosDesktop)) : (mobile ? ZSET.capPhone : ZSET.capDesktop); // v42: dev MAX chaos
   Z.wantChaos = Q.get('chaos') === '1' || (Q.get('chaos') !== '0' && (() => { try { return localStorage.getItem('hr_chaos') === '1'; } catch (_) { return false; } })());
   function setChaos(on, save = true) { Z.wantChaos = !!on; if (save) try { localStorage.setItem('hr_chaos', on ? '1' : '0'); } catch (_) {} if (Z.role() !== 'client') applyChaos(Z.wantChaos); return Z.wantChaos; }
   function applyChaos(on) { on = !!on; if (on === Z.chaos && Z.cap === capOf(on)) return; const was = Z.chaos; Z.chaos = on; Z.cap = capOf(on);

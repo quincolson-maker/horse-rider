@@ -3,6 +3,7 @@
 //  prickly-pear and saguaro-style cacti on the dry sunny slopes, and a belt of far conifers climbing the lower mountain
 //  slopes outside the walkable area (cheap far-LOD trees, no shadows) so the ranges read as layered forest → rock → snow.
 import * as THREE from 'three';
+import { PERF } from './perfopts.js?v=42u';
 
 function build(parts) { // parts: [geometry, [r,g,b] | fn(y)->rgb] -> one non-indexed geometry with vertex colours
   const pos = [], nor = [], col = [];
@@ -46,7 +47,7 @@ export function createFlora(scene, o) {
   function scatter(name, geo, mat, n, test, size, shadow, tint) { const L = []; for (let i = 0; i < n * 6 && L.length < n; i++) { const x = (r() - .5) * 2 * EDGE, z = (r() - .5) * 2 * EDGE; if (avoid(x, z) || !test(x, z)) continue; L.push([x, z]); }
     const im = new THREE.InstancedMesh(geo, mat, Math.max(1, L.length)); L.forEach(([x, z], i) => { const s = size(); m4.compose(v.set(x, hAt(x, z) - .05, z), q.setFromAxisAngle(up, r() * 6.28), s3.set(s, s * (.85 + r() * .3), s)); im.setMatrixAt(i, m4); if (tint) im.setColorAt(i, tint(col)); });
     im.count = L.length; im.castShadow = !!shadow; im.receiveShadow = true; im.computeBoundingSphere(); scene.add(im); out.meshes.push(im); out.counts[name] = L.length; return L; }
-  const k = mobile ? .22 : HQ ? .75 : .45;
+  const k = (mobile ? .22 : HQ ? .75 : .45) * (PERF.flora ? 1 : .5); // v42u: half the brush unless 'Full cacti, brush & trees' is on
   scatter('sagebrush', sagebrushGeo(), vm(), Math.round(2600 * k), (x, z) => slope(x, z) < .45 && dry(x, z) > -.35, () => .7 + r() * r() * 1.4, false, c => c.setHSL(.2 + r() * .06, .12 + r() * .1, .62 + r() * .2));
   scatter('bunchgrass', bunchGrassGeo(), vm(), Math.round(6000 * k * (mobile ? .75 : 1)), (x, z) => slope(x, z) < .55 && hAt(x, z) - BASE < 110, () => .8 + r() * .9, false, c => c.setHSL(.12 + r() * .1, .3 + r() * .25, .75 + r() * .25));
   const pr = scatter('prickly', pricklyGeo(), vm(), Math.round(260 * k), (x, z) => dry(x, z) > .25 && slope(x, z) < .4 && hAt(x, z) - BASE < 40, () => .8 + r() * .8, HQ);

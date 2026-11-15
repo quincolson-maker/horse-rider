@@ -13,7 +13,7 @@
 // multiple of 90 degrees), floors are box tops (stairs are 0.3 m steps), walls are rings of small boxes.
 // API matches the old createBanditCave (src/hrbanditcave.js) so src/hrcave.js drives the fight, key, vault and loot.
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=42u';
+import { PERF } from './perfopts.js?v=42v';
 
 const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 function hash(x, y) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
@@ -168,11 +168,11 @@ export function createHideout({ position, rotationY = 0, quality = 'high', viewD
     for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; let g = false; for (const h of gaps) { const d = Math.abs(((a - h.a) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI); if (d < h.w) g = true; } if (g) continue;
       wallBox(R.cx + Math.cos(a) * (R.rx + .3), R.cz + Math.sin(a) * (R.rz + .3), y0, y1, .75); } };
   ring({ ...HALL, rx: HALL.rx * .93, rz: HALL.rz * .93 }, -1, 9, [{ a: ang(HALL, 0, -10), w: .2 }, { a: ang(HALL, 12, -23), w: .2 }]);
-  ring({ ...CHASM, rx: CHASM.rx * .85, rz: CHASM.rz * .85 }, -9, 4, [{ a: ang(CHASM, 28, -27), w: .2 }, { a: ang(CHASM, 19, -50.5), w: .22 }]);
+  ring({ ...CHASM, rx: CHASM.rx * .85, rz: CHASM.rz * .85 }, -9, 4, [{ a: ang(CHASM, 28, -27), w: .2 }, { a: ang(CHASM, 22, -51.5), w: .42 }]); /* v42v: wider gap where the far ledge meets stair 2 (the old one left a wall across the path) */
   ring({ ...GROTTO, rx: GROTTO.rx * .92, rz: GROTTO.rz * .9 }, -13, -5, [{ a: ang(GROTTO, 6, -50.5), w: .22 }]);
   for (let z = 1.2; z > -11; z -= 1.2) { wallBox(-3.3, z, -1, 6); wallBox(3.3, z, -1, 6); }
-  for (let x = 11; x < 28; x += 1.2) { const y = x < 15 ? 0 : Math.max(-6, -(x - 15) / 2); wallBox(x, -25.6, y - 1, y + 5); wallBox(x, -20.4, y - 1, y + 5); }
-  for (let z = -22; z > -27.5; z -= 1.2) { wallBox(26.1, z, -7, -1); wallBox(30.9, z, -7, -1); } wallBox(28.5, -20.4, -7, -1);
+  for (let x = 11; x < 28; x += 1.2) { const y = x < 15 ? 0 : Math.max(-6, -(x - 15) / 2); if (x < 25.5) wallBox(x, -25.6, y - 1, y + 5); wallBox(x, -20.4, y - 1, y + 5); } /* v42v: south wall stops before the landing so you can turn toward the bridge */
+  for (let z = -22; z > -27.5; z -= 1.2) { if (z < -25.5) wallBox(26.1, z, -7, -1); wallBox(30.9, z, -7, -1); } /* v42v: the west landing wall used to block the foot of stair 1 */ wallBox(28.5, -20.4, -7, -1);
   for (let x = 6; x < 19.4; x += 1.2) { const y = x > 18 ? -6 : x < 8 ? -12 : -6 - (18 - x) * .6; wallBox(x, -47.9, y - 1, y + 5); wallBox(x, -53.1, y - 1, y + 5); }
   // the chasm pit: rails on the bridge, lips on the ledges (you cannot fall off by accident)
   box3(BRIDGE.x - BRIDGE.w / 2 - .25, -7, BRIDGE.z1, BRIDGE.x - BRIDGE.w / 2 - .05, -4.9, BRIDGE.z0); box3(BRIDGE.x + BRIDGE.w / 2 + .05, -7, BRIDGE.z1, BRIDGE.x + BRIDGE.w / 2 + .25, -4.9, BRIDGE.z0);

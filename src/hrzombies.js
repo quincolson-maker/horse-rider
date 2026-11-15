@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=57';
-import { PERF } from './perfopts.js?v=57';
+import { PF } from './perf.js?v=58';
+import { PERF } from './perfopts.js?v=58';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -186,9 +186,9 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
   const wrapA = a => Math.atan2(Math.sin(a), Math.cos(a));
   function outlawFx(o) { if (sfx.at && sfx.ctx) sfx.at(o.pos, () => { sfx.nz('highpass', 900, 1, .08, .9); sfx.tone('square', 170, 55, .09, .45); }, .5); if (fx && fx.flash) fx.flash(o.pos.x, o.pos.y + 1.4, o.pos.z); }
   function stepOutlaw(o, dt) { if (o.hold) { o.sp = 0; o.st = 0; return; } if (!o.post) o.post = [o.pos.x, o.pos.z];
-    let T = null, bd = o.K.range; for (const p of players()) { if (Math.abs((p.y ?? o.pos.y) - o.pos.y) > 7 || (c.inCave && !c.inCave(p.x, p.z))) continue; const d = Math.hypot(p.x - o.pos.x, p.z - o.pos.z); if (d < bd) { bd = d; T = p; } }
+    let T = null, bd = o.K.range; for (const p of players()) { if (Math.abs((p.y ?? o.pos.y) - o.pos.y) > 7 || (c.inCave && !o.hostile && !c.inCave(p.x, p.z))) continue; const d = Math.hypot(p.x - o.pos.x, p.z - o.pos.z); if (d < bd) { bd = d; T = p; } }
     o.cd -= dt; if (o.shotT > 0 && (o.shotT -= dt) <= 0) o.st = 0; let tx = o.post[0], tz = o.post[1], spd = 1.3;
-    if (T && Z.outlawCalm) { o.yaw += wrapA(Math.atan2(-(T.x - o.pos.x), -(T.z - o.pos.z)) - o.yaw) * Math.min(1, dt * 2); T = null; } // v41: they watch you, but hold fire until someone starts shooting
+    if (T && Z.outlawCalm && !o.hostile) { o.yaw += wrapA(Math.atan2(-(T.x - o.pos.x), -(T.z - o.pos.z)) - o.yaw) * Math.min(1, dt * 2); T = null; } // v41: they watch you, but hold fire until someone starts shooting
     if (T) { o.yaw += wrapA(Math.atan2(-(T.x - o.pos.x), -(T.z - o.pos.z)) - o.yaw) * Math.min(1, dt * 6); const fromPost = Math.hypot(o.pos.x - o.post[0], o.pos.z - o.post[1]);
       if (!o.stay && bd > 9 && fromPost < 4) { tx = T.x; tz = T.z; spd = o.K.spd; } else { tx = o.pos.x; tz = o.pos.z; }
       if (o.cd <= 0) { const see = !c.outlawLOS || c.outlawLOS(o.pos.x, o.pos.y + 1.45, o.pos.z, T.x, (T.y ?? o.pos.y) + 1.4, T.z); o.cd = see ? o.K.cd * (.75 + rnd() * .6) : .4;
@@ -253,7 +253,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     Z.wasRole = Z.role();
     { let bo = null, bd = 160; for (const o of Z.list) if ((o.kind === 'boss' || o.boss) && o.alive) { const d = Math.hypot(o.pos.x - P.pos.x, o.pos.z - P.pos.z); if (d < bd) { bd = d; bo = o; } } // v43 boss health bar
       if (!Z.bossEl && typeof document !== 'undefined') { const e = Z.bossEl = document.createElement('div'); e.id = 'hrBoss'; e.innerHTML = '<b>☠ THE HULKING DEAD</b><div><i></i></div>'; document.body.appendChild(e); }
-      if (Z.bossEl) { const on = !!bo; if (bo && Z.bossT !== bo.kind) { Z.bossT = bo.kind; Z.bossEl.firstChild.textContent = bo.boss ? '☠ EL DIABLO — OUTLAW BOSS' : '☠ THE HULKING DEAD'; } if (on !== Z.bossOn) { Z.bossOn = on; Z.bossEl.classList.toggle('on', on); } if (bo) { const f = Math.max(0, Math.min(1, bo.hp / bo.K.hp)); if (Math.abs(f - (Z.bossF ?? -1)) > .004) { Z.bossF = f; Z.bossEl.lastChild.firstChild.style.width = (f * 100).toFixed(1) + '%'; } } } }
+      if (Z.bossEl) { const on = !!bo; if (bo && Z.bossT !== (bo.wantedName || bo.kind)) { Z.bossT = bo.wantedName || bo.kind; Z.bossEl.firstChild.textContent = bo.wantedName ? '📜 WANTED: ' + bo.wantedName.toUpperCase() : bo.boss ? '☠ EL DIABLO — OUTLAW BOSS' : '☠ THE HULKING DEAD'; } if (on !== Z.bossOn) { Z.bossOn = on; Z.bossEl.classList.toggle('on', on); } if (bo) { const f = Math.max(0, Math.min(1, bo.hp / bo.K.hp)); if (Math.abs(f - (Z.bossF ?? -1)) > .004) { Z.bossF = f; Z.bossEl.lastChild.firstChild.style.width = (f * 100).toFixed(1) + '%'; } } } }
     const cam = c.camera.position; c.camera.updateMatrixWorld(); PSM.multiplyMatrices(c.camera.projectionMatrix, c.camera.matrixWorldInverse); FR.setFromProjectionMatrix(PSM);
     const range = Z.chaos ? (mobile ? 140 : 220) : (mobile ? 220 : 320), shadowD = Z.chaos ? 28 : 50, poseNear = Z.chaos ? 50 : 90, eyeD = Z.chaos ? 110 : 1e9; Z.groanTok = Math.min(4, Z.groanTok + dt * 2.5); let drawn = 0;
     Z.frame = (Z.frame || 0) + 1; for (let li = Z.list.length - 1; li >= 0; li--) { const o = Z.list[li]; if (!o) continue; o.anim += dt; o.flinch = Math.max(0, o.flinch - dt * 2.5);

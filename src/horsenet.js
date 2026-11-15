@@ -5,11 +5,11 @@
 // lobby. Transport is the existing PeerJS co-op star (src/coop.js); voice is the existing mesh (src/voice.js).
 // Synced: each rider's position / facing / walking speed, which horse they ride and its pose; the host is the authority
 // for the free herd (clients mirror it). Guns: other riders see your drawn gun, aim and shots (tracer, flash, smoke, sound) — visual only, no combat.
-import { createNet, MAX_PLAYERS } from './coop.js?v=57';
-import { PERF } from './perfopts.js?v=57';
-import { validCv } from './hrskin.js?v=57';
-import { createVoice } from './voice.js?v=57';
-import { createAdvert, LOBBY_URL } from './lobby.js?v=57';
+import { createNet, MAX_PLAYERS } from './coop.js?v=58';
+import { PERF } from './perfopts.js?v=58';
+import { validCv } from './hrskin.js?v=58';
+import { createVoice } from './voice.js?v=58';
+import { createAdvert, LOBBY_URL } from './lobby.js?v=58';
 const $ = id => document.getElementById(id);
 const QS = new URLSearchParams(location.search);
 const LOOP = QS.get('loopnet') === '1', LOCAL = /^(localhost|127\.|\[::1\])/.test(location.hostname);
@@ -68,7 +68,7 @@ export function createHorseNet({ horse, P, msg }) {
   }
   function addRemote(id) { if (!id || id === S.me) return null; if (S.remotes.has(id)) return S.remotes.get(id);
     const R = { id, av: horse.avatar(id, COLORS[id] || '#fff'), s: null }; S.remotes.set(id, R); if (S.remotes.size + 1 <= VOICE_MESH) voice.peer(id); return R; }
-  function removeRemote(id) { voice.drop(id); S.cv.delete(id); H.remoteCv && H.remoteCv(id, 0); const R = S.remotes.get(id); if (!R) return; R.av.dispose(); S.remotes.delete(id); }
+  function removeRemote(id) { H.ranch && H.ranch.drop(id); voice.drop(id); S.cv.delete(id); H.remoteCv && H.remoteCv(id, 0); const R = S.remotes.get(id); if (!R) return; R.av.dispose(); S.remotes.delete(id); }
   function reset() { S.gen++; for (const t of S.timers) clearTimeout(t); S.timers.clear(); if (hiWait) hiWait(null); // settle a pending join
     for (const id of [...S.remotes.keys()]) removeRemote(id); S.peers.clear(); voice.stop(); advert.stop(); net.reset();
     S.role = 'solo'; S.code = null; S.me = H.me = 'P1'; H.follow = false; for (const o of H.horses) o.net = null;
@@ -94,6 +94,7 @@ export function createHorseNet({ horse, P, msg }) {
       case 'tms': if (isClient() && H.temple) H.temple.netIn(m); break; // the host's ordered action log
       case 'dyn': { const id = isHost() ? S.peers.get(from) : m.id; if (!id || id === S.me) break; H.dyn && H.dyn.remote(m); if (isHost()) net.send({ t: 'dyn', p: m.p, v: m.v, f: m.f, id }, null, from); break; }
       case 'sun': { const id = isHost() ? S.peers.get(from) : m.id; if (!id || id === S.me) break; H.sun && H.sun.remote(m); if (isHost()) net.send({ t: 'sun', o: m.o, e: m.e, id }, null, from); break; } // a Sun Pyramid beam (visual)
+      case 'rb': if (isClient() && H.events) H.events.netIn(m); break; // v58 stagecoach robbery (host-run)
       case 'rc': { const id = isHost() ? S.peers.get(from) : m.id; if (!id || id === S.me) break; H.race && H.race.netIn(m, id); if (isHost()) net.send({ t: 'rc', k: m.k, n: m.n, tm: m.tm, id }, null, from); break; } // v54 races
       case 'cv': if (isClient() && H.cave) H.cave.netIn(m); break; // v38 Bandit Falls: the host's hideout state
       case 'cvk': if (isHost() && H.cave) H.cave.netIn(m, S.peers.get(from)); break; // a client took the vault key // a zombie hit me (host decides)
@@ -142,7 +143,7 @@ export function createHorseNet({ horse, P, msg }) {
         for (const [id, d] of L) if (voice.links.has(id) && d > VOICE_FAR) voice.drop(id); for (const [id, d] of L) if (!voice.links.has(id) && d < VOICE_NEAR && voice.links.size < VOICE_MESH) voice.peer(id); } }
     if (net.open && S.netT <= 0) { S.netT = rate;
       const st = { t: 'p', x: +x.toFixed(2), y: +(h ? h.pos.y : P.pos.y).toFixed(2), z: +z.toFixed(2), yw: +(h ? P.yaw : (H.bodyYaw ?? P.yaw)).toFixed(3), m: h ? h.id : -1, hc: h && H.myCoat ? H.myCoat() : -1, pa: !h && H.pass ? H.pass.h.id : -1, hy: h ? +h.yaw.toFixed(3) : 0, sp: +(h ? H.speed : S.footSp).toFixed(2) };
-      if (horse.gunNet) Object.assign(st, horse.gunNet()); if (H.saloon) Object.assign(st, H.saloon.netState()); st.n = callsign().slice(0, 14); if (H.dead) st.dd = 1; if (isHost()) st.id = 'P1'; net.send(st); }
+      if (horse.gunNet) Object.assign(st, horse.gunNet()); if (H.saloon) Object.assign(st, H.saloon.netState()); st.n = callsign().slice(0, 14); { const rn = H.ranch && H.ranch.netSite(); if (rn) st.rn = rn; } if (H.dead) st.dd = 1; if (isHost()) st.id = 'P1'; net.send(st); }
     if (isHost() && net.open && S.herdT <= 0) { S.herdT = .25; net.send({ t: 'herd', h: horse.herd() }); }
     if (isHost() && S.code && (S.hbT = (S.hbT || 0) - dt) <= 0) { S.hbT = 5; try { localStorage.setItem('hr_mycode', JSON.stringify({ code: S.code, t: Date.now() })); } catch (_) {} }
     // v34: never stay offline: retry the lobby in the background (cold lobby server, PeerJS hiccup, came back from the background)

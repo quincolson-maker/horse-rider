@@ -3,12 +3,12 @@
 // by Quin (src/hrbanditcave.js, credited in CREDITS.md). This file places it in our world — a flattened notch in a hillside,
 // picked the same way on every machine — and wires it into our controller (walls + floors), guns (rock stops bullets),
 // host-authoritative co-op (the host runs the outlaws and the vault) and game points. Points are game points only.
-import { CAVE_CUT } from './hrworld.js?v=57';
+import { CAVE_CUT } from './hrworld.js?v=58';
 import * as THREE from 'three';
-import { createHideout } from './hrhideout.js?v=57';
-import { createFalls, baseZ } from './hrfalls.js?v=57';
-import { makeFrontierCharacter } from './hrcharacters.js?v=57';
-import { poseDoll } from './hrsaloon.js?v=57';
+import { createHideout } from './hrhideout.js?v=58';
+import { createFalls, baseZ } from './hrfalls.js?v=58';
+import { makeFrontierCharacter } from './hrcharacters.js?v=58';
+import { poseDoll } from './hrsaloon.js?v=58';
 
 export const CAVE = { chest: 2500, dance: 50, slotBet: 10, outlaw: 60, outlawHead: 75 };
 const FU = 40, FV0 = -59, FV1 = 8, BL = 16, BS = 5; // footprint in the cave's own frame (u across, v out of the mouth); terrain blend: 16 m apron in front, 5 m to the sides and back (the hill meets the rock)
@@ -116,7 +116,7 @@ export function createCave(c) {
     if (o.kind === 'cave-gate') { msg(o.label || 'The vault is open', 2); return true; }
     return prevUse ? prevUse(o) : false; };
   // ---- the fight (host authority): guards spawn when someone walks in; the last one down drops the key; the key opens the vault for everyone ----
-  const Zs = () => H.zombies, outlaws = () => { const Z = Zs(); return Z ? Z.list.filter(o => o.kind === 'outlaw' && o.alive) : []; };
+  const Zs = () => H.zombies, outlaws = () => { const Z = Zs(); return Z ? Z.list.filter(o => o.kind === 'outlaw' && o.alive && !o.hostile) : []; };
   function everyone() { const L = [[P.pos.x, P.pos.z]]; for (const r of (c.remotes ? c.remotes() : [])) if (r && r.s && Number.isFinite(r.s.x)) L.push([r.s.x, r.s.z, r.id]); return L; }
   let lastDown = null, bcT = 0;
   function bc() { bcT = 0; if (c.role() === 'host') c.send({ t: 'cv', p: out.state.phase, n: out.state.left, k: out.state.key, bo: out.state.boss || 0 }); }

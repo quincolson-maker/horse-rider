@@ -2,7 +2,7 @@
 // you on your bounty, and a two-horse stagecoach runs a loop between town and the horse pen. All local (no net traffic), all
 // asleep when you're far away.
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=57';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=58';
 const FOLK = [
   { sex: 'male', coat: 0x5a4632, top: 0xd8cdb4, hatC: 0x4a3a28, skin: 0x8a5a3c, hair: 0x1a120c },
   { sex: 'female', top: 0xe8dcc6, bodice: 0x2e4a6a, skirt: 0x6a2a3a, skin: 0xf0c6a4, hair: 0x9a5a2a },
@@ -50,8 +50,8 @@ export function createTownLife({ scene, H, P, T, hAt, msg, makeRealHorse, realAn
       if (d < 7) { sh.head.rotation.y = Math.max(-.8, Math.min(.8, Math.atan2(P.pos.x - sh.g.position.x, P.pos.z - sh.g.position.z) - sh.g.rotation.y)); }
       if (d < 3.2 && !briefT) { briefT = 25; const j = H.bounty && H.bounty.job; msg(j ? `🤠 Sheriff: "${j.title} — ${j.task}. Pays ${j.pay.toLocaleString()}."` : '🤠 Sheriff: "You\'ve cleaned up this whole territory, Legend."', 5); } }
     if (!route.length) return; hitch(); const coachNear = Math.hypot(P.pos.x - cp.x, P.pos.z - cp.z) < 260; coach.visible = coachNear; for (const [g] of team) g.visible = coachNear;
-    cd += 7.5 * dt; const [x, z] = rAt(cd), [x2, z2] = rAt(cd + 3); cp.set(x, 0, z); const want = Math.atan2(x2 - x, z2 - z); let dy = want - cyaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); cyaw += dy * Math.min(1, dt * 2);
-    coach.position.set(x, hAt(x, z), z); coach.rotation.y = cyaw; if (!coachNear) return; for (const [w, r] of wheels) w.rotation.x -= 7.5 * dt / r;
-    for (const [g, sx] of team) { tmp.set(sx, 0, 5.4).applyAxisAngle(THREE.Object3D.DEFAULT_UP, cyaw); g.position.set(x + tmp.x, hAt(x + tmp.x, z + tmp.z), z + tmp.z); g.rotation.y = cyaw + Math.PI; realAnim && realAnim(g, dt, 7.5, false, cd); } }
+    const csp = H.coachHalt ? 0 : 7.5; cd += csp * dt; const [x, z] = rAt(cd), [x2, z2] = rAt(cd + 3); cp.set(x, 0, z); const want = Math.atan2(x2 - x, z2 - z); let dy = want - cyaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); cyaw += dy * Math.min(1, dt * 2);
+    coach.position.set(x, hAt(x, z), z); coach.rotation.y = cyaw; if (!coachNear) return; for (const [w, r] of wheels) w.rotation.x -= csp * dt / r;
+    for (const [g, sx] of team) { tmp.set(sx, 0, 5.4).applyAxisAngle(THREE.Object3D.DEFAULT_UP, cyaw); g.position.set(x + tmp.x, hAt(x + tmp.x, z + tmp.z), z + tmp.z); g.rotation.y = cyaw + Math.PI; realAnim && realAnim(g, dt, csp, false, cd); } }
   return { update, folk, sheriff: sh, coach };
 }

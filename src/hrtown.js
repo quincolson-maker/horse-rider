@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42w';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42x';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,7 +47,7 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=42w';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=42x';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -84,7 +84,7 @@ export function createTown(c) {
     s.y0 = gL(-4.6, A); s.kind = kind; T.towers.push(s); const G = (x, z) => gL(x, z) - s.y0, hw = y => HW0 + (HW1 - HW0) * Math.max(0, y) / L;
     // concrete footings + legs (each leg leans in from its footing to the top corner)
     for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const g0 = G(sx * HW0, sz * HW0), bx = sx * hw(g0), bz = sz * hw(g0); box(s, M.concrete, bx, g0 - .35, bz, .9, 1.3, .9);
-      beam(s, M.steel, [bx, g0 + .3, bz], [sx * HW1, L, sz * HW1], .2); wall(s, bx, bz, bx, bz, g0 - 1, L); }
+      beam(s, M.steel, [bx, g0 + .3, bz], [sx * HW1, L, sz * HW1], .2); wall(s, bx, bz, bx, bz, g0 - 1, g0 + 3.5); } /* v42x: the leg leans in; its old full-height collider stood across the top landing */
     // girts at each level + X bracing on every face, per level
     const lv = [0, 4, 8, 12, L]; for (let k = 0; k < lv.length - 1; k++) { const y0 = lv[k], y1 = lv[k + 1], h0 = hw(y0), h1 = hw(y1);
       for (const [ux, uz] of [[1, 0], [0, 1]]) for (const sg of [-1, 1]) { const P0 = (h, t, y) => ux ? [t * h, y, sg * h] : [sg * h, y, t * h];
@@ -100,7 +100,7 @@ export function createTown(c) {
       for (const ez of [zl, zr]) if (ez !== Z1 || up) beam(s, M.steel, [up ? -X : X, ya + 1, ez], [up ? X : -X, yb + 1, ez], .045); // sloped handrails
       if (i < 3) { const sx = up ? 1 : -1, lx0 = sx * X, lx1 = sx * LX; floor(s, Math.min(lx0, lx1), Math.max(lx0, lx1), Z0, Z2, yb); box(s, M.grate, (lx0 + lx1) / 2, yb - .04, (Z0 + Z2) / 2, LX - X, .08, Z2 - Z0);
         rail(s, lx1, Z0, lx1, Z2, yb); rail(s, lx0, Z0, lx1, Z0, yb); rail(s, lx0, Z2, lx1, Z2, yb); } }
-    wall(s, -X, Z0, X, Z0, -3, L + 1.2); wall(s, -X, Z1, X, Z1, -3, L + 1.2); wall(s, -X, Z2, X, Z2, -3, L + 1.2); // stair sides: solid stringers + rails (never fall off)
+    wall(s, -X, Z0, X, Z0, -3, 13.2); /* v42x: lane A tops out at 12 m; at full height this wall cut the top landing off from the cab */ wall(s, -X, Z1, X, Z1, -3, L + 1.2); wall(s, -X, Z2, X, Z2, -3, L + 1.2); // stair sides: solid stringers + rails (never fall off)
     wall(s, -X, Z1 + .05, -X, Z2 - .05, -3, 3.6); wall(s, X, Z0 + .05, X, Z1 - .05, -3, 0); // no walking under the flights
     for (const [x, z] of [[LX, Z0], [LX, Z2], [-LX, Z0], [-LX, Z2], [X, Z2], [-X, Z2]]) { const g0 = G(x, z), top = x > 0 ? 12 : L; box(s, M.concrete, x, g0 - .3, z, .5, 1, .5); beam(s, M.steel, [x, g0, z], [x, top, z], .12); if (Math.abs(x) === LX) wall(s, x, z, x, z, g0 - 1, top); }
     // catwalk (railed, cantilevered round the cab) + the top landing that joins it

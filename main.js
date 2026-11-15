@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=44';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=44';
-import './src/hraudio.js?v=44';
-import './src/stylize.js?v=44'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=44';
-import { FX, SFX } from './src/fx.js?v=44';
-import { initTouch } from './src/touch.js?v=44';
-import { createHorseRider } from './src/horse.js?v=44';
-import { createHorseNet } from './src/horsenet.js?v=44';
+import './src/assetshim.js?v=45';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=45';
+import './src/hraudio.js?v=45';
+import './src/stylize.js?v=45'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=45';
+import { FX, SFX } from './src/fx.js?v=45';
+import { initTouch } from './src/touch.js?v=45';
+import { createHorseRider } from './src/horse.js?v=45';
+import { createHorseNet } from './src/horsenet.js?v=45';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=44';
+import { PF, initPerf } from './src/perf.js?v=45';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -60,10 +60,16 @@ const PINS = [['pen', 'PEN', '#ffb35a'], ['town', 'TOWN', '#ff6a5a'], ['cave', '
 function pins(hd) { const box = $('cpins'); if (!box || !horse.state.places) return; const H = horse.state, pl = H.places, w = (box.parentNode.clientWidth || 300) / 2 - 34;
   if (!box.dataset.on) { box.dataset.on = 1; box.innerHTML = PINS.map(([k, lab, col]) => `<i data-k="${k}" style="--c:${col}"><u></u><em>${lab}</em> <b></b></i>`).join(''); }
   const sideN = { l: 0, r: 0 }, bt = H.bountyTarget; let onPoi = null; if (bt) for (const [k] of PINS) { if (k === 'job') continue; const q = k === 'pen' ? [horse.PEN.x, horse.PEN.z] : k === 'town' ? pl.town : pl[k] ? [pl[k].x, pl[k].z] : null; if (q && Math.hypot(q[0] - bt[0], q[1] - bt[1]) < 40) onPoi = k; }
-  for (const el of box.children) { const k = el.dataset.k; el.classList.toggle('jobOn', k === onPoi); if (k === 'job' && onPoi) { el.style.display = 'none'; continue; } const t = k === 'job' ? H.bountyTarget : k === 'pen' ? [horse.PEN.x, horse.PEN.z] : k === 'town' ? pl.town : pl[k] ? [pl[k].x, pl[k].z] : null; if (!t) { el.style.display = 'none'; continue; }
+  const vis = []; for (const el of box.children) { const k = el.dataset.k; el.classList.toggle('jobOn', k === onPoi); if (k === 'job' && onPoi) { el.style.display = 'none'; continue; } const t = k === 'job' ? H.bountyTarget : k === 'pen' ? [horse.PEN.x, horse.PEN.z] : k === 'town' ? pl.town : pl[k] ? [pl[k].x, pl[k].z] : null; if (!t) { el.style.display = 'none'; continue; }
     const dx = t[0] - P.pos.x, dz = t[1] - P.pos.z, d = Math.hypot(dx, dz), b = Math.atan2(dx, -dz) * 180 / Math.PI, dl = ((b - hd) % 360 + 540) % 360 - 180; let x = dl / 15 * 40, edge = '';
-    if (d < 20) { el.style.display = 'none'; continue; } if (x > w) { x = w - 92 * sideN.r++; edge = '▶'; } else if (x < -w) { x = -w + 92 * sideN.l++; edge = '◀'; }
-    el.style.display = ''; el.style.transform = `translateX(${x.toFixed(0)}px) translateX(-50%)`; el.style.opacity = edge ? .7 : 1; el.lastChild.textContent = (edge === '◀' ? '◀ ' : '') + (d > 999 ? (d / 1000).toFixed(1) + 'km' : Math.round(d) + 'm') + (edge === '▶' ? ' ▶' : ''); } }
+    if (d < 20) { el.style.display = 'none'; continue; } if (x > w) { x = w; edge = '▶'; } else if (x < -w) { x = -w; edge = '◀'; }
+    el.style.display = ''; vis.push({ el, x, edge }); el.style.opacity = edge ? .7 : 1; el.lastChild.textContent = (edge === '◀' ? '◀ ' : '') + (d > 999 ? (d / 1000).toFixed(1) + 'km' : Math.round(d) + 'm') + (edge === '▶' ? ' ▶' : ''); }
+  // v45: chips that point the same way are nudged apart instead of printing on top of each other
+  const all = vis.sort((a, b) => a.x - b.x); for (const v of all) v.w = (v.el.offsetWidth || 80) + 4; // v45: spaced by their real widths, both ways, inside the strip
+  for (let i = 1; i < all.length; i++) { const g = (all[i - 1].w + all[i].w) / 2; if (all[i].x - all[i - 1].x < g) all[i].x = all[i - 1].x + g; }
+  if (all.length && all[0].x < -(w + 32) + all[0].w / 2) { all[0].x = -(w + 32) + all[0].w / 2; for (let i = 1; i < all.length; i++) { const g = (all[i - 1].w + all[i].w) / 2; if (all[i].x - all[i - 1].x < g) all[i].x = all[i - 1].x + g; } }
+  const lim = all.length ? w + 32 - all[all.length - 1].w / 2 : 0; if (all.length && all[all.length - 1].x > lim) { all[all.length - 1].x = lim; for (let i = all.length - 2; i >= 0; i--) { const g = (all[i + 1].w + all[i].w) / 2; if (all[i + 1].x - all[i].x < g) all[i].x = all[i + 1].x - g; } }
+  for (const v of vis) v.el.style.transform = `translateX(${v.x.toFixed(0)}px) translateX(-50%)`; }
 function compass() { const el = $('cstrip'); if (!el) return; if (!el.innerHTML) el.innerHTML = CMP; const hd = ((-P.yaw * 180 / Math.PI) % 360 + 360) % 360; el.style.transform = `translateX(${-(hd + 360) / 15 * 40 - 20}px)`; $('chead').textContent = Math.round(hd); pins(hd); }
 function hud(dt) { compass(); hurtFlash = Math.max(0, hurtFlash - dt * 1.5); $('vign').style.opacity = hurtFlash;
   hudT -= dt; if (hudT > 0) return; hudT = .1; uiSync(); horse.hud(); }
@@ -99,6 +105,9 @@ function devChaosBtn() { let on = false; try { on = localStorage.getItem('hr_dev
   b.onclick = e => { e.stopPropagation(); const Zs = horse.state.zombies; if (!Zs || !Zs.setMaxChaos) { msg('Zombies are off in this game', 2); return; } if (horse.state.netRole && horse.state.netRole() === 'client') { msg('Only the host can start chaos', 2); return; }
     Zs.setMaxChaos(!Zs.maxChaos); sync(); syncChaos(); msg(Zs.maxChaos ? '☠ MAX CHAOS — the horde is coming' : 'Chaos stopped', 2.5); };
   ['pointerdown', 'touchstart'].forEach(ev => b.addEventListener(ev, e => e.stopPropagation(), { passive: true })); document.body.appendChild(b); sync(); }
+function chaosToMenu() { const b = $('devChaos'), m = $('uiMore'); if (!IS_TOUCH || !b || !m || $('mChaos')) return; b.style.setProperty('display', 'none', 'important'); // v45: on phones MAX CHAOS lives in the ⋯ menu
+  const mb = document.createElement('button'); mb.id = 'mChaos'; mb.style.color = '#ffb3a8'; const lab = () => { const Z = horse.state.zombies; mb.textContent = Z && Z.maxChaos ? '☠ Stop chaos' : '☠ Max Chaos'; }; lab(); mb.onclick = e => { b.click(); lab(); }; m.insertBefore(mb, m.lastChild); }
+addEventListener('hr-dev', () => setTimeout(chaosToMenu, 50)); setTimeout(chaosToMenu, 1600);
 addEventListener('hr-dev', devChaosBtn); setTimeout(devChaosBtn, 1500);
 function syncChaos() { const Zs = horse.state.zombies, b = $('chaosBtn'); if (!Zs || !b) return; const cl = !!(horse.state.netRole && horse.state.netRole() === 'client'), on = cl ? Zs.chaos : Zs.wantChaos;
   b.textContent = '☠ Chaos mode: ' + (on ? 'ON' : 'OFF') + (cl ? ' (host decides)' : ''); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.disabled = cl; }

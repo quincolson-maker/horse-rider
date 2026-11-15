@@ -5,13 +5,19 @@
 // upright facing +Z); arms and legs are solved with analytic two-bone IK onto the Mixamo hands / feet (poles = elbows /
 // knees), so a gun held by the Mixamo hand sits in the variant's hand and the feet stay in the stirrups.
 import * as THREE from 'three';
-import { createPlayerCharacter, PLAYER_VARIANTS } from './hrcharacters.js?v=44';
+import { createPlayerCharacter, PLAYER_VARIANTS, playerVariant } from './hrcharacters.js?v=45';
 export const CHARACTERS = Object.freeze(['Classic', ...PLAYER_VARIANTS.map(v => v.name)]); // index 0 = our classic rider (fallback)
 export const validCv = v => { v = +v; return Number.isInteger(v) && v >= 0 && v < CHARACTERS.length ? v : 0; };
 const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), v3 = new THREE.Vector3(), v4 = new THREE.Vector3(), v5 = new THREE.Vector3(), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion(), q3 = new THREE.Quaternion();
 const DELTA = ['Hips', 'Spine02', 'Spine01', 'neck', 'Head'];
+// v45: variants with a 'tex' are the main rider model itself, repainted (same mesh, rig and UVs: full quality)
+const TEX = new Map(); const repaint = (url) => { if (!TEX.has(url)) { const t = new THREE.TextureLoader().load(url); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; TEX.set(url, t); } return TEX.get(url); };
+function texSkin(rider, cv, v, quality) { const swaps = []; const url = v.tex + (quality === 'low' ? '_1k.webp' : '.webp'), map = repaint(url);
+  rider.traverse(o => { if (!o.isMesh || !o.material || !o.material.map || o.userData.jacket) return; const m0 = o.material, m = m0.clone(); m.map = map; m.needsUpdate = true; o.material = m; swaps.push([o, m0, m]); });
+  return { cv, D: null, sync() {}, dispose() { for (const [o, m0, m] of swaps) { if (o.material === m) o.material = m0; m.dispose(); } } }; }
 export function skinRider(rider, cv, { quality = 'high', hideHead = () => false } = {}) {
   cv = validCv(cv); const B = rider && rider.userData && rider.userData.B; if (!cv || !B) return null;
+  { const v = playerVariant(cv - 1); if (v && v.tex) return texSkin(rider, cv, v, quality); }
   const need = ['Hips', 'LeftToeBase', 'RightToeBase', 'Spine02', 'Spine01', 'neck', 'Head', 'LeftArm', 'LeftForeArm', 'LeftHand', 'RightArm', 'RightForeArm', 'RightHand', 'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'RightUpLeg', 'RightLeg', 'RightFoot'];
   if (need.some(n => !B[n] || !B[n].userData.rest)) return null;
   // Mixamo rest pose in rider-local space (rest quaternions saved by saveRest); restore the live pose afterwards

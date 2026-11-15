@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=44';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=45';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,7 +47,7 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=44';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=45';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -415,4 +415,4 @@ export function wearJacket(root, on) { if (!root || !root.userData) return false
       for (let i = 0; i < nP.length; i += 9) { wp.set(nP[i], nP[i + 1], nP[i + 2]).applyMatrix4(jm.matrixWorld); const d = wp.clone().sub(mid); if (Math.abs(d.dot(rt)) < sw * .2 && Math.abs(d.dot(up)) < .08) depth = Math.max(depth, d.dot(back)); }
       depth = Math.max(depth, sw * .62); const w = sw * .78, pl = new THREE.Mesh(new THREE.PlaneGeometry(w, w * .75), J.print); pl.position.copy(mid).addScaledVector(back, depth + .02);
       pl.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(rt.clone().negate(), up, back)); pl.renderOrder = 2; sp.attach(pl); parts.push(pl); } } catch (_) {}
-  root.userData.jacket = parts; return true; }
+  for (const q of parts) q.traverse(o => { o.userData.jacket = true; }); root.userData.jacket = parts; return true; }

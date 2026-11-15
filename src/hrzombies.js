@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=46';
-import { PERF } from './perfopts.js?v=46';
+import { PF } from './perf.js?v=47';
+import { PERF } from './perfopts.js?v=47';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -27,7 +27,7 @@ export function createHrZombies(c) {
     hp: ZSET.playerHp, hurtT: -99, dead: 0, deaths: 0, flash: 0, t: 0, snapT: 0, role: c.role || (() => 'solo'), chaos: false, groanTok: 4 };
   // v37 CHAOS MODE: ten times the dead (420 on a desktop host, 180 on a phone host). The host's switch decides for everyone in
   // co-op (it rides in the snapshot); a client's own switch only matters once it hosts or plays solo.
-  const capOf = on => on ? (Z.maxChaos ? (PERF.chaos ? (mobile ? 280 : 720) : (mobile ? 150 : 380)) : (mobile ? ZSET.chaosPhone : ZSET.chaosDesktop)) : (mobile ? ZSET.capPhone : ZSET.capDesktop); // v42: dev MAX chaos
+  const capOf = on => Math.round((1 + .5 * (H.night || 0)) * capOf0(on)); /* v47: bigger hordes at night */ const capOf0 = on => on ? (Z.maxChaos ? (PERF.chaos ? (mobile ? 280 : 720) : (mobile ? 150 : 380)) : (mobile ? ZSET.chaosPhone : ZSET.chaosDesktop)) : (mobile ? ZSET.capPhone : ZSET.capDesktop); // v42: dev MAX chaos
   Z.wantChaos = Q.get('chaos') === '1' || (Q.get('chaos') !== '0' && (() => { try { return localStorage.getItem('hr_chaos') === '1'; } catch (_) { return false; } })());
   function setChaos(on, save = true) { Z.wantChaos = !!on; if (save) try { localStorage.setItem('hr_chaos', on ? '1' : '0'); } catch (_) {} if (Z.role() !== 'client') applyChaos(Z.wantChaos); return Z.wantChaos; }
   function applyChaos(on) { on = !!on; if (on === Z.chaos && Z.cap === capOf(on)) return; const was = Z.chaos; Z.chaos = on; Z.cap = capOf(on);
@@ -214,7 +214,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     else if (safe) { const dx = tx - PEN.x, dz = tz - PEN.z, ox = PEN.hw - Math.abs(dx), oz = PEN.hd - Math.abs(dz); // prey inside the pen: press up against the rails nearest to it
       if (ox < oz) tx = PEN.x + Math.sign(dx || 1) * (RX + .35); else tz = PEN.z + Math.sign(dz || 1) * (RZ + .35); }
     const det = penDetour(o, tx, tz); if (det) [tx, tz] = det;
-    const far = dist > ZSET.near, spd = Math.max(o.K.spd, far ? ZSET.travel : 0) * (1 - o.flinch * .6), dx = tx - o.pos.x, dz = tz - o.pos.z, l = Math.hypot(dx, dz) || 1;
+    const far = dist > ZSET.near, spd = Math.max(o.K.spd * (1 + .18 * (H.night || 0)), far ? ZSET.travel : 0) * (1 - o.flinch * .6), dx = tx - o.pos.x, dz = tz - o.pos.z, l = Math.hypot(dx, dz) || 1;
     const want = Math.atan2(-dx, -dz); o.yaw += Math.atan2(Math.sin(want - o.yaw), Math.cos(want - o.yaw)) * Math.min(1, dt * 4);
     o.sp += (spd - o.sp) * Math.min(1, dt * 3); let mx = -Math.sin(o.yaw) * o.sp * dt, mz = -Math.cos(o.yaw) * o.sp * dt;
     if (o.push) { mx += o.push[0] * dt * 4; mz += o.push[1] * dt * 4; o.push[0] *= 1 - dt * 6; o.push[1] *= 1 - dt * 6; if (Math.abs(o.push[0]) + Math.abs(o.push[1]) < .02) o.push = null; }

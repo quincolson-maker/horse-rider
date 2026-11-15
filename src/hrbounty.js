@@ -2,7 +2,7 @@
 // with a rank that climbs from Greenhorn to Legend. Purely local (each rider has their own board), saved in localStorage.
 // Hooks are read-only peeks at the other systems, so nothing else has to know the board exists.
 const KEY = 'hr_bounty';
-const RANKS = [[0, 'Greenhorn'], [2, 'Drifter'], [4, 'Gunslinger'], [6, 'Deputy'], [8, 'Marshal'], [10, 'Sheriff'], [11, 'Legend of the West']];
+const RANKS = [[0, 'Greenhorn'], [2, 'Drifter'], [4, 'Gunslinger'], [6, 'Deputy'], [8, 'Marshal'], [10, 'Sheriff'], [12, 'Legend of the West']];
 export function createBounty({ H, P, T, msg, sfx, PEN }) {
   let S = { i: 0, base: {}, prog: {}, done: [] }; try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && Number.isInteger(v.i)) S = Object.assign(S, v); } catch (_) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (_) {} };
@@ -18,6 +18,7 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'whiskey', title: 'Wet Your Whistle', task: 'Order a whiskey at the saloon', pay: 100, p: () => (S.prog.drinks || 0) > 0 ? 1 : 0, to: () => H.places && H.places.town },
     { id: 'pest', title: 'Pest Control', task: 'Drop 25 zombies', pay: 400, ...killsSince('pest', 25) },
     { id: 'lookout', title: 'Eyes on the Range', task: 'Climb into the cab of a lookout tower', pay: 400, p: () => inCab() ? 1 : 0, to: () => { const t = nearTower(); return t ? [t.cx, t.cz] : null; } },
+    { id: 'prospector', title: 'Prospector', task: 'Find 5 glinting gold nuggets out on the range', pay: 300, p: () => Math.min(1, ((H.nuggets && H.nuggets.found) || 0) / 5), txt: () => `${Math.min(5, (H.nuggets && H.nuggets.found) || 0)} / 5`, to: () => { const s = H.nuggets && H.nuggets.nearest(); return s ? [s.x, s.z] : null; } },
     { id: 'falls', title: 'Behind the Falls', task: 'Find the outlaw hideout hidden behind a waterfall', pay: 400, p: () => H.cave && H.cave.underP ? 1 : 0, to: () => place('cave') },
     { id: 'justice', title: 'Outlaw Justice', task: 'Clear Bandit Falls of every outlaw (shoot first to start it)', pay: 1500, p: () => H.cave && H.cave.state.phase >= 2 ? 1 : H.cave && H.cave.state.phase === 1 ? .5 : 0, to: () => place('cave') },
     { id: 'crank', title: 'Crank It', task: 'Claim the hand-crank Gatling from the vault chest', pay: 1000, p: () => G() && G().owned.gatling ? 1 : 0, to: () => place('cave') },
@@ -27,7 +28,7 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];
   const rank = () => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (S.done.length >= n) r = name; return r; };
-  const job = () => JOBS[S.i] || null;
+  const job = () => JOBS.find(j => !S.done.includes(j.id)) || null; // by id: new jobs can be slotted in without breaking saved boards
   // ---- HUD card (tap to fold) ----
   const st = document.createElement('style');
   st.textContent = `#hrBounty{position:fixed;right:12px;top:96px;z-index:30;width:230px;max-width:46vw;font:600 11px/1.3 system-ui,sans-serif;color:#fff;background:linear-gradient(180deg,rgba(26,18,8,.82),rgba(14,10,4,.72));border:1.5px solid #e2b24a;border-radius:10px;padding:6px 9px 7px;box-shadow:0 3px 10px rgba(0,0,0,.45);cursor:pointer;user-select:none;-webkit-user-select:none}
@@ -50,7 +51,7 @@ body.touch #hrBounty{top:calc(max(8px,env(safe-area-inset-top)) + 30px);right:ca
   function fanfare() { const t = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a); [[784, 0], [988, 110], [1175, 220], [1568, 360]].forEach(([f, d]) => setTimeout(() => t('triangle', f, f, d === 360 ? .5 : .14, .2), d)); setTimeout(() => t('sine', 392, 392, .6, .12), 360); }
   function startJob() { const j = job(); if (j && j.start && S.base[j.id] === undefined) j.start(); save(); }
   function complete(j) { S.done.push(j.id); const g = G(); if (g) { g.score += j.pay; H.guns.save && H.guns.save(); }
-    const before = rank(); S.i++; startJob(); const after = rank();
+    const before = rank(); S.i = JOBS.findIndex(q => !S.done.includes(q.id)); startJob(); const after = rank();
     win.innerHTML = `BOUNTY COMPLETE<small>${j.title.toUpperCase()} · +${j.pay.toLocaleString()} PTS${after !== before ? ' · RANK UP: ' + after.toUpperCase() : ''}</small>`; win.className = ''; void win.offsetWidth; win.className = 'on';
     el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); fanfare(); }
   startJob();

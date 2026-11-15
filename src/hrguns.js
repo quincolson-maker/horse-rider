@@ -3,7 +3,7 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=43'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=43c'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -324,7 +324,14 @@ export function createGuns(c) {
       if (killed) { tone('sine', 1320, 1320, .09, .16); setTimeout(() => tone('sine', 1760, 1760, .16, .14), 70); } else if (head) tone('triangle', 2100, 1700, .07, .14); else tone('triangle', 1250, 1050, .05, .09); }; })();
   function hitMark(head) { if (!scopeEl || state.scopeK < .5) return; const hx = scopeEl.querySelector('.hx'); if (!hx) return; hx.classList.remove('on', 'hd'); void hx.offsetWidth; hx.classList.add('on'); if (head) hx.classList.add('hd'); }
   const role = () => (H.netRole ? H.netRole() : 'solo');
-  function award(head, kind) { if (kind === 'outlaw') { const p = head ? 75 : 60; state.score += p; state.outlaws = (state.outlaws || 0) + 1; say(head ? `Headshot! Outlaw down  +${p}` : `Outlaw down  +${p}`); save(); return p; } // v38 Bandit Falls guards
+  // v43 kill streaks: kills chained within 4 s
+  let stN = 0, stT = 0; const STREAK = { 2: 'DOUBLE KILL', 3: 'TRIPLE KILL', 5: 'RAMPAGE', 8: 'UNSTOPPABLE', 12: 'LEGENDARY', 20: 'GODLIKE' };
+  function streak() { const now = performance.now(); stN = now - stT < 4000 ? stN + 1 : 1; stT = now; const name = STREAK[stN]; if (!name || typeof document === 'undefined') return;
+    let el = document.getElementById('hrStreak'); if (!el) { el = document.createElement('div'); el.id = 'hrStreak'; document.body.appendChild(el); }
+    el.textContent = name; el.className = ''; void el.offsetWidth; el.className = 'on s' + Math.min(4, Object.keys(STREAK).indexOf(String(stN)));
+    const bonus = stN * 5; state.score += bonus; [0, 90, 180].slice(0, Math.min(3, 1 + (stN >= 5) + (stN >= 8))).forEach((d, i) => setTimeout(() => tone('square', 660 * (1 + i * .26), 990 * (1 + i * .26), .12, .12), d)); }
+  function award(head, kind) { if (kind !== 'outlaw') streak(); if (kind === 'outlaw') { const p = head ? 75 : 60; state.score += p; state.outlaws = (state.outlaws || 0) + 1; say(head ? `Headshot! Outlaw down  +${p}` : `Outlaw down  +${p}`); save(); return p; } // v38 Bandit Falls guards
+    if (kind === 'boss') { const p = head ? 750 : 500; state.score += p; state.kills = (state.kills || 0) + 1; say(`THE HULKING DEAD IS DOWN  +${p}`); save(); return p; } // v43
     const pts = head ? 15 : 10; state.score += pts; state.kills = (state.kills || 0) + 1; say(head ? `Headshot! Zombie down  +${pts}` : `Zombie down  +${pts}`); save(); return pts; } // host-authoritative in co-op (the host sends 'zk')
   function save() { try { localStorage.setItem('hr_v33', JSON.stringify({ score: state.score, kills: state.kills || 0, spent: state.spent || 0, owned: state.owned, up: state.up, att: state.att })); } catch (_) {} }
 

@@ -5,19 +5,20 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=43';
-import { PERF } from './perfopts.js?v=43';
+import { PF } from './perf.js?v=43c';
+import { PERF } from './perfopts.js?v=43c';
 import * as THREE from 'three';
 
 export const ZKINDS = {
   walker: { hp: 100, spd: 1.35, dmg: 12, cd: 1.2, s: 1, reach: 1.25 },
   runner: { hp: 70, spd: 4.3, dmg: 9, cd: .9, s: .97, reach: 1.2 },
   brute: { hp: 320, spd: 1.15, dmg: 28, cd: 1.6, s: 1.28, reach: 1.5 },
-  outlaw: { hp: 140, spd: 1.9, dmg: 5, cd: 1.5, s: 1, reach: 1.2, range: 34 }, // v38: Bandit Falls guards (host-run, they shoot; never spawned by the waves)
+  outlaw: { hp: 140, spd: 1.9, dmg: 5, cd: 1.5, s: 1, reach: 1.2, range: 34 },
+  boss: { hp: 2600, spd: 1.55, dmg: 42, cd: 1.9, s: 2.15, reach: 2.6 }, // v43: the Hulking Dead, every third wave (health bar on screen) // v38: Bandit Falls guards (host-run, they shoot; never spawned by the waves)
 };
 export const ZSET = { travel: 6, near: 90, capDesktop: 42, capPhone: 18, chaosDesktop: 420, chaosPhone: 180, chaosRows: 120, chaosRowR: 260, startDelay: 10, waveSecs: 75, playerHp: 100, horseHp: 160, regenDelay: 5, regen: 7, respawn: 4,
   dmg: { revolver: 50, rifle: 70, sniper: 260, tommy: 34, gold: 650, sun: 450, dyn: 420, gatling: 40 }, head: 2.4, penMargin: 1.1 };
-const KIND_LIST = ['walker', 'runner', 'brute', 'outlaw'];
+const KIND_LIST = ['walker', 'runner', 'brute', 'outlaw', 'boss'];
 
 export function createHrZombies(c) {
   const { scene, H, P, hAt, PEN, EDGE, sfx, fx, mobile } = c, WALK = c.WALK || EDGE;
@@ -36,7 +37,7 @@ export function createHrZombies(c) {
         const alive = Z.list.filter(o => o.alive && o.kind !== 'outlaw').map(o => [far(o), o]).sort((a, b) => b[0] - a[0]); let extra = alive.length - Z.cap;
         for (const [d, o] of alive) { if (extra <= 0) break; if (d > 60) { despawn(o); extra--; } } c.msg && c.msg('Chaos mode off', 2); } } }
   Z.cap = capOf(false);
-  const pool = { walker: [], runner: [], brute: [], outlaw: [] }, tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
+  const pool = { walker: [], runner: [], brute: [], outlaw: [], boss: [] }, tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
   const rnd = Math.random;
   // pen rectangle the dead may never enter (fence + gate gap + a little margin)
   const RX = PEN.hw + ZSET.penMargin, RZ = PEN.hd + ZSET.penMargin;
@@ -100,7 +101,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     add(new THREE.CylinderGeometry(.2, .17, .62, 8), cl, 0, 1.2, 0); add(new THREE.SphereGeometry(.13, 10, 8), sk, 0, 1.65, .03); for (const s of [-1, 1]) { add(new THREE.CylinderGeometry(.07, .06, .85, 6), cl, s * .1, .45, 0); const a = add(new THREE.CylinderGeometry(.05, .045, .6, 6), sk, s * .26, 1.38, .26); a.rotation.x = Math.PI / 2; }
     return { m: g, update() {}, stand: true }; }
   function makeBody(kind) { const P0 = pool[kind].pop(); if (P0) return P0; if (kind === 'outlaw') { const O = c.outlawBody && c.outlawBody(); return O || standIn(); }
-    const W = c.walker && c.walker(); if (!W) return standIn(); const v = kind === 'brute' ? 2 : zvar++ % 3;
+    const W = c.walker && c.walker(); if (!W) return standIn(); const v = kind === 'brute' || kind === 'boss' ? 2 : zvar++ % 3;
     if (!ZS) W.m.traverse(o => { if (o.isMesh && !ZS) { o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox; ZS = 1.75 / Math.max(1e-3, b.max.y - b.min.y, b.max.z - b.min.z); } });
     W.m.traverse(o => { if (o.isMesh) { o.material = Array.isArray(o.material) ? o.material.map(m => deadMat(m, v)) : deadMat(o.material, v); o.frustumCulled = false; } }); try { dress(W, v, (Z.nextId * 7 + zvar * 3) | 0); } catch (e) { W.zAt = []; } W.zv = v; return W; }
 
@@ -246,10 +247,13 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     Z.flash = Math.max(0, Z.flash - dt * 1.4); H.dead = Z.dead > 0;
     for (const h of H.horses) { if (h.hp == null) h.hp = ZSET.horseHp; if (h.panic > 0) h.panic -= dt; if (h.hp < ZSET.horseHp && (inPenSafe(h.pos.x, h.pos.z) || (Z.t % 1 < dt && h.panic <= 0))) h.hp = Math.min(ZSET.horseHp, h.hp + (inPenSafe(h.pos.x, h.pos.z) ? 12 : 2) * dt); }
     if (host) { // waves: a steady trickle that thickens; capped (phones lower)
-      if ((Z.waveT += dt) > ZSET.waveSecs) { Z.waveT = 0; Z.wave++; c.msg && c.msg(`Wave ${Z.wave} — more of the dead are coming down from the mountains`, 3); }
+      if ((Z.waveT += dt) > ZSET.waveSecs) { Z.waveT = 0; Z.wave++; if (Z.wave % 3 === 0 && !Z.chaos && !Z.list.some(o => o.alive && o.kind === 'boss')) { spawn('boss'); c.msg && c.msg(`Wave ${Z.wave} — THE HULKING DEAD is coming. Aim for the head!`, 4); sfx.tone && sfx.ctx && [110, 82, 65].forEach((f, i) => setTimeout(() => sfx.tone('sawtooth', f, f * .8, .5, .25), i * 260)); } else c.msg && c.msg(`Wave ${Z.wave} — more of the dead are coming down from the mountains`, 3); }
       let live = 0; for (const o of Z.list) if (o.alive && o.kind !== 'outlaw') live++; Z.live = live; if (Z.wasRole === 'client') Z.spawnT = Math.min(Z.spawnT, 1); // just became the host: keep the horde coming
       Z.spawnT -= dt; if (Z.spawnT <= 0 && live < Z.cap) { Z.spawnT = Z.chaos ? (live < Z.cap * .5 ? .05 : .18) : live < Z.cap * .5 ? .4 : Math.min(1.2, Math.max(.75, (7 - Z.wave * .7) / 3) * (rnd() * .5 + .75)); spawn(pickKind()); } }
     Z.wasRole = Z.role();
+    { let bo = null, bd = 160; for (const o of Z.list) if (o.kind === 'boss' && o.alive) { const d = Math.hypot(o.pos.x - P.pos.x, o.pos.z - P.pos.z); if (d < bd) { bd = d; bo = o; } } // v43 boss health bar
+      if (!Z.bossEl && typeof document !== 'undefined') { const e = Z.bossEl = document.createElement('div'); e.id = 'hrBoss'; e.innerHTML = '<b>☠ THE HULKING DEAD</b><div><i></i></div>'; document.body.appendChild(e); }
+      if (Z.bossEl) { const on = !!bo; if (on !== Z.bossOn) { Z.bossOn = on; Z.bossEl.classList.toggle('on', on); } if (bo) { const f = Math.max(0, Math.min(1, bo.hp / bo.K.hp)); if (Math.abs(f - (Z.bossF ?? -1)) > .004) { Z.bossF = f; Z.bossEl.lastChild.firstChild.style.width = (f * 100).toFixed(1) + '%'; } } } }
     const cam = c.camera.position; c.camera.updateMatrixWorld(); PSM.multiplyMatrices(c.camera.projectionMatrix, c.camera.matrixWorldInverse); FR.setFromProjectionMatrix(PSM);
     const range = Z.chaos ? (mobile ? 140 : 220) : (mobile ? 220 : 320), shadowD = Z.chaos ? 28 : 50, poseNear = Z.chaos ? 50 : 90, eyeD = Z.chaos ? 110 : 1e9; Z.groanTok = Math.min(4, Z.groanTok + dt * 2.5); let drawn = 0;
     Z.frame = (Z.frame || 0) + 1; for (let li = Z.list.length - 1; li >= 0; li--) { const o = Z.list[li]; if (!o) continue; o.anim += dt; o.flinch = Math.max(0, o.flinch - dt * 2.5);
@@ -318,6 +322,6 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     const html = `<b class="hp"><i style="width:${Math.round(Z.hp)}%"></i></b>${hh != null ? `<b class="hp horse"><i style="width:${hh}%"></i></b>` : ''}<span>${Z.chaos ? '<b class="chaos">CHAOS</b> ' : ''}☠ WAVE ${Z.wave} · ${live} near · ${Z.kills} down${Z.heads ? ` (${Z.heads} ◉)` : ''}</span>${Z.dead > 0 ? '<em>OVERRUN</em>' : inTown(P.pos.x, P.pos.z) ? `<em class="safe">${inTown(P.pos.x, P.pos.z).label || '🛡 SAFE ZONE · TOWN'}</em>` : inPenSafe(P.pos.x, P.pos.z) && !h ? '<em class="safe">SAFE IN THE PEN</em>' : ''}`; if (html !== el.__h) { el.__h = html; el.innerHTML = html; } }
   const netState = () => ({ dd: Z.dead > 0 ? 1 : 0 });
   function setMaxChaos(on) { Z.maxChaos = !!on; Z.cap = -1; return setChaos(!!on); }
-  return { setMaxChaos, get maxChaos() { return !!Z.maxChaos; }, spawnOutlaw, outlaws: () => Z.list.filter(o => o.kind === 'outlaw'), setChaos, get chaos() { return Z.chaos; }, get wantChaos() { return Z.wantChaos; }, state: Z, list: Z.list, settings: ZSET, kinds: ZKINDS, tick, spawn, damage, onHit, rayHit, assistPoints, headPos, snap, apply, remoteHit, remoteHurt, confirmKill, hurtMe, netState, inPenRect, inPenSafe, inSafeZone, inTown, despawn,
+  return { spawnBoss: () => spawn('boss'), setMaxChaos, get maxChaos() { return !!Z.maxChaos; }, spawnOutlaw, outlaws: () => Z.list.filter(o => o.kind === 'outlaw'), setChaos, get chaos() { return Z.chaos; }, get wantChaos() { return Z.wantChaos; }, state: Z, list: Z.list, settings: ZSET, kinds: ZKINDS, tick, spawn, damage, onHit, rayHit, assistPoints, headPos, snap, apply, remoteHit, remoteHurt, confirmKill, hurtMe, netState, inPenRect, inPenSafe, inSafeZone, inTown, despawn,
     clear() { for (const o of [...Z.list]) despawn(o); } };
 }

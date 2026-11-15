@@ -1,13 +1,13 @@
 // Graphics core: quality presets, procedural PBR texture atlas, sky/lighting, post-processing.
 import * as THREE from 'three';
-import { EffectComposer } from '../addons/postprocessing/EffectComposer.js?v=42p';
-import { RenderPass } from '../addons/postprocessing/RenderPass.js?v=42p';
-import { UnrealBloomPass } from '../addons/postprocessing/UnrealBloomPass.js?v=42p';
-import { GTAOPass } from '../addons/postprocessing/GTAOPass.js?v=42p';
-import { OutputPass } from '../addons/postprocessing/OutputPass.js?v=42p';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=42p';
-import { FXAAShader } from '../addons/shaders/FXAAShader.js?v=42p';
-import { STYLE_ON } from './stylize.js?v=42p';
+import { EffectComposer } from '../addons/postprocessing/EffectComposer.js?v=42q';
+import { RenderPass } from '../addons/postprocessing/RenderPass.js?v=42q';
+import { UnrealBloomPass } from '../addons/postprocessing/UnrealBloomPass.js?v=42q';
+import { GTAOPass } from '../addons/postprocessing/GTAOPass.js?v=42q';
+import { OutputPass } from '../addons/postprocessing/OutputPass.js?v=42q';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=42q';
+import { FXAAShader } from '../addons/shaders/FXAAShader.js?v=42q';
+import { STYLE_ON } from './stylize.js?v=42q';
 
 // ---------------- Quality ----------------
 export const PRESETS = {
@@ -68,7 +68,7 @@ export const LIGHTING = {
 };
 export function createGraphics(qname) {
   const Qp = { ...PRESETS[qname] };
-  if (IS_TOUCH && (qname === 'high' || qname === 'ultra')) Object.assign(Qp, { shadow: 2048, msaa: 0, fxaa: true, grass: Math.min(Qp.grass, 6500), pr: Math.min(Qp.pr, 1.35) }); // v42 phone High: same look, the costly extras trimmed (4x MSAA at phone DPR, 4K shadows)
+  if (IS_TOUCH && (qname === 'high' || qname === 'ultra')) Object.assign(Qp, { shadow: 2048, msaa: 0, fxaa: true, grass: Math.min(Qp.grass, 6500), pr: Qp.pr }); // v42 phone High: same look, the costly extras trimmed (4x MSAA at phone DPR, 4K shadows)
   const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: new URLSearchParams(location.search).has('auto') });
   renderer.setPixelRatio(Math.min(devicePixelRatio, Qp.pr)); renderer.setSize(innerWidth, innerHeight);
   renderer.toneMapping = STYLE_ON ? THREE.NeutralToneMapping : THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .9; renderer.outputColorSpace = THREE.SRGBColorSpace;

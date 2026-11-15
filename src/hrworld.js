@@ -1,10 +1,10 @@
-import { STYLE_ON } from './stylize.js?v=52';
-import { PERF } from './perfopts.js?v=52';
+import { STYLE_ON } from './stylize.js?v=53';
+import { PERF } from './perfopts.js?v=53';
 // HORSE RIDER world graphics: large-scale terrain (domain-warped fBm hills, carved valleys, ridged-multifractal mountains out to ~4 km),
 // physically based sky (Preetham Rayleigh/Mie) with layered procedural clouds, sky-driven IBL + aerial haze, slow golden-hour time of day,
 // slope/height-blended PBR terrain (Poly Haven CC0), GPU instanced wind-blown grass with wildflowers, CC0 scanned boulders.
 import * as THREE from 'three';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=52';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=53';
 const sstep = (a, b, t) => { t = Math.min(1, Math.max(0, (t - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 // ---------------- noise (Perlin gradient noise, fBm, ridged multifractal) ----------------
@@ -57,7 +57,7 @@ float penM(vec2 p){return max(abs(p.x-uPen.x)-uPen.z,abs(p.y-uPen.y)-uPen.w);}`;
 
 // ---------------- sky: Preetham atmosphere + layered clouds; also renders the IBL environment and measures the haze colour ----------------
 export function createSky(renderer, scene, opt) {
-  const U = { uNight: { value: 0 }, uMoon: { value: new THREE.Vector3(-.35, .55, -.76).normalize() }, uSun: { value: new THREE.Vector3(0, .2, 1) }, uSunCol: { value: new THREE.Color(1, .8, .6) }, uAmb: { value: new THREE.Color(.35, .45, .6) }, uT: { value: 0 }, uCov: { value: STYLE_ON ? .5 : .6 }, uEnc: { value: 1 }, uDisk: { value: 1 },
+  const U = { uGray: { value: 0 }, uDust: { value: 0 }, uNight: { value: 0 }, uMoon: { value: new THREE.Vector3(-.35, .55, -.76).normalize() }, uSun: { value: new THREE.Vector3(0, .2, 1) }, uSunCol: { value: new THREE.Color(1, .8, .6) }, uAmb: { value: new THREE.Color(.35, .45, .6) }, uT: { value: 0 }, uCov: { value: STYLE_ON ? .5 : .6 }, uEnc: { value: 1 }, uDisk: { value: 1 },
     uK: { value: STYLE_ON ? .46 : .62 }, uGround: { value: new THREE.Color(.25, .26, .24) }, turbidity: { value: STYLE_ON ? 2.2 : 4 }, rayleigh: { value: STYLE_ON ? 3.4 : 2.6 }, mieCoefficient: { value: STYLE_ON ? .003 : .0045 }, mieDirectionalG: { value: .82 } };
   const Q = opt.hq ? 5 : 3;
   const mat = new THREE.ShaderMaterial({ uniforms: U, side: THREE.BackSide, depthWrite: false, fog: false, defines: { CLOUD_OCT: Q },
@@ -66,7 +66,7 @@ const float e=2.718281828459045; const vec3 totalRayleigh=vec3(5.804542996261093
 float sunIntensity(float c){c=clamp(c,-1.,1.);return 1000.*max(0.,1.-pow(e,-((1.6110731556870734-acos(c))/1.5)));}
 void main(){ vec4 wp=modelMatrix*vec4(position,1.); vWorldPosition=wp.xyz; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); gl_Position.z=gl_Position.w;
  vSunE=sunIntensity(normalize(uSun).y); vBetaR=totalRayleigh*rayleigh; vBetaM=.434*(.2*turbidity)*10E-18*MieConst*mieCoefficient; }`,
-    fragmentShader: `uniform vec3 uSun, uSunCol, uAmb, uGround, uMoon; uniform float uNight; uniform float uT, uCov, uEnc, uDisk, uK, mieDirectionalG; varying vec3 vWorldPosition; varying vec3 vBetaR, vBetaM; varying float vSunE;
+    fragmentShader: `uniform vec3 uSun, uSunCol, uAmb, uGround, uMoon; uniform float uNight, uGray, uDust; uniform float uT, uCov, uEnc, uDisk, uK, mieDirectionalG; varying vec3 vWorldPosition; varying vec3 vBetaR, vBetaM; varying float vSunE;
 const float pi=3.141592653589793;
 float hs(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);} float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hs(i),hs(i+vec2(1,0)),f.x),mix(hs(i+vec2(0,1)),hs(i+1.),f.x),f.y);}
 float cfbm(vec2 p){float s=0.,a=.5,n=0.;for(int i=0;i<CLOUD_OCT;i++){s+=vn(p)*a;n+=a;p=mat2(1.7,1.1,-1.1,1.7)*p+vec2(3.1,1.7);a*=.5;}return s/n;}
@@ -90,6 +90,7 @@ void main(){ vec3 dir=normalize(vWorldPosition-cameraPosition); vec3 sd=normaliz
   // high cirrus streaks 7 km up
   float t2=7000./max(dir.y,.05); vec2 q=dir.xz*t2*.00011+vec2(uT*.0009,-uT*.0003); q=vec2(q.x*.35,q.y*1.4); float ci=smoothstep(.55,.85,cfbm(q))*.42*smoothstep(.02,.2,dir.y);
   sky=mix(sky,uSunCol*.9+uAmb*.55+sky*.4,ci*(1.-exp(-t2*.00001)*.2)); }
+ { float sl = dot(sky, vec3(.3,.59,.11)); sky = mix(sky, vec3(sl) * vec3(.82,.86,.92), uGray); sky = mix(sky, vec3(sl) * vec3(1.3,.98,.66), uDust); } /* v53 storms */
  if(uNight>.001){ /* v47 night: deep blue dome, stars, the moon and a faint milky band (pure shader, nothing re-baked) */
   float hz=clamp(dir.y,0.,1.); vec3 ns=mix(vec3(.075,.095,.17),vec3(.012,.02,.055),pow(hz,.45)); if(dir.y<0.) ns=mix(ns,vec3(.03,.035,.05),smoothstep(0.,-.2,dir.y));
   vec3 sd2=normalize(dir); vec2 sp=vec2(atan(sd2.z,sd2.x)*80.,asin(clamp(sd2.y,-1.,1.))*80.); vec2 ci=floor(sp),cf=fract(sp)-.5; float hh=hs(ci);

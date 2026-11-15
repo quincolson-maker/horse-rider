@@ -10,6 +10,7 @@
  * boxes: copy event data if retaining it. Events are synchronous and reused.
  */
 import * as THREE from 'three';
+import { buildPyramid } from './hrpyramid.js?v=46';
 const TAU = Math.PI * 2, UP = new THREE.Vector3(0, 1, 0);
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const rampY = z => Math.max(-9, z * .14);
@@ -19,22 +20,31 @@ function makeResources() {
   return { gs, ms, g(g) { gs.add(g); return g; }, m(m) { ms.add(m); return m; },
     dispose() { for (const g of gs) g.dispose(); for (const m of ms) m.dispose(); } };
 }
-function rockyMaterial(R) {
-  const m = R.m(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .94 }));
-  m.onBeforeCompile = s => {
+let SUN_TEX = null;
+function rockyMaterial(R) { // v46: sandstone masonry — real rock texture (normalised), cut courses with mortar, per-block tint, moss on tops, grime at the foot
+  if (!SUN_TEX) { SUN_TEX = new THREE.TextureLoader().load('assets/tex/rock_face_diff_1k.webp'); SUN_TEX.wrapS = SUN_TEX.wrapT = THREE.RepeatWrapping; SUN_TEX.anisotropy = 8; SUN_TEX.colorSpace = THREE.SRGBColorSpace; }
+  const m = R.m(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9, color: 0xffffff }));
+  m.onBeforeCompile = s => { s.uniforms.tRk = { value: SUN_TEX };
     s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 templeP,templeN;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\ntempleP=position;templeN=normal;');
     s.fragmentShader = s.fragmentShader.replace('#include <common>', `#include <common>
-      varying vec3 templeP,templeN;
-      float grain(vec2 p){return .5+.23*sin(p.x*5.7+sin(p.y*3.1))+.22*sin(p.y*9.1+sin(p.x*4.3));}`)
+      uniform sampler2D tRk; varying vec3 templeP,templeN;
+      float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}`)
       .replace('#include <color_fragment>', `#include <color_fragment>
-      vec3 w=pow(abs(normalize(templeN)),vec3(4.));w/=max(dot(w,vec3(1.)),.001);
-      float n=dot(w,vec3(grain(templeP.yz),grain(templeP.zx),grain(templeP.xy)));
-      vec2 cell=abs(fract(templeP.xz*.42)-.5);float relief=smoothstep(.035,.07,min(cell.x,cell.y));
-      float bands=.94+.06*sin(templeP.y*14.+n*2.);diffuseColor.rgb*=mix(.78,1.13,n)*mix(.84,1.,relief)*bands;`)
-      .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal=normalize(normal+vec3(dFdx(relief),dFdy(relief),0.)*.35);');
+      vec3 N=normalize(templeN),w=pow(abs(N),vec3(4.));w/=max(dot(w,vec3(1.)),.001);vec3 p=templeP;
+      vec3 t=texture2D(tRk,p.zy*.42).rgb*w.x+texture2D(tRk,p.xz*.42).rgb*w.y+texture2D(tRk,p.xy*.42).rgb*w.z;
+      float l=clamp(pow(dot(t,vec3(.3,.59,.11))/.075,1.8),.45,1.6);
+      /* cut blocks: 0.9 m courses, running bond along the face */
+      float along=abs(N.x)>abs(N.z)?p.z:p.x;float course=floor(p.y/.9);float u=along/1.7+course*.5;vec2 cell=vec2(floor(u),course);
+      float jy=abs(fract(p.y/.9)-.5),jx=abs(fract(u)-.5);float mortar=abs(N.y)>.7?1.:smoothstep(.47,.44,jy)*smoothstep(.485,.46,jx);
+      if(abs(N.y)>.7){vec2 c2=floor(p.xz/vec2(1.8,1.4));cell=c2;vec2 f=abs(fract(p.xz/vec2(1.8,1.4))-.5);mortar=smoothstep(.485,.46,f.x)*smoothstep(.48,.455,f.y);}
+      float bt=h21(cell);vec3 sand=mix(vec3(1.05,.93,.76),vec3(.86,.72,.56),bt)*mix(.92,1.08,h21(cell+7.));
+      vec3 col=diffuseColor.rgb*2.35*sand*l*mix(.55,1.,mortar);
+      float up=smoothstep(.55,.95,N.y),mn=texture2D(tRk,p.xz*.11+.3).g/.075;col=mix(col,vec3(.3,.36,.18)*l,up*smoothstep(1.3,1.7,mn)*.6);
+      col*=mix(.72,1.,smoothstep(-1.,2.5,p.y-floor(p.y/30.)*30.));
+      diffuseColor.rgb=col;`);
   };
-  m.customProgramCacheKey = () => 'hollow-sun-rock-1'; return m;
+  m.customProgramCacheKey = () => 'hollow-sun-stone-3'; return m;
 }
 function glowMaterial(R, color, opacity = .25) {
   return R.m(new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false,
@@ -71,7 +81,7 @@ export function createSunTemple({position=[0,0,0],rotationY=0,quality='high',vie
   let t=0,disposed=false,hasPlayer=false,near=false,seed=91823;
   const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)|0;return(seed>>>0)/4294967296;};
   const stone=rockyMaterial(R),dark=R.m(new THREE.MeshStandardMaterial({color:0x222527,roughness:.86,metalness:.35}));
-  const gold=R.m(new THREE.MeshStandardMaterial({color:0xe8b85b,metalness:.78,roughness:.27}));
+  const gold=R.m(new THREE.MeshStandardMaterial({color:0xf0b84a,metalness:.45,roughness:.32,emissive:0x4a2c00,emissiveIntensity:.55})); // v46: reads as warm gold without an env map
   const ivory=R.m(new THREE.MeshStandardMaterial({color:0xb0a28a,roughness:.7}));
   const emit=R.m(new THREE.MeshBasicMaterial({color:0xffd075,fog:true})),beamMat=glowMaterial(R,0xffc65c,.13),BATCH=batcher(R,group);
   const slab=noiseBox(R,high?4:2),box=R.g(new THREE.BoxGeometry(1,1,1)),cylinder=R.g(new THREE.CylinderGeometry(1,1,1,high?16:10));
@@ -230,6 +240,7 @@ export function createSunTemple({position=[0,0,0],rotationY=0,quality='high',vie
   const dust=new THREE.InstancedMesh(plane,dustMat,high?240:70);group.add(dust);for(let i=0;i<dust.count;i++){const z=-rnd()*70;M.compose(V.set((rnd()-.5)*17,rampY(z)+rnd()*12,z),Q.identity(),S.setScalar(1));dust.setMatrixAt(i,M);}dust.boundingSphere=new THREE.Sphere(new THREE.Vector3(0,2,-35),48);
   const cueDust=new THREE.InstancedMesh(plane,dustMat,32);group.add(cueDust);cueDust.boundingSphere=new THREE.Sphere(new THREE.Vector3(0,0,-30),40);cueDust.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   for(const [id,x,z,role] of [['sentinel_0',-5,-18,'guardian'],['sentinel_1',5,-24,'guardian'],['sentinel_2',-5,-45,'zombie'],['sentinel_3',5,-53,'zombie'],['sun_keeper',0,-65,'boss']])spawnPoints.push({id,role,position:world(x,rampY(z),z),rotationY});
+  const PYRA=buildPyramid({group,BATCH,box,slab,cylinder,cone,torus,stone,gold,emit,dark,R,high}); // v46 stepped sun pyramid shell
   BATCH.finish();refreshMirrors();
   // Fixed conservative bounds for dynamic batches; no bounds allocations in update.
   for(const mesh of [doorMesh,mirrorMesh,rays,plates,dartMesh,shafts])mesh.boundingSphere=new THREE.Sphere(new THREE.Vector3(0,1,-35),65);
@@ -239,7 +250,7 @@ export function createSunTemple({position=[0,0,0],rotationY=0,quality='high',vie
   function dynamicBox(b,x,y,z,w,h,d){A.set(x-w/2,y-h/2,z-d/2);B.set(x+w/2,y+h/2,z+d/2);b.set(A,B).applyMatrix4(group.matrixWorld);}
   function update(dt,camera,playerPos){
     if(disposed)return;dt=clamp(Number.isFinite(dt)?dt:0,0,.1);hasPlayer=!!playerPos;if(playerPos){pWorld.copy(playerPos);pLocal.copy(playerPos).applyMatrix4(inverse);}
-    group.visible=hasPlayer&&pWorld.distanceToSquared(entrance)<=viewDist*viewDist;near=hasPlayer&&pWorld.distanceToSquared(entrance)<=9025;if(!group.visible||!near)return;t+=dt;dustU.value=t;
+    group.visible=hasPlayer&&pWorld.distanceToSquared(entrance)<=viewDist*viewDist;PYRA.update(performance.now()/1000);near=hasPlayer&&pWorld.distanceToSquared(entrance)<=9025;if(!group.visible||!near)return;t+=dt;dustU.value=t;
     for(let i=0;i<lights.length;i++){const a=lights[i];a.l.intensity=a.power*(.96+.025*Math.sin(t*5+a.phase)+.015*Math.sin(t*11+a.phase));}
     for(let i=0;i<doors.length;i++){
       const d=doors[i];if(d.target&&!d.started){d.started=true;send('door_open',d.id,'opening');}d.progress=Math.min(d.target,d.progress+dt*.28);const ease=d.progress*d.progress*(3-2*d.progress);
@@ -303,7 +314,7 @@ export function createSunPyramidWeapon(){
 }
 
 /* Usage: your page resolves 'three' via its existing import map.
-import {createSunTemple,createSunPyramidWeapon} from './suntemple.js?v=45b';
+import {createSunTemple,createSunPyramidWeapon} from './suntemple.js?v=46';
 const temple=createSunTemple({position:[0,0,0],quality:'high'});scene.add(temple.group);
 const off=temple.onEvent(e=>{ // synchronous, reused event: copy fields to retain
   if(e.type==='pickup') grantPickup(e.playerId,e.id,e.value); // host authority!

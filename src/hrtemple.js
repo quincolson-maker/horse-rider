@@ -5,7 +5,9 @@
 // wires it into our controller (underground floors under the mound, walls, falls), guns, host-authoritative co-op (the host
 // orders every puzzle action and replays the log to everyone) and game points. The civilization and its glyphs are fictional.
 import * as THREE from 'three';
-import { createSunTemple } from './hrsuntemple.js?v=45b';
+import { createSunTemple } from './hrsuntemple.js?v=46';
+import { pyramidEnvelope } from './hrpyramid.js?v=46';
+import { TEMPLE_CUT } from './hrworld.js?v=46';
 
 export const TEMPLE = { gold: 100000, top: 18.5, trap: { rolling_boulder: 40, dart_wall: 12, swinging_blade: 30 } };
 const IU = 27, IV0 = -77, IV1 = -4.5, DU = 16.5, AV1 = 9, MB = 30; // interior / mound half-width + depth, doorway half-width, apron front, mound blend
@@ -35,14 +37,16 @@ export function pickTempleSite(hAt, F, o) { const { PEN, WALK } = o, tops = (F.t
 
 // terrain: a flat apron + doorway, and a mound raised over the halls (never lowered), blending back into the mountain
 export function makeTemplePad(S) { const R = 170; return (x, z, h) => { if (Math.abs(x - S.x) > R || Math.abs(z - S.z) > R) return h; const [u, v] = toLocal(S, x, z);
-  const da = rectD(u, v, -DU, DU, IV1, AV1); if (da < 16) { const p = S.y0 - .08; h = da <= 0 ? p : p + (h - p) * sstep(0, 16, da); }
-  if (!(Math.abs(u) <= DU && v > IV1)) { const dm = rectD(u, v, -IU, IU, IV0, IV1); if (dm < MB) h = Math.max(h, S.y0 + TEMPLE.top * (1 - sstep(0, MB, dm))); }
+  const da = Math.min(rectD(u, v, -DU, DU, IV1, AV1), rectD(u, v, -42, 42, -3, AV1 + 4)); /* v46: a plaza the full width of the pyramid front */ if (da < 16) { const p = S.y0 - .08; h = da <= 0 ? p : p + (h - p) * sstep(0, 16, da); }
+  if (!(Math.abs(u) <= DU && v > IV1)) { // v46: the ground hugs the underside of the stepped pyramid (and fills the halls' roof as before)
+    if (v <= -5.5 || (Math.abs(u) <= IU && v <= IV1)) { const ds = Math.max(0, Math.abs(u) - IU, IV0 - v); const e = pyramidEnvelope(ds); if (e > -1e8) h = ds <= 0 ? Math.max(h, S.y0 + TEMPLE.top) : S.y0 + e - .7; } }
+  { const dp = rectD(u, v, -IU, IU, IV0, AV1 + 4); if (dp > 11.5 && !(v > -5.5 && v <= -3 && Math.abs(u) <= IU + 12)) h = Math.min(h, S.y0 + (dp - 11.5) * .85); } // v46: the hillside is dug back so the terraces stand clear
   return h; }; }
 
 export function createTemple(c) {
   const { scene, H, P, T, hAt, sfx, msg, mobile, site: S } = c, me = () => String(H.me || 'P1'), host = () => c.role() !== 'client';
-  const tm = createSunTemple({ position: new THREE.Vector3(S.x, S.y0, S.z), rotationY: S.rot, quality: mobile || c.low ? 'low' : 'high', viewDist: mobile ? 260 : 380, onPlate: i => act(['g', i]) });
-  scene.add(tm.group); tm.group.updateMatrixWorld(true);
+  const tm = createSunTemple({ position: new THREE.Vector3(S.x, S.y0, S.z), rotationY: S.rot, quality: mobile || c.low ? 'low' : 'high', viewDist: mobile ? 650 : 1000, onPlate: i => act(['g', i]) });
+  scene.add(tm.group); tm.group.updateMatrixWorld(true); TEMPLE_CUT.value.set(S.x, S.z, S.rot, S.y0);
   if (mobile) tm.lights.forEach((l, i) => { if (i !== 0 && i !== 4) l.removeFromParent(); }); // phones: the seal and sanctum lamps only
   if (!mobile && !c.low) tm.group.traverse(m => { if (m.isMesh && !m.material.transparent) m.castShadow = true; }); // the roof shades the halls from the sun
   const INV = tm.inverse, L = new THREE.Vector3(), W = new THREE.Vector3();

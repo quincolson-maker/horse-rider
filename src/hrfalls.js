@@ -8,6 +8,7 @@
 //   - drifting mist, a faint rainbow in the spray, mossy boulders around the pool and along the cliff foot
 // Local frame (same as the cave): x = across the mouth, +z = out of the mouth, y = up from the ground at the mouth.
 import * as THREE from 'three';
+import { rockDetail } from './hrhideout.js?v=42t';
 
 const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 function hash(x, y) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }
@@ -120,7 +121,7 @@ export function createFalls({ position, rot, high = true }) {
   const group = new THREE.Group(); group.name = 'Bandit Falls scenery'; group.position.copy(position); group.rotation.y = rot;
   const U = { fT: { value: 0 } }, geos = [], mats = [], keep = (g, m) => (geos.push(g), mats.push(m), new THREE.Mesh(g, m));
   // cliff
-  const rockM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, metalness: 0 });
+  const rockM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .92, metalness: 0 }); rockM.defines = { STY_SHARP: '' }; rockDetail(rockM, 2.4, .65);
   const cliff = keep(buildCliff(high), rockM); cliff.castShadow = true; cliff.receiveShadow = true; group.add(cliff);
   // main falls (front curtain + slower sheet behind) and two side trickles
   const HN = topH(0) - .4;

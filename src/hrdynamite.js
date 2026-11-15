@@ -43,17 +43,17 @@ export function createDynamite(c) {
   // ---- input ----
   function start() { if (!H.on || H.uiOpen || H.dead) return; if (S.holding) return; if (S.count <= 0) { msg('🧨 No dynamite — buy 25 sticks for ' + DYN.price + ' at the General Store', 2.5); return; }
     S.holding = true; S.chargeT = 0; S.lit = 0; held.visible = true; if (sfx.ctx) { sfx.nz('highpass', 3200, .8, .25, .12); sfx.tone('triangle', 900, 1600, .05, .06); } }
-  function release() { if (!S.holding) return; S.holding = false; held.visible = false; arc.visible = marker.visible = false; const k = Math.min(1, S.chargeT / DYN.charge);
+  function release() { if (!S.holding) return; S.holding = false; held.visible = eq && S.count > 1; arc.visible = marker.visible = false; const k = Math.min(1, S.chargeT / DYN.charge);
     S.count--; save(); S.thrown++; const g = stick(), sp = new THREE.Sprite(sparkM); sp.scale.setScalar(.12); sp.position.set(.03, .13, 0); g.add(sp); origin(g.position); scene.add(g);
     live.push({ g, sp, v: velocity(k, new THREE.Vector3()), w: new THREE.Vector3(8 + Math.random() * 6, Math.random() * 4, 4 + Math.random() * 4), t: S.lit, rest: false });
     if (sfx.ctx) sfx.nz('bandpass', 700, 1, .25, .12); c.send && c.send({ t: 'dyn', p: g.position.toArray().map(v => +v.toFixed(2)), v: live[live.length - 1].v.toArray().map(v => +v.toFixed(2)), f: +(DYN.fuse - S.lit).toFixed(2) }); }
-  addEventListener('keydown', e => { if (e.code === 'KeyT' && !e.repeat) start(); });
-  addEventListener('keyup', e => { if (e.code === 'KeyT') release(); });
-  let btn = null; function ui() { if (!mobile || btn) return; btn = document.createElement('div'); btn.id = 'tDyn'; btn.innerHTML = '🧨<small></small>';
-    btn.style.cssText = 'position:fixed;right:92px;bottom:calc(30% + 70px);width:50px;height:50px;box-sizing:border-box;border-radius:50%;border:2px solid #ffb35a;background:rgba(110,20,10,.62);color:#fff;font-size:24px;z-index:40;touch-action:none;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;cursor:pointer';
-    const sm = btn.querySelector('small'); sm.style.cssText = 'position:absolute;right:-4px;bottom:-4px;background:#c4231c;border-radius:9px;padding:1px 5px;font:800 11px system-ui';
-    btn.addEventListener('touchstart', e => { e.preventDefault(); e.stopPropagation(); start(); }, { passive: false }); btn.addEventListener('touchend', e => { e.preventDefault(); e.stopPropagation(); release(); }, { passive: false });
-    btn.addEventListener('touchcancel', () => release()); btn.addEventListener('mousedown', e => { e.stopPropagation(); start(); }); btn.addEventListener('mouseup', e => { e.stopPropagation(); release(); }); document.body.appendChild(btn); }
+    // v42: dynamite is a weapon slot (gun swap / key 7): while equipped, FIRE (touch) or the left mouse button = hold to aim, release to throw
+  let eq = false, firePrev = false; const btn = null; function ui() {}
+  function equip(on) { on = !!on && S.count > 0; if (on && H.guns && H.guns.state.weapon) H.guns.holster(); if (!on && S.holding) { S.holding = false; held.visible = false; arc.visible = marker.visible = false; } eq = on; held.visible = on;
+    if (on) msg(`🧨 Dynamite (${S.count}) — hold FIRE to aim, let go to throw`, 2.2); return eq; }
+  addEventListener('keydown', e => { if (e.code === 'Digit7' && !e.repeat && H.on && !H.uiOpen) { equip(!eq); H.guns && H.guns.syncUI && H.guns.syncUI(); } });
+  addEventListener('mousedown', e => { if (e.button === 0 && eq && H.on && !H.uiOpen && document.pointerLockElement) start(); });
+  addEventListener('mouseup', e => { if (e.button === 0 && eq) release(); });
 
   // ---- the blast ----
   function explode(p) { const Z = H.zombies; let hits = 0;
@@ -69,7 +69,9 @@ export function createDynamite(c) {
     const boom = () => { sfx.nz('lowpass', 600, .7, 1.3, 1.1, 1, 1.4); sfx.tone('sine', 85, 26, 1.1, .9); sfx.nz('bandpass', 1600, .8, .6, .25); setTimeout(() => sfx.ctx && sfx.nz('lowpass', 420, .6, .3, .9), 380); setTimeout(() => sfx.ctx && sfx.nz('lowpass', 320, .6, .15, 1.1), 950); };
     if (sfx.ctx) { if (sfx.at) sfx.at(p, boom, .55); else boom(); } }
 
-  function update(dt) { ui(); if (btn) { btn.style.display = H.on ? '' : 'none'; const sm = btn.lastChild; if (sm.textContent !== String(S.count)) sm.textContent = S.count; btn.style.opacity = S.count > 0 ? 1 : .55; }
+  function update(dt) {
+    if (eq) { const f = !!(c.input && c.input.fire); if (f && !firePrev) start(); if (!f && firePrev) release(); firePrev = f; if (S.count <= 0 && !S.holding) { equip(false); H.guns && H.guns.syncUI && H.guns.syncUI(); } }
+    if (eq && !S.holding) { origin(held.position); held.quaternion.copy(camera.quaternion); held.rotateZ(-.5); held.rotateX(.3); heldSpark.visible = false; } else heldSpark.visible = true;
     if (S.holding) { S.chargeT += dt; S.lit += dt; origin(held.position); held.quaternion.copy(camera.quaternion); held.rotateZ(-.5); held.rotateX(.3);
       const k = Math.min(1, S.chargeT / DYN.charge); held.position.addScaledVector(fwd, -.12 * k).addScaledVector(up, .06 * k); heldSpark.scale.setScalar(.05 + Math.random() * .04);
       if (Math.random() < dt * 30 && sfx.ctx) sfx.nz('highpass', 4000 + Math.random() * 2000, 1, .03, .02);
@@ -90,8 +92,8 @@ export function createDynamite(c) {
   // another rider's stick (visual + sound only; their blast's damage reaches the host as normal checked hits)
   function remote(m) { if (!m || !Array.isArray(m.p) || !Array.isArray(m.v) || ![...m.p, ...m.v].every(Number.isFinite)) return; const g = stick(), sp = new THREE.Sprite(sparkM); sp.scale.setScalar(.12); sp.position.set(.03, .13, 0); g.add(sp);
     g.position.fromArray(m.p); scene.add(g); live.push({ g, sp, v: new THREE.Vector3().fromArray(m.v), w: new THREE.Vector3(10, 2, 5), t: DYN.fuse - Math.max(.3, Math.min(DYN.fuse, +m.f || DYN.fuse)), rest: false, remote: true }); }
-  const storeItem = { state: { id: 'dynamite', get name() { return `🧨 Dynamite ×${DYN.pack} · you have ${S.count} (T / 🧨: hold to aim, release to throw)`; }, price: DYN.price, owned: false, equipped: false },
-    buy() { const g = H.guns; if (!g || g.pts() < DYN.price) { msg('Not enough points', 1.5); return; } g.state.spent += DYN.price; g.save && g.save(); S.count += DYN.pack; save(); msg(`🧨 +${DYN.pack} dynamite (${S.count}) — hold T (or the 🧨 button) to aim, release to throw`, 3.5); },
+  const storeItem = { state: { id: 'dynamite', get name() { return `🧨 Dynamite ×${DYN.pack} · you have ${S.count} (gun swap or key 7, then hold FIRE to throw)`; }, price: DYN.price, owned: false, equipped: false },
+    buy() { const g = H.guns; if (!g || g.pts() < DYN.price) { msg('Not enough points', 1.5); return; } g.state.spent += DYN.price; g.save && g.save(); S.count += DYN.pack; save(); msg(`🧨 +${DYN.pack} dynamite (${S.count}) — swap to it with the gun button (or key 7), hold FIRE to aim, let go to throw`, 3.5); },
     toggle() { this.buy(); } };
-  return { state: S, update, remote, storeItem, start, release, explode, settings: DYN };
+  return { state: S, update, remote, storeItem, start, release, explode, equip, equipped: () => eq, settings: DYN };
 }

@@ -32,8 +32,8 @@ const ROOMS = [HALL, CHASM, GROTTO];
 function bakeLights() {
   const L = []; const add = (x, y, z, hex, s, r) => L.push({ p: [x, y, z], c: lin(hex), s, r });
   add(0, 3, 2, 0x9fd8ff, 1.8, 7);                                    // daylight through the falls at the mouth
-  add(-2, 1.4, -24, 0xff8a3a, 2.6, 8);                               // campfire
-  for (const [x, y, z] of [[-4, 3.6, -33.6], [8.6, 3.2, -16.5], [-14, 2.9, -14.5], [10.2, 3, -30], [-16.5, 6.6, -23], [0, 3, -10.5], [-9.5, 3.3, -33.8]]) add(x, y, z, 0xffa04a, 1.35, 5);
+  add(-2, 1.4, -24, 0xff8a3a, 2.3, 7);                               // campfire
+  for (const [x, y, z] of [[-4, 3.6, -33.6], [8.6, 3.2, -16.5], [-14, 2.9, -14.5], [10.2, 3, -30], [-16.5, 6.6, -23], [0, 3, -10.5], [-9.5, 3.3, -33.8]]) add(x, y, z, 0xffa04a, 1.15, 4.2);
   add(8.6, 1.2, -23, 0xff5c7a, 1.1, 4.5);                              // stage footlights (rosy)
   for (const [x, y, z] of [[14, 2.2, -23], [22, -1.4, -23], [28, -3.4, -25.5]]) add(x, y, z, 0xffa04a, 1.3, 5); // stair torches
   add(28, -15, -39.5, 0x38f0d0, 2.6, 10);                            // the glowing river
@@ -59,7 +59,7 @@ function Baker(lights, amb) {
       P.push(v.x, v.y, v.z); const sat = x => x > 1.1 ? 1.1 + (x - 1.1) / (1 + (x - 1.1) * 1.5) : x; C.push(sat(col.r * (lo[0] + e)), sat(col.g * (lo[1] + e)), sat(col.b * (lo[2] + e))); }
     if (geo.index) for (let k = 0; k < geo.index.count; k++) I.push(geo.index.getX(k) + n); else for (let k = 0; k < pos.count; k++) I.push(k + n);
     n += pos.count; geo.dispose(); }
-  function build() { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setIndex(I); g.computeBoundingSphere(); return g; }
+  function build() { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setIndex(I); g.computeVertexNormals(); g.computeBoundingSphere(); return g; }
   return { add, build, lightAt, count: () => n };
 }
 const M4 = (x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), new THREE.Vector3(sx, sy, sz));
@@ -68,7 +68,7 @@ const noisy = (hex, amt = .18, f = 1.3) => { const c = lin(hex); return (p, q, o
 const wood = (hex = 0x7a4e2c) => { const c = lin(hex); return (p, q, out) => { const g = .78 + .32 * vn(p.x * 3.1 + p.z * 2.3, p.y * 14 + p.x * .5); out.copy(c).multiplyScalar(g); }; };
 
 // rock: warm sandstone / cool slate, damp darker low down, wet sheen near the river, mineral streaks
-function rockPaint(warm = 1) { const a = lin(0x9a7b5e), b = lin(0x6f6a72), d = lin(0x3c3530), m = lin(0x4f6a3a), t = new THREE.Color();
+function rockPaint(warm = 1) { const a = lin(0x8c7866), b = lin(0x6a6870), d = lin(0x3c3530), m = lin(0x4f6a3a), t = new THREE.Color();
   return (p, q, out) => { const n1 = fbm(p.x * .16 + p.z * .07, p.y * .2 + p.z * .11, 3), n2 = vn(p.x * .9 + p.z * .6, p.y * 1.1);
     out.copy(b).lerp(a, sstep(.3, .75, n1) * warm); out.multiplyScalar(.72 + .45 * n2); t.copy(d); out.lerp(t, .25 * sstep(.6, .9, vn(p.x * .4, p.y * 2.5 + p.z * .3)));
     if (q.y > .6 && p.y < -2) out.lerp(m, .25 * sstep(.6, .9, q.y)); }; }
@@ -95,6 +95,20 @@ function tunnel(B, pts, w, h, paint, flare = [1.25, 1.25]) { const S = 14, rings
   for (let i = 0; i < path.length - 1; i++) for (let s = 0; s < S; s++) { const a = i * (S + 1) + s, b = a + 1, c = a + S + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); B.add(g, new THREE.Matrix4(), paint, { two: true }); }
 
+// v42: real scanned-rock texture detail on the baked colours (triplanar in world space, so no UVs needed; sharp, not blurred)
+let ROCK_TEX = null;
+export function rockDetail(mat, scale = 1.6, k = .7) { if (!ROCK_TEX) { ROCK_TEX = new THREE.TextureLoader().load('assets/tex/rock_face_diff_1k.webp'); ROCK_TEX.wrapS = ROCK_TEX.wrapT = THREE.RepeatWrapping; ROCK_TEX.anisotropy = 8; ROCK_TEX.colorSpace = THREE.SRGBColorSpace; }
+  mat.onBeforeCompile = sh => { sh.uniforms.tRk = { value: ROCK_TEX };
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 rkP; varying vec3 rkN;').replace('#include <begin_vertex>', '#include <begin_vertex>\nrkP = (modelMatrix * vec4(position, 1.)).xyz; rkN = normalize(mat3(modelMatrix) * normal);');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D tRk; varying vec3 rkP; varying vec3 rkN;')
+      .replace('#include <color_fragment>', `#include <color_fragment>
+{ vec3 w = pow(abs(rkN), vec3(4.)); w /= (w.x + w.y + w.z + 1e-4); vec3 p = rkP / ${scale.toFixed(2)};
+  vec3 t = texture2D(tRk, p.zy).rgb * w.x + texture2D(tRk, p.xz).rgb * w.y + texture2D(tRk, p.xy).rgb * w.z; p *= .23;
+  vec3 t2 = texture2D(tRk, p.zy + .37).rgb * w.x + texture2D(tRk, p.xz + .37).rgb * w.y + texture2D(tRk, p.xy + .37).rgb * w.z;
+  float l = dot(t, vec3(.3, .59, .11)) / .075, l2 = dot(t2, vec3(.3, .59, .11)) / .075; /* the photo is dark and low-contrast: normalise to its mean, then stretch */
+  float d = clamp(pow(l, 2.2) * mix(.75, 1.25, smoothstep(.7, 1.3, l2)), .38, 1.75);
+  diffuseColor.rgb *= mix(1., d, ${k.toFixed(2)}); }`); };
+  mat.customProgramCacheKey = () => 'rk' + scale + k; mat.needsUpdate = true; return mat; }
 // ---------------- the hideout ----------------
 export function createHideout({ position, rotationY = 0, quality = 'high', viewDist = 320 } = {}) {
   const high = quality !== 'low', group = new THREE.Group(); group.name = 'Bandit Falls hideout';
@@ -105,7 +119,7 @@ export function createHideout({ position, rotationY = 0, quality = 'high', viewD
   const floor = (x0, z0, x1, z1, y) => box3(x0, y - .4, z0, x1, y, z1);                  // walkable top at y (0.4 thick: not a wall)
   const wallBox = (x, z, y0, y1, s = .8) => box3(x - s, y0, z - s, x + s, y1, z + s);
   const marker = (id, type, x, y, z, extra = {}) => { const a = { id, type, position: W(x, y, z), radius: 2.4, ...extra }; interactions.push(a); return a; };
-  const lights = bakeLights(), B = Baker(lights, [.05, .055, .075]);
+  const lights = bakeLights(), B = Baker(lights, [.07, .08, .11]); /* v42t: cooler fill so the torchlight reads as warm pools, not one orange wash */
   const rock = rockPaint(1), rockCool = rockPaint(.35);
   let seed = 9127; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 
@@ -183,9 +197,13 @@ export function createHideout({ position, rotationY = 0, quality = 'high', viewD
   for (let i = 0; i < 46; i++) { const sx = -8.6 + (i % 16) * .6 + rnd() * .1, row = (i / 16) | 0; cyl(sx, 1.55 + row * .7, -34.15 + rnd() * .1, .055, .32, flat([0x2a6a3a, 0x6a2a1c, 0x8a6a2a, 0x2a3a6a][i % 4]), 0, 0, 7, .03); }
   for (let i = 0; i < 5; i++) { const x = -8.5 + i * 2.2; cyl(x, .38, -30.5, .25, .08, wood(0x5a3820), 0, 0, 10); cyl(x, .2, -30.5, .05, .4, flat(0x2a2522), 0, 0, 6); }
   // the stage on the east side, red curtain behind
-  bx(8.6, .4, -23, 4, .8, 8.5, wood(0x7a4a2a)); bx(10.9, 3.3, -23, .25, 6.6, 9, (() => { const r = lin(0xa01828); return (p, q, o) => o.copy(r).multiplyScalar(.7 + .45 * (Math.sin(p.z * 6) * .5 + .5)); })());
+  bx(8.6, .4, -23, 4, .8, 8.5, wood(0x7a4a2a)); { /* v42t: a real pleated velvet curtain (was a flat red slab) with a gold-fringed valance */
+    const g = new THREE.PlaneGeometry(7.4, 4.6, 80, 10), a = g.attributes.position; for (let k = 0; k < a.count; k++) { const z = a.getX(k), y = a.getY(k), sw = Math.abs(z) < .25 ? 0 : 1; a.setZ(k, -.16 * Math.sin(z * 7.3) * (1 - .25 * (y + 2.3) / 4.6) * sw - .04 * Math.sin(z * 19)); } g.computeVertexNormals();
+    const vel = lin(0x5e0c18), velD = lin(0x1e0308);
+    B.add(g, M4(10.2, 3.1, -23, 1, 1, 1, 0, -Math.PI / 2, 0), (p, q, o) => { const f = Math.sin(p.z * 7.3) * .5 + .5; o.copy(velD).lerp(vel, .35 + .65 * f); }, { two: true });
+    bx(10.05, 5.6, -23, .3, .6, 7.8, (() => { const c = lin(0x8a1424), gd = lin(0xc89a3a); return (p, q, o) => o.copy(p.y < 5.42 ? gd : c).multiplyScalar(.8 + .3 * vn(p.z * 9, p.y * 4)); })()); }
   for (let i = 0; i < 7; i++) { cyl(6.65, .84, -26.6 + i * 1.2, .09, .09, flat(0xfff0c0), 0, 0, 8); }
-  bx(8.6, 6.4, -23, 4.6, .6, 9.4, wood(0x5a3a22));
+  bx(8.4, 6.05, -23, 4, .5, 8.4, wood(0x5a3a22));
   // poker table + chairs, slot cabinets near the entrance, crates & barrels
   cyl(-8, .78, -19.5, 1.25, .1, flat(0x1f6a3a), 0, 0, 20); cyl(-8, .72, -19.5, 1.32, .08, wood(0x5a3820), 0, 0, 20); cyl(-8, .38, -19.5, .2, .76, wood(0x4a2c18));
   for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + .4; bx(-8 + Math.cos(a) * 1.75, .45, -19.5 + Math.sin(a) * 1.75, .45, .9, .45, wood(0x6a4424)); }
@@ -267,7 +285,7 @@ export function createHideout({ position, rotationY = 0, quality = 'high', viewD
   const keyHook = marker('vault-key', 'key', 23, -6, -50.5); keyHook.active = false;
 
   // ---- the merged, baked static mesh ----
-  const staticG = B.build(); geos.push(staticG); const staticM = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }); mats.push(staticM);
+  const staticG = B.build(); geos.push(staticG); const staticM = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }); mats.push(staticM); rockDetail(staticM, 1.6, .7);
   const staticMesh = new THREE.Mesh(staticG, staticM); staticMesh.frustumCulled = false; group.add(staticMesh);
 
   // ---- WANTED posters (canvas) ----

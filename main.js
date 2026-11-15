@@ -1,15 +1,15 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=42r';
-import './src/hraudio.js?v=42r';
-import './src/stylize.js?v=42r'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=42r';
-import { FX, SFX } from './src/fx.js?v=42r';
-import { initTouch } from './src/touch.js?v=42r';
-import { createHorseRider } from './src/horse.js?v=42r';
-import { createHorseNet } from './src/horsenet.js?v=42r';
+import './src/assetshim.js?v=42t';
+import './src/hraudio.js?v=42t';
+import './src/stylize.js?v=42t'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=42t';
+import { FX, SFX } from './src/fx.js?v=42t';
+import { initTouch } from './src/touch.js?v=42t';
+import { createHorseRider } from './src/horse.js?v=42t';
+import { createHorseNet } from './src/horsenet.js?v=42t';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=42r';
+import { PF, initPerf } from './src/perf.js?v=42t';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -55,12 +55,13 @@ function update(dt) { if (G.phase == 'menu') return; G.t += dt; horse.tick(dt); 
 // ---------------- HUD ----------------
 let hudT = 0, hurtFlash = 0;
 const CMP = (() => { let h = ''; for (let d = -360; d <= 720; d += 15) { const n = ((d % 360) + 360) % 360; const lab = { 0: 'N', 45: 'NE', 90: 'E', 135: 'SE', 180: 'S', 225: 'SW', 270: 'W', 315: 'NW' }[n]; h += `<span class="${lab ? 'c' : ''}">${lab || n}</span>`; } return h; })();
-const PINS = [['pen', '🐎'], ['town', '🏠'], ['cave', '💧'], ['temple', '☀️']];
-function pins(hd) { const box = $('cpins'); if (!box || !horse.state.places) return; const H = horse.state, pl = H.places, w = box.parentNode.clientWidth || 300;
-  if (!box.dataset.on) { box.dataset.on = 1; box.innerHTML = PINS.map(([k, ic]) => `<i data-k="${k}">${ic}<b></b></i>`).join(''); }
-  for (const el of box.children) { const k = el.dataset.k, t = k === 'pen' ? [horse.PEN.x, horse.PEN.z] : k === 'town' ? pl.town : pl[k] ? [pl[k].x, pl[k].z] : null; if (!t) { el.style.display = 'none'; continue; }
-    const dx = t[0] - P.pos.x, dz = t[1] - P.pos.z, d = Math.hypot(dx, dz), b = Math.atan2(dx, -dz) * 180 / Math.PI; let dl = ((b - hd) % 360 + 540) % 360 - 180; const x = dl / 15 * 40;
-    if (d < 25 || Math.abs(x) > w / 2 - 10) { el.style.display = 'none'; continue; } el.style.display = ''; el.style.transform = `translateX(${x.toFixed(0)}px)`; el.lastChild.textContent = d > 999 ? (d / 1000).toFixed(1) + 'k' : Math.round(d) + 'm'; } }
+const PINS = [['pen', 'PEN', '#ffb35a'], ['town', 'TOWN', '#ff6a5a'], ['cave', 'FALLS', '#4fd2ff'], ['temple', 'TEMPLE', '#ffe11a']];
+function pins(hd) { const box = $('cpins'); if (!box || !horse.state.places) return; const H = horse.state, pl = H.places, w = (box.parentNode.clientWidth || 300) / 2 - 34;
+  if (!box.dataset.on) { box.dataset.on = 1; box.innerHTML = PINS.map(([k, lab, col]) => `<i data-k="${k}" style="--c:${col}"><u></u><em>${lab}</em> <b></b></i>`).join(''); }
+  const sideN = { l: 0, r: 0 }; for (const el of box.children) { const k = el.dataset.k, t = k === 'pen' ? [horse.PEN.x, horse.PEN.z] : k === 'town' ? pl.town : pl[k] ? [pl[k].x, pl[k].z] : null; if (!t) { el.style.display = 'none'; continue; }
+    const dx = t[0] - P.pos.x, dz = t[1] - P.pos.z, d = Math.hypot(dx, dz), b = Math.atan2(dx, -dz) * 180 / Math.PI, dl = ((b - hd) % 360 + 540) % 360 - 180; let x = dl / 15 * 40, edge = '';
+    if (d < 20) { el.style.display = 'none'; continue; } if (x > w) { x = w - 92 * sideN.r++; edge = '▶'; } else if (x < -w) { x = -w + 92 * sideN.l++; edge = '◀'; }
+    el.style.display = ''; el.style.transform = `translateX(${x.toFixed(0)}px) translateX(-50%)`; el.style.opacity = edge ? .7 : 1; el.lastChild.textContent = (edge === '◀' ? '◀ ' : '') + (d > 999 ? (d / 1000).toFixed(1) + 'km' : Math.round(d) + 'm') + (edge === '▶' ? ' ▶' : ''); } }
 function compass() { const el = $('cstrip'); if (!el) return; if (!el.innerHTML) el.innerHTML = CMP; const hd = ((-P.yaw * 180 / Math.PI) % 360 + 360) % 360; el.style.transform = `translateX(${-(hd + 360) / 15 * 40 - 20}px)`; $('chead').textContent = Math.round(hd); pins(hd); }
 function hud(dt) { compass(); hurtFlash = Math.max(0, hurtFlash - dt * 1.5); $('vign').style.opacity = hurtFlash;
   hudT -= dt; if (hudT > 0) return; hudT = .1; uiSync(); horse.hud(); }
@@ -105,9 +106,10 @@ function setupSettingsX() { const st = (k, v) => { try { localStorage.setItem(k,
   const sr = $('sensRange'), vr = $('volRange'); if (!sr || sr.dataset.on) return; sr.dataset.on = 1;
   const syncS = () => { sr.value = gt('hr_sens', 100); $('sensVal').textContent = sr.value + '%'; }; sr.oninput = () => { st('hr_sens', sr.value); syncS(); }; syncS();
   const syncV = () => { const v = +gt('hr_vol', 50); vr.value = v; $('volVal').textContent = v + '%'; sfx.vol = v / 100; if (sfx.master) sfx.master.gain.value = sfx.vol; }; vr.oninput = () => { st('hr_vol', vr.value); syncV(); }; syncV();
+  { const gb = $('grassBtn'), on = gt('hr_grass', '0') === '1'; gb.textContent = '🌿 Grass blades: ' + (on ? 'ON' : 'OFF'); gb.setAttribute('aria-pressed', on); gb.onclick = () => { st('hr_grass', on ? '0' : '1'); location.reload(); }; }
   const cur = gt('vr_quality', 'auto'); for (const b of $('qSeg').children) { b.classList.toggle('on', b.dataset.q === cur); b.onclick = () => { if (b.dataset.q === gt('vr_quality', 'auto')) return; st('vr_quality', b.dataset.q); const u = new URL(location.href); u.searchParams.delete('q'); location.href = u.toString(); }; }
-  const touch = matchMedia('(pointer: coarse)').matches, rows = touch ? [['Left thumb', 'move / steer'], ['Right thumb', 'look around'], ['RIDE / USE', 'mount a horse, talk, buy'], ['DRAW', 'take out a gun'], ['FIRE / AIM', 'shoot / zoom'], ['🧨', 'hold to aim dynamite, let go to throw'], ['JUMP', 'jump'], ['⋯', 'more: settings, fullscreen']]
-    : [['W A S D', 'move / steer'], ['Mouse', 'look'], ['Shift', 'gallop / run'], ['E', 'mount, use, buy'], ['F / 1–6', 'draw a gun / pick one'], ['Click / Right-click', 'shoot / aim'], ['R', 'reload'], ['T (hold)', 'aim dynamite, release to throw'], ['Space', 'jump'], ['O', 'settings']];
+  const touch = matchMedia('(pointer: coarse)').matches, rows = touch ? [['Left thumb', 'move / steer'], ['Right thumb', 'look around'], ['RIDE / USE', 'mount a horse, talk, buy'], ['DRAW', 'take out a gun'], ['FIRE / AIM', 'shoot / zoom'], ['Gun swap', 'cycles guns, then 🧨 dynamite (hold FIRE to aim, let go to throw)'], ['JUMP', 'jump'], ['⋯', 'more: settings, fullscreen']]
+    : [['W A S D', 'move / steer'], ['Mouse', 'look'], ['Shift', 'gallop / run'], ['E', 'mount, use, buy'], ['F / 1–6', 'draw a gun / pick one'], ['Click / Right-click', 'shoot / aim'], ['R', 'reload'], ['7', 'dynamite: hold click to aim, release to throw'], ['Space', 'jump'], ['O', 'settings']];
   $('ctlList').innerHTML = rows.map(([k, v]) => `<b>${k}</b><span>${v}</span>`).join(''); }
 setTimeout(() => { try { const v = +(localStorage.getItem('hr_vol') ?? 50); sfx.vol = v / 100; if (sfx.master) sfx.master.gain.value = sfx.vol; } catch (_) {} }, 0);
 function syncFov() { setupSettingsX(); const v = horse.state.fovH; $('fovRange').value = v; $('fovVal').textContent = v + '°'; syncChar(); }

@@ -3,7 +3,7 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=42r'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=42t'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -322,12 +322,12 @@ export function createGuns(c) {
     const pts = head ? 15 : 10; state.score += pts; state.kills = (state.kills || 0) + 1; say(head ? `Headshot! Zombie down  +${pts}` : `Zombie down  +${pts}`); save(); return pts; } // host-authoritative in co-op (the host sends 'zk')
   function save() { try { localStorage.setItem('hr_v33', JSON.stringify({ score: state.score, kills: state.kills || 0, spent: state.spent || 0, owned: state.owned, up: state.up, att: state.att })); } catch (_) {} }
 
-  function draw(w) { if (!models[w] || !state.owned[w]) return false; if (H.mountT > 0 || H.dismT > 0) return false; if (state.weapon === w) return true;
+  function draw(w) { if (!models[w] || !state.owned[w]) return false; if (H.dyn && H.dyn.equipped()) H.dyn.equip(false); if (H.mountT > 0 || H.dismT > 0) return false; if (state.weapon === w) return true;
     state.weapon = w; state.last = w; state.reloading = false; state.cycling = false; clock.cooldown = .15; clock.draw = S.drawTime; state.cocked = true; state.chambered = state.ammo.rifle > 0; state.breath = 1; if (w === 'gold') state.gz = S.goldFovMax; state.winded = false;
     click(2400, .12); setTimeout(() => click(4200, .08), 120); syncUI(); return true; }
   function holster() { if (!state.weapon) return; state.weapon = null; state.aiming = false; state.reloading = false; input.ads = false; click(1800, .1); syncUI(); }
   const ORDER = ['revolver', 'rifle', 'sniper', 'tommy', 'gold', 'gatling'], owned = () => ORDER.filter(w => state.owned[w]);
-  function cycle() { const o = owned(); if (!state.weapon) draw(o[0]); else { const i = o.indexOf(state.weapon); if (i < 0 || i === o.length - 1) holster(); else draw(o[i + 1]); } } // phone: holstered -> six-shooter -> rifle -> buffalo -> (tommy, golden buffalo once owned) -> holstered
+  function cycle() { const o = owned(), D = H.dyn; if (D && D.equipped()) { D.equip(false); syncUI(); return; } if (!state.weapon) draw(o[0]); else { const i = o.indexOf(state.weapon); if (i < 0 || i === o.length - 1) { holster(); if (D && D.state.count > 0) D.equip(true); syncUI(); } else draw(o[i + 1]); } } // v42: ... -> last gun -> 🧨 dynamite (when you have sticks) -> holstered // phone: holstered -> six-shooter -> rifle -> buffalo -> (tommy, golden buffalo once owned) -> holstered
   function reload() { const w = state.weapon; if (!w || state.reloading || state.cycling || state.ammo[w] >= maxAmmo(w)) return false; state.reloading = true; if (w === 'tommy') tommyWav('reload'); clock.reload = (H.reloadMul || 1) * (w === 'rifle' ? S.reloadRifle : w === 'sniper' ? S.reloadSniper : w === 'tommy' ? S.reloadTommy : w === 'gatling' ? S.reloadGatling : w === 'gold' ? S.reloadGold : S.reloadRevolver) * S.tierReload[tier(w)]; state.rlLen = clock.reload; state.rlStep = 0; click(1500, .1); return true; }
 
   // ChatGPT's horseback arc clamp (kept): a direction behind the horse is turned back to the limit; returns whether it was clamped
@@ -489,7 +489,7 @@ export function createGuns(c) {
 
   // ---- HUD + phone buttons ----
   const $ = id => document.getElementById(id); let hudEl = null, crossEl = null, scopeEl = null;
-  function syncUI() { document.body.classList.toggle('hr-gun', !!state.weapon); const b = $('tGun'); if (b) b.innerHTML = !state.weapon ? '🔫<small>DRAW</small>' : state.weapon === 'revolver' ? '🔫<small>RIFLE</small>' : state.weapon === 'rifle' ? '🔭<small>BUFFALO</small>' : (() => { const o = owned(), n = o[o.indexOf(state.weapon) + 1]; return n === 'tommy' ? '🔫<small>TOMMY</small>' : n === 'gold' ? '🔭<small>GOLD</small>' : n === 'gatling' ? '🔫<small>GATLING</small>' : '🔫<small>HOLSTER</small>'; })(); if (!state.weapon) input.ads = false; }
+  function syncUI() { document.body.classList.toggle('hr-gun', !!state.weapon); const b = $('tGun'), Dq = H.dyn && H.dyn.equipped(); document.body.classList.toggle('hr-dyn', !!Dq); const oo = owned(), lastG = state.weapon && oo.indexOf(state.weapon) === oo.length - 1 && H.dyn && H.dyn.state.count > 0; if (b && lastG) { b.innerHTML = '🧨<small>DYNAMITE</small>'; return; } if (b) b.innerHTML = Dq ? '🔫<small>HOLSTER</small>' : !state.weapon ? '🔫<small>DRAW</small>' : state.weapon === 'revolver' ? '🔫<small>RIFLE</small>' : state.weapon === 'rifle' ? '🔭<small>BUFFALO</small>' : (() => { const o = owned(), n = o[o.indexOf(state.weapon) + 1]; return n === 'tommy' ? '🔫<small>TOMMY</small>' : n === 'gold' ? '🔭<small>GOLD</small>' : n === 'gatling' ? '🔫<small>GATLING</small>' : '🔫<small>HOLSTER</small>'; })(); if (!state.weapon) input.ads = false; }
   if (mobile && $('tGun')) { const b = $('tGun'); b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); cycle(); }); }
   if (mobile && $('tFire')) $('tFire').addEventListener('pointerdown', () => { if (H.on && state.weapon) firePend = true; }); // a quick tap between two frames still fires
   function hud() {

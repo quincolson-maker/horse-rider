@@ -5,28 +5,28 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=42r';
-import { PF } from './perf.js?v=42r';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=42t';
+import { PF } from './perf.js?v=42t';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=42r';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=42r';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42r';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42r';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=42r';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=42r';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=42r';
-import { createGuns } from './hrguns.js?v=42r';
-import { createHrZombies } from './hrzombies.js?v=42r';
-import { createFlora } from './hrflora.js?v=42r';
-import { createTown, wearJacket } from './hrtown.js?v=42r';
-import { createSaloon } from './hrsaloon.js?v=42r';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=42r';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=42r';
-import { createDynamite } from './hrdynamite.js?v=42r';
-import { createSunItem } from './hrsunweapon.js?v=42r';
-import { createBuild } from './hrbuild.js?v=42r';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=42r';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=42r';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=42t';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=42t';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=42t';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=42t';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=42t';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=42t';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=42t';
+import { createGuns } from './hrguns.js?v=42t';
+import { createHrZombies } from './hrzombies.js?v=42t';
+import { createFlora } from './hrflora.js?v=42t';
+import { createTown, wearJacket } from './hrtown.js?v=42t';
+import { createSaloon } from './hrsaloon.js?v=42t';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=42t';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=42t';
+import { createDynamite } from './hrdynamite.js?v=42t';
+import { createSunItem } from './hrsunweapon.js?v=42t';
+import { createBuild } from './hrbuild.js?v=42t';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=42t';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=42t';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -491,7 +491,7 @@ export function createHorseRider(ctx) {
       H.obst.push([tx + 2.5, tz, .6, 1.8]); void ty; }
   }
   // GPU grass: tufts on a camera-following grid (count / radius from the quality tier), sways in the wind, wildflowers, fades out by distance
-  function buildGrass() {
+  function buildGrass() { let on = false; try { on = localStorage.getItem('hr_grass') === '1'; } catch (_) {} if (!on && !/[?&]grass=1/.test(location.search)) return; // v42: grass blades off by default (big GPU saving); Settings > Graphics turns them back on
     const tufts = Math.round(Math.min(60000, Math.max(3000, (Q.grass || 600) * 4.5)) * (mobile ? .5 : 1.15)), N = Math.round(Math.sqrt(tufts)); // v30: denser near the player on desktop
     const R = Math.min(52, Math.max(18, 9 + Math.sqrt(N * N) * .19));
     H.grassG = createGrass(scene, H.terrain, PEN, SEG, { N, R, blades: mobile ? 4 : HQ ? 9 : 7, hAt, mask: H.mask, maskHalf: MASK_HALF, mobile, cave: CAVE_SITE ? (q => [q.x, q.z, q.hw, q.hd])(caveRect(CAVE_SITE, 1)) : null }); H.grassInfo = { tufts: N * N, radius: +R.toFixed(1), tris: H.grassG.tris };
@@ -697,7 +697,7 @@ export function createHorseRider(ctx) {
     guns = H.guns = createGuns({ scene, camera, P, H, hAt, sfx, fx: ctx.fx, msg, mobile, input, keys, renderer: GX.renderer, rig: () => real() ? rider : null, aimBone, twistBone, RANGE, BASE, dev: new URLSearchParams(location.search).has('dev'), send: m => H.netShot && H.netShot(m), zombies: () => zombies });
     H.gatlingSpin = (k, held) => sfx.spin && sfx.spin(k, held);
     H.onGunShot = () => { if (H.cave && H.cave.inside(P.pos.x, P.pos.z)) H.cave.provoke(); }; // v41: a shot fired inside Bandit Falls starts the gunfight
-    H.dyn = createDynamite({ scene, H, P, camera, sfx, msg, mobile, fx: ctx.fx, role: () => H.netRole ? H.netRole() : 'solo', send: m => H.zSend && H.zSend(m),
+    H.dyn = createDynamite({ scene, H, P, camera, sfx, msg, mobile, input: ctx.input, fx: ctx.fx, role: () => H.netRole ? H.netRole() : 'solo', send: m => H.zSend && H.zSend(m),
       ground: (x, z, y) => { let g = town2 ? town2.floorAt(x, z, y) : hAt(x, z); if (H.cave) { const cg = H.cave.groundAt ? H.cave.groundAt(x, z, y) : null; g = cg !== null && cg !== undefined ? cg : H.cave.floorAt(x, z, y, g); } if (H.temple) { const tg = H.temple.groundAt(x, z, y); if (tg !== null) g = tg; } return g; } }); // v42 dynamite
     if (town2 && town2.registerStoreItem) try { town2.registerStoreItem(H.dyn.storeItem); } catch (e) { console.warn('dyn store', e); }
     H.sun = createSunItem({ scene, H, P, camera, sfx, msg, mobile, fx: ctx.fx, role: () => H.netRole ? H.netRole() : 'solo', send: m => H.zSend && H.zSend(m) }); // v39 the Sun Pyramid

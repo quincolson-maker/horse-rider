@@ -3,7 +3,7 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=42x'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=43'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -316,6 +316,12 @@ export function createGuns(c) {
   // v33: inside the scope (where the rest of the HUD is hidden) hit markers, damage and points pop up beside the reticle
   const pops = []; function scopePop(t, cls = '') { if (!scopeEl || state.scopeK < .5) return; const box = scopeEl.querySelector('.pops'); if (!box) return; const e = document.createElement('b'); e.textContent = t; if (cls) e.className = cls; box.appendChild(e); pops.push(e); state.scopePops = (state.scopePops || 0) + 1; state.lastPop = t;
     setTimeout(() => { e.remove(); pops.splice(pops.indexOf(e), 1); }, 1400); while (pops.length > 4) pops.shift().remove(); }
+  // v43: Fortnite-style hit feedback for every gun: a crosshair X (white body / gold head / red kill) + a crisp confirm sound
+  const hitX = (() => { if (typeof document === 'undefined') return () => {}; const st = document.createElement('style');
+    st.textContent = '#hrHitX{position:fixed;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;pointer-events:none;z-index:60;opacity:0}#hrHitX i{position:absolute;left:50%;top:50%;width:3px;height:11px;margin:-5.5px 0 0 -1.5px;background:#fff;border-radius:2px;box-shadow:0 0 2px #000}#hrHitX i:nth-child(1){transform:rotate(45deg) translateY(-11px)}#hrHitX i:nth-child(2){transform:rotate(135deg) translateY(-11px)}#hrHitX i:nth-child(3){transform:rotate(225deg) translateY(-11px)}#hrHitX i:nth-child(4){transform:rotate(315deg) translateY(-11px)}#hrHitX.on{animation:hrHx .26s ease-out}#hrHitX.hd i{background:#ffd23a}#hrHitX.kl i{background:#ff3b30;height:14px}#hrHitX.kl{animation:hrHk .45s ease-out}@keyframes hrHx{0%{opacity:1;transform:scale(1.35)}100%{opacity:0;transform:scale(1)}}@keyframes hrHk{0%{opacity:1;transform:scale(1.6) rotate(0)}40%{opacity:1}100%{opacity:0;transform:scale(1) rotate(8deg)}}';
+    document.head.appendChild(st); const el = document.createElement('div'); el.id = 'hrHitX'; el.innerHTML = '<i></i><i></i><i></i><i></i>'; document.body.appendChild(el);
+    return (head, killed) => { el.className = ''; void el.offsetWidth; el.className = killed ? 'kl' : head ? 'on hd' : 'on';
+      if (killed) { tone('sine', 1320, 1320, .09, .16); setTimeout(() => tone('sine', 1760, 1760, .16, .14), 70); } else if (head) tone('triangle', 2100, 1700, .07, .14); else tone('triangle', 1250, 1050, .05, .09); }; })();
   function hitMark(head) { if (!scopeEl || state.scopeK < .5) return; const hx = scopeEl.querySelector('.hx'); if (!hx) return; hx.classList.remove('on', 'hd'); void hx.offsetWidth; hx.classList.add('on'); if (head) hx.classList.add('hd'); }
   const role = () => (H.netRole ? H.netRole() : 'solo');
   function award(head, kind) { if (kind === 'outlaw') { const p = head ? 75 : 60; state.score += p; state.outlaws = (state.outlaws || 0) + 1; say(head ? `Headshot! Outlaw down  +${p}` : `Outlaw down  +${p}`); save(); return p; } // v38 Bandit Falls guards
@@ -420,7 +426,7 @@ export function createGuns(c) {
         let hm = T.holes[T.hi]; if (!hm) { hm = new THREE.Mesh(new THREE.PlaneGeometry(.05, .05), mats().hole); hm.rotation.y = Math.PI / 2; T.mesh.add(hm); T.holes[T.hi] = hm; } T.hi = (T.hi + 1) % 30; hm.position.set(.027, lp.y, lp.z);
         tone('sine', 220, 120, .25, .12); nz('lowpass', 500, 1, .25, .08); if (fx && fx.debris) fx.debris(p.x, p.y, p.z, 0xc9b48a, 4, .4); }
       return; }
-    if (hit.kind === 'zombie') { const zs = c.zombies && c.zombies(); if (zs) { state.hits++; const r = hit.zr = zs.onHit(hit.Z, w, hit.head, p, d, dmgMul(w)); if (r) { hitMark(hit.head); scopePop('-' + r.dmg + (hit.head ? ' ◉' : ''), hit.head ? 'h' : ''); if (r.killed && role() !== 'client') award(hit.head, hit.Z.kind); else if (hit.head && !r.killed) say('Headshot!');
+    if (hit.kind === 'zombie') { const zs = c.zombies && c.zombies(); if (zs) { state.hits++; const r = hit.zr = zs.onHit(hit.Z, w, hit.head, p, d, dmgMul(w)); if (r) { hitMark(hit.head); hitX(hit.head, r.killed); scopePop('-' + r.dmg + (hit.head ? ' ◉' : ''), hit.head ? 'h' : ''); if (r.killed && role() !== 'client') award(hit.head, hit.Z.kind); else if (hit.head && !r.killed) say('Headshot!');
         nz('lowpass', 700, 1, .2, .12); if (hit.head) tone('square', 1600, 900, .05, .08); } } return; }
     if (!fx) return;
     if (hit.kind === 'ground') { fx.debris && fx.debris(p.x, p.y + .03, p.z, 0x7d6a4c, 5, .55); fx.smoke && fx.smoke.emit(p.x, p.y + .05, p.z, 0, .4, 0, .55, .47, .36, .2, 1, .7, -.05, .45); }

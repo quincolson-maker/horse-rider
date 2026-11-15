@@ -5,7 +5,7 @@
 // wires it into our controller (underground floors under the mound, walls, falls), guns, host-authoritative co-op (the host
 // orders every puzzle action and replays the log to everyone) and game points. The civilization and its glyphs are fictional.
 import * as THREE from 'three';
-import { createSunTemple } from './hrsuntemple.js?v=42x';
+import { createSunTemple } from './hrsuntemple.js?v=43';
 
 export const TEMPLE = { gold: 100000, top: 18.5, trap: { rolling_boulder: 40, dart_wall: 12, swinging_blade: 30 } };
 const IU = 27, IV0 = -77, IV1 = -4.5, DU = 16.5, AV1 = 9, MB = 30; // interior / mound half-width + depth, doorway half-width, apron front, mound blend
@@ -114,6 +114,8 @@ export function createTemple(c) {
     if (!tm.near) for (const l of tm.lights) l.intensity = 0;
     if (stones && (stoneT -= dt) <= 0) { const n = stones; stones = 0; act(['w', n]); if (n !== 12) { msg('The scale lurches — ' + n + ' is the wrong weight. Darts hiss from the wall!', 2.5); const Z = H.zombies; if (Z && Z.hurtMe) Z.hurtMe(10, 0); } }
     out.underP = !H.mounted && out.under(P.pos.x, P.pos.z, P.pos.y);
+    { const [, lv] = toLocal(S, P.pos.x, P.pos.z), tgt = out.underP ? .96 * sstep(-3, -12, lv) : 0; H.templeDark = (H.templeDark || 0) + (tgt - (H.templeDark || 0)) * Math.min(1, dt * 2.5); // v43: daylight fades inside the halls; the lamps carry the light
+      if (tm.near) { const k = 1 + 2.2 * H.templeDark; for (const l of tm.lights) if (l.parent) l.intensity *= k; } }
     if (tm.near && !H.mounted) { CAP.min.set(P.pos.x - .35, P.pos.y, P.pos.z - .35); CAP.max.set(P.pos.x + .35, P.pos.y + 1.7, P.pos.z + .35);
       for (const q of tm.triggers) { if (q.type !== 'trap' || q.hazard.isEmpty() || !TEMPLE.trap[q.id]) continue; hitT[q.id] = Math.max(0, (hitT[q.id] || 0) - dt); if (hitT[q.id] > 0 || !q.hazard.intersectsBox(CAP)) continue;
         hitT[q.id] = 1.2; const Z = H.zombies; if (Z && Z.hurtMe) Z.hurtMe(TEMPLE.trap[q.id], 0); out.trapHits = (out.trapHits || 0) + 1; msg(q.id === 'rolling_boulder' ? 'The boulder slams into you!' : q.id === 'dart_wall' ? 'Darts!' : 'The blade catches you!', 1.2); } }

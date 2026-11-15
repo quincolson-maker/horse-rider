@@ -252,10 +252,13 @@ body.touch #vMute svg{width:14px;height:14px}
 #fnSplash .ver{position:absolute;right:14px;bottom:10px;color:#9fc4ff;font:700 12px system-ui;opacity:.7}
 @keyframes fnPulse{0%,100%{transform:skewX(-10deg) scale(1)}50%{transform:skewX(-10deg) scale(1.05)}}
 #hrSettings .perfL{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}#hrSettings .perfL .tog{font-size:12px!important;padding:8px 6px!important;text-align:left}
+#cpins i.jobOn em::before{content:"★ ";color:#ffd700}#cpins i.jobOn{filter:drop-shadow(0 0 4px #ffd700)}#cpins i[data-k="job"] em{color:#ffd700}
+#hrSpeed{position:fixed;inset:-10%;pointer-events:none;z-index:19;opacity:0;background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,255,255,.0) 0deg,rgba(255,255,255,.0) 5deg,rgba(255,255,255,.75) 5.4deg,rgba(255,255,255,.0) 5.9deg,rgba(255,255,255,.0) 11deg,rgba(255,255,255,.5) 11.3deg,rgba(255,255,255,0) 11.7deg);-webkit-mask:radial-gradient(ellipse at 50% 50%,transparent 38%,#000 78%);mask:radial-gradient(ellipse at 50% 50%,transparent 38%,#000 78%);animation:hrSpd .35s linear infinite}
+@keyframes hrSpd{0%{transform:rotate(0deg) scale(1)}50%{transform:rotate(1.5deg) scale(1.03)}100%{transform:rotate(0deg) scale(1)}}
 </style>
 </head><body>
 <div id="fnSplash"><div class="logo">Horse<br>Rider</div><div class="tag">Wild Frontier · Season 1</div><button class="play" id="fnPlay">Play</button>
-<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v42x · updated Nov 14</div></div>
+<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v43 · updated Nov 14</div></div>
 <script>(function(){var q=new URLSearchParams(location.search);var real=q.get('style')==='real';if(!real)document.body.classList.add('sty');var sp=document.getElementById('fnSplash');
 if(real||q.has('dev')||q.has('auto')||q.get('splash')==='0'){sp.remove();return;}
 if(matchMedia('(pointer: coarse)').matches)document.getElementById('fnHint').textContent='Left side: move & steer · right side: look · tap RIDE near a horse';
@@ -319,5 +322,5 @@ document.getElementById('fnPlay').addEventListener('click',go);addEventListener(
 </script>
 <script src="./vendor/peerjs.min.js"></script>
 <script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
-<script type="module" src="./main.js?v=42x" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
+<script type="module" src="./main.js?v=43" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
 </body></html>

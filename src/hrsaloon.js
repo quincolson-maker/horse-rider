@@ -3,12 +3,12 @@
 // bandit or a random brawl), the dealer in the dark corner (snow = fast, green = slow), three slot machines upstairs (seated
 // first-person view, 10/50/100 bets, jackpot 6000), swinging batwing doors, warm lamps, light shafts and dust.
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=49';
-import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=49';
-import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=49';
-import {createCasino} from './hrcasino.js?v=49';
-import {createSaloonDecor} from './hrsaloondecor.js?v=49';
-import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=49';
+import { PERF } from './perfopts.js?v=50';
+import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=50';
+import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=50';
+import {createCasino} from './hrcasino.js?v=50';
+import {createSaloonDecor} from './hrsaloondecor.js?v=50';
+import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=50';
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
 // ---------------- slots: pure math (tests use it) ----------------
 export const SLOT = { NAMES: ['cactus', 'cherry', 'horseshoe', 'bell', 'buffalo'], W: [10, 9, 7, 4, 2], THREE: [0, 5, 10, 25, 60], TWO_CHERRY: 3, ONE_CHERRY: 1, BETS: [10, 50, 100] };

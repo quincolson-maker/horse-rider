@@ -59,7 +59,7 @@ export function createDynamite(c) {
   function explode(p) { const Z = H.zombies; let hits = 0;
     if (Z) for (const o of [...Z.list]) { if (!o.alive) continue; const d = Math.hypot(o.pos.x - p.x, o.pos.y + .9 - p.y, o.pos.z - p.z); if (d > DYN.radius) continue; const mul = 1 - .67 * (d / DYN.radius);
       tmp.set(o.pos.x - p.x, .6, o.pos.z - p.z).normalize(); const r = Z.onHit(o, 'dyn', false, new THREE.Vector3(o.pos.x, o.pos.y + 1, o.pos.z), tmp, mul); hits++;
-      if (r && r.killed && (!c.role || c.role() !== 'client') && H.guns) { H.guns.credit(false, o.kind); S.kills++; } }
+      if (r && r.killed && (!c.role || c.role() !== 'client') && H.guns) { H.guns.credit(false, o.kind); S.kills++; } if (r && r.killed && o.kind !== 'outlaw') { const St = H.stats || (H.stats = {}); St.dynKills = (St.dynKills || 0) + 1; try { localStorage.setItem('hr_stats', JSON.stringify(St)); } catch (_) {} } }
     visual(p); return hits; }
   function visual(p) { const fb = new THREE.Sprite(sparkM); fb.position.copy(p); fb.position.y += .6; fb.scale.setScalar(.5); scene.add(fb);
     const ring = new THREE.Mesh(ringG, new THREE.MeshBasicMaterial({ color: 0xffd8a0, transparent: true, opacity: .8, depthWrite: false, fog: false })); ring.position.copy(p); ring.position.y += .12; scene.add(ring);

@@ -2,7 +2,7 @@
 // with a rank that climbs from Greenhorn to Legend. Purely local (each rider has their own board), saved in localStorage.
 // Hooks are read-only peeks at the other systems, so nothing else has to know the board exists.
 const KEY = 'hr_bounty';
-const RANKS = [[0, 'Greenhorn'], [2, 'Drifter'], [4, 'Gunslinger'], [6, 'Deputy'], [8, 'Marshal'], [10, 'Sheriff'], [13, 'Marshal of the Frontier'], [15, 'Legend of the West']];
+const RANKS = [[0, 'Greenhorn'], [2, 'Drifter'], [4, 'Gunslinger'], [6, 'Deputy'], [8, 'Marshal'], [10, 'Sheriff'], [14, 'Marshal of the Frontier'], [18, 'Living Legend'], [21, 'Legend of the West']];
 export function createBounty({ H, P, T, msg, sfx, PEN }) {
   let S = { i: 0, base: {}, prog: {}, done: [] }; try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && Number.isInteger(v.i)) S = Object.assign(S, v); } catch (_) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (_) {} };
@@ -20,6 +20,7 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'pest', title: 'Pest Control', task: 'Drop 25 zombies', pay: 400, ...killsSince('pest', 25) },
     { id: 'lookout', title: 'Eyes on the Range', task: 'Climb into the cab of a lookout tower', pay: 400, p: () => inCab() ? 1 : 0, to: () => { const t = nearTower(); return t ? [t.cx, t.cz] : null; } },
     { id: 'prospector', title: 'Prospector', task: 'Find 5 glinting gold nuggets out on the range', pay: 300, p: () => Math.min(1, ((H.nuggets && H.nuggets.found) || 0) / 5), txt: () => `${Math.min(5, (H.nuggets && H.nuggets.found) || 0)} / 5`, to: () => { const s = H.nuggets && H.nuggets.nearest(); return s ? [s.x, s.z] : null; } },
+    { id: 'derby', title: 'Derby Day', task: 'Ride through the start gate by the pen and finish the Derby', pay: 400, p: () => ((H.stats && H.stats.races) || 0) > 0 ? 1 : 0, to: () => H.raceNext || H.raceStart || null },
     { id: 'falls', title: 'Behind the Falls', task: 'Find the outlaw hideout hidden behind a waterfall', pay: 400, p: () => H.cave && H.cave.underP ? 1 : 0, to: () => place('cave') },
     { id: 'justice', title: 'Outlaw Justice', task: 'Clear Bandit Falls of every outlaw (shoot first to start it)', pay: 1500, p: () => H.cave && H.cave.state.phase >= 2 ? 1 : H.cave && H.cave.state.phase === 1 ? .5 : 0, to: () => place('cave') },
     { id: 'diablo', title: 'El Diablo', task: 'Take down El Diablo, the outlaw boss deep in Bandit Falls', pay: 2500, p: () => ((H.stats && H.stats.diablo) || 0) > 0 ? 1 : 0, to: () => place('cave') },
@@ -28,6 +29,11 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'sun', title: 'Keeper of the Sun', task: 'Solve the three seals and claim the Sun Pyramid', pay: 5000, p: () => H.temple && H.temple.claims.sun ? 1 : 0, txt: () => { const st = H.temple && H.temple.temple.state; return st ? `${['mirror', 'glyph', 'weight'].filter(k => st[k]).length} / 3 seals` : ''; }, to: () => place('temple') },
     { id: 'hulk', title: 'Boss Hunter', task: 'Kill the Hulking Dead (he comes every 3rd wave)', pay: 1500, p: () => ((H.stats && H.stats.hulk) || 0) > 0 ? 1 : 0 },
     { id: 'nightrider', title: 'Night Rider', task: 'Drop 20 zombies after dark', pay: 800, p: () => Math.min(1, ((H.stats && H.stats.nightKills) || 0) / 20), txt: () => `${Math.min(20, (H.stats && H.stats.nightKills) || 0)} / 20` + ((H.night || 0) > .5 ? '' : ' · waits for night') },
+    { id: 'speedy', title: 'Fast Horse', task: 'Finish the Derby in under 90 seconds', pay: 1000, p: () => (H.stats && H.stats.raceBest || 999) < 90 ? 1 : 0, txt: () => H.stats && H.stats.raceBest ? 'best ' + H.stats.raceBest.toFixed(1) + 's' : '', to: () => H.raceNext || H.raceStart || null },
+    { id: 'ghost', title: 'Ghost Buster', task: 'Banish the Ghost Rider (he rides once a night)', pay: 1500, p: () => ((H.stats && H.stats.ghost) || 0) > 0 ? 1 : 0, txt: () => (H.night || 0) > .5 ? '' : 'waits for night', to: () => H.ghostPos },
+    { id: 'lamps', title: 'Lamplighter', task: 'Collect all 8 night lanterns around town', pay: 800, p: () => ((H.stats && H.stats.lanternSets) || 0) > 0 ? 1 : 0, txt: () => (H.night || 0) > .5 ? '' : 'waits for night', to: () => H.lanternNear },
+    { id: 'boom', title: 'Powder Monkey', task: 'Blow up 15 zombies with dynamite', pay: 700, p: () => Math.min(1, ((H.stats && H.stats.dynKills) || 0) / 15), txt: () => `${Math.min(15, (H.stats && H.stats.dynKills) || 0)} / 15` },
+    { id: 'buddy', title: 'Saddle Pals', task: 'Ride double behind a buddy (multiplayer)', pay: 300, p: () => ((H.stats && H.stats.doubles) || 0) > 0 ? 1 : 0 },
     { id: 'slayer', title: 'Slayer', task: 'Drop 150 zombies', pay: 3000, ...killsSince('slayer', 150) },
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];

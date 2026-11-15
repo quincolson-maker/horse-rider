@@ -2,10 +2,11 @@
 // with a rank that climbs from Greenhorn to Legend. Purely local (each rider has their own board), saved in localStorage.
 // Hooks are read-only peeks at the other systems, so nothing else has to know the board exists.
 const KEY = 'hr_bounty';
-const RANKS = [[0, 'Greenhorn'], [2, 'Drifter'], [4, 'Gunslinger'], [6, 'Deputy'], [8, 'Marshal'], [10, 'Sheriff'], [12, 'Legend of the West']];
+const RANKS = [[0, 'Greenhorn'], [2, 'Drifter'], [4, 'Gunslinger'], [6, 'Deputy'], [8, 'Marshal'], [10, 'Sheriff'], [13, 'Marshal of the Frontier'], [15, 'Legend of the West']];
 export function createBounty({ H, P, T, msg, sfx, PEN }) {
   let S = { i: 0, base: {}, prog: {}, done: [] }; try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && Number.isInteger(v.i)) S = Object.assign(S, v); } catch (_) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (_) {} };
+  if (!H.stats) try { H.stats = JSON.parse(localStorage.getItem('hr_stats') || '{}') || {}; } catch (_) { H.stats = {}; }
   const G = () => H.guns && H.guns.state, kills = () => (G() && G().kills) || 0;
   const tw = () => (T && T.towers) || [];
   const nearTower = () => { let b = null, bd = 1e9; for (const t of tw()) { const d = Math.hypot(t.cx - P.pos.x, t.cz - P.pos.z); if (d < bd) { bd = d; b = t; } } return b; };
@@ -21,9 +22,12 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'prospector', title: 'Prospector', task: 'Find 5 glinting gold nuggets out on the range', pay: 300, p: () => Math.min(1, ((H.nuggets && H.nuggets.found) || 0) / 5), txt: () => `${Math.min(5, (H.nuggets && H.nuggets.found) || 0)} / 5`, to: () => { const s = H.nuggets && H.nuggets.nearest(); return s ? [s.x, s.z] : null; } },
     { id: 'falls', title: 'Behind the Falls', task: 'Find the outlaw hideout hidden behind a waterfall', pay: 400, p: () => H.cave && H.cave.underP ? 1 : 0, to: () => place('cave') },
     { id: 'justice', title: 'Outlaw Justice', task: 'Clear Bandit Falls of every outlaw (shoot first to start it)', pay: 1500, p: () => H.cave && H.cave.state.phase >= 2 ? 1 : H.cave && H.cave.state.phase === 1 ? .5 : 0, to: () => place('cave') },
+    { id: 'diablo', title: 'El Diablo', task: 'Take down El Diablo, the outlaw boss deep in Bandit Falls', pay: 2500, p: () => ((H.stats && H.stats.diablo) || 0) > 0 ? 1 : 0, to: () => place('cave') },
     { id: 'crank', title: 'Crank It', task: 'Claim the hand-crank Gatling from the vault chest', pay: 1000, p: () => G() && G().owned.gatling ? 1 : 0, to: () => place('cave') },
     { id: 'seal', title: 'Sunseeker', task: 'Push open the seal of the Hollow Sun temple', pay: 500, p: () => H.temple && H.temple.temple.doors[0].target > 0 ? 1 : 0, to: () => place('temple') },
     { id: 'sun', title: 'Keeper of the Sun', task: 'Solve the three seals and claim the Sun Pyramid', pay: 5000, p: () => H.temple && H.temple.claims.sun ? 1 : 0, txt: () => { const st = H.temple && H.temple.temple.state; return st ? `${['mirror', 'glyph', 'weight'].filter(k => st[k]).length} / 3 seals` : ''; }, to: () => place('temple') },
+    { id: 'hulk', title: 'Boss Hunter', task: 'Kill the Hulking Dead (he comes every 3rd wave)', pay: 1500, p: () => ((H.stats && H.stats.hulk) || 0) > 0 ? 1 : 0 },
+    { id: 'nightrider', title: 'Night Rider', task: 'Drop 20 zombies after dark', pay: 800, p: () => Math.min(1, ((H.stats && H.stats.nightKills) || 0) / 20), txt: () => `${Math.min(20, (H.stats && H.stats.nightKills) || 0)} / 20` + ((H.night || 0) > .5 ? '' : ' · waits for night') },
     { id: 'slayer', title: 'Slayer', task: 'Drop 150 zombies', pay: 3000, ...killsSince('slayer', 150) },
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];

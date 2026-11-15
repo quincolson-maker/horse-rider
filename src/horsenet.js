@@ -5,11 +5,11 @@
 // lobby. Transport is the existing PeerJS co-op star (src/coop.js); voice is the existing mesh (src/voice.js).
 // Synced: each rider's position / facing / walking speed, which horse they ride and its pose; the host is the authority
 // for the free herd (clients mirror it). Guns: other riders see your drawn gun, aim and shots (tracer, flash, smoke, sound) — visual only, no combat.
-import { createNet, MAX_PLAYERS } from './coop.js?v=47';
-import { PERF } from './perfopts.js?v=47';
-import { validCv } from './hrskin.js?v=47';
-import { createVoice } from './voice.js?v=47';
-import { createAdvert, LOBBY_URL } from './lobby.js?v=47';
+import { createNet, MAX_PLAYERS } from './coop.js?v=48';
+import { PERF } from './perfopts.js?v=48';
+import { validCv } from './hrskin.js?v=48';
+import { createVoice } from './voice.js?v=48';
+import { createAdvert, LOBBY_URL } from './lobby.js?v=48';
 const $ = id => document.getElementById(id);
 const QS = new URLSearchParams(location.search);
 const LOOP = QS.get('loopnet') === '1', LOCAL = /^(localhost|127\.|\[::1\])/.test(location.hostname);
@@ -82,7 +82,7 @@ export function createHorseNet({ horse, P, msg }) {
       case 'herd': if (isClient()) horse.applyHerd(m.h); break;
       case 'zs': if (isClient() && H.zombies) H.zombies.apply(m); break; // the host's zombies (host-authoritative)
       case 'zh': if (isHost() && H.zombies) H.zombies.remoteHit(m, S.peers.get(from)); break; // a client shot one
-      case 'zk': if (isClient() && H.zombies && H.zombies.confirmKill(m)) { if (m.b) { H.saloon && H.saloon.banditKill(); } else if (H.guns) H.guns.credit(!!m.h, m.o ? 'outlaw' : null); } break; // v36: deduped by zombie id
+      case 'zk': if (isClient() && H.zombies && H.zombies.confirmKill(m)) { if (m.b) { H.saloon && H.saloon.banditKill(); } else if (H.guns) H.guns.credit(!!m.h, m.ob ? 'outlawBoss' : m.o ? 'outlaw' : m.bk ? 'boss' : null); } break; // v36: deduped by zombie id
       case 'sv': { const pid = isHost() ? S.peers.get(from) : null; if (!pid) break; if (H.build && H.build.owns(m.k)) H.build.netIn(m, pid); else if (H.saloon) H.saloon.netIn(m, pid); break; } // a client's build / slot / casino request: only from a registered peer, keyed by the host's own id for that connection
       case 'svr': if (isClient() && H.build && H.build.owns(m.k)) H.build.netRes(m); else if (isClient() && H.saloon) H.saloon.netRes(m); break; // the host's answer (reels, casino view: only this player's cards)
       case 'dt': if (isHost() && H.town2) H.town2.netIn(m, S.peers.get(from)); break; // darts: a client's throw / challenge (host runs the match)
@@ -140,7 +140,7 @@ export function createHorseNet({ horse, P, msg }) {
       else { const L = [...S.remotes.values()].map(R => [R.id, R.s && Number.isFinite(R.s.x) ? Math.hypot(R.s.x - x, R.s.z - z) : 1e9]).sort((a, b) => a[1] - b[1] || (a[0] < b[0] ? -1 : 1)); // v36: nearest first, deterministic
         for (const [id, d] of L) if (voice.links.has(id) && d > VOICE_FAR) voice.drop(id); for (const [id, d] of L) if (!voice.links.has(id) && d < VOICE_NEAR && voice.links.size < VOICE_MESH) voice.peer(id); } }
     if (net.open && S.netT <= 0) { S.netT = rate;
-      const st = { t: 'p', x: +x.toFixed(2), y: +(h ? h.pos.y : P.pos.y).toFixed(2), z: +z.toFixed(2), yw: +(h ? P.yaw : (H.bodyYaw ?? P.yaw)).toFixed(3), m: h ? h.id : -1, pa: !h && H.pass ? H.pass.h.id : -1, hy: h ? +h.yaw.toFixed(3) : 0, sp: +(h ? H.speed : S.footSp).toFixed(2) };
+      const st = { t: 'p', x: +x.toFixed(2), y: +(h ? h.pos.y : P.pos.y).toFixed(2), z: +z.toFixed(2), yw: +(h ? P.yaw : (H.bodyYaw ?? P.yaw)).toFixed(3), m: h ? h.id : -1, hc: h && H.myCoat ? H.myCoat() : -1, pa: !h && H.pass ? H.pass.h.id : -1, hy: h ? +h.yaw.toFixed(3) : 0, sp: +(h ? H.speed : S.footSp).toFixed(2) };
       if (horse.gunNet) Object.assign(st, horse.gunNet()); if (H.saloon) Object.assign(st, H.saloon.netState()); st.n = callsign().slice(0, 14); if (H.dead) st.dd = 1; if (isHost()) st.id = 'P1'; net.send(st); }
     if (isHost() && net.open && S.herdT <= 0) { S.herdT = .25; net.send({ t: 'herd', h: horse.herd() }); }
     if (isHost() && S.code && (S.hbT = (S.hbT || 0) - dt) <= 0) { S.hbT = 5; try { localStorage.setItem('hr_mycode', JSON.stringify({ code: S.code, t: Date.now() })); } catch (_) {} }

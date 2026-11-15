@@ -3,12 +3,12 @@
 // by Quin (src/hrbanditcave.js, credited in CREDITS.md). This file places it in our world — a flattened notch in a hillside,
 // picked the same way on every machine — and wires it into our controller (walls + floors), guns (rock stops bullets),
 // host-authoritative co-op (the host runs the outlaws and the vault) and game points. Points are game points only.
-import { CAVE_CUT } from './hrworld.js?v=47';
+import { CAVE_CUT } from './hrworld.js?v=48';
 import * as THREE from 'three';
-import { createHideout } from './hrhideout.js?v=47';
-import { createFalls, baseZ } from './hrfalls.js?v=47';
-import { makeFrontierCharacter } from './hrcharacters.js?v=47';
-import { poseDoll } from './hrsaloon.js?v=47';
+import { createHideout } from './hrhideout.js?v=48';
+import { createFalls, baseZ } from './hrfalls.js?v=48';
+import { makeFrontierCharacter } from './hrcharacters.js?v=48';
+import { poseDoll } from './hrsaloon.js?v=48';
 
 export const CAVE = { chest: 2500, dance: 50, slotBet: 10, outlaw: 60, outlawHead: 75 };
 const FU = 40, FV0 = -59, FV1 = 8, BL = 16, BS = 5; // footprint in the cave's own frame (u across, v out of the mouth); terrain blend: 16 m apron in front, 5 m to the sides and back (the hill meets the rock)
@@ -119,10 +119,13 @@ export function createCave(c) {
   const Zs = () => H.zombies, outlaws = () => { const Z = Zs(); return Z ? Z.list.filter(o => o.kind === 'outlaw' && o.alive) : []; };
   function everyone() { const L = [[P.pos.x, P.pos.z]]; for (const r of (c.remotes ? c.remotes() : [])) if (r && r.s && Number.isFinite(r.s.x)) L.push([r.s.x, r.s.z, r.id]); return L; }
   let lastDown = null, bcT = 0;
-  function bc() { bcT = 0; if (c.role() === 'host') c.send({ t: 'cv', p: out.state.phase, n: out.state.left, k: out.state.key }); }
+  function bc() { bcT = 0; if (c.role() === 'host') c.send({ t: 'cv', p: out.state.phase, n: out.state.left, k: out.state.key, bo: out.state.boss || 0 }); }
   function startFight() { const Z = Zs(); if (!Z || !Z.spawnOutlaw || !Z.state.on) return; cave.startChallenge();
-    for (const s of cave.spawnPoints) Z.spawnOutlaw(s.position.x, s.position.z, s.position.y, s.rotationY, s.role); // facing out toward the mouth
+    let deep = null; for (const s of cave.spawnPoints) { const o = Z.spawnOutlaw(s.position.x, s.position.z, s.position.y, s.rotationY, s.role); if (o && (!deep || s.position.y < deep.y)) deep = { o, y: s.position.y }; } // facing out toward the mouth
+    if (deep) { makeDiablo(deep.o); out.state.boss = deep.o.id; } // v47: El Diablo holds the deepest level
     Z.state.outlawCalm = true; out.state.phase = 1; out.state.left = cave.spawnPoints.length; out.state.startedAt = performance.now(); msg(out.state.left + ' outlaws guard Bandit Falls. They will leave you be — unless you start shooting. The last one carries the vault key', 5); bc(); }
+  function makeDiablo(o) { if (!o || o.boss) return; o.boss = true; o.K = Object.assign({}, o.K, { hp: 900, dmg: (o.K.dmg || 5) * 2.4, s: 1.24, range: 40 }); if (o.hp > 0) o.hp = Math.max(o.hp, 900); const m = o.g && o.g.children[0]; if (m) m.scale.setScalar(1.24); }
+  out.makeDiablo = makeDiablo;
   out.provoked = () => msg('You started a gunfight! The outlaws open fire', 2.5);
   out.provoke = () => { const Z = Zs(); if (Z && Z.state.outlawCalm && out.state.phase === 1) { Z.state.outlawCalm = false; out.provoked(); } };
   out.outlawDown = o => { lastDown = o.pos.clone(); };
@@ -131,7 +134,7 @@ export function createCave(c) {
   function openVault(who) { if (out.state.phase !== 2) return; out.state.phase = 3; showOpen(); msg(who === (H.me || 'P1') ? 'You took the vault key — the iron gate grinds open' : 'The vault gate grinds open', 3); bc(); }
   out.netIn = (m, from) => { if (!m) return; if (m.t === 'cvk' && c.role() !== 'client') { if (out.state.phase !== 2 || !out.state.key) return; const R0 = (c.remotes ? c.remotes() : []).find(q => q.id === from);
       if (!R0 || !R0.s || Math.hypot(R0.s.x - out.state.key[0], R0.s.z - out.state.key[2]) > 6) return; openVault(from); return; }
-    if (m.t === 'cv' && c.role() === 'client') { const ph = Math.max(0, Math.min(3, m.p | 0)); if (Array.isArray(m.k) && m.k.length === 3 && m.k.every(Number.isFinite)) out.state.key = m.k;
+    if (m.t === 'cv' && c.role() === 'client') { const ph = Math.max(0, Math.min(3, m.p | 0)); if (m.bo) { const Z = Zs(), o = Z && Z.byId && Z.byId(m.bo); if (o) makeDiablo(o); } if (Array.isArray(m.k) && m.k.length === 3 && m.k.every(Number.isFinite)) out.state.key = m.k;
       if (ph === 1 && out.state.phase === 0) msg('Outlaws! They hold Bandit Falls — the last one carries the vault key', 3);
       if (ph >= 2 && !cave.state.keyDropped && out.state.key) dropKey(new THREE.Vector3(out.state.key[0], out.state.key[1] - .5, out.state.key[2]).sub(new THREE.Vector3(0, 0, 0)));
       if (ph === 2 && out.state.phase < 2) msg('The last outlaw dropped the vault key', 2.5);

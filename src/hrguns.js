@@ -3,7 +3,7 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=47'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=48'; // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -330,7 +330,11 @@ export function createGuns(c) {
     let el = document.getElementById('hrStreak'); if (!el) { el = document.createElement('div'); el.id = 'hrStreak'; document.body.appendChild(el); }
     el.textContent = name; el.className = ''; void el.offsetWidth; el.className = 'on s' + Math.min(4, Object.keys(STREAK).indexOf(String(stN)));
     const bonus = stN * 5; state.score += bonus; [0, 90, 180].slice(0, Math.min(3, 1 + (stN >= 5) + (stN >= 8))).forEach((d, i) => setTimeout(() => tone('square', 660 * (1 + i * .26), 990 * (1 + i * .26), .12, .12), d)); }
-  function award(head, kind) { if (kind !== 'outlaw') streak(); if (kind === 'outlaw') { const p = head ? 75 : 60; state.score += p; state.outlaws = (state.outlaws || 0) + 1; say(head ? `Headshot! Outlaw down  +${p}` : `Outlaw down  +${p}`); save(); return p; } // v38 Bandit Falls guards
+  function award(head, kind) { const ST = H.stats || (H.stats = (() => { try { return JSON.parse(localStorage.getItem('hr_stats') || '{}'); } catch (_) { return {}; } })()); // v47 lifetime stats for bounties
+    const bump = k => { ST[k] = (ST[k] || 0) + 1; try { localStorage.setItem('hr_stats', JSON.stringify(ST)); } catch (_) {} };
+    if (kind === 'outlawBoss') { const p = head ? 1500 : 1200; state.score += p; state.outlaws = (state.outlaws || 0) + 1; bump('diablo'); say(`EL DIABLO IS DOWN  +${p}`); save(); return p; }
+    if (kind === 'boss') bump('hulk'); else if (kind !== 'outlaw' && (H.night || 0) > .5) bump('nightKills');
+    if (kind !== 'outlaw') streak(); if (kind === 'outlaw') { const p = head ? 75 : 60; state.score += p; state.outlaws = (state.outlaws || 0) + 1; say(head ? `Headshot! Outlaw down  +${p}` : `Outlaw down  +${p}`); save(); return p; } // v38 Bandit Falls guards
     if (kind === 'boss') { const p = head ? 750 : 500; state.score += p; state.kills = (state.kills || 0) + 1; say(`THE HULKING DEAD IS DOWN  +${p}`); save(); return p; } // v43
     const pts = head ? 15 : 10; state.score += pts; state.kills = (state.kills || 0) + 1; say(head ? `Headshot! Zombie down  +${pts}` : `Zombie down  +${pts}`); save(); return pts; } // host-authoritative in co-op (the host sends 'zk')
   function save() { try { localStorage.setItem('hr_v33', JSON.stringify({ score: state.score, kills: state.kills || 0, spent: state.spent || 0, owned: state.owned, up: state.up, att: state.att })); } catch (_) {} }
@@ -433,7 +437,7 @@ export function createGuns(c) {
         let hm = T.holes[T.hi]; if (!hm) { hm = new THREE.Mesh(new THREE.PlaneGeometry(.05, .05), mats().hole); hm.rotation.y = Math.PI / 2; T.mesh.add(hm); T.holes[T.hi] = hm; } T.hi = (T.hi + 1) % 30; hm.position.set(.027, lp.y, lp.z);
         tone('sine', 220, 120, .25, .12); nz('lowpass', 500, 1, .25, .08); if (fx && fx.debris) fx.debris(p.x, p.y, p.z, 0xc9b48a, 4, .4); }
       return; }
-    if (hit.kind === 'zombie') { const zs = c.zombies && c.zombies(); if (zs) { state.hits++; const r = hit.zr = zs.onHit(hit.Z, w, hit.head, p, d, dmgMul(w)); if (r) { hitMark(hit.head); hitX(hit.head, r.killed); scopePop('-' + r.dmg + (hit.head ? ' ◉' : ''), hit.head ? 'h' : ''); if (r.killed && role() !== 'client') award(hit.head, hit.Z.kind); else if (hit.head && !r.killed) say('Headshot!');
+    if (hit.kind === 'zombie') { const zs = c.zombies && c.zombies(); if (zs) { state.hits++; const r = hit.zr = zs.onHit(hit.Z, w, hit.head, p, d, dmgMul(w)); if (r) { hitMark(hit.head); hitX(hit.head, r.killed); scopePop('-' + r.dmg + (hit.head ? ' ◉' : ''), hit.head ? 'h' : ''); if (r.killed && role() !== 'client') award(hit.head, hit.Z.boss ? 'outlawBoss' : hit.Z.kind); else if (hit.head && !r.killed) say('Headshot!');
         nz('lowpass', 700, 1, .2, .12); if (hit.head) tone('square', 1600, 900, .05, .08); } } return; }
     if (!fx) return;
     if (hit.kind === 'ground') { fx.debris && fx.debris(p.x, p.y + .03, p.z, 0x7d6a4c, 5, .55); fx.smoke && fx.smoke.emit(p.x, p.y + .05, p.z, 0, .4, 0, .55, .47, .36, .2, 1, .7, -.05, .45); }

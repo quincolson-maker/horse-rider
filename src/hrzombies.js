@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=47';
-import { PERF } from './perfopts.js?v=47';
+import { PF } from './perf.js?v=48';
+import { PERF } from './perfopts.js?v=48';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -163,7 +163,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     return best; }
   function assistPoints() { const out = []; for (const o of Z.list) if (o.alive) { out.push({ c: headPos(o, new THREE.Vector3()), z: o }); out.push({ c: new THREE.Vector3(o.pos.x, o.pos.y + 1.15 * o.K.s, o.pos.z), z: o }); } return out; }
   function damage(o, dmg, head, p, dir, by, from) { if (!o || !o.alive) return false; if (o.kind === 'outlaw' && Z.outlawCalm) { Z.outlawCalm = false; c.onOutlawProvoked && c.onOutlawProvoked(); } o.hp -= dmg; o.flinch = Math.min(1, o.flinch + (head ? .8 : .45)); if (dir) o.push = [dir.x * (dmg > 150 ? 2.5 : .8), dir.z * (dmg > 150 ? 2.5 : .8)];
-    if (o.hp <= 0) { kill(o, head, by); if (from && c.sendTo) { c.sendTo(from, { t: 'zk', h: head ? 1 : 0, b: Z.byBandit ? 1 : 0, z: o.id, ...(o.kind === 'outlaw' ? { o: 1 } : {}) }); c.creditRemote && c.creditRemote(from, head); } } return true; }
+    if (o.hp <= 0) { kill(o, head, by); if (from && c.sendTo) { c.sendTo(from, { t: 'zk', h: head ? 1 : 0, b: Z.byBandit ? 1 : 0, z: o.id, ...(o.kind === 'outlaw' ? { o: 1, ...(o.boss ? { ob: 1 } : {}) } : o.kind === 'boss' ? { bk: 1 } : {}) }); c.creditRemote && c.creditRemote(from, head); } } return true; }
   const zAt = (pos, fn, wet) => sfx.zAt ? sfx.zAt(pos, fn, wet) : sfx.at(pos, fn, wet); // zombie voices: their own (fadeable) bus
   function kill(o, head, by) { if (!o.alive) return; o.alive = false; o.hp = 0; o.st = 2; o.deadT = 0; o.fallDir = rnd() < .5 ? 1 : -1; if (o.kind === 'outlaw') { if (Z.role() !== 'client' && c.onOutlawDown) c.onOutlawDown(o); if (sfx.at && sfx.ctx) sfx.at(o.pos, () => sfx.tone('triangle', 220, 90, .3, .5), .3); return; } // v38
     if (by !== 'remote' && by !== 'bandit') { Z.kills++; if (head) Z.heads++; }
@@ -251,9 +251,9 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
       let live = 0; for (const o of Z.list) if (o.alive && o.kind !== 'outlaw') live++; Z.live = live; if (Z.wasRole === 'client') Z.spawnT = Math.min(Z.spawnT, 1); // just became the host: keep the horde coming
       Z.spawnT -= dt; if (Z.spawnT <= 0 && live < Z.cap) { Z.spawnT = Z.chaos ? (live < Z.cap * .5 ? .05 : .18) : live < Z.cap * .5 ? .4 : Math.min(1.2, Math.max(.75, (7 - Z.wave * .7) / 3) * (rnd() * .5 + .75)); spawn(pickKind()); } }
     Z.wasRole = Z.role();
-    { let bo = null, bd = 160; for (const o of Z.list) if (o.kind === 'boss' && o.alive) { const d = Math.hypot(o.pos.x - P.pos.x, o.pos.z - P.pos.z); if (d < bd) { bd = d; bo = o; } } // v43 boss health bar
+    { let bo = null, bd = 160; for (const o of Z.list) if ((o.kind === 'boss' || o.boss) && o.alive) { const d = Math.hypot(o.pos.x - P.pos.x, o.pos.z - P.pos.z); if (d < bd) { bd = d; bo = o; } } // v43 boss health bar
       if (!Z.bossEl && typeof document !== 'undefined') { const e = Z.bossEl = document.createElement('div'); e.id = 'hrBoss'; e.innerHTML = '<b>☠ THE HULKING DEAD</b><div><i></i></div>'; document.body.appendChild(e); }
-      if (Z.bossEl) { const on = !!bo; if (on !== Z.bossOn) { Z.bossOn = on; Z.bossEl.classList.toggle('on', on); } if (bo) { const f = Math.max(0, Math.min(1, bo.hp / bo.K.hp)); if (Math.abs(f - (Z.bossF ?? -1)) > .004) { Z.bossF = f; Z.bossEl.lastChild.firstChild.style.width = (f * 100).toFixed(1) + '%'; } } } }
+      if (Z.bossEl) { const on = !!bo; if (bo && Z.bossT !== bo.kind) { Z.bossT = bo.kind; Z.bossEl.firstChild.textContent = bo.boss ? '☠ EL DIABLO — OUTLAW BOSS' : '☠ THE HULKING DEAD'; } if (on !== Z.bossOn) { Z.bossOn = on; Z.bossEl.classList.toggle('on', on); } if (bo) { const f = Math.max(0, Math.min(1, bo.hp / bo.K.hp)); if (Math.abs(f - (Z.bossF ?? -1)) > .004) { Z.bossF = f; Z.bossEl.lastChild.firstChild.style.width = (f * 100).toFixed(1) + '%'; } } } }
     const cam = c.camera.position; c.camera.updateMatrixWorld(); PSM.multiplyMatrices(c.camera.projectionMatrix, c.camera.matrixWorldInverse); FR.setFromProjectionMatrix(PSM);
     const range = Z.chaos ? (mobile ? 140 : 220) : (mobile ? 220 : 320), shadowD = Z.chaos ? 28 : 50, poseNear = Z.chaos ? 50 : 90, eyeD = Z.chaos ? 110 : 1e9; Z.groanTok = Math.min(4, Z.groanTok + dt * 2.5); let drawn = 0;
     Z.frame = (Z.frame || 0) + 1; for (let li = Z.list.length - 1; li >= 0; li--) { const o = Z.list[li]; if (!o) continue; o.anim += dt; o.flinch = Math.max(0, o.flinch - dt * 2.5);
@@ -322,6 +322,6 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     const html = `<b class="hp"><i style="width:${Math.round(Z.hp)}%"></i></b>${hh != null ? `<b class="hp horse"><i style="width:${hh}%"></i></b>` : ''}<span>${Z.chaos ? '<b class="chaos">CHAOS</b> ' : ''}☠ WAVE ${Z.wave} · ${live} near · ${Z.kills} down${Z.heads ? ` (${Z.heads} ◉)` : ''}</span>${Z.dead > 0 ? '<em>OVERRUN</em>' : inTown(P.pos.x, P.pos.z) ? `<em class="safe">${inTown(P.pos.x, P.pos.z).label || '🛡 SAFE ZONE · TOWN'}</em>` : inPenSafe(P.pos.x, P.pos.z) && !h ? '<em class="safe">SAFE IN THE PEN</em>' : ''}`; if (html !== el.__h) { el.__h = html; el.innerHTML = html; } }
   const netState = () => ({ dd: Z.dead > 0 ? 1 : 0 });
   function setMaxChaos(on) { Z.maxChaos = !!on; Z.cap = -1; return setChaos(!!on); }
-  return { spawnBoss: () => spawn('boss'), setMaxChaos, get maxChaos() { return !!Z.maxChaos; }, spawnOutlaw, outlaws: () => Z.list.filter(o => o.kind === 'outlaw'), setChaos, get chaos() { return Z.chaos; }, get wantChaos() { return Z.wantChaos; }, state: Z, list: Z.list, settings: ZSET, kinds: ZKINDS, tick, spawn, damage, onHit, rayHit, assistPoints, headPos, snap, apply, remoteHit, remoteHurt, confirmKill, hurtMe, netState, inPenRect, inPenSafe, inSafeZone, inTown, despawn,
+  return { byId: id => Z.byId.get(id), spawnBoss: () => spawn('boss'), setMaxChaos, get maxChaos() { return !!Z.maxChaos; }, spawnOutlaw, outlaws: () => Z.list.filter(o => o.kind === 'outlaw'), setChaos, get chaos() { return Z.chaos; }, get wantChaos() { return Z.wantChaos; }, state: Z, list: Z.list, settings: ZSET, kinds: ZKINDS, tick, spawn, damage, onHit, rayHit, assistPoints, headPos, snap, apply, remoteHit, remoteHurt, confirmKill, hurtMe, netState, inPenRect, inPenSafe, inSafeZone, inTown, despawn,
     clear() { for (const o of [...Z.list]) despawn(o); } };
 }

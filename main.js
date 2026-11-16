@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=60';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=60';
-import './src/hraudio.js?v=60';
-import './src/stylize.js?v=60'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=60';
-import { FX, SFX } from './src/fx.js?v=60';
-import { initTouch } from './src/touch.js?v=60';
-import { createHorseRider } from './src/horse.js?v=60';
-import { createHorseNet } from './src/horsenet.js?v=60';
+import './src/assetshim.js?v=61';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=61';
+import './src/hraudio.js?v=61';
+import './src/stylize.js?v=61'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=61';
+import { FX, SFX } from './src/fx.js?v=61';
+import { initTouch } from './src/touch.js?v=61';
+import { createHorseRider } from './src/horse.js?v=61';
+import { createHorseNet } from './src/horsenet.js?v=61';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=60';
+import { PF, initPerf } from './src/perf.js?v=61';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -56,11 +56,11 @@ function update(dt) { if (G.phase == 'menu') return; G.t += dt; horse.tick(dt); 
 // ---------------- HUD ----------------
 let hudT = 0, hurtFlash = 0;
 const CMP = (() => { let h = ''; for (let d = -360; d <= 720; d += 15) { const n = ((d % 360) + 360) % 360; const lab = { 0: 'N', 45: 'NE', 90: 'E', 135: 'SE', 180: 'S', 225: 'SW', 270: 'W', 315: 'NW' }[n]; h += `<span class="${lab ? 'c' : ''}">${lab || n}</span>`; } return h; })();
-const PINS = [['pen', 'PEN', '#ffb35a'], ['town', 'TOWN', '#ff6a5a'], ['cave', 'FALLS', '#4fd2ff'], ['temple', 'TEMPLE', '#ffe11a'], ['job', '★ JOB', '#ffd700'], ['ranch', '🏠 RANCH', '#c88a50'], ['buddy', '🏠 BUDDY', '#a0c070'], ['rob', '🚨 COACH', '#ff5a3a'], ['mustang', '🐎 WILD', '#d8b070'], ['wanted', '📜 WANTED', '#e8c27a'], ['race', '🏁 GATE', '#ffd23a'], ['ghost', '👻 GHOST', '#9fd8ff'], ['lantern', '🏮', '#ffb060']];
+const PINS = [['pen', 'PEN', '#ffb35a'], ['town', 'TOWN', '#ff6a5a'], ['cave', 'FALLS', '#4fd2ff'], ['temple', 'TEMPLE', '#ffe11a'], ['job', '★ JOB', '#ffd700'], ['ranch', '🏠 RANCH', '#c88a50'], ['buddy', '🏠 BUDDY', '#a0c070'], ['rob', '🚨 COACH', '#ff5a3a'], ['mustang', '🐎 WILD', '#d8b070'], ['train', '🚂 TRAIN', '#9ab0c8'], ['wanted', '📜 WANTED', '#e8c27a'], ['race', '🏁 GATE', '#ffd23a'], ['ghost', '👻 GHOST', '#9fd8ff'], ['lantern', '🏮', '#ffb060']];
 function pins(hd) { const box = $('cpins'); if (!box || !horse.state.places) return; const H = horse.state, pl = H.places, w = (box.parentNode.clientWidth || 300) / 2 - 34;
   if (!box.dataset.on) { box.dataset.on = 1; box.innerHTML = PINS.map(([k, lab, col]) => `<i data-k="${k}" style="--c:${col}"><u></u><em>${lab}</em> <b></b></i>`).join(''); }
   const sideN = { l: 0, r: 0 }, bt = H.bountyTarget; let onPoi = null; if (bt) for (const [k] of PINS) { if (k === 'job') continue; const q = k === 'pen' ? [horse.PEN.x, horse.PEN.z] : k === 'town' ? pl.town : pl[k] ? [pl[k].x, pl[k].z] : null; if (q && Math.hypot(q[0] - bt[0], q[1] - bt[1]) < 40) onPoi = k; }
-  const vis = []; for (const el of box.children) { const k = el.dataset.k; el.classList.toggle('jobOn', k === onPoi); if (k === 'job' && onPoi) { el.style.display = 'none'; continue; } const t = k === 'mustang' ? (H.mustangHome || null) : k === 'rob' ? H.robPos : k === 'wanted' ? H.wantedPos : k === 'buddy' ? H.buddyRanch : k === 'ranch' ? H.ranchPos : k === 'race' ? H.raceNext : k === 'ghost' ? H.ghostPos : k === 'lantern' ? H.lanternNear : k === 'job' ? H.bountyTarget : k === 'pen' ? [horse.PEN.x, horse.PEN.z] : k === 'town' ? pl.town : pl[k] ? [pl[k].x, pl[k].z] : null; if (!t) { el.style.display = 'none'; continue; }
+  const vis = []; for (const el of box.children) { const k = el.dataset.k; el.classList.toggle('jobOn', k === onPoi); if (k === 'job' && onPoi) { el.style.display = 'none'; continue; } const t = k === 'train' ? H.trainPos : k === 'mustang' ? (H.mustangHome || null) : k === 'rob' ? H.robPos : k === 'wanted' ? H.wantedPos : k === 'buddy' ? H.buddyRanch : k === 'ranch' ? H.ranchPos : k === 'race' ? H.raceNext : k === 'ghost' ? H.ghostPos : k === 'lantern' ? H.lanternNear : k === 'job' ? H.bountyTarget : k === 'pen' ? [horse.PEN.x, horse.PEN.z] : k === 'town' ? pl.town : pl[k] ? [pl[k].x, pl[k].z] : null; if (!t) { el.style.display = 'none'; continue; }
     const dx = t[0] - P.pos.x, dz = t[1] - P.pos.z, d = Math.hypot(dx, dz), b = Math.atan2(dx, -dz) * 180 / Math.PI, dl = ((b - hd) % 360 + 540) % 360 - 180; let x = dl / 15 * 40, edge = '';
     if (d < 20) { el.style.display = 'none'; continue; } if (x > w) { x = w; edge = '▶'; } else if (x < -w) { x = -w; edge = '◀'; }
     el.style.display = ''; vis.push({ el, x, edge }); el.style.opacity = edge ? .7 : 1; el.lastChild.textContent = (edge === '◀' ? '◀ ' : '') + (d > 999 ? (d / 1000).toFixed(1) + 'km' : Math.round(d) + 'm') + (edge === '▶' ? ' ▶' : ''); }

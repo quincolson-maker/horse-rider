@@ -5,11 +5,11 @@
 // lobby. Transport is the existing PeerJS co-op star (src/coop.js); voice is the existing mesh (src/voice.js).
 // Synced: each rider's position / facing / walking speed, which horse they ride and its pose; the host is the authority
 // for the free herd (clients mirror it). Guns: other riders see your drawn gun, aim and shots (tracer, flash, smoke, sound) — visual only, no combat.
-import { createNet, MAX_PLAYERS } from './coop.js?v=64';
-import { PERF } from './perfopts.js?v=64';
-import { validCv } from './hrskin.js?v=64';
-import { createVoice } from './voice.js?v=64';
-import { createAdvert, LOBBY_URL } from './lobby.js?v=64';
+import { createNet, MAX_PLAYERS } from './coop.js?v=65';
+import { PERF } from './perfopts.js?v=65';
+import { validCv } from './hrskin.js?v=65';
+import { createVoice } from './voice.js?v=65';
+import { createAdvert, LOBBY_URL } from './lobby.js?v=65';
 const $ = id => document.getElementById(id);
 const QS = new URLSearchParams(location.search);
 const LOOP = QS.get('loopnet') === '1', LOCAL = /^(localhost|127\.|\[::1\])/.test(location.hostname);
@@ -88,6 +88,8 @@ export function createHorseNet({ horse, P, msg }) {
       case 'dt': if (isHost() && H.town2) H.town2.netIn(m, S.peers.get(from)); break; // darts: a client's throw / challenge (host runs the match)
       case 'dts': if (isClient() && H.town2) H.town2.netState(m); break;
       case 'ck': if (isHost() && H.town2) H.town2.ck.netIn(m, S.peers.get(from)); break; // checkers move / challenge (host runs the game)
+      case 'pk': if (isHost() && H.poker) H.poker.netIn(m, S.peers.get(from)); break; // v65 poker action (host deals)
+      case 'pks': if (isClient() && H.poker) H.poker.netState(m); break;
       case 'cks': if (isClient() && H.town2) H.town2.ck.netState(m); break;
       case 'zd': if (isClient() && H.zombies) H.zombies.remoteHurt(m); break;
       case 'tma': if (isHost() && H.temple) H.temple.netIn(m, S.peers.get(from)); break; // v39 Hollow Sun: a client's puzzle action

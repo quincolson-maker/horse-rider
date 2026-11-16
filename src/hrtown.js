@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=64';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=65';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,7 +47,8 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=64';
+import { createPoker } from './hrpoker.js?v=65';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=65';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -243,6 +244,10 @@ export function createTown(c) {
     for (const x of [-8.5, 7.5]) box(s, M.lamp, x, F + 2.6, -.25, .12, .2, .12);
     const g = finish(s); for (const sg of s.signs) g.add(sg); T.board = board;
     s.ckSpot = spot(s, -9, F, 1.5, 'checkers', 'Play checkers', 1.3);
+    { const fe = new THREE.Mesh(new THREE.CircleGeometry(.5, 40), new THREE.MeshStandardMaterial({ color: 0x1f6b3a, roughness: .95 })); fe.rotation.x = -Math.PI / 2; fe.position.set(-14.2, F + .776, 6.2); s.signs.push(fe); // v65 poker felt, a few chips + cards
+      for (let k = 0; k < 7; k++) { const ch = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .012, 14), new THREE.MeshStandardMaterial({ color: [0xc0392b, 0xf3f3f3, 0x2a5bd7][k % 3], roughness: .6 })); ch.position.set(-14.2 + (k < 4 ? .08 : -.12), F + .79 + (k % 4) * .013, 6.2 + (k < 4 ? -.05 : .1)); s.signs.push(ch); }
+      for (let k = 0; k < 5; k++) { const cd = new THREE.Mesh(new THREE.PlaneGeometry(.07, .1), new THREE.MeshStandardMaterial({ color: 0x9a2b2b, roughness: .8 })); cd.rotation.set(-Math.PI / 2, 0, k * .5 + .3); cd.position.set(-14.2 + Math.cos(k * 1.3) * .28, F + .78 + k * .001, 6.2 + Math.sin(k * 1.3) * .28); s.signs.push(cd); } }
+    s.pkSpot = spot(s, -14.2, F, 5.1, 'drawpoker', 'Play draw poker for points', 1.4);
     s.drinkSpot = spot(s, -7, F, 4.5, 'drink', 'Order a whiskey', 1.6); s.dartSpot = spot(s, -2.6, F, 3.5, 'darts', 'Play darts', 1.5); s.storeSpot = spot(s, 5.5, F, 4.5, 'store', 'General store', 1.7);
     const [ax, az] = toW(s, -3.5, 3.6), hw = 19, hd = 13.5, wide = Math.abs(Math.sin(rot)) > .5; T.safe.push({ x: ax, z: az, hw: wide ? hd : hw, hd: wide ? hw : hd, town: true });
     T.npcAt = [[toW(s, -7, 6.5), s.y0 + F, rot], [toW(s, 5.5, 6.5), s.y0 + F, rot]]; // bartender, storekeeper (facing the room)
@@ -260,13 +265,13 @@ export function createTown(c) {
   T.nearSpot = () => { if (H.mounted) return null; let best = null, bd = 1e9; for (const o of T.spots) { if (Math.abs(P.pos.y - o.y) > 1.3) continue; const d = Math.hypot(P.pos.x - o.x, P.pos.z - o.z); if (d < o.r && d < bd) { bd = d; best = o; } } return best; };
   T.label = o => !o ? '' : o.kind === 'tommy' && H.guns && H.guns.state.owned.tommy ? '' : o.kind === 'gold' && H.guns && H.guns.state.owned.gold ? '' : o.label;
   // hotfix: every interactable gets an on-screen button (phones had none for the v35 saloon spots); unknown kinds fall back to USE
-  T.TL = { tommy: 'TAKE<small>TOMMY GUN</small>', gold: 'TAKE<small>GOLD BUFFALO</small>', shop: 'UPGRADES', drink: 'DRINK', darts: 'PLAY<small>DARTS</small>', checkers: 'PLAY<small>CHECKERS</small>', store: 'STORE' };
+  T.TL = { tommy: 'TAKE<small>TOMMY GUN</small>', gold: 'TAKE<small>GOLD BUFFALO</small>', shop: 'UPGRADES', drink: 'DRINK', darts: 'PLAY<small>DARTS</small>', checkers: 'PLAY<small>CHECKERS</small>', drawpoker: 'DRAW POKER<small>REAL POINTS</small>', store: 'STORE' };
   T.touchLabel = o => !o ? '' : T.TL[o.kind] || (T.label(o) ? 'USE' : '');
   T.touchText = o => T.touchLabel(o).replace(/<small>/g, ' ').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&');
   T.use = () => { const o = T.nearSpot(); if (!o || !T.label(o)) return false; const g = H.guns; if (T.onUse && T.onUse(o)) { sfx.ui && sfx.ui(); return true; }
     if (o.kind === 'tommy') { g.give('tommy'); g.draw('tommy'); msg('Tommy gun — 100-round drum, full auto (4)', 3); if (o.s.tommyMesh) o.s.tommyMesh.visible = false; }
     else if (o.kind === 'gold') { g.give('gold'); g.draw('gold'); msg('The Golden Buffalo — aim, then scroll / pinch / + − to zoom across the map (5)', 4); if (o.s.goldMesh) o.s.goldMesh.visible = false; }
-    else if (o.kind === 'shop') openShop('guns'); else if (o.kind === 'store') openShop('store'); else if (o.kind === 'drink') drink(); else if (o.kind === 'darts') openDarts(); else if (o.kind === 'checkers') ck.open();
+    else if (o.kind === 'shop') openShop('guns'); else if (o.kind === 'store') openShop('store'); else if (o.kind === 'drink') drink(); else if (o.kind === 'darts') openDarts(); else if (o.kind === 'drawpoker') pk.open(); else if (o.kind === 'checkers') ck.open();
     sfx.ui && sfx.ui(); return true; };
   // show the actual gun models on the desk / in the box (each rider takes their own copy)
   T.dressGuns = models => { const s = T.towers.find(t => t.kind === 'armory'); if (!s || s.tommyMesh) return;
@@ -307,7 +312,7 @@ export function createTown(c) {
   T.tick = dt => { if (T.passT > 0) { T.passT -= dt; T.black = Math.min(1, (T.black || 0) + dt * 1.5); if (T.passT <= 0) wake(); }
     else { T.black = Math.max(0, (T.black || 0) - dt * .5); if (T.drunk >= T.PASS && !H.mounted) passOut(); }
     T.drunk = Math.max(0, T.drunk - dt / 75); // 75 s per drink: three drinks stay with you ~3.75 minutes, it stacks
-    ck.tick(dt);
+    ck.tick(dt); pk.tick(dt);
     if (T.drunk > 1.2 && (T.hicT = (T.hicT || 3) - dt) <= 0) { T.hicT = 2 + Math.random() * Math.max(1.5, 9 - T.drunk); T.hic = .25; if (sfx.tone && sfx.ctx) { sfx.tone('square', 520, 260, .06, .06); sfx.tone('sine', 260, 180, .1, .08); } }
     T.hic = Math.max(0, (T.hic || 0) - dt); let bl = $('hrBlack'); if (!bl) { bl = document.createElement('div'); bl.id = 'hrBlack'; bl.style.cssText = 'position:fixed;inset:0;background:#000;pointer-events:none;z-index:39;opacity:0'; document.body.appendChild(bl); } bl.style.opacity = (T.black || 0).toFixed(2);
     if (T.dart || (dEl && !dEl.hidden)) dartTick(dt); for (const W of T.npcs) if (Math.hypot(W.m.position.x - camera.position.x, W.m.position.z - camera.position.z) < 60) W.update(dt, 0); };
@@ -331,6 +336,7 @@ export function createTown(c) {
   function throwDart() { const G = T.dart; if (!G || G.win >= 0 || G.who[G.turn] !== me()) return; const [sx, sy] = sway(); const x = D.ptr[0] + sx + (Math.random() - .5) * 8, y = D.ptr[1] + sy + (Math.random() - .5) * 8; netOut({ a: 'th', x: +x.toFixed(1), y: +y.toFixed(1) }); }
   // authority: the host (or a solo player) runs every match
   const games = new Map(); T.games = games;
+  const pk = T.pk = H.poker = createPoker({ H, msg, sfx, send: m => c.send && c.send(m) });
   const ck = T.ck = createCheckers({ H, msg, sfx, send: m => c.send && c.send(m), level: () => T.drunk, spot: () => T.town.ckSpot });
   function netOut(m) { if (isAuth()) netIn(m, me()); else c.send && c.send({ t: 'dt', ...m }); }
   function bcast(G) { const st = { t: 'dts', g: G }; if (c.send && role() === 'host') c.send(st); netState(st); }
@@ -354,7 +360,7 @@ export function createTown(c) {
     if (G) for (const l of G.log.slice(-3)) {} if (G && G.last) { const lx = c0 + G.last.x * k, ly = c0 - G.last.y * k; x.fillStyle = '#ffd34a'; x.beginPath(); x.arc(lx, ly, 4, 0, TAU); x.fill(); x.fillStyle = '#fff'; x.font = 'bold 15px system-ui'; x.fillText(G.last.label, lx, ly - 14); } dartUI(); }
   T.extraStoreItems=[];T.registerStoreItem=item=>{if(!item?.state||!/^[-a-z0-9_]+$/.test(item.state.id)||typeof item.buy!=='function'||typeof item.toggle!=='function')throw new TypeError('Invalid store item');if(!T.extraStoreItems.some(i=>i.state.id===item.state.id))T.extraStoreItems.push(item);render();return item;};
   T.buyJacket = buyJacket; T.dartScore = dartScore; T.applyDart = applyDart; T.newGame = newGame; T.toW = toW; T.toL = toL;
-  T.openDarts = openDarts; T.openShop = openShop; T.closeUI = () => { closeUI(); closeDarts(); ck.close(); }; T.ckNew = ckNew; T.ckMoves = ckMoves; T.ckApply = ckApply; T.ckAI = ckAI; T.D = D;
+  T.openDarts = openDarts; T.openShop = openShop; T.closeUI = () => { closeUI(); closeDarts(); ck.close(); pk.close(); }; T.ckNew = ckNew; T.ckMoves = ckMoves; T.ckApply = ckApply; T.ckAI = ckAI; T.D = D;
 
   // ---- build: towers at the two trail tops furthest apart, the town on flat meadow ground ----
   T.build = (sites) => { for (const [x, z, k, r] of sites.towers) tower(x, z, k, r || 0); if (sites.town) town(...sites.town); return T; };

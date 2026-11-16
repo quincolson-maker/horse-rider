@@ -5,9 +5,9 @@
 // wires it into our controller (underground floors under the mound, walls, falls), guns, host-authoritative co-op (the host
 // orders every puzzle action and replays the log to everyone) and game points. The civilization and its glyphs are fictional.
 import * as THREE from 'three';
-import { createSunTemple } from './hrsuntemple.js?v=66';
-import { pyramidEnvelope } from './hrpyramid.js?v=66';
-import { TEMPLE_CUT } from './hrworld.js?v=66';
+import { createSunTemple } from './hrsuntemple.js?v=67';
+import { pyramidEnvelope } from './hrpyramid.js?v=67';
+import { TEMPLE_CUT } from './hrworld.js?v=67';
 
 export const TEMPLE = { gold: 100000, top: 18.5, trap: { rolling_boulder: 40, dart_wall: 12, swinging_blade: 30 } };
 const IU = 27, IV0 = -77, IV1 = -4.5, DU = 16.5, AV1 = 9, MB = 30; // interior / mound half-width + depth, doorway half-width, apron front, mound blend
@@ -77,9 +77,28 @@ export function createTemple(c) {
   const IA = id => tm.interactions.find(q => q.id === id);
   function apply(a) { if (!Array.isArray(a)) return false; const [k, n] = a; let ok = false;
     if (k === 'e') ok = IA('entrance').activate({ force: true }); else if (k === 'm' && n >= 0 && n < 3) ok = IA('mirror_' + n).activate({ force: true });
-    else if (k === 'g' && n >= 0 && n < 4) { if (!tm.state.glyph) { tm.stepGlyph(n); ok = true; } } else if (k === 'r') ok = IA('glyph_reset').activate({ force: true });
+    else if (k === 'g' && n >= 0 && n < 4) { if (!tm.state.glyph) { glyphFeedback(n); tm.stepGlyph(n); ok = true; } } else if (k === 'r') { ok = IA('glyph_reset').activate({ force: true }); GL.at = 0; GL.lit.fill(false); }
     else if (k === 'w' && Number.isFinite(n)) { ok = IA('counterweight').activate({ force: true, weight: n }); if (!ok && !tm.state.weight) out.lastWrong = n; ok = ok || !tm.state.weight; }
     else if (k === 'a') ok = IA('hidden_altar').activate({ force: true }); return ok; }
+  // ---- v67: the glyph tiles answer you (glow + chime, or a buzz and a reset), floating numbers, and a seal tracker in the halls ----
+  const GL = { seq: [0, 2, 1, 3], at: 0, lit: [false, false, false, false], disc: [], num: [] };
+  function glyphFeedback(n) { if (n === GL.seq[GL.at]) { GL.lit[n] = true; GL.at++; tone('sine', 440 + GL.at * 110, 460 + GL.at * 120, .35, .25); if (GL.at < 4) msg('Tile ' + (n + 1) + ' glows — ' + GL.at + ' of 4. Step off, then the next one.', 1.8); }
+    else { GL.at = 0; GL.lit.fill(false); tone('square', 160, 90, .35, .25); msg('Wrong tile — the tiles go dark. The order is carved on the far wall: 1 → 3 → 2 → 4', 3.5); } }
+  { const mk = (txt, col) => { const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d'); x.fillStyle = 'rgba(20,12,4,.75)'; x.beginPath(); x.arc(64, 64, 58, 0, Math.PI * 2); x.fill(); x.strokeStyle = col; x.lineWidth = 6; x.stroke(); x.fillStyle = col; x.font = 'bold 80px Georgia'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, 64, 70); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; };
+    const dm = new THREE.MeshBasicMaterial({ color: 0xffd36a, transparent: true, opacity: .75, depthWrite: false, fog: false });
+    for (let i = 0; i < 4; i++) { const u = -4.5 + i * 3, v = -42, [wx, wz] = toWorld(S, u, v), y = S.y0 + rampY(v);
+      const d = new THREE.Mesh(new THREE.CircleGeometry(.95, 6), dm); d.rotation.x = -Math.PI / 2; d.position.set(wx, y + .19, wz); d.visible = false; scene.add(d); GL.disc.push(d);
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: mk(String(i + 1), '#ffd36a'), transparent: true, depthWrite: false, fog: false })); sp.scale.set(.7, .7, 1); sp.position.set(wx, y + 1.9, wz); sp.visible = false; scene.add(sp); GL.num.push(sp); } }
+  const QE = document.createElement('div'); QE.id = 'tpQuest'; QE.hidden = true; document.body.appendChild(QE);
+  { const st = document.createElement('style'); st.textContent = '#tpQuest{position:fixed;top:196px;left:50%;transform:translateX(-50%);z-index:20;background:rgba(18,10,4,.78);border:1px solid #c9a35a;border-radius:10px;padding:7px 12px;color:#f3e2bd;font:13px system-ui;max-width:min(520px,92vw);text-align:center;pointer-events:none}#tpQuest[hidden]{display:none}#tpQuest b{color:#ffd36a}#tpQuest .s{display:inline-block;margin:0 6px}#tpQuest .ok{color:#7dff8a}#tpQuest .h{margin-top:4px;color:#e8d6ae;font-size:12px}'; document.head.appendChild(st); }
+  let qTxt = '';
+  function quest() { const inside = out.underP || (out.inFoot(P.pos.x, P.pos.z, 2) && P.pos.y < hAt(P.pos.x, P.pos.z) - .5); const nearT = tm.near; for (let i = 0; i < 4; i++) { GL.disc[i].visible = nearT && (GL.lit[i] || tm.state.glyph); GL.num[i].visible = nearT && !tm.state.glyph; }
+    if (!inside) { if (!QE.hidden) QE.hidden = true; return; } const st = tm.state, k = (on, t) => `<span class="s ${on ? 'ok' : ''}">${on ? '✔' : '◻'} ${t}</span>`;
+    const hint = !st.mirror ? '☀ <b>Sun discs</b> — in the chamber on your <b>left</b> near the start: turn the three discs until the beam hits the seal.'
+      : !st.glyph ? '▦ <b>Glyph tiles</b> — past the chasm, step on the numbered gold tiles in the order carved on the far wall: <b>1 → 3 → 2 → 4</b>' + (GL.at ? ' (' + GL.at + ' of 4 lit)' : '') + '.'
+      : !st.weight ? '⚖ <b>Counterweight</b> — side chamber on your <b>right</b>, just past the tiles: count the gold studs on the wall and load that many stones.'
+      : !tm.sealUp ? '🌞 All three seals restored — go down into the sanctum and <b>raise the hidden seal</b>.' : '💰 Take the <b>Sun Pyramid</b> and the <b>gold</b> in the sanctum.';
+    const h = '<b>THE HOLLOW SUN</b> · ' + k(st.mirror, 'Sun discs') + k(st.glyph, 'Glyph tiles') + k(st.weight, 'Counterweight') + '<div class="h">' + hint + '</div>'; if (h !== qTxt) { qTxt = h; QE.innerHTML = h; } QE.hidden = false; }
   function bc() { if (c.role() === 'host') c.send({ t: 'tms', log: out.state.log }); }
   function commit(a, who) { if (out.state.log.length >= 600) return; if (!apply(a)) return; out.state.log.push(a); out.state.applied = out.state.log.length; if (a[0] === 'w' && who !== me() && out.lastWrong === a[1]) {} bc(); }
   function act(a) { if (host()) commit(a, me()); else c.send({ t: 'tma', a }); }
@@ -125,7 +144,7 @@ export function createTemple(c) {
         hitT[q.id] = 1.2; const Z = H.zombies; if (Z && Z.hurtMe) Z.hurtMe(TEMPLE.trap[q.id], 0); out.trapHits = (out.trapHits || 0) + 1; msg(q.id === 'rolling_boulder' ? 'The boulder slams into you!' : q.id === 'dart_wall' ? 'Darts!' : 'The blade catches you!', 1.2); } }
     if (out.underP && P.pos.y < S.y0 - 16) { const [x, z] = toWorld(S, 0, -27); P.pos.set(x, S.y0 + rampY(-27) + .1, z); H.vy = 0; const Z = H.zombies; if (Z && Z.hurtMe) Z.hurtMe(35, 0); out.falls = (out.falls || 0) + 1; msg('You fell into the chasm — and dragged yourself back up', 3); }
     if (host() && c.role() === 'host' && (out.bcT = (out.bcT || 0) + dt) > 2.5) { out.bcT = 0; bc(); }
-    labels(); };
+    labels(); quest(); };
   out._act = act; // dev / tests: the same path as a USE press
   out.info = () => ({ x: +S.x.toFixed(1), z: +S.z.toFixed(1), y0: +S.y0.toFixed(2), rot: S.rot, rise: S.rise, range: S.range, pass: S.pass, solved: { ...tm.state }, log: out.state.log.length, claims: { ...out.claims } });
   labels(); return out;

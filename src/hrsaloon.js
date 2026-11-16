@@ -3,12 +3,12 @@
 // bandit or a random brawl), the dealer in the dark corner (snow = fast, green = slow), three slot machines upstairs (seated
 // first-person view, 10/50/100 bets, jackpot 6000), swinging batwing doors, warm lamps, light shafts and dust.
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=65';
-import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=65';
-import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=65';
-import {createCasino} from './hrcasino.js?v=65';
-import {createSaloonDecor} from './hrsaloondecor.js?v=65';
-import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=65';
+import { PERF } from './perfopts.js?v=66';
+import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=66';
+import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=66';
+import {createCasino} from './hrcasino.js?v=66';
+import {createSaloonDecor} from './hrsaloondecor.js?v=66';
+import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=66';
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
 // ---------------- slots: pure math (tests use it) ----------------
 export const SLOT = { NAMES: ['cactus', 'cherry', 'horseshoe', 'bell', 'buffalo'], W: [10, 9, 7, 4, 2], THREE: [0, 5, 10, 25, 60], TWO_CHERRY: 3, ONE_CHERRY: 1, BETS: [10, 50, 100] };
@@ -94,7 +94,7 @@ export function createSaloon(c) {
   const ring = (f0, f1, d, v, type = 'sine') => { if(disposed)return;if (sfx.tone && sfx.ctx) sfx.tone(type, f0, f1, d, v); };
   // ---- NPCs ----
   const bartable = [[-13.4, 6.2, -Math.PI / 2], [-14.2, 7.05, Math.PI], [-15.05, 6.2, Math.PI / 2], [-14.2, 5.35, 0]]; // seated round the bandits' table (local, facing in)
-  bartable.forEach((_, i) => { const a = i / 4 * TAU + .4, x = -14.2 + Math.cos(a) * .85, z = 6.2 + Math.sin(a) * .85, D = makeDoll({ kind: 'bandit', ...BANDIT_LOOKS[i] }); D.mode = 'sit'; place(D, x, F, z, Math.atan2(-Math.cos(a), -Math.sin(a))); S.seated.push(D); });
+  bartable.forEach((_, i) => { const a = Math.PI + (i + 2) / 6 * TAU, x = -14.2 + Math.sin(a) * 1.47, z = 6.2 - Math.cos(a) * 1.47, D = makeDoll({ kind: 'bandit', ...BANDIT_LOOKS[i] }); D.mode = 'sit'; place(D, x, F, z, Math.atan2(-14.2 - x, 6.2 - z)); /* v66: in the poker chairs (src/hrpoker.js); they step out while a hand is dealt */ S.seated.push(D); });
   S.drifters = [[-4.6, 4.75, 0, 'lean'], [-12.6, 8.2, -2.2, 'idle']].map(([x, z, y, m], i) => { const D = makeDoll({ kind: 'bandit', ...BANDIT_LOOKS[(i + 2) % 4] }); D.mode = m; D.home = [x, z, y, m]; place(D, x, F, z, y); D.hp = 100; return D; });
   S.dancers = DANCERS.map((o, i) => { const D = makeDoll({ kind: 'dancer', ...o }); D.mode = 'idle'; D.home = [-16.2 + i * .9, 1.4 + (i % 2) * .5]; place(D, D.home[0], F + .4, D.home[1], Math.PI / 2 + .3); return D; });
   const greta = makeDoll({ kind: 'barmaid', top: 0xe6d8bd, bust: 0xe6d8bd, sleeve: 0xe9dcc3, bodice: 0x2f5e2c, skirt: 0x8a1e22, hair: 0xd6a94e, skin: 0xeebf9d, legs: 0x3b2c26, shoe: 0x2c1a10, name: 'Greta' }); greta.route = [[-4.2,3.1],[-3,4.8],[-6,4.2],[-8.6,4.5],[-9.2,3.8],[-6,3.4]]; greta.ri = 0; greta.wait = 2; place(greta, -6, F, 4.2, 0); S.greta = greta;

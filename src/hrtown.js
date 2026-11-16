@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=65';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=66';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,8 +47,8 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createPoker } from './hrpoker.js?v=65';
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=65';
+import { createPoker } from './hrpoker.js?v=66';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=66';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -222,7 +222,7 @@ export function createTown(c) {
     // round tables + chairs, a piano, spittoons, the bandits' table (under the upper floor), the dealer's dim corner, a small stage
     const rtable = (x, z, chairs = 4) => { cyl(s, M.dark, x, F + .74, z, .55, .05); cyl(s, M.dark, x, F + .37, z, .07, .74); cyl(s, M.dark, x, F + .02, z, .3, .04); wall(s, x - .3, z, x + .3, z, F, F + .9);
       for (let k = 0; k < chairs; k++) { const a = k / chairs * TAU + .4, cx2 = x + Math.cos(a) * .85, cz2 = z + Math.sin(a) * .85; box(s, M.dark, cx2, F + .45, cz2, .42, .05, .42, -a); box(s, M.dark, cx2 + Math.cos(a) * .2, F + .75, cz2 + Math.sin(a) * .2, .06, .6, .4, -a); for (const [u, v] of [[-.16, -.16], [.16, -.16], [-.16, .16], [.16, .16]]) box(s, M.dark, cx2 + u, F + .22, cz2 + v, .04, .44, .04); } };
-    rtable(-4.2, 1.6); rtable(-3, 7.2, 3); rtable(-14.2, 6.2, 4); rtable(-8.6, 8.1, 0);
+    rtable(-4.2, 1.6); rtable(-3, 7.2, 3); /* -14.2, 6.2: the 3D draw-poker table (src/hrpoker.js) */ rtable(-8.6, 8.1, 0);
     box(s, M.black, -1.75, F + .7, 8.6, .55, 1.4, 1.6); box(s, M.black, -1.75, F + 1.45, 8.6, .6, .1, 1.65); box(s, M.ivory, -2.07, F + .82, 8.6, .12, .04, 1.4); for (let k = 0; k < 10; k++) box(s, M.black, -2.08, F + .85, 7.98 + k * .14, .08, .03, .05);
     cyl(s, M.dark, -2.7, F + .3, 8.6, .2, .6); // piano + stool
     for (const [x, z] of [[-9.9, 4.8], [-4.1, 4.8], [-12.2, 9.5]]) { cyl(s, M.brass, x, F + .12, z, .17, .24); cyl(s, M.brass, x, F + .25, z, .12, .03); }
@@ -244,10 +244,7 @@ export function createTown(c) {
     for (const x of [-8.5, 7.5]) box(s, M.lamp, x, F + 2.6, -.25, .12, .2, .12);
     const g = finish(s); for (const sg of s.signs) g.add(sg); T.board = board;
     s.ckSpot = spot(s, -9, F, 1.5, 'checkers', 'Play checkers', 1.3);
-    { const fe = new THREE.Mesh(new THREE.CircleGeometry(.5, 40), new THREE.MeshStandardMaterial({ color: 0x1f6b3a, roughness: .95 })); fe.rotation.x = -Math.PI / 2; fe.position.set(-14.2, F + .776, 6.2); s.signs.push(fe); // v65 poker felt, a few chips + cards
-      for (let k = 0; k < 7; k++) { const ch = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .012, 14), new THREE.MeshStandardMaterial({ color: [0xc0392b, 0xf3f3f3, 0x2a5bd7][k % 3], roughness: .6 })); ch.position.set(-14.2 + (k < 4 ? .08 : -.12), F + .79 + (k % 4) * .013, 6.2 + (k < 4 ? -.05 : .1)); s.signs.push(ch); }
-      for (let k = 0; k < 5; k++) { const cd = new THREE.Mesh(new THREE.PlaneGeometry(.07, .1), new THREE.MeshStandardMaterial({ color: 0x9a2b2b, roughness: .8 })); cd.rotation.set(-Math.PI / 2, 0, k * .5 + .3); cd.position.set(-14.2 + Math.cos(k * 1.3) * .28, F + .78 + k * .001, 6.2 + Math.sin(k * 1.3) * .28); s.signs.push(cd); } }
-    s.pkSpot = spot(s, -14.2, F, 5.1, 'drawpoker', 'Play draw poker for points', 1.4);
+    s.pkSpot = spot(s, -14.2, F, 4.75, 'drawpoker', 'Play draw poker for points', 1.4);
     s.drinkSpot = spot(s, -7, F, 4.5, 'drink', 'Order a whiskey', 1.6); s.dartSpot = spot(s, -2.6, F, 3.5, 'darts', 'Play darts', 1.5); s.storeSpot = spot(s, 5.5, F, 4.5, 'store', 'General store', 1.7);
     const [ax, az] = toW(s, -3.5, 3.6), hw = 19, hd = 13.5, wide = Math.abs(Math.sin(rot)) > .5; T.safe.push({ x: ax, z: az, hw: wide ? hd : hw, hd: wide ? hw : hd, town: true });
     T.npcAt = [[toW(s, -7, 6.5), s.y0 + F, rot], [toW(s, 5.5, 6.5), s.y0 + F, rot]]; // bartender, storekeeper (facing the room)
@@ -336,7 +333,7 @@ export function createTown(c) {
   function throwDart() { const G = T.dart; if (!G || G.win >= 0 || G.who[G.turn] !== me()) return; const [sx, sy] = sway(); const x = D.ptr[0] + sx + (Math.random() - .5) * 8, y = D.ptr[1] + sy + (Math.random() - .5) * 8; netOut({ a: 'th', x: +x.toFixed(1), y: +y.toFixed(1) }); }
   // authority: the host (or a solo player) runs every match
   const games = new Map(); T.games = games;
-  const pk = T.pk = H.poker = createPoker({ H, msg, sfx, send: m => c.send && c.send(m) });
+  const pk = T.pk = H.poker = createPoker({ H, msg, sfx, send: m => c.send && c.send(m), scene, camera, P, mobile, town: () => T.town, toW, walls: T.walls });
   const ck = T.ck = createCheckers({ H, msg, sfx, send: m => c.send && c.send(m), level: () => T.drunk, spot: () => T.town.ckSpot });
   function netOut(m) { if (isAuth()) netIn(m, me()); else c.send && c.send({ t: 'dt', ...m }); }
   function bcast(G) { const st = { t: 'dts', g: G }; if (c.send && role() === 'host') c.send(st); netState(st); }

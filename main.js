@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=63';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=63';
-import './src/hraudio.js?v=63';
-import './src/stylize.js?v=63'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=63';
-import { FX, SFX } from './src/fx.js?v=63';
-import { initTouch } from './src/touch.js?v=63';
-import { createHorseRider } from './src/horse.js?v=63';
-import { createHorseNet } from './src/horsenet.js?v=63';
+import './src/assetshim.js?v=64';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=64';
+import './src/hraudio.js?v=64';
+import './src/stylize.js?v=64'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=64';
+import { FX, SFX } from './src/fx.js?v=64';
+import { initTouch } from './src/touch.js?v=64';
+import { createHorseRider } from './src/horse.js?v=64';
+import { createHorseNet } from './src/horsenet.js?v=64';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=63';
+import { PF, initPerf } from './src/perf.js?v=64';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -125,7 +125,7 @@ function setupSettingsX() { const st = (k, v) => { try { localStorage.setItem(k,
   const cur = gt('vr_quality', 'auto'); for (const b of $('qSeg').children) { b.classList.toggle('on', b.dataset.q === cur); b.onclick = () => { if (b.dataset.q === gt('vr_quality', 'auto')) return; st('vr_quality', b.dataset.q); const u = new URL(location.href); u.searchParams.delete('q'); location.href = u.toString(); }; }
   const touch = matchMedia('(pointer: coarse)').matches, rows = touch ? [['Left thumb', 'move / steer'], ['Right thumb', 'look around'], ['RIDE / USE', 'mount a horse, talk, buy'], ['DRAW', 'take out a gun'], ['FIRE / AIM', 'shoot / zoom'], ['Gun swap', 'cycles guns, then 🧨 dynamite (hold FIRE to aim, let go to throw)'], ['JUMP', 'jump'], ['⋯', 'more: settings, fullscreen']]
     : [['W A S D', 'move / steer'], ['Mouse', 'look'], ['Shift', 'gallop / run'], ['E', 'mount, use, buy'], ['F / 1–6', 'draw a gun / pick one'], ['Click / Right-click', 'shoot / aim'], ['R', 'reload'], ['7', 'dynamite: hold click to aim, release to throw'], ['Space', 'jump'], ['O', 'settings']];
-  $('ctlList').innerHTML = rows.map(([k, v]) => `<b>${k}</b><span>${v}</span>`).join(''); }
+  rows.push(['🎮 Controller', 'L-stick move (click sprint) · R-stick look · RT shoot · LT aim · A jump · X use · B reload · Y/RB swap · LB whistle · D-up dynamite · Start settings']); $('ctlList').innerHTML = rows.map(([k, v]) => `<b>${k}</b><span>${v}</span>`).join(''); }
 setTimeout(() => { try { const v = +(localStorage.getItem('hr_vol') ?? 50); sfx.vol = v / 100; if (sfx.master) sfx.master.gain.value = sfx.vol; } catch (_) {} }, 0);
 function syncFov() { setupSettingsX(); const v = horse.state.fovH; $('fovRange').value = v; $('fovVal').textContent = v + '°'; syncChar(); }
 function syncChar() { const H = horse.state, row = $('charRow'); if (!row || !H.characters) return; if (row.children.length !== H.characters.length) { row.innerHTML = ''; H.characters.forEach((n, i) => { const b = document.createElement('button'); b.textContent = i ? n.split(' ')[0] : 'Classic'; b.title = n; b.dataset.cv = i; b.onclick = () => { H.setCharacter(i); syncChar(); }; row.appendChild(b); }); } for (const b of row.children) b.classList.toggle('on', +b.dataset.cv === (H.cv | 0)); } // v36 character picker (saved; sent to the lobby)
@@ -172,3 +172,22 @@ function loop(t) { requestAnimationFrame(loop); window.__frames = (window.__fram
   }
 requestAnimationFrame(loop);
 window.__mainDone = true; // v36 boot guard: the game script finished starting
+// v64 CONTROLLER SUPPORT (Xbox / PlayStation / most Bluetooth pads via the standard Gamepad API)
+//  Left stick move (click = sprint) · Right stick look · RT fire · LT aim · A jump · X use / mount / interact · B reload
+//  Y or RB swap weapon · LB whistle your horse · D-pad up = dynamite · Start settings · Select leaderboard
+(() => { let had = false, prev = [], hint = false;
+  const key = (code, down) => { keys[code] = down; dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { code })); };
+  addEventListener('gamepadconnected', e => { sfx.init(); msg('🎮 Controller connected — X to interact, RT to shoot, Start for settings', 3.5); });
+  function poll(t) { requestAnimationFrame(poll); const pads = navigator.getGamepads ? navigator.getGamepads() : []; let g = null; for (const p of pads) if (p && p.connected && p.mapping === 'standard') { g = p; break; } if (!g) { for (const p of pads) if (p && p.connected) { g = p; break; } }
+    if (!g) { if (had) { had = false; input.mx = input.mz = 0; input.fire = input.ads = input.jump = false; keys.ShiftLeft = false; } return; } had = true;
+    const B = i => !!(g.buttons[i] && (g.buttons[i].pressed || g.buttons[i].value > .5)), dz = v => Math.abs(v) < .16 ? 0 : (v - Math.sign(v) * .16) / .84, edge = i => B(i) && !prev[i];
+    if (G.phase === 'menu') { if (edge(0) || edge(9)) { const b = document.querySelector('#fnSplash button, #playBtn, #start'); if (b) b.click(); } prev = g.buttons.map((_, i) => B(i)); return; }
+    const mx = dz(g.axes[0] || 0), mz = dz(g.axes[1] || 0); input.mx = mx; input.mz = mz; keys.ShiftLeft = B(10) || (keys.ShiftLeft && Math.hypot(mx, mz) > .3 && prev.sprint); prev.sprint = keys.ShiftLeft;
+    const rx = dz(g.axes[2] || 0), ry = dz(g.axes[3] || 0); if (rx || ry) { const k = lookSens() * (input.ads ? .45 : 1) * .045; look(Math.sign(rx) * rx * rx * k * 1.15 + rx * k * .4, Math.sign(ry) * ry * ry * k * .8 + ry * k * .3); }
+    input.fire = B(7); input.ads = B(6); input.jump = B(0);
+    if (edge(2)) horse.use(); if (edge(1)) key('KeyR', true); else if (!B(1) && prev[1]) key('KeyR', false);
+    if ((edge(3) || edge(5)) && horse.state.guns && horse.state.guns.cycle) horse.state.guns.cycle(); if (edge(4) && horse.state.whistle) horse.state.whistle();
+    if (edge(12)) { key('Digit7', true); key('Digit7', false); } if (edge(9)) openSettings($('hrSettings').hidden); if (edge(8) && horse.state.lb) horse.state.lb.open();
+    if (!hint) { hint = true; document.body.classList.add('hr-pad'); }
+    const bs = g.buttons.map((_, i) => B(i)); bs.sprint = prev.sprint; prev = bs; }
+  requestAnimationFrame(poll); })();

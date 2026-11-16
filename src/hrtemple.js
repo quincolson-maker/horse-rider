@@ -5,9 +5,9 @@
 // wires it into our controller (underground floors under the mound, walls, falls), guns, host-authoritative co-op (the host
 // orders every puzzle action and replays the log to everyone) and game points. The civilization and its glyphs are fictional.
 import * as THREE from 'three';
-import { createSunTemple } from './hrsuntemple.js?v=68';
-import { pyramidEnvelope } from './hrpyramid.js?v=68';
-import { TEMPLE_CUT } from './hrworld.js?v=68';
+import { createSunTemple } from './hrsuntemple.js?v=69';
+import { pyramidEnvelope } from './hrpyramid.js?v=69';
+import { TEMPLE_CUT } from './hrworld.js?v=69';
 
 export const TEMPLE = { gold: 100000, top: 18.5, trap: { rolling_boulder: 40, dart_wall: 12, swinging_blade: 30 } };
 const IU = 27, IV0 = -77, IV1 = -4.5, DU = 16.5, AV1 = 9, MB = 30; // interior / mound half-width + depth, doorway half-width, apron front, mound blend
@@ -90,14 +90,18 @@ export function createTemple(c) {
     for (let i = 0; i < 4; i++) { const u = -4.5 + i * 3, v = -42, [wx, wz] = toWorld(S, u, v), y = S.y0 + rampY(v);
       const d = new THREE.Mesh(new THREE.CircleGeometry(.95, 6), dm); d.rotation.x = -Math.PI / 2; d.position.set(wx, y + .19, wz); d.visible = false; scene.add(d); GL.disc.push(d);
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: mk(String(i + 1), '#ffd36a'), transparent: true, depthWrite: false, fog: false })); sp.scale.set(.7, .7, 1); sp.position.set(wx, y + 1.9, wz); sp.visible = false; scene.add(sp); GL.num.push(sp); } }
+  const STUD = [], STONE = []; { const sm = new THREE.MeshStandardMaterial({ color: 0xffd040, emissive: 0xffb000, emissiveIntensity: 1.1, metalness: .6, roughness: .3 }), sg = new THREE.SphereGeometry(.17, 16, 12), pm = new THREE.MeshStandardMaterial({ color: 0x8a8070, roughness: .95 }), pg = new THREE.DodecahedronGeometry(.17, 0);
+    for (let i = 0; i < 12; i++) { const u = 16.4 + (i % 4) * 1.05, v = -53.3, [wx, wz] = toWorld(S, u, v), m = new THREE.Mesh(sg, sm); m.position.set(wx, S.y0 + rampY(-52) + 3 + Math.floor(i / 4) * .6, wz); scene.add(m); STUD.push(m); }
+    for (let k = 0; k < 12; k++) { const u = 16.6 + (k % 6) * .55, v = -52 + ((k / 6) | 0) * .3 - .15, [wx, wz] = toWorld(S, u, v), m = new THREE.Mesh(pg, pm); m.position.set(wx, S.y0 + rampY(-52) + 2.72 + ((k / 6) | 0) * .05, wz); m.rotation.set(k, k * 2, 0); m.visible = false; scene.add(m); STONE.push(m); } }
   const QE = document.createElement('div'); QE.id = 'tpQuest'; QE.hidden = true; document.body.appendChild(QE);
-  { const st = document.createElement('style'); st.textContent = '#tpQuest{position:fixed;top:196px;left:50%;transform:translateX(-50%);z-index:20;background:rgba(18,10,4,.78);border:1px solid #c9a35a;border-radius:10px;padding:7px 12px;color:#f3e2bd;font:13px system-ui;max-width:min(520px,92vw);text-align:center;pointer-events:none}#tpQuest[hidden]{display:none}#tpQuest b{color:#ffd36a}#tpQuest .s{display:inline-block;margin:0 6px}#tpQuest .ok{color:#7dff8a}#tpQuest .h{margin-top:4px;color:#e8d6ae;font-size:12px}'; document.head.appendChild(st); }
+  { const st = document.createElement('style'); st.textContent = '#tpQuest{position:fixed;top:150px;left:10px;z-index:20;background:rgba(18,10,4,.78);border:1px solid #c9a35a;border-radius:10px;padding:7px 12px;color:#f3e2bd;font:13px system-ui;max-width:min(300px,42vw);text-align:left;pointer-events:none}#tpQuest[hidden]{display:none}#tpQuest b{color:#ffd36a}#tpQuest .s{display:inline-block;margin:0 6px}#tpQuest .ok{color:#7dff8a}#tpQuest .h{margin-top:4px;color:#e8d6ae;font-size:12px}'; document.head.appendChild(st); }
   let qTxt = '';
   function quest() { const inside = out.underP || (out.inFoot(P.pos.x, P.pos.z, 2) && P.pos.y < hAt(P.pos.x, P.pos.z) - .5); const nearT = tm.near; for (let i = 0; i < 4; i++) { GL.disc[i].visible = nearT && (GL.lit[i] || tm.state.glyph); GL.num[i].visible = nearT && !tm.state.glyph; }
+    for (let k = 0; k < 12; k++) STONE[k].visible = nearT && (tm.state.weight || k < stones); for (const m of STUD) m.visible = nearT;
     if (!inside) { if (!QE.hidden) QE.hidden = true; return; } const st = tm.state, k = (on, t) => `<span class="s ${on ? 'ok' : ''}">${on ? '✔' : '◻'} ${t}</span>`;
     const hint = !st.mirror ? '☀ <b>Sun discs</b> — chamber on your <b>left</b> near the start. Turn <b>disc ' + (chain() + 1) + '</b> until the beam jumps to the next disc' + (chain() ? ' (' + chain() + ' of 3 lined up)' : '; then do the same with disc 2 and 3') + '.'
       : !st.glyph ? '▦ <b>Glyph tiles</b> — past the chasm, step on the numbered gold tiles in the order carved on the far wall: <b>1 → 3 → 2 → 4</b>' + (GL.at ? ' (' + GL.at + ' of 4 lit)' : '') + '.'
-      : !st.weight ? '⚖ <b>Counterweight</b> — side chamber on your <b>right</b>, just past the tiles: count the gold studs on the wall and load that many stones.'
+      : !st.weight ? '⚖ <b>Counterweight</b> — side chamber on your <b>right</b>, just past the tiles. Count the gold studs on the wall behind the scale, then press USE once per stud' + (stones ? ' (<b>' + stones + '</b> on the scale)' : '') + '. Too many and the stones spill off.'
       : !tm.sealUp ? '🌞 All three seals restored — go down into the sanctum and <b>raise the hidden seal</b>.' : '💰 Take the <b>Sun Pyramid</b> and the <b>gold</b> in the sanctum.';
     const h = '<b>THE HOLLOW SUN</b> · ' + k(st.mirror, 'Sun discs') + k(st.glyph, 'Glyph tiles') + k(st.weight, 'Counterweight') + '<div class="h">' + hint + '</div>'; if (h !== qTxt) { qTxt = h; QE.innerHTML = h; } QE.hidden = false; }
   function bc() { if (c.role() === 'host') c.send({ t: 'tms', log: out.state.log }); }
@@ -122,12 +126,14 @@ export function createTemple(c) {
   let stones = 0, stoneT = 0;
   const all = () => tm.state.mirror && tm.state.glyph && tm.state.weight;
   function labels() { sEnt.label = tm.doors[0].target ? '' : 'Push the sun seal'; for (const s of sMir) s.label = tm.state.mirror ? '' : 'Turn sun disc ' + (s.i + 1) + ' — follow the beam';
-    sRst.label = tm.state.glyph ? '' : 'Reset the glyph tiles (read the dots: 1, 3, 2, 4)'; sW.label = tm.state.weight ? '' : stones ? `Stones on the scale: ${stones} (USE adds one)` : 'Count the gold studs — USE to load stones on the scale';
+    sRst.label = tm.state.glyph ? '' : 'Reset the glyph tiles (read the dots: 1, 3, 2, 4)'; sW.label = tm.state.weight ? '' : stones ? `Stones on the scale: ${stones} — add another` : 'Load stones on the scale — one per gold stud on the wall';
     sAlt.label = all() && !tm.sealUp ? 'Raise the hidden seal' : ''; sPyr.label = all() && tm.sealUp ? (out.claims.sun ? '' : 'Take the Sun Pyramid') : ''; sGold.label = all() ? (out.claims.gold ? 'Empty — you took your share of the gold' : 'Take the gold (+' + TEMPLE.gold.toLocaleString() + ' pts)') : ''; }
   const prevUse = T.onUse;
   T.onUse = o => { if (!o || !o.temple) return prevUse ? prevUse(o) : false;
     if (o.kind === 'tp-seal') act(['e']); else if (o.kind === 'tp-mirror') { act(['m', o.i]); tone('triangle', 330, 360, .12, .2); } else if (o.kind === 'tp-reset') { act(['r']); msg('The tiles go dark', 1.2); }
-    else if (o.kind === 'tp-weight') { if (!tm.state.weight) { stones = Math.min(15, stones + 1); stoneT = 2.5; tone('square', 140, 120, .08, .2); } }
+    else if (o.kind === 'tp-weight') { if (!tm.state.weight) { stones++; tone('square', 120 + stones * 12, 110 + stones * 12, .08, .2); /* v69: no timer - the scale opens on the right count, overloading spills the stones */
+      if (stones === 12) { stones = 0; act(['w', 12]); } else if (stones > 12) { stones = 0; msg('Too heavy — the scale tips and the stones spill off. Count the gold studs again and start over.', 3.5); const Z = H.zombies; if (Z && Z.hurtMe) Z.hurtMe(5, 0); }
+      else msg('Stones on the scale: ' + stones + ' — add one for each gold stud on the wall', 1.6); } }
     else if (o.kind === 'tp-altar') act(['a']);
     else if (o.kind === 'tp-pyramid') { if (all() && tm.sealUp && !out.claims.sun) { out.claims.sun = 1; saveClaims(); if (H.sun) H.sun.give(); msg('The Sun Pyramid — press 6 (☀ on a phone) to hold it, then fire: it charges, then a sun beam burns through the dead', 5); tone('sine', 660, 1320, 1, .35); } }
     else if (o.kind === 'tp-gold') { if (all() && !out.claims.gold) { out.claims.gold = 1; saveClaims(); const G = H.guns; if (G) { G.state.score += TEMPLE.gold; G.save(); } msg('Gold of the Hollow Sun — +' + TEMPLE.gold.toLocaleString() + ' points', 4); tone('triangle', 520, 1560, .9, .4); } }
@@ -136,7 +142,6 @@ export function createTemple(c) {
   const cp = new THREE.Vector3(), hitT = {}, CAP = new THREE.Box3(), cap = new THREE.Vector3();
   out.update = dt => { cp.copy(H.mounted ? H.mounted.pos : P.pos); tm.update(dt, null, cp); WL = WL.length ? WL : WALLS();
     if (!tm.near) for (const l of tm.lights) l.intensity = 0;
-    if (stones && (stoneT -= dt) <= 0) { const n = stones; stones = 0; act(['w', n]); if (n !== 12) { msg('The scale lurches — ' + n + ' is the wrong weight. Darts hiss from the wall!', 2.5); const Z = H.zombies; if (Z && Z.hurtMe) Z.hurtMe(10, 0); } }
     out.underP = !H.mounted && out.under(P.pos.x, P.pos.z, P.pos.y);
     { const [, lv] = toLocal(S, P.pos.x, P.pos.z), tgt = out.underP ? .96 * sstep(-3, -12, lv) : 0; H.templeDark = (H.templeDark || 0) + (tgt - (H.templeDark || 0)) * Math.min(1, dt * 2.5); // v43: daylight fades inside the halls; the lamps carry the light
       if (tm.near) { const k = 1 + 2.2 * H.templeDark; for (const l of tm.lights) if (l.parent) l.intensity *= k; } }

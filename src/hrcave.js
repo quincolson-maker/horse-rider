@@ -3,12 +3,12 @@
 // by Quin (src/hrbanditcave.js, credited in CREDITS.md). This file places it in our world — a flattened notch in a hillside,
 // picked the same way on every machine — and wires it into our controller (walls + floors), guns (rock stops bullets),
 // host-authoritative co-op (the host runs the outlaws and the vault) and game points. Points are game points only.
-import { CAVE_CUT } from './hrworld.js?v=61';
+import { CAVE_CUT } from './hrworld.js?v=62';
 import * as THREE from 'three';
-import { createHideout } from './hrhideout.js?v=61';
-import { createFalls, baseZ } from './hrfalls.js?v=61';
-import { makeFrontierCharacter } from './hrcharacters.js?v=61';
-import { poseDoll } from './hrsaloon.js?v=61';
+import { createHideout } from './hrhideout.js?v=62';
+import { createFalls, baseZ } from './hrfalls.js?v=62';
+import { makeFrontierCharacter } from './hrcharacters.js?v=62';
+import { poseDoll } from './hrsaloon.js?v=62';
 
 export const CAVE = { chest: 2500, dance: 50, slotBet: 10, outlaw: 60, outlawHead: 75 };
 const FU = 40, FV0 = -59, FV1 = 8, BL = 16, BS = 5; // footprint in the cave's own frame (u across, v out of the mouth); terrain blend: 16 m apron in front, 5 m to the sides and back (the hill meets the rock)
@@ -55,7 +55,7 @@ const PH = ['idle', 'fight', 'key', 'open'];
 export function createCave(c) {
   const { scene, H, P, T, hAt, sfx, msg, mobile, site: S } = c, g = () => H.guns;
   const cave = createHideout({ position: new THREE.Vector3(S.x, S.y0, S.z), rotationY: S.rot, quality: mobile || c.low ? 'low' : 'high', viewDist: mobile ? 240 : 340 }); // v42: the new three-level hideout
-  scene.add(cave.group); const falls = createFalls({ position: new THREE.Vector3(S.x, S.y0, S.z), rot: S.rot, high: !(mobile || c.low) }); scene.add(falls.group); cave.group.updateMatrixWorld(true);
+  scene.add(cave.group); const falls = createFalls({ position: new THREE.Vector3(S.x, S.y0, S.z), rot: S.rot, high: !(mobile || c.low) }); scene.add(falls.group); cave.group.updateMatrixWorld(true); falls.group.updateMatrixWorld(true); H.fallsPool = { c: falls.group.localToWorld(new THREE.Vector3(0, -.16, 4.4)), shore: falls.group.localToWorld(new THREE.Vector3(0, 0, 10.6)), rot: S.rot, toW: (x, z) => falls.group.localToWorld(new THREE.Vector3(x, -.16, z)) }; // v62 fishing
   if (mobile) cave.lights.forEach((l, i) => { if (i >= 2) l.removeFromParent(); });
   cave.group.updateMatrixWorld(true); for (const l of cave.lights) if (l.parent) scene.attach(l); // v42: lamps live in the scene, not the (often hidden) cave group: hiding them changed the light count and recompiled every shader // phones: two of the five lamps (each lamp costs every lit pixel)
   const BOX = cave.colliders, WALLS = BOX.filter(b => b.max.y - b.min.y > .65), ALL = new THREE.Box3(); for (const b of BOX) ALL.union(b); ALL.expandByScalar(1);

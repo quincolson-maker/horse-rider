@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=74';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=75';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,8 +47,8 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createPoker } from './hrpoker.js?v=74';
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=74';
+import { createPoker } from './hrpoker.js?v=75';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=75';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -292,10 +292,13 @@ export function createTown(c) {
       h += '<div style="opacity:.7;font-size:12px">Each tier: more damage, a bigger magazine, faster reloads and fire rate.</div>'; }
     else { h += `<h3>GENERAL STORE</h3><div class="pt">${pts} points</div>`;
       /* v41: every gun is sold here too */ const GN = { revolver: 'Six-shooter', rifle: 'Lever rifle', sniper: 'Buffalo rifle', tommy: 'Tommy gun · 100-round drum', gold: 'Golden Buffalo · huge zoom', gatling: 'Gatling gun · hand-crank minigun' };
+      /* v74: one sorted list - NEW gear first, then what you can still buy (cheapest first), then wear/equip toggles, owned guns last */ const R = [], NEW = { speckit: 1, m4: 1, mp5: 1 };
       for (const w of Object.keys(GN)) { if (!(w in S.owned) && w !== 'gatling') continue; if (w === 'gatling' && !g.models.gatling) continue; const own = !!S.owned[w], pr = (g.PRICE && g.PRICE[w]) || 0;
-        h += `<div class="row"><span class="nm">🔫 ${GN[w]}</span>` + (own ? '<span>OWNED</span>' : `<button data-a="buy" data-w="${w}" ${pts < pr ? 'disabled' : ''}>BUY ${pr}</button>`) + '</div>'; }
-      h += `<div class="row"><span class="nm">Black windbreaker · HORSE RIDER on the back</span>` + (T.jacket ? `<button data-a="wear">${T.wear ? 'TAKE OFF' : 'WEAR'}</button>` : `<button data-a="jacket" ${pts < TOWN_PRICES.jacket ? 'disabled' : ''}>BUY ${TOWN_PRICES.jacket}</button>`) + '</div>'; }
-    if(T.ui==='store')for(const item of T.extraStoreItems||[]){const i=item.state,name=String(i.name).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));h+=`<div class="row"><span class="nm">${name}</span><button data-a="extra" data-id="${i.id}" ${i.maxed||(!i.owned&&pts<i.price)?'disabled':''}>${i.label?i.label:i.maxed?'MAXED':i.owned?(i.equipped?'REMOVE':'EQUIP'):'BUY '+i.price}</button></div>`;}
+        R.push({ o: own ? 3 : 1, p: pr, h: `<div class="row"><span class="nm">🔫 ${GN[w]}</span>` + (own ? '<span>OWNED</span>' : `<button data-a="buy" data-w="${w}" ${pts < pr ? 'disabled' : ''}>BUY ${pr}</button>`) + '</div>' }); }
+      R.push({ o: T.jacket ? 2 : 1, p: TOWN_PRICES.jacket, h: `<div class="row"><span class="nm">Black windbreaker · HORSE RIDER on the back</span>` + (T.jacket ? `<button data-a="wear">${T.wear ? 'TAKE OFF' : 'WEAR'}</button>` : `<button data-a="jacket" ${pts < TOWN_PRICES.jacket ? 'disabled' : ''}>BUY ${TOWN_PRICES.jacket}</button>`) + '</div>' });
+      for (const item of T.extraStoreItems || []) { const i = item.state, name = String(i.name).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])), nw = NEW[i.id] && !i.owned;
+        R.push({ o: nw ? 0 : i.owned ? (i.maxed ? 3 : 2) : 1, p: i.price || 0, h: `<div class="row"><span class="nm">${nw ? '<b style="color:#ffd34a">NEW</b> ' : ''}${name}</span><button data-a="extra" data-id="${i.id}" ${i.maxed || (!i.owned && pts < i.price) ? 'disabled' : ''}>${i.label ? i.label : i.maxed ? 'MAXED' : i.owned ? (i.equipped ? 'REMOVE' : 'EQUIP') : 'BUY ' + i.price}</button></div>` }); }
+      R.sort((a, b) => a.o - b.o || a.p - b.p); h += R.map(r => r.h).join(''); }
     shopEl.innerHTML = h; }
   function buyJacket() { const g = H.guns; if (T.jacket) return; if (g.pts() < TOWN_PRICES.jacket) { msg('Not enough points', 1.5); return; } g.state.spent += TOWN_PRICES.jacket; T.jacket = true; T.wear = true; save(); c.jacket && c.jacket(true); msg('Black HORSE RIDER windbreaker — looking sharp', 3); }
   T.save = () => save();

@@ -5,9 +5,9 @@
 // wires it into our controller (underground floors under the mound, walls, falls), guns, host-authoritative co-op (the host
 // orders every puzzle action and replays the log to everyone) and game points. The civilization and its glyphs are fictional.
 import * as THREE from 'three';
-import { createSunTemple } from './hrsuntemple.js?v=67';
-import { pyramidEnvelope } from './hrpyramid.js?v=67';
-import { TEMPLE_CUT } from './hrworld.js?v=67';
+import { createSunTemple } from './hrsuntemple.js?v=68';
+import { pyramidEnvelope } from './hrpyramid.js?v=68';
+import { TEMPLE_CUT } from './hrworld.js?v=68';
 
 export const TEMPLE = { gold: 100000, top: 18.5, trap: { rolling_boulder: 40, dart_wall: 12, swinging_blade: 30 } };
 const IU = 27, IV0 = -77, IV1 = -4.5, DU = 16.5, AV1 = 9, MB = 30; // interior / mound half-width + depth, doorway half-width, apron front, mound blend
@@ -76,11 +76,12 @@ export function createTemple(c) {
   // ---- the puzzles in co-op: every action goes to the host, which orders them in a log that every machine replays ----
   const IA = id => tm.interactions.find(q => q.id === id);
   function apply(a) { if (!Array.isArray(a)) return false; const [k, n] = a; let ok = false;
-    if (k === 'e') ok = IA('entrance').activate({ force: true }); else if (k === 'm' && n >= 0 && n < 3) ok = IA('mirror_' + n).activate({ force: true });
+    if (k === 'e') ok = IA('entrance').activate({ force: true }); else if (k === 'm' && n >= 0 && n < 3) { const c0 = chain(); ok = IA('mirror_' + n).activate({ force: true }); const c1 = chain(); if (c1 > c0 && c1 < 3) { tone('sine', 520 + c1 * 90, 700 + c1 * 90, .4, .25); msg('The beam reaches sun disc ' + (c1 + 1) + ' — now turn that one', 2.4); } else if (c1 < c0) msg('The beam slips off — disc ' + (c1 + 1) + ' is out of line', 2); }
     else if (k === 'g' && n >= 0 && n < 4) { if (!tm.state.glyph) { glyphFeedback(n); tm.stepGlyph(n); ok = true; } } else if (k === 'r') { ok = IA('glyph_reset').activate({ force: true }); GL.at = 0; GL.lit.fill(false); }
     else if (k === 'w' && Number.isFinite(n)) { ok = IA('counterweight').activate({ force: true, weight: n }); if (!ok && !tm.state.weight) out.lastWrong = n; ok = ok || !tm.state.weight; }
     else if (k === 'a') ok = IA('hidden_altar').activate({ force: true }); return ok; }
   // ---- v67: the glyph tiles answer you (glow + chime, or a buzz and a reset), floating numbers, and a seal tracker in the halls ----
+  const TV = tm.group.userData.temple.trapView, chain = () => { let n = 0; while (n < 3 && TV.mirrorSteps[n] === TV.mirrorTargets[n]) n++; return n; };
   const GL = { seq: [0, 2, 1, 3], at: 0, lit: [false, false, false, false], disc: [], num: [] };
   function glyphFeedback(n) { if (n === GL.seq[GL.at]) { GL.lit[n] = true; GL.at++; tone('sine', 440 + GL.at * 110, 460 + GL.at * 120, .35, .25); if (GL.at < 4) msg('Tile ' + (n + 1) + ' glows — ' + GL.at + ' of 4. Step off, then the next one.', 1.8); }
     else { GL.at = 0; GL.lit.fill(false); tone('square', 160, 90, .35, .25); msg('Wrong tile — the tiles go dark. The order is carved on the far wall: 1 → 3 → 2 → 4', 3.5); } }
@@ -94,7 +95,7 @@ export function createTemple(c) {
   let qTxt = '';
   function quest() { const inside = out.underP || (out.inFoot(P.pos.x, P.pos.z, 2) && P.pos.y < hAt(P.pos.x, P.pos.z) - .5); const nearT = tm.near; for (let i = 0; i < 4; i++) { GL.disc[i].visible = nearT && (GL.lit[i] || tm.state.glyph); GL.num[i].visible = nearT && !tm.state.glyph; }
     if (!inside) { if (!QE.hidden) QE.hidden = true; return; } const st = tm.state, k = (on, t) => `<span class="s ${on ? 'ok' : ''}">${on ? '✔' : '◻'} ${t}</span>`;
-    const hint = !st.mirror ? '☀ <b>Sun discs</b> — in the chamber on your <b>left</b> near the start: turn the three discs until the beam hits the seal.'
+    const hint = !st.mirror ? '☀ <b>Sun discs</b> — chamber on your <b>left</b> near the start. Turn <b>disc ' + (chain() + 1) + '</b> until the beam jumps to the next disc' + (chain() ? ' (' + chain() + ' of 3 lined up)' : '; then do the same with disc 2 and 3') + '.'
       : !st.glyph ? '▦ <b>Glyph tiles</b> — past the chasm, step on the numbered gold tiles in the order carved on the far wall: <b>1 → 3 → 2 → 4</b>' + (GL.at ? ' (' + GL.at + ' of 4 lit)' : '') + '.'
       : !st.weight ? '⚖ <b>Counterweight</b> — side chamber on your <b>right</b>, just past the tiles: count the gold studs on the wall and load that many stones.'
       : !tm.sealUp ? '🌞 All three seals restored — go down into the sanctum and <b>raise the hidden seal</b>.' : '💰 Take the <b>Sun Pyramid</b> and the <b>gold</b> in the sanctum.';

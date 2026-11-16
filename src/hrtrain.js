@@ -3,7 +3,7 @@
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=73';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=74';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 13, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['coach', 11], ['express', 10]], GAP = .6;

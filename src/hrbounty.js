@@ -66,6 +66,9 @@ body.touch #hrBounty{top:calc(max(8px,env(safe-area-inset-top)) + 30px);right:ca
   try { if (localStorage.getItem('hr_bfold') === '1') el.classList.add('fold'); } catch (_) {}
   const stop = e => e.stopPropagation(); el.addEventListener('pointerdown', stop); el.addEventListener('touchstart', stop, { passive: true });
   el.addEventListener('click', e => { e.stopPropagation(); el.classList.toggle('fold'); try { localStorage.setItem('hr_bfold', el.classList.contains('fold') ? '1' : '0'); } catch (_) {} });
+  { let pref = null; try { pref = localStorage.getItem('hr_bfold'); } catch (_) {} // v74: on phones the card tucks itself away 7 s after a new job shows (until you choose by tapping)
+    if (pref === null && matchMedia('(pointer: coarse)').matches) { let t = 0, last = ''; el.addEventListener('click', () => { pref = 'set'; clearTimeout(t); }); const bt = el.querySelector('.bt');
+      new MutationObserver(() => { if (pref) return; const now = bt.textContent; if (now === last) return; last = now; el.classList.remove('fold'); clearTimeout(t); t = setTimeout(() => { if (!pref) el.classList.add('fold'); }, 7000); }).observe(bt, { childList: true, characterData: true, subtree: true }); } }
   const win = document.createElement('div'); win.id = 'hrBountyWin'; document.body.appendChild(win);
   const $ = q => el.querySelector(q);
   function fanfare() { const t = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a); [[784, 0], [988, 110], [1175, 220], [1568, 360]].forEach(([f, d]) => setTimeout(() => t('triangle', f, f, d === 360 ? .5 : .14, .2), d)); setTimeout(() => t('sine', 392, 392, .6, .12), 360); }

@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=73';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=73';
-import './src/hraudio.js?v=73';
-import './src/stylize.js?v=73'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=73';
-import { FX, SFX } from './src/fx.js?v=73';
-import { initTouch } from './src/touch.js?v=73';
-import { createHorseRider } from './src/horse.js?v=73';
-import { createHorseNet } from './src/horsenet.js?v=73';
+import './src/assetshim.js?v=74';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=74';
+import './src/hraudio.js?v=74';
+import './src/stylize.js?v=74'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=74';
+import { FX, SFX } from './src/fx.js?v=74';
+import { initTouch } from './src/touch.js?v=74';
+import { createHorseRider } from './src/horse.js?v=74';
+import { createHorseNet } from './src/horsenet.js?v=74';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=73';
+import { PF, initPerf } from './src/perf.js?v=74';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -41,7 +41,7 @@ function look(dx, dy, src) { const ls = P.lookScale || 1; dx *= ls; dy *= ls; P.
 renderer.domElement.addEventListener('mousedown', () => { gesture(); if (!IS_TOUCH && !locked()) renderer.domElement.requestPointerLock(); });
 addEventListener('contextmenu', e => e.preventDefault());
 const input = { mx: 0, mz: 0, fire: false, jump: false, ads: false };
-const act = { settings: () => openSettings(true), build: () => horse.use(), ads() { input.ads = !input.ads; }, help() { const k = $('keys'); k.hidden = !k.hidden; },
+const act = { settings: () => openSettings(true), build: () => horse.use(), ads() { input.ads = !input.ads; }, help() { setupSettingsX(); const k = $('keys'); k.hidden = !k.hidden; },
   fs() { if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else goFullscreen(); } };
 function onKey(c) { if (G.phase == 'menu') return; if (c == 'KeyO') openSettings($('hrSettings').hidden); if (c == 'KeyE') horse.use(); if (c == 'KeyL' && horse.state.lb) horse.state.lb.open(); if (c == 'KeyZ' && horse.state.whistle) horse.state.whistle(); if (c == 'KeyH') act.help(); if (c == 'KeyV') hnet.voice.toggle(); }
 // first tap / click / key: unlock audio, re-ask for the mic if it was refused without a gesture, phones go fullscreen
@@ -63,7 +63,8 @@ function pins(hd) { const box = $('cpins'); if (!box || !horse.state.places) ret
   const vis = []; for (const el of box.children) { const k = el.dataset.k; el.classList.toggle('jobOn', k === onPoi); if (k === 'job' && onPoi) { el.style.display = 'none'; continue; } const t = k === 'train' ? H.trainPos : k === 'mustang' ? (H.mustangHome || null) : k === 'rob' ? H.robPos : k === 'wanted' ? H.wantedPos : k === 'buddy' ? H.buddyRanch : k === 'ranch' ? H.ranchPos : k === 'race' ? H.raceNext : k === 'ghost' ? H.ghostPos : k === 'lantern' ? H.lanternNear : k === 'job' ? H.bountyTarget : k === 'pen' ? [horse.PEN.x, horse.PEN.z] : k === 'town' ? pl.town : pl[k] ? [pl[k].x, pl[k].z] : null; if (!t) { el.style.display = 'none'; continue; }
     const dx = t[0] - P.pos.x, dz = t[1] - P.pos.z, d = Math.hypot(dx, dz), b = Math.atan2(dx, -dz) * 180 / Math.PI, dl = ((b - hd) % 360 + 540) % 360 - 180; let x = dl / 15 * 40, edge = '';
     if (d < 20) { el.style.display = 'none'; continue; } if (x > w) { x = w; edge = '▶'; } else if (x < -w) { x = -w; edge = '◀'; }
-    el.style.display = ''; vis.push({ el, x, edge }); el.style.opacity = edge ? .7 : 1; el.lastChild.textContent = (edge === '◀' ? '◀ ' : '') + (d > 999 ? (d / 1000).toFixed(1) + 'km' : Math.round(d) + 'm') + (edge === '▶' ? ' ▶' : ''); }
+    el.style.display = ''; vis.push({ el, x, edge, d, k }); el.style.opacity = edge ? .7 : 1; el.lastChild.textContent = (edge === '◀' ? '◀ ' : '') + (d > 999 ? (d / 1000).toFixed(1) + 'km' : Math.round(d) + 'm') + (edge === '▶' ? ' ▶' : ''); }
+  { const URG = { job: 1, rob: 1, race: 1, ghost: 1 }, MAX = w < 260 ? 4 : 6; const keep = vis.slice().sort((a, b) => (URG[b.k] || 0) - (URG[a.k] || 0) || a.d - b.d).slice(0, MAX); for (let i = vis.length - 1; i >= 0; i--) if (!keep.includes(vis[i])) { vis[i].el.style.display = 'none'; vis.splice(i, 1); } } // v74: a calmer compass - urgent pins + the nearest few
   // v45: chips that point the same way are nudged apart instead of printing on top of each other
   const all = vis.sort((a, b) => a.x - b.x); for (const v of all) v.w = (v.el.offsetWidth || 80) + 4; // v45: spaced by their real widths, both ways, inside the strip
   for (let i = 1; i < all.length; i++) { const g = (all[i - 1].w + all[i].w) / 2; if (all[i].x - all[i - 1].x < g) all[i].x = all[i - 1].x + g; }
@@ -123,9 +124,9 @@ function setupSettingsX() { const st = (k, v) => { try { localStorage.setItem(k,
   { const gb = $('grassBtn'); if (gb && !$('dnBtn')) { const b = document.createElement('button'); b.id = 'dnBtn'; b.className = gb.className; const on = () => { try { return localStorage.getItem('hr_daynight') !== '0'; } catch (_) { return true; } }; const lab = () => { b.textContent = '🌙 Day/Night: ' + (on() ? 'ON' : 'OFF'); b.setAttribute('aria-pressed', on()); }; lab(); b.onclick = () => { try { localStorage.setItem('hr_daynight', on() ? '0' : '1'); } catch (_) {} lab(); }; gb.insertAdjacentElement('afterend', b); } if (gb && !$('wxBtn')) { const b = document.createElement('button'); b.id = 'wxBtn'; b.className = gb.className; const on = () => { try { return localStorage.getItem('hr_weather') !== '0'; } catch (_) { return true; } }; const lab = () => { b.textContent = '🌧️ Weather: ' + (on() ? 'ON' : 'OFF'); b.setAttribute('aria-pressed', on()); }; lab(); b.onclick = () => { try { localStorage.setItem('hr_weather', on() ? '0' : '1'); } catch (_) {} lab(); }; $('dnBtn').insertAdjacentElement('afterend', b); } } // v47/v53
   { const gb = $('grassBtn'), on = gt('hr_grass', '0') === '1'; gb.textContent = '🌿 Grass blades: ' + (on ? 'ON' : 'OFF'); gb.setAttribute('aria-pressed', on); gb.onclick = () => { st('hr_grass', on ? '0' : '1'); location.reload(); }; }
   const cur = gt('vr_quality', 'auto'); for (const b of $('qSeg').children) { b.classList.toggle('on', b.dataset.q === cur); b.onclick = () => { if (b.dataset.q === gt('vr_quality', 'auto')) return; st('vr_quality', b.dataset.q); const u = new URL(location.href); u.searchParams.delete('q'); location.href = u.toString(); }; }
-  const touch = matchMedia('(pointer: coarse)').matches, rows = touch ? [['Left thumb', 'move / steer'], ['Right thumb', 'look around'], ['RIDE / USE', 'mount a horse, talk, buy'], ['DRAW', 'take out a gun'], ['FIRE / AIM', 'shoot / zoom'], ['Gun swap', 'cycles guns, then 🧨 dynamite (hold FIRE to aim, let go to throw)'], ['JUMP', 'jump'], ['⋯', 'more: settings, fullscreen']]
-    : [['W A S D', 'move / steer'], ['Mouse', 'look'], ['Shift', 'gallop / run'], ['E', 'mount, use, buy'], ['F / 1–6', 'draw a gun / pick one'], ['Click / Right-click', 'shoot / aim'], ['R', 'reload'], ['7', 'dynamite: hold click to aim, release to throw'], ['Space', 'jump'], ['O', 'settings']];
-  rows.push(['🎮 Controller', 'L-stick move (click sprint) · R-stick look · RT shoot · LT aim · A jump · X use · B reload · Y/RB swap · LB whistle · D-up dynamite · Start settings']); $('ctlList').innerHTML = rows.map(([k, v]) => `<b>${k}</b><span>${v}</span>`).join(''); }
+  const touch = matchMedia('(pointer: coarse)').matches, rows = touch ? [['Left thumb', 'move / steer'], ['Right thumb', 'look around'], ['RIDE / USE', 'mount, talk, buy; with no horse near it whistles yours over'], ['FIRE / AIM', 'shoot / zoom; FIRE also draws your last gun'], ['Gun swap', 'cycles guns, then 🧨 dynamite (hold FIRE to aim, let go to throw)'], ['JUMP', 'jump'], ['⋯', 'more: settings, fullscreen']]
+    : [['W A S D', 'move / steer'], ['Mouse', 'look'], ['Shift', 'gallop / run'], ['Space', 'jump'], ['E', 'mount, use, talk, buy'], ['F · Q', 'draw a gun · next gun'], ['1–6 · 8 · 9', 'six-shooter, rifle, Buffalo, Tommy, Golden, Gatling · M4 · MP5'], ['0', 'Sun Pyramid'], ['7', 'dynamite: hold click to aim, release to throw'], ['Click · Right-click', 'shoot · aim'], ['R · X', 'reload · holster'], ['C', 'first / third person'], ['Z', 'whistle for your horse'], ['G · B', 'axe · build'], ['L', 'leaderboard'], ['V', 'voice chat'], ['H', 'help'], ['O', 'settings']];
+  rows.push(['🎮 Controller', 'L-stick move (click sprint) · R-stick look · RT shoot · LT aim · A jump · X use · B reload · Y/RB swap · LB whistle · D-up dynamite · Start settings']); $('ctlList').innerHTML = rows.map(([k, v]) => `<b>${k}</b><span>${v}</span>`).join(''); { const kp = $('keys'); if (kp) kp.innerHTML = '<div style="display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12px;text-align:left">' + rows.map(([k, v]) => `<b style="color:#ffd98a">${k}</b><span>${v}</span>`).join('') + '</div><div style="margin-top:6px;opacity:.7;font-size:11px">H to close</div>'; } } // v74: the H panel was empty
 setTimeout(() => { try { const v = +(localStorage.getItem('hr_vol') ?? 50); sfx.vol = v / 100; if (sfx.master) sfx.master.gain.value = sfx.vol; } catch (_) {} }, 0);
 function syncFov() { setupSettingsX(); const v = horse.state.fovH; $('fovRange').value = v; $('fovVal').textContent = v + '°'; syncChar(); }
 function syncChar() { const H = horse.state, row = $('charRow'); if (!row || !H.characters) return; if (row.children.length !== H.characters.length) { row.innerHTML = ''; H.characters.forEach((n, i) => { const b = document.createElement('button'); b.textContent = i ? n.split(' ')[0] : 'Classic'; b.title = n; b.dataset.cv = i; b.onclick = () => { H.setCharacter(i); syncChar(); }; row.appendChild(b); }); } for (const b of row.children) b.classList.toggle('on', +b.dataset.cv === (H.cv | 0)); } // v36 character picker (saved; sent to the lobby)

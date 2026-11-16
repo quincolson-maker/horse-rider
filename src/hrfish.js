@@ -27,7 +27,7 @@ export function createFishing({ scene, H, P, T, hAt, msg, sfx }) {
   function update(dt) { if (!built) { build(); if (!built) return; } t += dt; if (!S) { ringM.opacity = 0; return; }
     if (Math.hypot(P.pos.x - spot.x, P.pos.z - spot.z) > 6 || H.mounted) { reel(false); return; }
     const hand = new THREE.Vector3(P.pos.x, P.pos.y + 1.5, P.pos.z), a = lineG.attributes.position; a.setXYZ(0, hand.x, hand.y, hand.z); a.setXYZ(1, bob.position.x, bob.position.y + .06, bob.position.z); a.needsUpdate = true;
-    S.t -= dt; if (S.st === 'wait') { bob.position.y = S.by + Math.sin(t * 3) * .015; if (S.t <= 0) { S.st = 'bite'; S.t = 1.25; spot.label = '🐟 BITE! TAP NOW!'; msg('🎣 BITE! Tap PUSH / E now!', 1.2); tone('square', 1200, 900, .08, .16); setTimeout(() => tone('square', 1200, 900, .08, .16), 120); } }
+    S.t -= dt; if (S.st === 'wait') { bob.position.y = S.by + Math.sin(t * 3) * .015; if (S.t <= 0) { S.st = 'bite'; S.t = 1.6; /* v74: 1.25 s was tight on phones */ spot.label = '🐟 BITE! TAP NOW!'; msg('🎣 BITE! Tap PUSH / E now!', 1.2); tone('square', 1200, 900, .08, .16); setTimeout(() => tone('square', 1200, 900, .08, .16), 120); } }
     else { bob.position.y = S.by - .08 + Math.sin(t * 22) * .04; ring.position.set(bob.position.x, S.by + .01, bob.position.z); ringM.opacity = .7 * (S.t / 1.25); ring.scale.setScalar(1 + (1.25 - S.t) * 3); if (S.t <= 0) { reel(false); msg('It got away…', 1.4); } } }
   return { update, get state() { return S; } };
 }

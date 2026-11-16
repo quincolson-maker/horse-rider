@@ -3,8 +3,8 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=73';
-import { buildM4, buildMP5, detailize } from './hrmodern.js?v=73'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=74';
+import { buildM4, buildMP5, detailize } from './hrmodern.js?v=74'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -545,6 +545,7 @@ export function createGuns(c) {
     updateTargets(dt);
     const w = state.weapon; if (w && (H.mountT > 0 || H.dismT > 0)) { for (const m of Object.values(models)) m.group.visible = false; state.aiming = false; H.scoped = false; H.gunAim = false; H.gunFace = null; return; }
     if (w && (H.noGun || H.tool)) holster();
+    { const f = !!input.fire; if (f && !state.fireWas && !state.weapon && !H.noGun && !H.tool && !H.uiOpen && !(H.mountT > 0) && !(H.dyn && H.dyn.equipped())) draw(state.last || 'revolver'); state.fireWas = f; } // v74: FIRE with no gun out draws your last gun (phones: no separate DRAW step)
     if (!state.weapon) { for (const m of Object.values(models)) m.group.visible = false; state.aiming = false; H.scoped = false; state.aimK += (0 - state.aimK) * Math.min(1, dt * 10); H.aimK = state.aimK; H.gunFace = null; return; }
     state.aiming = !!(aimHeld || input.ads);
     const scoping = SCOPED(w) && state.aiming; state.scopeT = scoping ? state.scopeT + dt : 0;

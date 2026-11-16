@@ -1,10 +1,10 @@
 // v39 THE SUN PYRAMID — the Hollow Sun's hidden prize. The model, charge, beam and flare are ChatGPT-generated code from Quin
-// (createSunPyramidWeapon in src/hrsuntemple.js); this file makes it an item you hold (key 6 / the sun button on a phone),
+// (createSunPyramidWeapon in src/hrsuntemple.js); this file makes it an item you hold (key 0 / the sun button on a phone; v74 moved off 6, which also draws the Gatling),
 // aims it with the camera, finds what the beam hits with our own gun ray, and blasts the dead around the impact through the
 // normal host-checked zombie hits (co-op safe). Balance: 0.55 s charge, then 4.5 s before the next pulse, 90 m reach,
 // up to 450 damage that falls to half at the 3.8 m edge of the blast.
 import * as THREE from 'three';
-import { createSunPyramidWeapon } from './hrsuntemple.js?v=73';
+import { createSunPyramidWeapon } from './hrsuntemple.js?v=74';
 
 export const SUN = { dmg: 450, radius: 3.8, range: 90, cooldown: 4.5, beam: 1.3 };
 export function createSunItem(c) {
@@ -21,7 +21,7 @@ export function createSunItem(c) {
   function save() { try { localStorage.setItem('hr_sun', S.owned ? '1' : '0'); } catch (_) {} }
   function give() { S.owned = true; save(); ui(); }
   function hold(on) { if (on && !S.owned) return false; if (on && H.guns && H.guns.state.weapon) H.guns.holster(); S.held = !!on; model.visible = S.held; return true; }
-  addEventListener('keydown', e => { if (!H.on || e.repeat) return; if (e.code === 'Digit6' && S.owned) { hold(!S.held); if (S.held) msg('☀ The Sun Pyramid — fire to charge a sun beam', 2); } });
+  addEventListener('keydown', e => { if (!H.on || e.repeat) return; if (e.code === 'Digit0' && S.owned) { hold(!S.held); if (S.held) msg('☀ The Sun Pyramid — fire to charge a sun beam', 2); } });
   addEventListener('mousedown', e => { if (e.button === 0 && S.held && H.on && !H.uiOpen) pend = true; });
   const seg = new THREE.Vector3(), rel = new THREE.Vector3();
   function blast(p, d, a) { const Z = H.zombies; if (!Z) return; let hits = 0; if (a) seg.copy(p).sub(a); const L = a ? seg.length() : 0; if (L > 1e-3) seg.divideScalar(L);

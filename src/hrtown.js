@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=69';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=70';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,8 +47,8 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createPoker } from './hrpoker.js?v=69';
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=69';
+import { createPoker } from './hrpoker.js?v=70';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=70';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -287,7 +287,7 @@ export function createTown(c) {
     let h = `<button class="x" data-a="x">✕</button>`;
     if (T.ui === 'guns') { h += `<h3>GUN UPGRADE STATION</h3><div class="pt">${pts} points · zombie kills +10 (headshot +15)</div>`;
       for (const w of ['tommy', 'gold']) if (!S.owned[w]) h += `<div class="row"><span class="nm">${({ tommy: 'Tommy gun · 100-round drum', gold: 'Golden Buffalo · huge zoom' })[w]}</span><button data-a="buy" data-w="${w}" ${pts < g.PRICE[w] ? 'disabled' : ''}>BUY ${g.PRICE[w]}</button></div>`;
-      for (const w of ['revolver', 'rifle', 'sniper', 'tommy', 'gold']) { if (!S.owned[w]) continue; const t = g.tier(w); h += `<div class="row"><span class="nm">${({ revolver: 'Six-shooter', rifle: 'Lever rifle', sniper: 'Buffalo rifle', tommy: 'Tommy gun', gold: 'Golden Buffalo' })[w]} ${t ? '· ' + TN[t] : ''}</span>` +
+      for (const w of ['revolver', 'rifle', 'sniper', 'tommy', 'gold', 'm4', 'mp5']) { if (!S.owned[w]) continue; const t = g.tier(w); h += `<div class="row"><span class="nm">${({ revolver: 'Six-shooter', rifle: 'Lever rifle', sniper: 'Buffalo rifle', tommy: 'Tommy gun', gold: 'Golden Buffalo', m4: 'M4A1 carbine', mp5: 'MP5' })[w]} ${t ? '· ' + TN[t] : ''}</span>` +
         (t < 3 ? `<button class="${cls[t + 1]}" data-a="up" data-w="${w}" ${pts < g.UP_COST[w][t] ? 'disabled' : ''}>${TN[t + 1]} ${g.UP_COST[w][t]}</button>` : '<span>MAXED</span>') + '</div>'; }
       h += '<div style="opacity:.7;font-size:12px">Each tier: more damage, a bigger magazine, faster reloads and fire rate.</div>'; }
     else { h += `<h3>GENERAL STORE</h3><div class="pt">${pts} points</div>`;

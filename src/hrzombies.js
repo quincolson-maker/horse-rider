@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=69';
-import { PERF } from './perfopts.js?v=69';
+import { PF } from './perf.js?v=70';
+import { PERF } from './perfopts.js?v=70';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -17,7 +17,7 @@ export const ZKINDS = {
   boss: { hp: 2600, spd: 1.55, dmg: 42, cd: 1.9, s: 2.15, reach: 2.6 }, // v43: the Hulking Dead, every third wave (health bar on screen) // v38: Bandit Falls guards (host-run, they shoot; never spawned by the waves)
 };
 export const ZSET = { travel: 6, near: 90, capDesktop: 42, capPhone: 18, chaosDesktop: 420, chaosPhone: 180, chaosRows: 120, chaosRowR: 260, startDelay: 10, waveSecs: 75, playerHp: 100, horseHp: 160, regenDelay: 5, regen: 7, respawn: 4,
-  dmg: { revolver: 50, rifle: 70, sniper: 260, tommy: 34, gold: 650, sun: 450, dyn: 420, gatling: 40 }, head: 2.4, penMargin: 1.1 };
+  dmg: { revolver: 50, rifle: 70, sniper: 260, tommy: 34, m4: 46, mp5: 31, gold: 650, sun: 450, dyn: 420, gatling: 40 }, head: 2.4, penMargin: 1.1 };
 const KIND_LIST = ['walker', 'runner', 'brute', 'outlaw', 'boss'];
 
 export function createHrZombies(c) {
@@ -295,13 +295,13 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     for (const o of [...Z.list]) if (!seen.has(o.id) && o.alive) despawn(o); }
   // v36: the host checks a client's hit: known weapon (or a hired gun), no more than that weapon's best (gold-tier, headshot)
   // damage, no faster than it can fire (token bucket), in range of where that rider is, and each shot counts once
-  const W_GAP = { revolver: .14, rifle: .16, sniper: .7, tommy: .075, gold: .7, bandit: .12, sun: .3, dyn: .02, gatling: .05 }, W_RANGE = { revolver: 135, rifle: 260, sniper: 420, tommy: 170, gold: 3200, bandit: 140, sun: 100, dyn: 90, gatling: 170 };
+  const W_GAP = { revolver: .14, rifle: .16, sniper: .7, tommy: .075, m4: .08, mp5: .066, gold: .7, bandit: .12, sun: .3, dyn: .02, gatling: .05 }, W_RANGE = { revolver: 135, rifle: 260, sniper: 420, tommy: 170, m4: 280, mp5: 160, gold: 3200, bandit: 140, sun: 100, dyn: 90, gatling: 170 };
   function reject(why) { Z.rejected = Z.rejected || {}; Z.rejected[why] = (Z.rejected[why] || 0) + 1; return false; }
   function remoteHit(m, from) { if (!m || !from || !Number.isFinite(m.id) || !Number.isFinite(m.d) || m.d < 0) return reject('malformed');
     const w = m.b ? 'bandit' : (ZSET.dmg[m.w] ? m.w : null); if (!w) return reject('weapon');
     let V = Z.val.get(from); if (!V) Z.val.set(from, V = { ids: new Set(), q: [], b: {} });
     if (Number.isFinite(m.s)) { const key = m.s + ':' + m.id; if (V.ids.has(key)) return reject('dupe'); V.ids.add(key); V.q.push(key); if (V.q.length > 256) V.ids.delete(V.q.shift()); }
-    const now = performance.now() / 1000, gap = W_GAP[w] * .7 * .75, cap = w === 'bandit' || w === 'tommy' ? 8 : w === 'sun' ? 16 : w === 'dyn' ? 40 : w === 'gatling' ? 10 : 4, B = V.b[w] || (V.b[w] = { tok: cap, t: now }); B.tok = Math.min(cap, B.tok + (now - B.t) / gap); B.t = now; if (B.tok < 1) return reject('rate'); B.tok -= 1;
+    const now = performance.now() / 1000, gap = W_GAP[w] * .7 * .75, cap = w === 'bandit' || w === 'tommy' || w === 'm4' || w === 'mp5' ? 8 : w === 'sun' ? 16 : w === 'dyn' ? 40 : w === 'gatling' ? 10 : 4, B = V.b[w] || (V.b[w] = { tok: cap, t: now }); B.tok = Math.min(cap, B.tok + (now - B.t) / gap); B.t = now; if (B.tok < 1) return reject('rate'); B.tok -= 1;
     const o = Z.byId.get(m.id); if (!o) return reject('unknown');
     const R = (c.remotes ? c.remotes() : []).find(q => q.id === from); if (R && R.s && Number.isFinite(R.s.x) && Math.hypot(R.s.x - o.pos.x, R.s.z - o.pos.z) > W_RANGE[w] + 30) return reject('range');
     const max = w === 'bandit' ? 85 : ZSET.dmg[w] * (m.h ? ZSET.head : 1) * 2 + 1; if (m.d > max) reject('clamped');

@@ -1,0 +1,10 @@
+<!doctype html><html><body style="margin:0;background:#888"><script type="importmap">{"imports":{"three":"../three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';import { buildM4, buildMP5 } from '../src/hrmodern.js';
+const q=new URLSearchParams(location.search),W=innerWidth,H=innerHeight;const r=new THREE.WebGLRenderer({antialias:true});r.setSize(W,H);r.toneMapping=THREE.ACESFilmicToneMapping;r.outputColorSpace=THREE.SRGBColorSpace;document.body.appendChild(r.domElement);
+const s=new THREE.Scene();s.background=new THREE.Color(0x8a8f96);const c=new THREE.PerspectiveCamera(30,W/H,.01,10);
+s.add(new THREE.HemisphereLight(0xffffff,0x444444,1.6));const d=new THREE.DirectionalLight(0xffffff,2.4);d.position.set(1,2,1.5);s.add(d);const d2=new THREE.DirectionalLight(0xbcd0ff,1);d2.position.set(-2,1,-1);s.add(d2);
+const a=buildM4(),b=buildMP5();a.group.position.set(0,.16,0);b.group.position.set(0,-.14,0);s.add(a.group,b.group);
+const view=q.get('v')||'side';if(view==='side'){c.position.set(2.2,0.15,-.05);c.lookAt(0,0,-.05);}else if(view==='q'){c.position.set(1.4,.6,-1.3);c.lookAt(0,0,-.08);}else{c.position.set(-1.6,.35,.9);c.lookAt(0,0,-.05);}
+r.render(s,c);window.__done=1;
+</script></body></html>

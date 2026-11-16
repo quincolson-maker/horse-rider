@@ -8,7 +8,7 @@
 //     hollow boardwalk, sharp rock/cave)
 //   - ambience: wind bed, birdsong by day, the waterfall's roar near Bandit Falls, and inside the hideout: dripping
 //     water, the campfire's crackle and the underground river
-import { SFX } from './fx.js?v=69';
+import { SFX } from './fx.js?v=70';
 
 const P = SFX.prototype, baseInit = P.init;
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -27,6 +27,8 @@ const GUNS = {
   gold:     { crack: 1.15, body: [800, .2, 1.15], thump: [85, 30, .26, 1.3], tail: [210, 1.1, .7], echoes: [[.5, .38, 1100], [1.05, .24, 760], [1.7, .13, 540], [2.35, .07, 420]], mech: [[.75, 2600, 5, .03, .25]], ring: [2350, .9, .08], dur: 3 },
   gatling:  { crack: .75, body: [1550, .06, .8], thump: [170, 60, .07, .75], tail: [380, .2, .18], echoes: [[.3, .1, 1200]], mech: [], dur: .7 },
   tommy:    { crack: .7, body: [1800, .06, .75], thump: [180, 70, .07, .7], tail: [420, .22, .2], echoes: [[.3, .1, 1300]], mech: [], dur: .7 },
+  m4:       { crack: 1.05, body: [2100, .05, .9], thump: [150, 55, .08, .85], tail: [520, .38, .32], echoes: [[.32, .16, 1500], [.72, .08, 1000]], mech: [], dur: 1 }, // v70 5.56 carbine: hard supersonic crack
+  mp5:      { crack: .62, body: [2400, .04, .62], thump: [230, 95, .05, .55], tail: [640, .18, .15], echoes: [[.28, .08, 1500]], mech: [], dur: .55 }, // v70 9 mm SMG: tight, fast
 };
 function renderGuns(sfx) { const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext; if (!OAC) return; const sr = 44100;
   for (const [k, G] of Object.entries(GUNS)) { try {
@@ -49,7 +51,7 @@ function renderGuns(sfx) { const OAC = window.OfflineAudioContext || window.webk
       const kk = m > 0 ? .94 / m : 1; for (let ch = 0; ch < b.numberOfChannels; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < d.length; i++) d[i] *= kk; } sfx.bufs[k] = b; }).catch(() => {});
   } catch (e) {} } }
 
-P.gun = function (kind, vol = 1) { if (!this.ctx || !this.bufs) return false; const b = this.bufs[kind]; if (!b) return false; if (!this.ok('gun' + kind, kind === 'gatling' || kind === 'tommy' ? .03 : .02)) return true;
+P.gun = function (kind, vol = 1) { if (!this.ctx || !this.bufs) return false; const b = this.bufs[kind]; if (!b) return false; if (!this.ok('gun' + kind, kind === 'gatling' || kind === 'tommy' || kind === 'm4' || kind === 'mp5' ? .03 : .02)) return true;
   const c = this.ctx, s = c.createBufferSource(); s.buffer = b; s.playbackRate.value = rand(.95, 1.05); const g = c.createGain(); g.gain.value = vol; s.connect(g); const w = this.wet; this.wet = .18; this.route(g); this.wet = w; s.start(); return true; };
 
 // ---------------- Gatling spin ----------------

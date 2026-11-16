@@ -68,9 +68,16 @@ function plateCarrier(g, M) { // chest ~y .30-.52, front surface z ~.19, back z 
   RB(g, M.rgP, .08, .12, .06, -.19, .38, .1, .015); C(g, M.black, .007, .007, .2, -.2, .52, .1); C(g, M.black, .012, .012, .02, -.2, .62, .1); // radio + antenna
   RB(g, M.rgP, .07, .09, .045, .19, .36, .12, .012); // med pouch
   for (const x of [-.13, .13]) B(g, M.buckle, .04, .02, .012, x, .27, .24); // cummerbund buckles
+  // v73: tourniquet on the left strap, frag pouch, chem lights, PTT cable from the radio, IR square on the back, shoulder pads
+  B(g, M.black, .035, .075, .03, .1, .53, .2, -.25); C(g, M.rubber, .012, .012, .03, .1, .57, .21, 0, 0, Math.PI / 2, 10);
+  C(g, M.rgP, .03, .03, .07, .2, .3, .19, 0, 0, 0, 14); C(g, M.black, .022, .022, .02, .2, .345, .19, 0, 0, 0, 12);
+  for (const [x, c] of [[-.15, 0x7dff6a], [-.135, 0xff3a2a]]) { const m = C(g, new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: .25, roughness: .5 }), .006, .006, .09, x, .45, .25, 0, 0, .1, 8); }
+  C(g, M.black, .004, .004, .26, -.15, .52, .14, .5, 0, .35, 6);
+  B(g, M.velcro, .07, .05, .006, -.08, .5, -.263); B(g, new THREE.MeshStandardMaterial({ color: 0x3a3a30, roughness: .6, metalness: .2 }), .045, .03, .004, -.08, .5, -.268);
+  for (const sd of [-1, 1]) RB(g, M.rgP, .09, .02, .14, sd * .12, .63, .0, .008);
   B(g, M.rgP, .26, .03, .05, 0, .55, -.235); RB(g, M.rgP, .2, .14, .06, 0, .38, -.26, .015); C(g, M.black, .01, .01, .26, .07, .5, -.27, .2, 0, 0); } // drag handle, back panel, hydration tube
 function helmet(g, M) { const hx = 0, hy = .835, hz = .065, R = .158;
-  const shell = new THREE.Mesh(new THREE.SphereGeometry(R, 40, 20, 0, Math.PI * 2, 0, 1.38), M.helm); shell.scale.set(.98, .92, 1.08); shell.position.set(hx, hy - .015, hz); g.add(shell); // high-cut dome
+  const shell = new THREE.Mesh(new THREE.SphereGeometry(R, 40, 20, 0, Math.PI * 2, 0, 1.38), M.camo); // v73: multicam helmet cover shell.scale.set(.98, .92, 1.08); shell.position.set(hx, hy - .015, hz); g.add(shell); // high-cut dome
   const rim = new THREE.Mesh(new THREE.TorusGeometry(R * .985, .006, 6, 48), M.black); rim.rotation.x = Math.PI / 2; rim.scale.set(.98, 1.08, 1); rim.position.set(hx, hy - .015 + Math.cos(1.38) * R * .92, hz); g.add(rim);
   for (const s of [-1, 1]) { const rail = B(g, M.black, .014, .022, .15, s * .152, hy - .01, hz - .01, 0, 0, s * .12); rail.scale.y = 1; for (let i = 0; i < 6; i++) B(g, M.black, .016, .006, .008, s * .158, hy - .002, hz - .07 + i * .025); } // ARC-style side rails
   B(g, M.black, .06, .035, .02, hx, hy + .045, hz + .168, -.35); // NVG shroud
@@ -80,6 +87,10 @@ function helmet(g, M) { const hx = 0, hy = .835, hz = .065, R = .158;
   // quad-tube night vision, flipped UP on its mount (tubes point up/forward above the brow)
   const nv = new THREE.Group(); nv.position.set(hx, hy + .075, hz + .2); nv.rotation.x = -1.15; g.add(nv); B(nv, M.black, .14, .03, .04, 0, 0, .0); B(nv, M.black, .03, .05, .03, 0, -.02, -.02);
   for (const [x, ry] of [[-.058, -.25], [-.022, 0], [.022, 0], [.058, .25]]) { const t = C(nv, M.black, .0145, .016, .085, x, .0, .055, Math.PI / 2, ry, 0, 18); const l = C(nv, M.lens, .0125, .0125, .004, 0, .044, 0); t.add(l); }
+  // v73: comms headset (ear cups under the rails, mic boom to the mouth), IR patch, cover drawstring
+  for (const sd of [-1, 1]) { const cup = RB(g, M.black, .07, .085, .06, sd * .158, hy - .055, hz + .005, .025); cup.rotation.y = Math.PI / 2; C(g, M.rubber, .03, .03, .012, sd * .186, hy - .055, hz + .005, 0, 0, Math.PI / 2, 18); B(g, M.black, .012, .05, .014, sd * .158, hy - .005, hz + .005); C(g, M.black, .004, .004, .02, sd * .19, hy - .02, hz + .03, 0, 0, Math.PI / 2, 8); }
+  { const boom = C(g, M.black, .0035, .0035, .13, .1, hy - .1, hz + .14, Math.PI / 2, -.6, 0, 8); const mic = C(g, M.rubber, .009, .009, .02, .045, hy - .12, hz + .195, Math.PI / 2, 0, 0, 10); }
+  B(g, M.velcro, .04, .03, .004, hx + .05, hy + .1, hz - .1, -.9, .3); C(g, M.black, .002, .002, .9, hx, hy - .012, hz, 0, 0, Math.PI / 2, 4).scale.set(1, .38, 1);
   // chin strap
   for (const s of [-1, 1]) { B(g, M.black, .012, .11, .006, s * .118, hy - .1, hz + .01, 0, 0, -s * .1); } B(g, M.black, .07, .012, .03, hx, hy - .18, hz + .09); }
 
@@ -99,6 +110,14 @@ export function wearKit(root, on) { if (!root || !root.userData) return false;
   add(onBone(sk, 'Spine01', g => plateCarrier(g, M))); add(onBone(sk, 'Head', g => helmet(g, M)));
   for (const [leg, s] of [['LeftLeg', 1], ['RightLeg', -1]]) add(onBone(sk, leg, g => { RB(g, M.black, .11, .14, .04, s * .19, -.44, .085, .03); B(g, M.black, .13, .018, .1, s * .19, -.41, .03); B(g, M.black, .13, .018, .1, s * .19, -.49, .03); }));
   add(onBone(sk, 'RightUpLeg', g => { B(g, M.rgP, .05, .03, .14, -.255, -.08, .0); RB(g, M.black, .05, .17, .09, -.27, -.2, .01, .015); B(g, M.black, .018, .05, .03, -.27, -.1, .04); B(g, M.rgP, .06, .03, .15, -.25, -.26, .0); })); // drop-leg holster
+  add(onBone(sk, 'Hips', g => { // v73 battle belt: padded belt, buckle, pistol-mag pouches, rifle-mag pouch, dump pouch, IFAK
+    const belt = new THREE.Mesh(new THREE.CylinderGeometry(.205, .2, .055, 36, 1, true), M.rg); belt.scale.set(1.04, 1, .94); belt.position.set(0, .14, .01); belt.material.side = THREE.DoubleSide; g.add(belt);
+    B(g, M.black, .06, .035, .02, 0, .14, .205); B(g, M.buckle, .03, .02, .012, 0, .14, .217);
+    for (const x of [.075, .12]) RB(g, M.rgP, .035, .06, .03, x, .1, .19, .008); RB(g, M.rgP, .07, .09, .045, -.12, .09, .175, .012);
+    RB(g, M.rgP, .12, .1, .05, -.11, .09, -.19, .015); RB(g, M.rgP, .1, .08, .045, .1, .1, -.19, .015); B(g, new THREE.MeshStandardMaterial({ color: 0x9a2a22, roughness: .8 }), .03, .03, .004, .1, .12, -.214); }));
+  for (const [bn, sd] of [['LeftArm', 1], ['RightArm', -1]]) add(onBone(sk, bn, g => { // sleeve pockets; reversed flag patch on the right arm
+    const pk = RB(g, M.camo, .085, .1, .025, sd * .3, .405, -.01, .01); pk.rotation.z = sd * .53; pk.position.x += sd * .03; pk.position.y += .018;
+    if (sd < 0) { const f = B(g, M.flag, .06, .038, .004, sd * .33, .425, -.01); f.rotation.set(0, -Math.PI / 2 * sd * 0, sd * .53); f.rotation.y = Math.PI / 2; f.rotation.order = 'YZX'; } else B(g, M.velcro, .055, .04, .004, sd * .33, .425, -.01, 0, Math.PI / 2, sd * .53); }));
   // 3. the straw hat comes off: drop the crown above the skull and the wide brim
   if (G.index) { const hx = 0, hz = .07, keep = v => { const y = pos.getY(v), r = Math.hypot(pos.getX(v) - hx, pos.getZ(v) - hz); if (y > .735 && r > .165) return false; /* nothing but the hat is that high and that wide (shoulders stop at y .66) */ if (!HEAD.has(dom[v]) && dom[v] !== NECK) return true; return !(y > .905 || (y > .78 && r > .152) || (y > .655 && r > .168)); }, I0 = body.userData.kitIndex0, out = [];
     for (let t = 0; t < I0.length; t += 3) if (keep(I0[t]) && keep(I0[t + 1]) && keep(I0[t + 2])) out.push(I0[t], I0[t + 1], I0[t + 2]); body.userData.kitIndexHat = new (I0.constructor)(out); }

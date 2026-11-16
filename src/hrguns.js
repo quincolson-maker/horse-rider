@@ -3,8 +3,8 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=72';
-import { buildM4, buildMP5 } from './hrmodern.js?v=72'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=73';
+import { buildM4, buildMP5, detailize } from './hrmodern.js?v=73'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -70,6 +70,7 @@ function mats() {
     steel: P({ color: 0xe9e5da, roughness: .55, metalness: .25 }), chain: new THREE.MeshStandardMaterial({ color: 0x3a3632, metalness: .8, roughness: .5 }),
     flash: new THREE.MeshBasicMaterial({ map: flash, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, side: THREE.DoubleSide }),
     glass: [0x2e6b3c, 0x7a4a16, 0xa8c8c0].map(c => P({ color: c, roughness: .06, metalness: 0, transparent: true, opacity: .62, clearcoat: 1, envMapIntensity: 1.6 })) };
+  detailize(MATS.blued, 'machined', .22, 5); detailize(MATS.caseH, 'machined', .18, 3); detailize(MATS.walnut, 'grain', .16, 3); detailize(MATS.brass, 'machined', .05, 8); detailize(MATS.steel, 'machined', .2, 4); // v73 surface detail on every gun
   for (const m of Object.values(MATS)) if (m && m.isMaterial) { m.defines = Object.assign(m.defines || {}, { STY_SHARP: '' }); m.needsUpdate = true; } // v42: guns stay crisp (no painterly texture blur)
   return MATS;
 }

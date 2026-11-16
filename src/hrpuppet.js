@@ -10,7 +10,7 @@
 // rider's own texture (skin-coloured texels keep their hue), plus the George repaint for some.
 // Female characters (barmaid, dancers) keep their own models.
 import * as THREE from 'three';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=71';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=72';
 
 export const PENDING = []; // dolls made before the rider model has loaded
 const LOOKS = [

@@ -44,7 +44,7 @@ export function initTouch(input, look, act, unlockAudio) {
   dbg(); addEventListener('resize', dbg);
   // buttons; FIRE also acts as a look pad while held
   const btn = (id, down, up, drag) => { const el = $(id); if (!el || !down) return; let pid = null, last = null;
-    el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); unlockAudio(); if (pid !== null) return; pid = e.pointerId; cap(el, e); el.classList.add('down'); last = [e.clientX, e.clientY]; if (drag) lookStart(pid, e.clientX, e.clientY); down(); });
+    el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); unlockAudio(); if (pid !== null) { if (pid === e.pointerId) return; if (drag) lookEnd(pid); up && up(); } /* v72: a new press always takes over (a lost pointerup used to leave the button dead) */ pid = e.pointerId; cap(el, e); el.classList.add('down'); last = [e.clientX, e.clientY]; if (drag) lookStart(pid, e.clientX, e.clientY); down(); });
     if (drag) el.addEventListener('pointermove', e => { if (e.pointerId !== pid) return; e.preventDefault(); lookMove(pid, e.clientX, e.clientY); });
     const u = e => { if (e.pointerId !== pid) return; if (drag) lookEnd(pid); pid = null; el.classList.remove('down'); up && up(); };
     for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) el.addEventListener(ev, u);

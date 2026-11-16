@@ -51,6 +51,8 @@ select,input{background:#1c2540;box-shadow:none}
 #touchDbg .tl{position:absolute;left:3%;top:22%;font:700 11px system-ui;letter-spacing:.1em;color:#ffd84a;text-shadow:0 1px 2px #000}#touchDbg .tp{position:absolute;width:34px;height:34px;margin:-17px;border-radius:50%;border:3px solid #fff}#touchDbg .mv{background:rgba(80,230,120,.6)}#touchDbg .lk{background:rgba(255,210,60,.7)}#touchDbg .wt{background:rgba(160,160,160,.5)}
 .tb{position:absolute;pointer-events:auto;width:clamp(48px,11vmin,74px);height:clamp(48px,11vmin,74px);border-radius:50%;background:rgba(20,28,50,.6);border:2px solid #fff8;color:#fff;font-weight:bold;font-size:clamp(10px,2.4vmin,14px);display:flex;align-items:center;justify-content:center;text-align:center;line-height:1}
 .tb.big{width:clamp(70px,17vmin,104px);height:clamp(70px,17vmin,104px);background:rgba(220,60,40,.55);font-size:clamp(12px,3vmin,17px)}
+#tFire{width:clamp(88px,22vmin,132px);height:clamp(88px,22vmin,132px);font-size:clamp(14px,3.4vmin,19px);touch-action:none}#tFire::before{content:'';position:absolute;inset:-22px;border-radius:50%}/* v72: bigger FIRE + an invisible 22px ring that still counts as a press */
+.horse-mode #tFire{width:clamp(100px,25vmin,150px);height:clamp(100px,25vmin,150px);right:4%!important;bottom:18%!important}#tFire.down{transform:scale(.94);background:rgba(255,80,50,.7)!important}.horse-mode.hr-gun #tAct{bottom:52%!important;right:calc(5% + clamp(112px,27vmin,165px))!important}/* v72: GET OFF moves up and away from FIRE while you shoot from the saddle */
 .tb:active,.tb.down{background:rgba(255,211,74,.6)}
 .touch #hotbar{bottom:auto;top:calc(max(8px,env(safe-area-inset-top)) + 5.2em)}
 .touch #vitals{bottom:auto;top:max(8px,env(safe-area-inset-top));min-width:10em}
@@ -264,7 +266,7 @@ body.touch #hrBounty .bh{flex-wrap:nowrap;white-space:nowrap;font-size:8.5px}bod
 </style>
 </head><body>
 <div id="fnSplash"><div class="logo">Horse<br>Rider</div><div class="tag">Wild Frontier · Season 1</div><button class="play" id="fnPlay">Play</button>
-<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v71 · updated Nov 16</div></div>
+<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v72 · updated Nov 16</div></div>
 <script>(function(){var q=new URLSearchParams(location.search);var real=q.get('style')==='real';if(!real)document.body.classList.add('sty');var sp=document.getElementById('fnSplash');
 if(real||q.has('dev')||q.has('auto')||q.get('splash')==='0'){sp.remove();return;}
 if(matchMedia('(pointer: coarse)').matches)document.getElementById('fnHint').textContent='Left side: move & steer · right side: look · tap RIDE near a horse';
@@ -290,9 +292,9 @@ document.getElementById('fnPlay').addEventListener('click',go);addEventListener(
 <div id="touch">
  <div id="joy"><div id="stick"><div id="knob"></div></div></div><div id="look"></div>
  <div class="tb big" id="tFire" style="right:5%;bottom:22%">FIRE</div>
- <div class="tb" id="tAds" style="right:calc(5% + clamp(74px,18vmin,110px));bottom:12%">ADS</div>
+ <div class="tb" id="tAds" style="right:calc(5% + clamp(98px,25vmin,150px));bottom:10%">ADS</div>
  <div class="tb" id="tJump" style="right:2%;bottom:3%">JUMP</div>
- <div class="tb act" id="tGun" style="right:2%;bottom:calc(22% + clamp(76px,18vmin,112px))">🔫<small>DRAW</small></div>
+ <div class="tb act" id="tGun" style="right:2%;bottom:calc(20% + clamp(104px,26vmin,156px))">🔫<small>DRAW</small></div>
  <div class="tb act" id="tAct" style="right:calc(7% + clamp(130px,30vmin,190px));bottom:30%" hidden>USE</div>
  <div class="tb sm" id="tMore" title="More">⋯</div>
  <div class="tb sm" id="tCall" title="Call your horse">🐴</div>
@@ -329,5 +331,5 @@ document.getElementById('fnPlay').addEventListener('click',go);addEventListener(
 </script>
 <script src="./vendor/peerjs.min.js"></script>
 <script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
-<script type="module" src="./main.js?v=71" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
+<script type="module" src="./main.js?v=72" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
 </body></html>

@@ -1,8 +1,8 @@
 // Host-authoritative poker and private blackjack, sharing the saloon sv/svr route.
 // Table chips are free, isolated practice chips; they never award game points.
 import * as THREE from 'three';
-import {HoldemTable,BlackjackGame,cardText} from './hrcasinogames.js?v=71';
-import {makeFrontierCharacter} from './hrcharacters.js?v=71';
+import {HoldemTable,BlackjackGame,cardText} from './hrcasinogames.js?v=72';
+import {makeFrontierCharacter} from './hrcharacters.js?v=72';
 export function createCasino({scene,H,P,T,camera,mobile,msg,beforeOpen=()=>{}}){
  const s=T.town,F=s.F,table=new HoldemTable(),blackjack=new Map(),modes=new Map(),sequences=new Map(),me=()=>String(H.me||'P1'),auth=()=>!H.netRole||H.netRole()!=='client';
  const root=new THREE.Group();root.position.set(s.cx,s.y0,s.cz);root.rotation.y=s.rot;root.name='Frontier casino tables';scene.add(root);
@@ -68,7 +68,7 @@ export function createCasino({scene,H,P,T,camera,mobile,msg,beforeOpen=()=>{}}){
  const click=e=>{const b=e.target.closest('button');if(!b||b.disabled)return;e.stopPropagation();const a=b.dataset.a;if(a==='exit')return close();send(a,{amount:a==='raise'?Number(panel.querySelector('#hrRaise')?.value):Number(b.dataset.n)});};
  const stop=e=>e.stopPropagation();panel.addEventListener('pointerdown',stop);panel.addEventListener('mousedown',stop);panel.addEventListener('click',click);
  const key=e=>{if(opened&&e.code==='Escape'){e.preventDefault();e.stopImmediatePropagation();close();}};addEventListener('keydown',key,true);
- const tableWalls=[];for(const [cx,cz,rx,rz] of [[-4.2,1.6,1.35,1],[-3,7.2,1.1,1]])for(let i=0;i<10;i++){const a=i/10*Math.PI*2,b=(i+1)/10*Math.PI*2,[ax,az]=T.toW(s,cx+Math.sin(a)*rx,cz+Math.cos(a)*rz),[bx,bz]=T.toW(s,cx+Math.sin(b)*rx,cz+Math.cos(b)*rz),w=[ax,az,bx,bz,s.y0+F,s.y0+F+.87];T.walls.push(w);tableWalls.push(w);}
+ const tableWalls=[];for(const [cx,cz,rx,rz] of [[-4.2,1.6,1.22,.9],[-3,7.2,1.0,.9]])for(let i=0;i<10;i++){const a=i/10*Math.PI*2,b=(i+1)/10*Math.PI*2,[ax,az]=T.toW(s,cx+Math.sin(a)*rx,cz+Math.cos(a)*rz),[bx,bz]=T.toW(s,cx+Math.sin(b)*rx,cz+Math.cos(b)*rz),w=[ax,az,bx,bz,s.y0+F,s.y0+F+.87];T.walls.push(w);tableWalls.push(w);}
  const stopUse=T.onUse;T.onUse=o=>{if(o.kind==='poker'||o.kind==='blackjack'){open(o.kind);return true;}return stopUse?stopUse(o):false;};Object.assign(T.TL,{poker:'SIT & PLAY<small>TEXAS HOLD’EM</small>',blackjack:'SIT & PLAY<small>BLACKJACK</small>'});
  const spots=[];for(const [kind,x,z] of [['poker',-4.2,.35],['blackjack',-3,6.1]]){const [wx,wz]=T.toW(s,x,z),p={x:wx,z:wz,y:s.y0+F,kind,label:kind==='poker'?'Play Texas Hold’em':'Play blackjack',r:1.25,s};T.spots.push(p);spots.push(p);}
  return {table,open,close,handleRequest:handle,handleResponse:receive,get view(){return view;},get opened(){return opened;},tick(dt){if(disposed)return;dt=Math.max(0,Math.min(.1,dt||0));

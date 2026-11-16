@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=71';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=72';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,8 +47,8 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createPoker } from './hrpoker.js?v=71';
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=71';
+import { createPoker } from './hrpoker.js?v=72';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=72';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -194,7 +194,7 @@ export function createTown(c) {
     for (let x = -18; x <= 11; x += 2) for (let z = -3.4; z <= 10.6; z += 2) box(s, M.dark, x, (F - 2.5) / 2, z, .24, 2.5 + F, .24); // stilts down to the ground
     floor(s, -17.2, 10.2, -2.4, 10, F); box(s, M.plank, -3.5, F - .06, 3.8, 27.4, .12, 12.8); // boardwalk + floors
     floor(s, -17.2, 10.2, -3.4, -2.4, 0, F, 'z'); box(s, M.plank, -3.5, F / 2 - .05, -2.9, 27.4, .1, 1);
-    for (const [x0, x1, door, name, D, HT] of [[-17, -1, [-6.8, -5.2], 'SALOON', 10, 7.6], [1, 10, [4.7, 6.3], 'GENERAL STORE', 8, WH]]) { const mx = (x0 + x1) / 2, w = x1 - x0, sal = name === 'SALOON';
+    for (const [x0, x1, door, name, D, HT] of [[-17, -1, [-7.6, -5.0], 'SALOON', 10, 7.6], [1, 10, [4.7, 6.3], 'GENERAL STORE', 8, WH]]) { const mx = (x0 + x1) / 2, w = x1 - x0, sal = name === 'SALOON';
       for (const [ax, az, bx, bz] of [[x0, D, x1, D], [x0, 0, x0, D], [x1, 0, x1, D], [x0, 0, door[0], 0], [door[1], 0, x1, 0]]) { wall(s, ax, az, bx, bz, F, F + HT); if(az===0&&bz===0){const holes=[];for(const x of [x0+1.6,x1-1.6])if(x<door[0]-.8||x>door[1]+.8)holes.push([x-.7,x+.7,F+1.1,F+2.3]);if(sal)for(const x of [-15.5,-12.5,-9.5,-3.5])holes.push([x-.6,x+.6,Y2+.95,Y2+2.05]);const cuts=[ax,bx,...holes.flatMap(h=>[Math.max(ax,h[0]),Math.min(bx,h[1])]).filter(x=>x>ax&&x<bx)].sort((a,b)=>a-b);for(let k=0;k<cuts.length-1;k++){const l=cuts[k],r=cuts[k+1];if(r-l<.001)continue;const open=holes.filter(h=>h[0]<(l+r)/2&&h[1]>(l+r)/2).sort((a,b)=>a[2]-b[2]);let y=F;for(const h of open){if(h[2]>y)box(s,M.plank,(l+r)/2,(y+h[2])/2,0,r-l,h[2]-y,.16);y=Math.max(y,h[3]);}if(y<F+HT)box(s,M.plank,(l+r)/2,(y+F+HT)/2,0,r-l,F+HT-y,.16);}}else box(s,M.plank,(ax+bx)/2,F+HT/2,(az+bz)/2,Math.abs(bx-ax)+.16,HT,Math.abs(bz-az)+.16); }
       if (sal) box(s, M.plank, (door[0] + door[1]) / 2, F + 2.9 + (HT - 2.9) / 2, 0, door[1] - door[0] + .2, HT - 2.9, .16); // wall above the door
       box(s, M.roof, mx, F + HT + .15, D / 2, w + .6, .2, D + .6); if (!sal) { box(s, M.plank, mx, F + HT + 1.2, 0, w + .2, 2.4, .2); box(s, M.dark, mx, F + 2.9, -1.3, w + .2, .12, 2.6); // false front, porch roof
@@ -209,7 +209,7 @@ export function createTown(c) {
     floor(s, -11.5, -10.4, 2.8, 8.4, F, Y2, 'z'); floor(s, -11.5, -10.4, 8.4, 10, Y2); box(s, M.plank, -10.95, Y2 - .08, 9.2, 1.1, .16, 1.6);
     { const n = 17; for (let k = 0; k < n; k++) { const z = 2.8 + (k + .5) * 5.6 / n, y = F + (Y2 - F) * (k + 1) / n; box(s, M.plank, -10.95, y - .05, z, 1.1, .1, 5.6 / n + .04); }
       for (const x of [-11.5, -10.4]) { const g = new THREE.Vector3(); beam(s, M.dark, [x, F + .1, 2.8], [x, Y2 - .1, 8.4], .08, .3); } }
-    wall(s, -10.4, 2.8, -10.4, 10, F, Y2 + 1.1); wall(s, -11.5, 2.8, -11.5, 8.4, F, Y2 + 1.1); wall(s, -11.5, 0, -11.5, 2.8, Y2, Y2 + 1.1); // stair sides + balcony rail (solid)
+    wall(s, -10.4, 2.8, -10.4, 6.2, F, Y2 + 1.1); wall(s, -11.5, 2.8, -11.5, 6.2, F, Y2 + 1.1); wall(s, -10.4, 6.2, -10.4, 10, F + 1.95, Y2 + 1.1); wall(s, -11.5, 6.2, -11.5, 8.4, F + 1.95, Y2 + 1.1); /* v72: walk UNDER the high half of the stair (2 m+ headroom) between the two rooms; the sides still stop you falling off */ wall(s, -11.5, 0, -11.5, 2.8, Y2, Y2 + 1.1); // stair sides + balcony rail (solid)
     beam(s, M.dark, [-10.4, F + 1.05, 2.8], [-10.4, Y2 + 1.05, 8.4], .07); beam(s, M.dark, [-10.4, Y2 + 1.05, 8.4], [-10.4, Y2 + 1.05, 10], .07); beam(s, M.dark, [-11.5, Y2 + 1.05, 0], [-11.5, Y2 + 1.05, 2.8], .08);
     for (let z = .3; z <= 2.8; z += .35) box(s, M.dark, -11.5, Y2 + .5, z, .05, 1, .05); for (let z = 8.6; z <= 10; z += .35) box(s, M.dark, -10.4, Y2 + .5, z, .05, 1, .05);
     for (let k = 0; k <= 8; k++) { const z = 2.8 + k * .7, y = F + (Y2 - F) * k / 8; box(s, M.dark, -10.4, y + .55, z, .05, 1.05, .05); }

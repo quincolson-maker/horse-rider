@@ -10,7 +10,8 @@ function makeMirror(w, h, tint, size) { const rt = new THREE.WebGLRenderTarget(s
       float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
       void main(){ vec3 c = texture2DProj(tDiffuse, vUv).rgb * tint;
         float e = min(min(vP.x, 1. - vP.x) * 4., min(vP.y, 1. - vP.y) * 2.5); float silver = smoothstep(0., .35, e) * (.85 + .15 * h(floor(vP * vec2(160., 40.))));   // old mirror: darker, speckled edges
-        c = mix(vec3(.05, .045, .035), c, silver); gl_FragColor = vec4(c, 1.); #include <colorspace_fragment>
+        c = mix(vec3(.05, .045, .035), c, silver); gl_FragColor = vec4(c, 1.);
+        #include <colorspace_fragment>
       }` });
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); m.renderOrder = 1;
   const plane = new THREE.Plane(), N = new THREE.Vector3(), RP = new THREE.Vector3(), CP = new THREE.Vector3(), RM = new THREE.Matrix4(), LA = new THREE.Vector3(), CL = new THREE.Vector4(), V = new THREE.Vector3(), TG = new THREE.Vector3(), Q = new THREE.Vector4();

@@ -1,7 +1,8 @@
 // Frontier people: one vertex-colored SkinnedMesh per character, no external assets.
 // Detailed procedural art, not a scanned/photoreal human. Adult characters only.
 import * as THREE from 'three';
-import { PENDING } from './hrpuppet.js?v=77';
+import { PENDING } from './hrpuppet.js?v=78';
+import { upgradeFemale } from './hrfemale.js?v=78';
 export const PLAYER_VARIANTS = Object.freeze([
  {id:'george',name:'George Reed',tex:'assets/horses/rider_george',kind:'player',sex:'male',skin:0x4e2e20,hair:0x120d0b,hairStyle:'fade',beard:true,nose:1.35,lips:1.55,top:0xd5c7ac,bottom:0x343e43,coat:0x393024,hatC:0x32271e,bandana:0x934532,curls:true},
  {id:'cole',name:'Cole Mercer',kind:'player',sex:'male',skin:0xd5a080,hair:0x533a27,top:0xd8c6a2,bottom:0x343e43,coat:0x65503b,hatC:0x564431,bandana:0x934532},
@@ -139,6 +140,7 @@ export function makeFrontierCharacter(o={}) {
  for(const b of bones)b.userData.rest=b.quaternion.clone();R.userData.B=B;R.userData.kind='real';R.userData.adult=true;R.userData.variant=o.id||null;
  const D={g:R,hips,spine,head,arms,legs,hand:hands[1],hands,fan:fanBone,o,mode:'idle',t:Math.random()*10,ph:Math.random()*6,v:0,body,skeleton,dispose(){R.removeFromParent();skeleton.dispose();geometry.dispose();material.dispose();}};
  // A small separate gun remains attached to the hand; player weapons supplied by game.
+ if(female&&high&&!o.noPuppet){try{upgradeFemale(D);}catch(e){console.warn('female HD',e);}} // v78
  if(o.kind&&o.kind!=='player'&&!o.noPuppet){D.seed=PENDING.seq=(PENDING.seq||0)+1;PENDING.push(D);} // v71: dressed in the main rider model once it has loaded (src/hrpuppet.js)
  if(o.kind==='bandit'){const gg=new THREE.Group(),gm=new THREE.MeshStandardMaterial({color:0x30302d,metalness:.8,roughness:.35}),barrel=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,o.rifle?.7:.22,10).rotateX(Math.PI/2),gm);barrel.position.z=o.rifle?.25:.08;gg.add(barrel);hands[1].add(gg);D.gun=gg;const dp=D.dispose;D.dispose=()=>{barrel.geometry.dispose();gm.dispose();dp();};}
  return D;

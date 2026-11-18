@@ -5,46 +5,46 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=76';
-import { PERF } from './perfopts.js?v=76';
-import { PF } from './perf.js?v=76';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=77';
+import { PERF } from './perfopts.js?v=77';
+import { PF } from './perf.js?v=77';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=76';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=76';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=76';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=76';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=76';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=76';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=76';
-import { createGuns } from './hrguns.js?v=76';
-import { createHrZombies } from './hrzombies.js?v=76';
-import { createFlora } from './hrflora.js?v=76';
-import { createBounty } from './hrbounty.js?v=76';
-import { createNuggets } from './hrnuggets.js?v=76';
-import { createStable } from './hrstable.js?v=76';
-import { createLeaderboard } from './hrlb.js?v=76';
-import { createNight } from './hrnight.js?v=76';
-import { createRace } from './hrrace.js?v=76';
-import { buildPalisade } from './hrpalisade.js?v=76';
-import { createWeather } from './hrweather.js?v=76';
-import { createMusic } from './hrmusic.js?v=76';
-import { createTownLife } from './hrtownlife.js?v=76';
-import { createRanch } from './hrranch.js?v=76';
-import { createEvents } from './hrevents.js?v=76';
-import { createWild } from './hrwild.js?v=76';
-import { createTrain } from './hrtrain.js?v=76';
-import { createFishing } from './hrfish.js?v=76';
-import { createTown, wearJacket, townNight } from './hrtown.js?v=76';
-import { wearKit } from './hrkit.js?v=76';
-import { createPuppets } from './hrpuppet.js?v=76';
-import { createSaloon } from './hrsaloon.js?v=76';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=76';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=76';
-import { createDynamite } from './hrdynamite.js?v=76';
-import { createSunItem } from './hrsunweapon.js?v=76';
-import { createBuild } from './hrbuild.js?v=76';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=76';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=76';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=77';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=77';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=77';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=77';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=77';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=77';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=77';
+import { createGuns } from './hrguns.js?v=77';
+import { createHrZombies } from './hrzombies.js?v=77';
+import { createFlora } from './hrflora.js?v=77';
+import { createBounty } from './hrbounty.js?v=77';
+import { createNuggets } from './hrnuggets.js?v=77';
+import { createStable } from './hrstable.js?v=77';
+import { createLeaderboard } from './hrlb.js?v=77';
+import { createNight } from './hrnight.js?v=77';
+import { createRace } from './hrrace.js?v=77';
+import { buildPalisade } from './hrpalisade.js?v=77';
+import { createWeather } from './hrweather.js?v=77';
+import { createMusic } from './hrmusic.js?v=77';
+import { createTownLife } from './hrtownlife.js?v=77';
+import { createRanch } from './hrranch.js?v=77';
+import { createEvents } from './hrevents.js?v=77';
+import { createWild } from './hrwild.js?v=77';
+import { createTrain } from './hrtrain.js?v=77';
+import { createFishing } from './hrfish.js?v=77';
+import { createTown, wearJacket, townNight } from './hrtown.js?v=77';
+import { wearKit } from './hrkit.js?v=77';
+import { createPuppets } from './hrpuppet.js?v=77';
+import { createSaloon } from './hrsaloon.js?v=77';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=77';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=77';
+import { createDynamite } from './hrdynamite.js?v=77';
+import { createSunItem } from './hrsunweapon.js?v=77';
+import { createBuild } from './hrbuild.js?v=77';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=77';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=77';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -660,6 +660,7 @@ export function createHorseRider(ctx) {
   function nearestHorse() { let best = null, bd = MOUNT_R; for (const h of H.horses) { if (H.ridden.has(h)) continue; const d = Math.hypot(h.pos.x - P.pos.x, h.pos.z - P.pos.z); if (d < bd) { bd = d; best = h; } } return best; }
   function use() {
     if (!H.on || H.cd > 0) return false;
+    if (H.trainRide && H.trainUse) { H.cd = COOLDOWN; return H.trainUse(); } // v77 riding the train: USE = get off at a station
     if (H.saloon && H.saloon.isOpen()) { H.saloon.close(); H.cd = COOLDOWN; return true; } if (H.saloon && H.saloon.dance) { H.saloon.endDance(); H.cd = COOLDOWN; return true; } // v35: E stands up / leaves
     if (H.mounted) { if (H.mountT > 0 || H.dismT > 0) return false; H.wantOff = true; H.cd = COOLDOWN; return true; } // rein in, then step down
     if (H.pass) { hopOff(); return true; } { const ht = hopTarget(); if (ht) { hopOn(ht); return true; } }

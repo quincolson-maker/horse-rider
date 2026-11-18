@@ -10,13 +10,15 @@
 // rider's own texture (skin-coloured texels keep their hue), plus the George repaint for some.
 // Female characters (barmaid, dancers) keep their own models.
 import * as THREE from 'three';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=75';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=76';
 
 export const PENDING = []; // dolls made before the rider model has loaded
+// v76: period palette - small hue nudges, mostly desaturating / darkening the farmer's clothes into browns, greys,
+// faded blues, blacks and oxblood; skin is protected (wider mask) and only lightened/darkened
 const LOOKS = [
-  { hue: .0, sat: 1, val: 1, skin: 1 }, { hue: .55, sat: .55, val: .75, skin: .7 }, { hue: .28, sat: .7, val: .72, skin: 1.06 }, { hue: .78, sat: .45, val: .85, skin: .52 },
-  { hue: .08, sat: .3, val: .55, skin: .88 }, { hue: .62, sat: 1.1, val: .95, skin: 1.12 }, { hue: .4, sat: .5, val: .6, skin: .64 }, { hue: .9, sat: .8, val: .7, skin: .95 },
-  { hue: .16, sat: .4, val: .45, skin: .78, g: 1 }, { hue: .5, sat: .8, val: .85, skin: 1, g: 1 }, { hue: .7, sat: .6, val: .65, skin: .6, g: 1 } ];
+  { hue: .0, sat: .55, val: .62, skin: .92 }, { hue: .02, sat: .25, val: .45, skin: .7 }, { hue: -.04, sat: .4, val: .55, skin: 1.05 }, { hue: .03, sat: .15, val: .38, skin: .55 },
+  { hue: .0, sat: .7, val: .48, skin: .82 }, { hue: -.02, sat: .3, val: .7, skin: 1.1 }, { hue: .05, sat: .5, val: .4, skin: .62 }, { hue: .0, sat: .1, val: .3, skin: .95 },
+  { hue: .0, sat: .5, val: .5, skin: .8, g: 1 }, { hue: .02, sat: .3, val: .62, skin: 1, g: 1 }, { hue: -.03, sat: .45, val: .42, skin: .6, g: 1 } ];
 const SHERIFF = { hue: .05, sat: .35, val: .42, skin: .62 };
 const matCache = new Map(); let georgeTex = null;
 function lookMaterial(base, L) { const key = base.uuid + JSON.stringify(L); if (matCache.has(key)) return matCache.get(key);
@@ -27,7 +29,7 @@ uniform vec4 uLook;
 vec3 rgb2hsv(vec3 c){ vec4 K = vec4(0., -1./3., 2./3., -1.); vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g)); vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r)); float d = q.x - min(q.w, q.y); float e = 1.0e-10; return vec3(abs(q.z + (q.w - q.y) / (6. * d + e)), d / (q.x + e), q.x); }
 vec3 hsv2rgb(vec3 c){ vec3 p = abs(fract(c.xxx + vec3(0., 2./3., 1./3.)) * 6. - 3.); return c.z * mix(vec3(1.), clamp(p - 1., 0., 1.), c.y); }`)
       .replace('#include <map_fragment>', `#include <map_fragment>
-{ vec3 sr = sqrt(max(diffuseColor.rgb, 0.)); vec3 h = rgb2hsv(sr); bool skin = h.x < .11 && h.y > .18 && h.y < .62 && h.z > .33;
+{ vec3 sr = sqrt(max(diffuseColor.rgb, 0.)); vec3 h = rgb2hsv(sr); bool skin = (h.x < .105 || h.x > .96) && h.y > .12 && h.y < .7 && h.z > .25 && h.z < .98;
   if (skin) sr *= uLook.w; else { h.x = fract(h.x + uLook.x); h.y = clamp(h.y * uLook.y, 0., 1.); h.z *= uLook.z; sr = hsv2rgb(h); }
   diffuseColor.rgb = sr * sr; }`); };
   m.customProgramCacheKey = () => 'hr-look-' + key; matCache.set(key, m); return m; }

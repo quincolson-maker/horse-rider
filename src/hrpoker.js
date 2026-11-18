@@ -5,7 +5,7 @@
 // Networking: the host (or a solo player) runs the table. Clients send actions ({t:'pk'}) and the host sends each
 // seated rider their own view ({t:'pks'}) via H.zSendTo, so nobody's hole cards ever reach another player's machine.
 import * as THREE from 'three';
-import { makeFrontierCharacter } from './hrcharacters.js?v=75';
+import { makeFrontierCharacter } from './hrcharacters.js?v=76';
 const RANKS = '23456789TJQKA', SUITS = '♠♥♦♣', ANTE = 10, BET = 25, BUYIN = 200, MAXS = 6;
 const BOTS = [{ n: 'DOC', loose: .35, bluff: .08 }, { n: 'SLIM', loose: .6, bluff: .16 }, { n: 'ROSA', loose: .45, bluff: .1 }];
 const rk = c => c % 13, st = c => (c / 13) | 0;
@@ -146,9 +146,13 @@ export function createPoker(c) { const { H, msg } = c, K = { el: null, V: null, 
       if (!V || !x.in) return; const mine = i === myI, show = x.hand, r = mine ? .74 : .66;
       for (let j = 0; j < 5; j++) { const m = D3.cards[ci++]; const f = show ? x.hand[j] : 52; if (m.userData.face !== f) { faceUV(m.geometry, f); m.userData.face = f; }
         const off = (mine ? 2 - j : j - 2) * (mine ? .118 : .085), aa = a + off / r, [px, pz] = loc(r - (mine ? 0 : Math.abs(j - 2) * .01), aa), lift = mine && K.sel.has(j) ? .05 : 0;
-        if (mine && !x.fold) { m.position.set(px, Y + .035 + lift, pz); E.set(-1.2, -a + Math.PI + (j - 2) * .1, 0, 'YXZ'); } // stood up toward your eyes
-        else { m.position.set(px, Y + .002 + j * .0005, pz); E.set(-Math.PI / 2, 0, -a + (j - 2) * .12 + (x.fold ? .6 : 0), 'XYZ'); if (x.fold) m.position.lerp(new THREE.Vector3(TC.x, Y, TC.z), .35); }
-        m.rotation.copy(E); m.userData.slot = mine ? j : -1; m.visible = true; } });
+        const U = m.userData, tp = U.tp || (U.tp = new THREE.Vector3()), held = !mine && !x.fold && !(V.phase === 'show' && show);
+        if (mine && !x.fold) { tp.set(px, Y + .035 + lift, pz); E.set(-1.2, -a + Math.PI + (j - 2) * .1, 0, 'YXZ'); } // stood up toward your eyes
+        else if (held) { const [hx, hz] = loc(1.02, a + (j - 2) * .045); tp.set(hx, Y + .2 + Math.abs(j - 2) * -.008, hz); E.set(.35, -a + (j - 2) * .16, (j - 2) * -.12, 'YXZ'); } // v76: the regulars hold their hand up, fanned (you see the backs)
+        else { tp.set(px, Y + .002 + j * .0005, pz); E.set(-Math.PI / 2, 0, -a + (j - 2) * .12 + (x.fold ? .6 : 0), 'XYZ'); if (x.fold) tp.lerp(new THREE.Vector3(TC.x, Y, TC.z), .35); }
+        (U.tq || (U.tq = new THREE.Quaternion())).setFromEuler(E);
+        if (V.hand !== U.hand) { U.hand = V.hand; U.delay = (j * V.seats.length + i) * .07; m.position.set(TC.x, Y + .02, TC.z); m.quaternion.setFromEuler(E.set(-Math.PI / 2, 0, 0)); } // v76: a fresh deal flies out of the deck, round the table, one card at a time
+        if (!U.anim) { m.position.copy(tp); m.quaternion.copy(U.tq); } U.slot = mine ? j : -1; m.visible = true; } });
     for (; ci < D3.cards.length; ci++) D3.cards[ci].visible = false;
     if (V && V.pot) { const n = Math.min(40, Math.ceil(V.pot / 10)); for (let j = 0; j < n; j++) { const a = j * 2.39, r = .05 + (j % 5) * .045; chip(TC.x + Math.sin(a) * r, Y + .006 + ((j / 5) | 0) * .0115, TC.z + Math.cos(a) * r, j); } }
     D3.chips.count = chipN; D3.chips.instanceMatrix.needsUpdate = true; if (D3.chips.instanceColor) D3.chips.instanceColor.needsUpdate = true; }
@@ -188,6 +192,8 @@ export function createPoker(c) { const { H, msg } = c, K = { el: null, V: null, 
     q('.bt').innerHTML = b + '<button data-a="x">CASH OUT & LEAVE</button>'; }
   function tick(dt) { K.t += dt; if (!D3.built && c.town && c.town()) build3D();
     if (isAuth()) { hostTick(dt); if (K.V && !K.T) { const s = mySeat(); netState({ g: null, cash: s ? s.chips : K.cash, why: 'lost' }); } } else if (K.V && K.t - (K.rx || 0) > 12) { const s = mySeat(); netState({ g: null, cash: s ? s.chips : K.cash, why: 'lost' }); } /* host vanished: keep your chips */
+    if (D3.built && K.V) { for (const m of D3.cards) { const U = m.userData; if (!m.visible || !U.tp) continue; U.anim = true; if (U.delay > 0) { U.delay -= dt; if (U.delay <= 0 && c.sfx && c.sfx.tone && c.sfx.ctx && Math.random() < .5) c.sfx.tone('triangle', 2400, 1600, .02, .03); continue; }
+        const k = 1 - Math.exp(-dt * 11); if (m.position.distanceToSquared(U.tp) > 1e-7) { const arc = Math.min(.08, m.position.distanceTo(U.tp) * .25); m.position.lerp(U.tp, k); m.position.y += arc * k; } m.quaternion.slerp(U.tq, k); } } // v76: cards glide / flip into place
     if (D3.built) { const near = Math.hypot(c.P.pos.x - D3.s.cx, c.P.pos.z - D3.s.cz) < 70; D3.root.visible = near;
       if (near) D3.dolls.forEach((d, i) => { if (d.g.visible && d.head) d.head.rotation.y = Math.sin(K.t * .5 + i * 2) * .25; }); }
     if (K.saved && D3.built) { const s = D3.s, V = K.V, i = V ? V.seats.findIndex(x => x.n === me()) : -1, a = seatAng(i >= 0 ? i : 0), [lx, lz] = loc(i >= 0 ? SEATR - .02 : SEATR + .5, a), [wx, wz] = c.toW(s, lx, lz), [tx, tz] = c.toW(s, TC.x, TC.z);

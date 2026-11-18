@@ -3,12 +3,13 @@
 // bandit or a random brawl), the dealer in the dark corner (snow = fast, green = slow), three slot machines upstairs (seated
 // first-person view, 10/50/100 bets, jackpot 6000), swinging batwing doors, warm lamps, light shafts and dust.
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=75';
-import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=75';
-import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=75';
-import {createCasino} from './hrcasino.js?v=75';
-import {createSaloonDecor} from './hrsaloondecor.js?v=75';
-import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=75';
+import { PERF } from './perfopts.js?v=76';
+import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=76';
+import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=76';
+import {createCasino} from './hrcasino.js?v=76';
+import {createSaloonDecor} from './hrsaloondecor.js?v=76';
+import { createSaloonPlus } from './hrsaloonplus.js?v=76';
+import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=76';
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
 // ---------------- slots: pure math (tests use it) ----------------
 export const SLOT = { NAMES: ['cactus', 'cherry', 'horseshoe', 'bell', 'buffalo'], W: [10, 9, 7, 4, 2], THREE: [0, 5, 10, 25, 60], TWO_CHERRY: 3, ONE_CHERRY: 1, BETS: [10, 50, 100] };
@@ -181,6 +182,7 @@ export function createSaloon(c) {
   T.onUse = o => { if (o.kind === 'bandits') { open('bandits'); return true; } if (o.kind === 'dance') { open('dance'); return true; } if (o.kind === 'dealer') { open('dealer'); return true; } if (o.kind === 'slot') { sit(S.slots.find(M => M.spot === o)); return true; } return originalTownUse ? originalTownUse(o) : false; }; /* v42w: chain on — this used to swallow the temple seal, cave chest, etc. */
   const casino=createCasino({scene,H,P,T,camera,mobile,msg,beforeOpen:()=>{close();endDance();endFight(false,true);}});S.casino=casino;
   const decor=createSaloonDecor({scene,T,mobile});
+  let plus = null; try { plus = S.plus = createSaloonPlus({ scene, H, P, T, mobile, msg, sfx }); } catch (e) { console.warn('saloon plus', e); }
   // ---- slots: seated first-person view with limited free look ----
   function sit(M) { if (!M) return; S.seat = M; S.fpSave = H.fp; H.fp = true; H.seated = true; H.noGun = true; if (G()) G().holster(); const p = Lh(-15.25, Y2, M.z); P.pos.set(p.x, p.y, p.z); H.fv.set(0, 0); S.seatYaw = rot + Math.PI / 2; P.yaw = S.seatYaw; P.pitch = -.12; open('slot', M); }
   function stand() { if (!S.seat) return; const M = S.seat; S.seat = null; H.seated = false; H.noGun = false; H.fp = !!S.fpSave; const p = Lh(-14.4, Y2, M.z); P.pos.set(p.x, p.y, p.z); }
@@ -295,7 +297,7 @@ export function createSaloon(c) {
   // ---- frame ----
   let near = false;
   S.tick = dt => { if(disposed)return;const dTown = Math.min(Math.hypot(camera.position.x - s.cx, camera.position.z - s.cz), Math.hypot(P.pos.x - s.cx, P.pos.z - s.cz)); near = dTown < (mobile ? 60 : 90); for (const D of npcAll()) D.g.visible = near; lodBuild(dt); if (near) npcLOD(); dust.visible = near && dTown < 30; for (const L of lampLights) L.intensity = dTown < 45 ? 5 : 0; /* v41: fade by intensity, visibility stays on (no shader recompiles) */ for (const M of S.slots) M.g.visible = near;
-    casino.tick(dt);decor.update(H.t||0,near);slotTick(dt);buzzTick(dt);fightTick(dt);
+    casino.tick(dt);decor.update(H.t||0,near);if(plus)plus.update(dt,near);slotTick(dt);buzzTick(dt);fightTick(dt);
     if(panel?.kind==='slot'&&panel.data.spin){S.slotUIT=(S.slotUIT||0)+dt;if(S.slotUIT>.1){S.slotUIT=0;render();}}
     for (let i = S.bandits.length - 1; i >= 0; i--) if (!banditTick(S.bandits[i], dt, i)) { dropBandit(S.bandits[i], true); S.bandits.splice(i, 1); }
     remoteTick(dt);

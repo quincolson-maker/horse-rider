@@ -3,8 +3,8 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=84';
-import { buildM4, buildMP5, detailize } from './hrmodern.js?v=84'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=85';
+import { buildM4, buildMP5, detailize } from './hrmodern.js?v=85'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -327,6 +327,16 @@ export function createGuns(c) {
     return (head, killed) => { el.className = ''; void el.offsetWidth; el.className = killed ? 'kl' : head ? 'on hd' : 'on';
       if (killed) { tone('sine', 1320, 1320, .09, .16); setTimeout(() => tone('sine', 1760, 1760, .16, .14), 70); } else if (head) tone('triangle', 2100, 1700, .07, .14); else tone('triangle', 1250, 1050, .05, .09); }; })();
   H.hitX = hitX;
+  // v85 combat feel: bigger hit markers, a real headshot bell, floating damage numbers at the hit point, vibration
+  const vib = ms => { try { if (navigator.vibrate && !H.noVibe) navigator.vibrate(ms); } catch (_) {} }; H.vib = vib;
+  const dmgNum = (() => { if (typeof document === 'undefined') return () => {}; const st = document.createElement('style');
+    st.textContent = '#hrHitX{width:52px!important;height:52px!important;margin:-26px 0 0 -26px!important}#hrHitX i{width:4px!important;height:15px!important;margin:-7.5px 0 0 -2px!important}#hrHitX i:nth-child(1){transform:rotate(45deg) translateY(-16px)!important}#hrHitX i:nth-child(2){transform:rotate(135deg) translateY(-16px)!important}#hrHitX i:nth-child(3){transform:rotate(225deg) translateY(-16px)!important}#hrHitX i:nth-child(4){transform:rotate(315deg) translateY(-16px)!important}#hrHitX.kl i{height:19px!important}'
+      + '.hrDmg{position:fixed;left:0;top:0;pointer-events:none;z-index:59;font:900 20px system-ui,sans-serif;color:#fff;text-shadow:0 2px 0 #000,0 0 6px #000;white-space:nowrap;transform:translate(-50%,-50%);animation:hrDmgUp .85s ease-out forwards}.hrDmg.h{color:#ffd23a;font-size:24px}.hrDmg.k{color:#ff5a4a;font-size:26px}'
+      + '@keyframes hrDmgUp{0%{opacity:0;margin-top:0;scale:.6}12%{opacity:1;scale:1.25}30%{scale:1}100%{opacity:0;margin-top:-58px}}';
+    document.head.appendChild(st); const V = new THREE.Vector3(); let n = 0;
+    return (p, dmg, head, killed) => { if (!p) return; V.copy(p).project(camera); if (V.z > 1) return; const el = document.createElement('div'); el.className = 'hrDmg' + (killed ? ' k' : head ? ' h' : '');
+      el.textContent = (head ? 'HEADSHOT ' : '') + '-' + dmg; el.style.left = ((V.x * .5 + .5) * innerWidth + (n++ % 3 - 1) * 14) + 'px'; el.style.top = ((-V.y * .5 + .5) * innerHeight - 18) + 'px'; document.body.appendChild(el); setTimeout(() => el.remove(), 900); }; })();
+  const ding = () => { tone('sine', 2637, 2637, .42, .2); setTimeout(() => tone('sine', 3951, 3951, .3, .09), 8); };
   function hitMark(head) { if (!scopeEl || state.scopeK < .5) return; const hx = scopeEl.querySelector('.hx'); if (!hx) return; hx.classList.remove('on', 'hd'); void hx.offsetWidth; hx.classList.add('on'); if (head) hx.classList.add('hd'); }
   const role = () => (H.netRole ? H.netRole() : 'solo');
   // v43 kill streaks: kills chained within 4 s
@@ -444,7 +454,7 @@ export function createGuns(c) {
         let hm = T.holes[T.hi]; if (!hm) { hm = new THREE.Mesh(new THREE.PlaneGeometry(.05, .05), mats().hole); hm.rotation.y = Math.PI / 2; T.mesh.add(hm); T.holes[T.hi] = hm; } T.hi = (T.hi + 1) % 30; hm.position.set(.027, lp.y, lp.z);
         tone('sine', 220, 120, .25, .12); nz('lowpass', 500, 1, .25, .08); if (fx && fx.debris) fx.debris(p.x, p.y, p.z, 0xc9b48a, 4, .4); }
       return; }
-    if (hit.kind === 'zombie') { const zs = c.zombies && c.zombies(); if (zs) { state.hits++; const r = hit.zr = zs.onHit(hit.Z, w, hit.head, p, d, dmgMul(w)); if (r) { hitMark(hit.head); hitX(hit.head, r.killed); scopePop('-' + r.dmg + (hit.head ? ' ◉' : ''), hit.head ? 'h' : ''); if (r.killed && role() !== 'client') award(hit.head, hit.Z.wantedName ? 'wantedBoss' : hit.Z.boss ? 'outlawBoss' : hit.Z.kind); else if (hit.head && !r.killed) say('Headshot!');
+    if (hit.kind === 'zombie') { const zs = c.zombies && c.zombies(); if (zs) { state.hits++; const r = hit.zr = zs.onHit(hit.Z, w, hit.head, p, d, dmgMul(w)); if (r) { hitMark(hit.head); hitX(hit.head, r.killed); scopePop('-' + r.dmg + (hit.head ? ' ◉' : ''), hit.head ? 'h' : ''); dmgNum(p, r.dmg, hit.head, r.killed); if (hit.head) ding(); vib(r.killed ? 28 : hit.head ? 18 : 10); if (r.killed && role() !== 'client') award(hit.head, hit.Z.wantedName ? 'wantedBoss' : hit.Z.boss ? 'outlawBoss' : hit.Z.kind); else if (hit.head && !r.killed) say('Headshot!');
         nz('lowpass', 700, 1, .2, .12); if (hit.head) tone('square', 1600, 900, .05, .08); } } return; }
     if (!fx) return;
     if (hit.kind === 'ground') { fx.debris && fx.debris(p.x, p.y + .03, p.z, 0x7d6a4c, 5, .55); fx.smoke && fx.smoke.emit(p.x, p.y + .05, p.z, 0, .4, 0, .55, .47, .36, .2, 1, .7, -.05, .45); }
@@ -635,7 +645,7 @@ export function createGuns(c) {
     state.score += 1000000; localStorage.setItem('hr_gift1', '1'); save(); say('💰 +1,000,000 points — buy everything!');
     try { const u = new URL(location.href); u.searchParams.delete('gift'); history.replaceState(null, '', u); } catch (_) {} } catch (_) {} })();
   function give(w) { if (!models[w]) return false; state.owned[w] = true; state.ammo[w] = maxAmmo(w); save(); syncUI(); return true; }
-  function buy(cost, fn) { if (pts() < cost) { say('Not enough points'); return false; } state.spent = (state.spent || 0) + cost; fn(); save(); syncUI(); return true; }
+  function buy(cost, fn) { if (pts() < cost) { say('Not enough points'); return false; } state.spent = (state.spent || 0) + cost; fn(); save(); syncUI(); vib(15); return true; }
   function upgrade(w) { const t = tier(w); if (t >= 3 || !state.owned[w]) return false; return buy(UP_COST[w][t], () => { state.up[w] = t + 1; state.ammo[w] = maxAmmo(w); say(`${WNAME[w]} → ${['', 'BRONZE', 'SILVER', 'GOLD'][t + 1]}`); }); }
   function purchase(w) { if (state.owned[w]) return false; return buy(PRICE[w], () => { give(w); say(`${WNAME[w]} bought`); }); }
   function credit(head, kind) { return award(head, kind); }

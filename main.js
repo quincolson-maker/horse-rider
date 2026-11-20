@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=82';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=82';
-import './src/hraudio.js?v=82';
-import './src/stylize.js?v=82'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=82';
-import { FX, SFX } from './src/fx.js?v=82';
-import { initTouch } from './src/touch.js?v=82';
-import { createHorseRider } from './src/horse.js?v=82';
-import { createHorseNet } from './src/horsenet.js?v=82';
+import './src/assetshim.js?v=83';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=83';
+import './src/hraudio.js?v=83';
+import './src/stylize.js?v=83'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=83';
+import { FX, SFX } from './src/fx.js?v=83';
+import { initTouch } from './src/touch.js?v=83';
+import { createHorseRider } from './src/horse.js?v=83';
+import { createHorseNet } from './src/horsenet.js?v=83';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=82';
+import { PF, initPerf } from './src/perf.js?v=83';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -72,7 +72,7 @@ function pins(hd) { const box = $('cpins'); if (!box || !horse.state.places) ret
   const lim = all.length ? w + 32 - all[all.length - 1].w / 2 : 0; if (all.length && all[all.length - 1].x > lim) { all[all.length - 1].x = lim; for (let i = all.length - 2; i >= 0; i--) { const g = (all[i + 1].w + all[i].w) / 2; if (all[i + 1].x - all[i].x < g) all[i].x = all[i + 1].x - g; } }
   for (const v of vis) v.el.style.transform = `translateX(${v.x.toFixed(0)}px) translateX(-50%)`; }
 function compass() { const el = $('cstrip'); if (!el) return; if (!el.innerHTML) el.innerHTML = CMP; const hd = ((-P.yaw * 180 / Math.PI) % 360 + 360) % 360; el.style.transform = `translateX(${-(hd + 360) / 15 * 40 - 20}px)`; $('chead').textContent = Math.round(hd); pins(hd); }
-function hud(dt) { compass(); hurtFlash = Math.max(0, hurtFlash - dt * 1.5); $('vign').style.opacity = hurtFlash;
+function hud(dt) { { const H = horse.state, o = !!(H.uiOpen || H.seated || (H.town2 && H.town2.ui)); if (document.body.classList.contains('ui-open') !== o) document.body.classList.toggle('ui-open', o); } /* v83: touch controls step aside while a panel is open */ compass(); hurtFlash = Math.max(0, hurtFlash - dt * 1.5); $('vign').style.opacity = hurtFlash;
   hudT -= dt; if (hudT > 0) return; hudT = .1; uiSync(); horse.hud(); }
 function uiSync() { if (!IS_TOUCH) return; const a = $('tAct'), lab = horse.touchLabel(); a.hidden = !lab; if (lab && a.innerHTML !== lab) a.innerHTML = lab; }
 // ---------------- Screen ----------------

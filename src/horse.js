@@ -5,46 +5,46 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=82';
-import { PERF } from './perfopts.js?v=82';
-import { PF } from './perf.js?v=82';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=83';
+import { PERF } from './perfopts.js?v=83';
+import { PF } from './perf.js?v=83';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=82';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=82';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=82';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=82';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=82';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=82';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=82';
-import { createGuns } from './hrguns.js?v=82';
-import { createHrZombies } from './hrzombies.js?v=82';
-import { createFlora } from './hrflora.js?v=82';
-import { createBounty } from './hrbounty.js?v=82';
-import { createNuggets } from './hrnuggets.js?v=82';
-import { createStable } from './hrstable.js?v=82';
-import { createLeaderboard } from './hrlb.js?v=82';
-import { createNight } from './hrnight.js?v=82';
-import { createRace } from './hrrace.js?v=82';
-import { buildPalisade } from './hrpalisade.js?v=82';
-import { createWeather } from './hrweather.js?v=82';
-import { createMusic } from './hrmusic.js?v=82';
-import { createTownLife } from './hrtownlife.js?v=82';
-import { createRanch } from './hrranch.js?v=82';
-import { createEvents } from './hrevents.js?v=82';
-import { createWild } from './hrwild.js?v=82';
-import { createTrain } from './hrtrain.js?v=82';
-import { createFishing } from './hrfish.js?v=82';
-import { createTown, wearJacket, townNight } from './hrtown.js?v=82';
-import { wearKit } from './hrkit.js?v=82';
-import { createPuppets } from './hrpuppet.js?v=82';
-import { createSaloon } from './hrsaloon.js?v=82';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=82';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=82';
-import { createDynamite } from './hrdynamite.js?v=82';
-import { createSunItem } from './hrsunweapon.js?v=82';
-import { createBuild } from './hrbuild.js?v=82';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=82';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=82';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=83';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=83';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=83';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=83';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=83';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=83';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=83';
+import { createGuns } from './hrguns.js?v=83';
+import { createHrZombies } from './hrzombies.js?v=83';
+import { createFlora } from './hrflora.js?v=83';
+import { createBounty } from './hrbounty.js?v=83';
+import { createNuggets } from './hrnuggets.js?v=83';
+import { createStable } from './hrstable.js?v=83';
+import { createLeaderboard } from './hrlb.js?v=83';
+import { createNight } from './hrnight.js?v=83';
+import { createRace } from './hrrace.js?v=83';
+import { buildPalisade } from './hrpalisade.js?v=83';
+import { createWeather } from './hrweather.js?v=83';
+import { createMusic } from './hrmusic.js?v=83';
+import { createTownLife } from './hrtownlife.js?v=83';
+import { createRanch } from './hrranch.js?v=83';
+import { createEvents } from './hrevents.js?v=83';
+import { createWild } from './hrwild.js?v=83';
+import { createTrain } from './hrtrain.js?v=83';
+import { createFishing } from './hrfish.js?v=83';
+import { createTown, wearJacket, townNight } from './hrtown.js?v=83';
+import { wearKit } from './hrkit.js?v=83';
+import { createPuppets } from './hrpuppet.js?v=83';
+import { createSaloon } from './hrsaloon.js?v=83';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=83';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=83';
+import { createDynamite } from './hrdynamite.js?v=83';
+import { createSunItem } from './hrsunweapon.js?v=83';
+import { createBuild } from './hrbuild.js?v=83';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=83';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=83';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -667,6 +667,7 @@ export function createHorseRider(ctx) {
     if (town2 && town2.use()) { H.cd = COOLDOWN; return true; }
     const h = nearestHorse(); if (!h) { if (H.whistle && !H.tool) { H.whistle(); H.cd = COOLDOWN; return true; } msg('Walk up to a horse to ride it', 1.5); return false; } // v74: no horse in reach -> whistle yours over
     const rx = Math.cos(h.yaw), rz = -Math.sin(h.yaw); H.side = (P.pos.x - h.pos.x) * rx + (P.pos.z - h.pos.z) * rz > 0 ? -1 : 1; // mount from the side you stand on (+1 = horse's left)
+    if (Math.abs(h.pos.x - PEN.x) < PEN.hw && Math.abs(h.pos.z - PEN.z) < PEN.hd) { const yw = Math.atan2(-(PEN.x - h.pos.x), -(PEN.z + PEN.hd + 4 - h.pos.z)); h.yaw = yw; h.g.rotation.y = yw; P.yaw = yw; } // v83: in the pen you mount facing the open gate (phones stalled against the fence)
     H.mounted = h; H.lastHorse = h; H.cd = COOLDOWN; applyCoat(h, H.myCoat()); H.speed = 0; H.yawRate = 0; H.roll = 0; H.wantOff = false; H.dismT = 0; H.mountT = real() && h.g.userData.kind === 'real' ? MOUNT_T : 0;
     h.speed = 0; h.tgt = null; h.graze = false; P.yaw = h.yaw; P.pitch = -.15; H.lookT = 9; H.swLast = P.swX || 0; H.recenter = false; attachRider(h); if (H.mountT) mountPose(h, 0);
     H.mounts++; sfx.ui && sfx.ui(); msg(mobile ? 'Riding! Push the stick to go · all the way to gallop' : 'Riding! W go · tap Shift to speed up a gait · hold Shift to gallop · C slow down · E get off', 3); return true;
@@ -859,7 +860,7 @@ export function createHorseRider(ctx) {
     // turning: rate scales with speed (pivots at a stand, tight at a walk, wide but usable at a gallop), eased in, dropped at once on release
     const sp0 = Math.abs(H.speed), maxR = sp0 < .4 ? 1.9 : lerp(2.5, 1.05, sstep(1.5, 17, sp0));
     const wantR = (H.speed < -.1 ? 1 : -1) * tA * maxR;
-    H.yawRate += (wantR - H.yawRate) * Math.min(1, dt * (Math.abs(tA) > .05 ? 9 : 16)); if (Math.abs(tA) < .05 && Math.abs(H.yawRate) < .02) H.yawRate = 0; h.yaw += H.yawRate * dt;
+    H.yawRate += (wantR - H.yawRate) * Math.min(1, dt * (Math.abs(tA) > .05 ? 9 : 16)); if (Math.abs(tA) < .05 && Math.abs(H.yawRate) < .02) H.yawRate = 0; h.yaw += H.yawRate * dt; if (H.speed > .3 && Math.abs(h.pos.x - PEN.x) < PEN.hw && h.pos.z > PEN.z - PEN.hd && h.pos.z < PEN.z + PEN.hd + 1.5) { const near = h.pos.z > PEN.z + PEN.hd - 2.5 && Math.abs(h.pos.x - PEN.x) < 1, gy = near ? Math.PI : Math.atan2(-(PEN.x - h.pos.x), -(PEN.z + PEN.hd - .5 - h.pos.z)); let d = gy - h.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); if (Math.abs(d) < 1.6) h.yaw += d * Math.min(1, dt * 5); } /* v83: inside the pen, a gentle funnel toward the open gate */
     if (Math.abs(H.yawRate) > .8 && H.speed > 9) H.speed -= (Math.abs(H.yawRate) - .8) * dt * 1.5;
     const fx = -Math.sin(h.yaw), fz = -Math.cos(h.yaw);
     const ox0 = h.pos.x, oz0 = h.pos.z, gy0 = hAt(ox0, oz0); H.curY = h.pos.y; let hit = moveCircle(h.pos, fx * H.speed * dt, fz * H.speed * dt, .8, h); H.curY = null;

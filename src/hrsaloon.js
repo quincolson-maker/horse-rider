@@ -3,13 +3,13 @@
 // bandit or a random brawl), the dealer in the dark corner (snow = fast, green = slow), three slot machines upstairs (seated
 // first-person view, 10/50/100 bets, jackpot 6000), swinging batwing doors, warm lamps, light shafts and dust.
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=78';
-import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=78';
-import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=78';
-import {createCasino} from './hrcasino.js?v=78';
-import {createSaloonDecor} from './hrsaloondecor.js?v=78';
-import { createSaloonPlus } from './hrsaloonplus.js?v=78';
-import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=78';
+import { PERF } from './perfopts.js?v=79';
+import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=79';
+import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=79';
+import {createCasino} from './hrcasino.js?v=79';
+import {createSaloonDecor} from './hrsaloondecor.js?v=79';
+import { createSaloonPlus } from './hrsaloonplus.js?v=79';
+import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=79';
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
 // ---------------- slots: pure math (tests use it) ----------------
 export const SLOT = { NAMES: ['cactus', 'cherry', 'horseshoe', 'bell', 'buffalo'], W: [10, 9, 7, 4, 2], THREE: [0, 5, 10, 25, 60], TWO_CHERRY: 3, ONE_CHERRY: 1, BETS: [10, 50, 100] };
@@ -86,7 +86,7 @@ const DANCERS = [{ name: 'Ruby', top: 0xb01030, skirt: 0xc81a3a, trim: 0x111111,
 export function createSaloon(c) {
   const { scene, H, P, T, camera, sfx, msg, mobile, input, keys } = c, s = T.town, S = { bandits: [], seated: [], dancers: [], remote: new Map(), fight: null, seat: null, dance: null, buzz: { snow: 0, crash: 0, green: 0 }, req: 0, pend: new Map(), slotsPlayed: 0, last: null };
   if (!s) return null;
-  const makeDoll = o => makeFrontierCharacter({...o,quality:mobile?'low':'high'});
+  const makeDoll = o => makeFrontierCharacter({...o,quality:mobile&&o.kind!=='barmaid'&&o.kind!=='dancer'?'low':'high'}); // v79: Greta + the dancers are always full detail
   const ownedNodes=new Set(),ownedDolls=new Set(),sceneBefore=new Set(scene.children),ownSpots=new Set(),originalTownUse=T.onUse;let disposed=false;
   // Construction nodes are recorded explicitly below; no global scene patching.
   H.saloon = S; const F = s.F, Y2 = s.Y2, W = (x, z) => T.toW(s, x, z), Lh = (x, y, z) => { const [wx, wz] = W(x, z); return new THREE.Vector3(wx, s.y0 + y, wz); }, rot = s.rot;

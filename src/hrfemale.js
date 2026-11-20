@@ -64,6 +64,10 @@ export function upgradeFemale(D) { if (!D || !D.body || D.femaleHD) return; D.fe
     // fuller upper lashes (a few flicked hairs per eye)
     for (const sd of [-1, 1]) for (let i = 0; i < 7; i++) { const t = i / 6, x = sd * (.024 + t * .032), y = .156 + Math.sin(t * Math.PI) * .004; ADD(head, new THREE.CylinderGeometry(.0006, .0011, .011, 4), mt.lash, x, y + .004, .099 - Math.abs(t - .5) * .01, -.9, 0, sd * (t - .5) * .9); }
   }
+  { const skinM = new THREE.MeshStandardMaterial({ color: D.o.skin ?? 0xeebf9d, roughness: .6 }); // v79: a real neck (was a thin tube under a wide jaw) + hair over the nape
+    if (neck) ADD(neck, new THREE.CylinderGeometry(.044, .056, .15, 24), skinM, 0, .035, .004);
+    if (head) { ADD(head, new THREE.SphereGeometry(.116, 28, 18, Math.PI, Math.PI, Math.PI * .22, Math.PI * .52), HM, 0, .118, -.004, 0, 0, 0, 1, 1.12, 1.02); // back of the head, down to the nape
+      ADD(head, new THREE.CylinderGeometry(.075, .058, .08, 20, 1, true, Math.PI * .6, Math.PI * .8), HM, 0, .045, -.03); } }
   if (neck) { ADD(neck, new THREE.TorusGeometry(.046, .0055, 8, 32), mt.velvet, 0, .045, .002, Math.PI / 2, 0, 0, 1, 1, 1); const cam = ADD(neck, new THREE.SphereGeometry(.013, 16, 12), mt.gold, 0, .04, .049, 0, 0, 0, .8, 1, .35); ADD(neck, new THREE.SphereGeometry(.0105, 16, 12), mt.ivory, 0, .04, .052, 0, 0, 0, .7, .9, .3); }
   if (spine && barmaid) { // bodice lacing: crossed black cords between two rows of gold eyelets
     const zF = .152; for (let i = 0; i < 6; i++) { const y = .1 + i * .045; for (const sd of [-1, 1]) ADD(spine, new THREE.TorusGeometry(.0045, .0016, 5, 10), mt.gold, sd * .028, y, zF, 0, 0, 0); }

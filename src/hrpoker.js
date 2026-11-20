@@ -5,7 +5,7 @@
 // Networking: the host (or a solo player) runs the table. Clients send actions ({t:'pk'}) and the host sends each
 // seated rider their own view ({t:'pks'}) via H.zSendTo, so nobody's hole cards ever reach another player's machine.
 import * as THREE from 'three';
-import { makeFrontierCharacter } from './hrcharacters.js?v=80';
+import { makeFrontierCharacter } from './hrcharacters.js?v=81';
 const RANKS = '23456789TJQKA', SUITS = '♠♥♦♣', ANTE = 10, BET = 25, BUYIN = 200, MAXS = 6;
 const BOTS = [{ n: 'DOC', loose: .35, bluff: .08 }, { n: 'SLIM', loose: .6, bluff: .16 }, { n: 'ROSA', loose: .45, bluff: .1 }];
 const rk = c => c % 13, st = c => (c / 13) | 0;
@@ -114,7 +114,7 @@ export function createPoker(c) { const { H, msg } = c, K = { el: null, V: null, 
     add(new THREE.TorusGeometry(1.03, .055, 8, 48).rotateX(Math.PI / 2), rail, TC.x, F + .82, TC.z); add(new THREE.CylinderGeometry(.12, .18, .72, 12), wood, TC.x, F + .36, TC.z); add(new THREE.CylinderGeometry(.5, .55, .05, 24), wood, TC.x, F + .025, TC.z);
     add(new THREE.TorusGeometry(.55, .008, 4, 48).rotateX(Math.PI / 2), brass, TC.x, F + .823, TC.z); // pot ring on the felt
     { const lamp = add(new THREE.CylinderGeometry(.08, .32, .22, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0x2a5a32, roughness: .6, side: THREE.DoubleSide, emissive: 0x112a12 }), TC.x, F + 2.25, TC.z); add(new THREE.CylinderGeometry(.006, .006, 1.2, 4), brass, TC.x, F + 2.95, TC.z);
-      const L = new THREE.PointLight(0xffd9a0, 2.6, 4.5, 1.6); L.position.set(TC.x, F + 2.05, TC.z); root.add(L); lamp.material.emissiveIntensity = 1; }
+      if (!c.mobile) { const L = new THREE.PointLight(0xffd9a0, 2.6, 4.5, 1.6); L.position.set(TC.x, F + 2.05, TC.z); root.add(L); } lamp.material.emissiveIntensity = 1; }
     for (let i = 0; i < MAXS; i++) { const a = seatAng(i), [x, z] = loc(SEATR + .1, a), ch = new THREE.Group(); ch.position.set(x, F, z); ch.rotation.y = -a + Math.PI; root.add(ch); // chair, back away from the table
       const pc = (w, h, d, px, py, pz) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wood); o.position.set(px, py, pz); ch.add(o); }; pc(.44, .05, .44, 0, .46, 0); pc(.44, .6, .05, 0, .78, -.2); for (const [u, v] of [[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]]) pc(.04, .46, .04, u, .23, v); }
     const tex = atlas(), cm = new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide, emissive: 0x5a5a5a, emissiveMap: tex }); D3.cards = [];

@@ -10,7 +10,7 @@
 // rider's own texture (skin-coloured texels keep their hue), plus the George repaint for some.
 // Female characters (barmaid, dancers) keep their own models.
 import * as THREE from 'three';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=80';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=81';
 
 export const PENDING = []; // dolls made before the rider model has loaded
 // v76: period palette - small hue nudges, mostly desaturating / darkening the farmer's clothes into browns, greys,
@@ -42,7 +42,7 @@ function restOf(root) { const out = new Map(), inv = new THREE.Matrix4(); root.u
 
 export function puppetize(D, H, seed = 0) { const A = H && H.assets; if (!D || !D.g || D.puppet || !A || !A.riderSrc) return false; const o = D.o || {};
   if (o.sex === 'female' || o.kind === 'barmaid' || o.kind === 'dancer') { D.puppet = 'keep'; return false; }
-  const R = cloneSkinned(A.riderSrc); let mesh = null; R.traverse(q => { if (q.isSkinnedMesh && (!mesh || q.geometry.attributes.position.count > mesh.geometry.attributes.position.count)) mesh = q; if (q.isMesh) { q.castShadow = true; q.frustumCulled = false; } }); if (!mesh) return false;
+  const R = cloneSkinned(A.riderSrc); let mesh = null; R.traverse(q => { if (q.isSkinnedMesh && (!mesh || q.geometry.attributes.position.count > mesh.geometry.attributes.position.count)) mesh = q; if (q.isMesh) { q.castShadow = !H.mobileLite; q.frustumCulled = false; } }); if (!mesh) return false;
   const L = o.kind === 'sheriff' ? SHERIFF : LOOKS[Math.abs(seed | 0) % LOOKS.length]; mesh.material = lookMaterial(mesh.material, L);
   // scale: rider hips to the doll's hips height
   R.position.set(0, 0, 0); R.quaternion.identity(); R.scale.set(1, 1, 1); const rRest = restOf(R), rb = n => mesh.skeleton.bones.find(b => b.name === n), rHips = rb('Hips'); if (!rHips) return false;
@@ -77,7 +77,7 @@ export function puppetize(D, H, seed = 0) { const A = H && H.assets; if (!D || !
 
 // central registry: dolls register here; the nearest few (8 desktop / 4 phone, within 45 m) wear the rider model,
 // built on demand (one per frame) and cached; farther ones show their own light body - a bounded GPU cost
-export function createPuppets(H, mobile) { const all = [], K = mobile ? 6 : 12, R2 = 45 * 45, W = new THREE.Vector3();
+export function createPuppets(H, mobile) { H.mobileLite = !!mobile; /* v81: phone NPCs in the rider model skip the shadow pass */ const all = [], K = mobile ? 3 : 12, R2 = 45 * 45, W = new THREE.Vector3();
   const show = (D, on) => { const P = D.puppet; if (!P || P === 'keep') return; if (P.R.visible === on) return; P.R.visible = on; D.body.visible = !on; if (D.gun && P.gunHand) { (on ? P.gunHand : D.hand).add(D.gun); D.gun.scale.setScalar(on ? 1 / P.s : 1); } };
   // v80: compile every look's shader while the game is loading, so dressing an NPC in town never stalls a frame (phones)
   function warm(renderer, scene, camera) { if (!H.assets || !H.assets.riderSrc || warm.done) return; warm.done = true; try { const R = cloneSkinned(H.assets.riderSrc); let mesh = null; R.traverse(q => { if (q.isSkinnedMesh && !mesh) mesh = q; }); if (!mesh) return; const base = mesh.material; R.position.copy(camera.position); scene.add(R);

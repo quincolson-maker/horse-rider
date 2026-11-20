@@ -2,7 +2,7 @@
 // you on your bounty, and a two-horse stagecoach runs a loop between town and the horse pen. All local (no net traffic), all
 // asleep when you're far away.
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=80';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=81';
 const FOLK = [
   { sex: 'male', coat: 0x5a4632, top: 0xd8cdb4, hatC: 0x4a3a28, skin: 0x8a5a3c, hair: 0x1a120c },
   { sex: 'female', top: 0xe8dcc6, bodice: 0x2e4a6a, skirt: 0x6a2a3a, skin: 0xf0c6a4, hair: 0x9a5a2a },
@@ -22,7 +22,7 @@ export function createTownLife({ scene, H, P, T, hAt, msg, makeRealHorse, realAn
   const folk = FOLK.slice(0, mobile ? 4 : 6).map((o, i) => { const D = makeFrontierCharacter({ kind: 'townsfolk', quality: mobile ? 'low' : 'high', ...o }); scene.add(D.g);
     return { D, d: loop * i / FOLK.length + Math.random() * 6, dir: i % 2 ? 1 : -1, sp: 1.1 + Math.random() * .4, wait: 0 }; });
   // sheriff at the main gate, with a gold star
-  const sh = makeFrontierCharacter({ kind: 'sheriff', sex: 'male', coat: 0x3a2c20, top: 0xe6dcc6, hatC: 0x2a1e14, skin: 0x7a4c30, hair: 0x120c08, bandana: 0x2a2a2a, name: 'Sheriff' });
+  const sh = makeFrontierCharacter({ kind: 'sheriff', sex: 'male', quality: mobile ? 'low' : 'high', /* v81: was full detail (111k verts) on phones */ coat: 0x3a2c20, top: 0xe6dcc6, hatC: 0x2a1e14, skin: 0x7a4c30, hair: 0x120c08, bandana: 0x2a2a2a, name: 'Sheriff' });
   { const star = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, .015, 5), new THREE.MeshStandardMaterial({ color: 0xffcf4a, metalness: .6, roughness: .3, emissive: 0x4a3000 })); star.rotation.x = Math.PI / 2; star.position.set(-.1, .18, .14); sh.spine.add(star); }
   const shL = [CX + 5.5, CZ + 21.2], shW = toW(...shL); sh.g.position.set(shW[0], yAt(...shW), shW[1]); sh.g.rotation.y = (s.rot || 0); scene.add(sh.g);
   let briefT = 0;

@@ -271,7 +271,7 @@ body.ui-open #touch .tb{display:none!important}/* v85: only the buttons step asi
 </style>
 </head><body>
 <div id="fnSplash"><div class="logo">Horse<br>Rider</div><div class="tag">Wild Frontier · Season 1</div><button class="play" id="fnPlay">Play</button>
-<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v85 · updated Nov 20</div></div>
+<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v86 · updated Nov 20</div></div>
 <script>(function(){var q=new URLSearchParams(location.search);var real=q.get('style')==='real';if(!real)document.body.classList.add('sty');var sp=document.getElementById('fnSplash');
 if(real||q.has('dev')||q.has('auto')||q.get('splash')==='0'){sp.remove();return;}
 if(matchMedia('(pointer: coarse)').matches)document.getElementById('fnHint').textContent='Left side: move & steer · right side: look · tap RIDE near a horse';
@@ -303,7 +303,7 @@ document.getElementById('fnPlay').addEventListener('click',go);addEventListener(
  <div class="tb act" id="tAct" style="right:calc(7% + clamp(130px,30vmin,190px));bottom:30%" hidden>USE</div>
  <div class="tb sm" id="tMore" title="More">⋯</div>
  <div class="tb sm" id="tCall" title="Call your horse">🐴</div>
- <div id="uiMore" class="pill" hidden><button id="mLB">🏆 Leaders</button><button id="mHelp">Controls</button><button id="mSet">Settings</button><button id="mFs">Fullscreen</button><button id="mClose">✕ Close</button></div>
+ <div id="uiMore" class="pill" hidden><button id="mMap">🗺️ Map</button><button id="mLB">🏆 Leaders</button><button id="mHelp">Controls</button><button id="mSet">Settings</button><button id="mFs">Fullscreen</button><button id="mClose">✕ Close</button></div>
 </div>
 <button id="vMute" hidden aria-pressed="false"></button>
 <div id="rot"><div class="ph"></div><p>Rotate your phone to landscape</p><button id="rotskip">Play anyway</button></div>
@@ -336,5 +336,5 @@ document.getElementById('fnPlay').addEventListener('click',go);addEventListener(
 </script>
 <script src="./vendor/peerjs.min.js"></script>
 <script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
-<script type="module" src="./main.js?v=85" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
+<script type="module" src="./main.js?v=86" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
 </body></html>

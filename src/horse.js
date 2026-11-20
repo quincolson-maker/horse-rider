@@ -5,46 +5,46 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=79';
-import { PERF } from './perfopts.js?v=79';
-import { PF } from './perf.js?v=79';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=80';
+import { PERF } from './perfopts.js?v=80';
+import { PF } from './perf.js?v=80';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=79';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=79';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=79';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=79';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=79';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=79';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=79';
-import { createGuns } from './hrguns.js?v=79';
-import { createHrZombies } from './hrzombies.js?v=79';
-import { createFlora } from './hrflora.js?v=79';
-import { createBounty } from './hrbounty.js?v=79';
-import { createNuggets } from './hrnuggets.js?v=79';
-import { createStable } from './hrstable.js?v=79';
-import { createLeaderboard } from './hrlb.js?v=79';
-import { createNight } from './hrnight.js?v=79';
-import { createRace } from './hrrace.js?v=79';
-import { buildPalisade } from './hrpalisade.js?v=79';
-import { createWeather } from './hrweather.js?v=79';
-import { createMusic } from './hrmusic.js?v=79';
-import { createTownLife } from './hrtownlife.js?v=79';
-import { createRanch } from './hrranch.js?v=79';
-import { createEvents } from './hrevents.js?v=79';
-import { createWild } from './hrwild.js?v=79';
-import { createTrain } from './hrtrain.js?v=79';
-import { createFishing } from './hrfish.js?v=79';
-import { createTown, wearJacket, townNight } from './hrtown.js?v=79';
-import { wearKit } from './hrkit.js?v=79';
-import { createPuppets } from './hrpuppet.js?v=79';
-import { createSaloon } from './hrsaloon.js?v=79';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=79';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=79';
-import { createDynamite } from './hrdynamite.js?v=79';
-import { createSunItem } from './hrsunweapon.js?v=79';
-import { createBuild } from './hrbuild.js?v=79';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=79';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=79';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=80';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=80';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=80';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=80';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=80';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=80';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=80';
+import { createGuns } from './hrguns.js?v=80';
+import { createHrZombies } from './hrzombies.js?v=80';
+import { createFlora } from './hrflora.js?v=80';
+import { createBounty } from './hrbounty.js?v=80';
+import { createNuggets } from './hrnuggets.js?v=80';
+import { createStable } from './hrstable.js?v=80';
+import { createLeaderboard } from './hrlb.js?v=80';
+import { createNight } from './hrnight.js?v=80';
+import { createRace } from './hrrace.js?v=80';
+import { buildPalisade } from './hrpalisade.js?v=80';
+import { createWeather } from './hrweather.js?v=80';
+import { createMusic } from './hrmusic.js?v=80';
+import { createTownLife } from './hrtownlife.js?v=80';
+import { createRanch } from './hrranch.js?v=80';
+import { createEvents } from './hrevents.js?v=80';
+import { createWild } from './hrwild.js?v=80';
+import { createTrain } from './hrtrain.js?v=80';
+import { createFishing } from './hrfish.js?v=80';
+import { createTown, wearJacket, townNight } from './hrtown.js?v=80';
+import { wearKit } from './hrkit.js?v=80';
+import { createPuppets } from './hrpuppet.js?v=80';
+import { createSaloon } from './hrsaloon.js?v=80';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=80';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=80';
+import { createDynamite } from './hrdynamite.js?v=80';
+import { createSunItem } from './hrsunweapon.js?v=80';
+import { createBuild } from './hrbuild.js?v=80';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=80';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=80';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -725,7 +725,7 @@ export function createHorseRider(ctx) {
   // Do all of that once, early (the title screen is still up): show every hidden mesh for one compile, upload every loaded texture.
   function prewarm() { H.warm = true; const hid = []; try {
       scene.traverse(o => { if (!o.visible && !o.isLight) { hid.push(o); o.visible = true; } });
-      GX.renderer.compile(scene, camera); const seen = new Set();
+      GX.renderer.compile(scene, camera); const seen = new Set(); try { if (!H.puppets) H.puppets = createPuppets(H, mobile); H.puppets.warm(GX.renderer, scene, camera); } catch (e) { console.warn('puppet warm', e); } // v80
       /* v42o: the whole-world preload draw was removed: on real phones (High) it could freeze the game at start */
       scene.traverse(o => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; for (const m of ms) for (const k in m) { const t = m[k]; if (t && t.isTexture && !seen.has(t) && t.image && (t.image.width || t.image.data)) { seen.add(t); GX.renderer.initTexture(t); } } });
     } catch (e) { console.warn('prewarm', e); } for (const o of hid) o.visible = false; }

@@ -10,7 +10,7 @@
 // rider's own texture (skin-coloured texels keep their hue), plus the George repaint for some.
 // Female characters (barmaid, dancers) keep their own models.
 import * as THREE from 'three';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=79';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=80';
 
 export const PENDING = []; // dolls made before the rider model has loaded
 // v76: period palette - small hue nudges, mostly desaturating / darkening the farmer's clothes into browns, greys,
@@ -79,7 +79,10 @@ export function puppetize(D, H, seed = 0) { const A = H && H.assets; if (!D || !
 // built on demand (one per frame) and cached; farther ones show their own light body - a bounded GPU cost
 export function createPuppets(H, mobile) { const all = [], K = mobile ? 6 : 12, R2 = 45 * 45, W = new THREE.Vector3();
   const show = (D, on) => { const P = D.puppet; if (!P || P === 'keep') return; if (P.R.visible === on) return; P.R.visible = on; D.body.visible = !on; if (D.gun && P.gunHand) { (on ? P.gunHand : D.hand).add(D.gun); D.gun.scale.setScalar(on ? 1 / P.s : 1); } };
-  return { all, get list() { return all.filter(D => D.puppet && D.puppet !== 'keep'); }, tick(dt, cam) { while (PENDING.length) all.push(PENDING.shift()); if (!cam || !H.assets || !H.assets.riderSrc) return;
+  // v80: compile every look's shader while the game is loading, so dressing an NPC in town never stalls a frame (phones)
+  function warm(renderer, scene, camera) { if (!H.assets || !H.assets.riderSrc || warm.done) return; warm.done = true; try { const R = cloneSkinned(H.assets.riderSrc); let mesh = null; R.traverse(q => { if (q.isSkinnedMesh && !mesh) mesh = q; }); if (!mesh) return; const base = mesh.material; R.position.copy(camera.position); scene.add(R);
+      for (const L of [...LOOKS, SHERIFF]) { mesh.material = lookMaterial(base, L); renderer.compile(scene, camera); } scene.remove(R); } catch (e) { console.warn('puppet warm', e); } }
+  return { warm, all, get list() { return all.filter(D => D.puppet && D.puppet !== 'keep'); }, tick(dt, cam) { while (PENDING.length) all.push(PENDING.shift()); if (!cam || !H.assets || !H.assets.riderSrc) return;
       const near = []; for (let i = all.length - 1; i >= 0; i--) { const D = all[i]; if (D.puppet === 'keep') continue; if (!D.g.parent && D.seen) { all.splice(i, 1); continue; } if (D.g.parent) D.seen = 1; if (!D.g.parent || !D.g.visible) { show(D, false); continue; } D.g.getWorldPosition(W); const d2 = W.distanceToSquared(cam.position); if (d2 < R2) near.push([d2, D]); else show(D, false); }
       near.sort((a, b) => a[0] - b[0]); let built = 0;
       near.forEach(([d2, D], i) => { if (i >= K) { show(D, false); return; } if (!D.puppet) { if (built++) return; try { if (!puppetize(D, H, D.seed || i)) { if (!D.puppet) D.puppet = 'keep'; return; } } catch (e) { console.warn('puppet', e); D.puppet = 'keep'; return; } D.puppet.R.visible = false; D.body.visible = true; }

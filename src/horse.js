@@ -5,47 +5,48 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=87';
-import { PERF } from './perfopts.js?v=87';
-import { PF } from './perf.js?v=87';
+import { createCamo } from './hrcamo.js?v=88';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=88';
+import { PERF } from './perfopts.js?v=88';
+import { PF } from './perf.js?v=88';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=87';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=87';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=87';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=87';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=87';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=87';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=87';
-import { createGuns } from './hrguns.js?v=87';
-import { createHrZombies } from './hrzombies.js?v=87';
-import { createFlora } from './hrflora.js?v=87';
-import { createBounty } from './hrbounty.js?v=87';
-import { createNuggets } from './hrnuggets.js?v=87';
-import { createStable } from './hrstable.js?v=87';
-import { createLeaderboard } from './hrlb.js?v=87';
-import { createNight } from './hrnight.js?v=87';
-import { createRace } from './hrrace.js?v=87';
-import { buildPalisade } from './hrpalisade.js?v=87';
-import { createWeather } from './hrweather.js?v=87';
-import { createMusic } from './hrmusic.js?v=87';
-import { createTownLife } from './hrtownlife.js?v=87';
-import { createRanch } from './hrranch.js?v=87';
-import { createEvents } from './hrevents.js?v=87';
-import { createWild } from './hrwild.js?v=87';
-import { createTrain } from './hrtrain.js?v=87';
-import { createFishing } from './hrfish.js?v=87';
-import { createTown, wearJacket, townNight } from './hrtown.js?v=87';
-import { wearKit } from './hrkit.js?v=87';
-import { createMap } from './hrmap.js?v=87';
-import { createPuppets } from './hrpuppet.js?v=87';
-import { createSaloon } from './hrsaloon.js?v=87';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=87';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=87';
-import { createDynamite } from './hrdynamite.js?v=87';
-import { createSunItem } from './hrsunweapon.js?v=87';
-import { createBuild } from './hrbuild.js?v=87';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=87';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=87';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=88';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=88';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=88';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=88';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=88';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=88';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=88';
+import { createGuns } from './hrguns.js?v=88';
+import { createHrZombies } from './hrzombies.js?v=88';
+import { createFlora } from './hrflora.js?v=88';
+import { createBounty } from './hrbounty.js?v=88';
+import { createNuggets } from './hrnuggets.js?v=88';
+import { createStable } from './hrstable.js?v=88';
+import { createLeaderboard } from './hrlb.js?v=88';
+import { createNight } from './hrnight.js?v=88';
+import { createRace } from './hrrace.js?v=88';
+import { buildPalisade } from './hrpalisade.js?v=88';
+import { createWeather } from './hrweather.js?v=88';
+import { createMusic } from './hrmusic.js?v=88';
+import { createTownLife } from './hrtownlife.js?v=88';
+import { createRanch } from './hrranch.js?v=88';
+import { createEvents } from './hrevents.js?v=88';
+import { createWild } from './hrwild.js?v=88';
+import { createTrain } from './hrtrain.js?v=88';
+import { createFishing } from './hrfish.js?v=88';
+import { createTown, wearJacket, townNight } from './hrtown.js?v=88';
+import { wearKit } from './hrkit.js?v=88';
+import { createMap } from './hrmap.js?v=88';
+import { createPuppets } from './hrpuppet.js?v=88';
+import { createSaloon } from './hrsaloon.js?v=88';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=88';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=88';
+import { createDynamite } from './hrdynamite.js?v=88';
+import { createSunItem } from './hrsunweapon.js?v=88';
+import { createBuild } from './hrbuild.js?v=88';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=88';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=88';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -798,9 +799,10 @@ export function createHorseRider(ctx) {
       town2.registerStoreItem({ state: { id: 'speckit', name: '🪖 Spec-ops kit · multicam uniform, plate carrier, helmet + night vision, gloves, boots, knee pads', price: KP, owned: !!KS.owned, equipped: !!KS.wear },
         buy() { if (guns.pts() < KP) { msg('Not enough points', 1.5); return; } guns.state.spent = (guns.state.spent || 0) + KP; guns.save(); KS.owned = KS.wear = true; kSave(); this.state.owned = this.state.equipped = true; if (real()) wearKit(rider, true); msg('Kitted up — spec-ops kit on. Take it off here any time.', 3); },
         toggle() { KS.wear = !KS.wear; kSave(); this.state.equipped = KS.wear; if (real()) wearKit(rider, KS.wear); msg(KS.wear ? 'Kit on' : 'Kit off', 1.2); } });
-      for (const [w, nm, key] of [['m4', '🔫 M4A1 carbine · 30 rounds, holographic sight, laser, 750 rpm', 8], ['mp5', '🔫 MP5 · 30 rounds 9 mm, 900 rpm, light recoil', 9]]) town2.registerStoreItem({ state: { id: w, name: nm, price: guns.PRICE[w], get owned() { return !!guns.state.owned[w]; }, maxed: false, get label() { return guns.state.owned[w] ? (guns.state.weapon === w ? 'HOLSTER' : 'DRAW (' + key + ')') : ''; } },
+      for (const [w, nm, key] of [['m4', '🔫 M4A1 carbine · 200-round twin drum, holographic sight, laser, 750 rpm', 8], ['mp5', '🔫 MP5 · 30 rounds 9 mm, 900 rpm, light recoil', 9]]) town2.registerStoreItem({ state: { id: w, name: nm, price: guns.PRICE[w], get owned() { return !!guns.state.owned[w]; }, maxed: false, get label() { return guns.state.owned[w] ? (guns.state.weapon === w ? 'HOLSTER' : 'DRAW (' + key + ')') : ''; } },
         buy() { if (guns.purchase(w)) guns.draw(w); }, toggle() { if (guns.state.weapon === w) guns.holster(); else guns.draw(w); } });
     } catch (e) { console.warn('spec kit', e); }
+    if (town2 && town2.registerStoreItem) try { H.camo = createCamo({ guns, msg }); for (const it of H.camo.items) town2.registerStoreItem(it); } catch (e) { console.warn('camo', e); } // v88
     zombies = H.zombies = createHrZombies({ scene, camera, P, H, hAt, PEN, EDGE, WALK, sfx, fx: ctx.fx, mobile, msg, aimBone, dismount, walker: () => H.assets && H.assets.riderSrc ? makeWalker(H.assets.riderSrc, H.assets.clips) : null,
       remotes: () => H.netRemotes ? H.netRemotes() : [], send: m => H.zSend && H.zSend(m), sendTo: (id, m) => H.zSendTo && H.zSendTo(id, m), role: () => H.netRole ? H.netRole() : 'solo',
       // v38 Bandit Falls outlaws

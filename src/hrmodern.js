@@ -2,7 +2,7 @@
 // Units are metres. -Z is forward, +Y up, origin at the trigger. Static parts are merged per material (one draw each);
 // the charging / cocking handle (recoil) and the magazine (reload) stay separate so they can move.
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=87';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=88';
 
 let MM = null;
 function modernMats() { if (MM) return MM;
@@ -45,6 +45,28 @@ function curvedMag(M, w, d, len, bend, slices = 10, ribs = true) { const g = new
   const mesh = new THREE.Mesh(mergeGeometries(body), M.poly); mesh.castShadow = true; g.add(mesh);
   const lip = new THREE.Mesh(new THREE.BoxGeometry(w * .8, .006, d * .7), M.brass); lip.position.set(0, -.002, 0); g.add(lip); // top round showing
   const bp = new THREE.Mesh(new THREE.BoxGeometry(w + .004, .01, d + .006), M.poly); const fe = bend, fy = -len, ff = Math.sin(bend) * len * .35 * 1.3; bp.position.set(0, fy - .002, -ff); bp.rotation.x = fe; bp.castShadow = true; g.add(bp); return g; }
+
+// v88: 200-round twin-drum magazine (C-Mag style): short feed tower, two drums either side, ribbed end caps, smoked windows showing brass
+function twinDrum(M) { const g = new THREE.Group(), parts = [], A = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), S1 = new THREE.Vector3(1, 1, 1), E = new THREE.Euler(), put = (geo, x, y, z, rx = 0, ry = 0, rz = 0) => { E.set(rx, ry, rz); Q.setFromEuler(E); A.compose(V.set(x, y, z), Q, S1); parts.push(geo.toNonIndexed().applyMatrix4(A)); };
+  const R = .052, T = .044, DX = .047, DY = -.105, DZ = -.012, H2 = Math.PI / 2;
+  put(new THREE.BoxGeometry(.022, .06, .058), 0, -.03, 0); // feed tower in the magwell
+  put(new THREE.BoxGeometry(.05, .03, .06), 0, -.07, -.004); // tower shoulder
+  put(new THREE.BoxGeometry(.046, .05, .05), 0, DY, DZ); // centre spine joining the drums
+  for (const sx of [-1, 1]) { const x = sx * DX;
+    put(new THREE.CylinderGeometry(R, R, T, 32), x, DY, DZ, 0, 0, H2); // drum shell
+    for (const e of [-1, 1]) { put(new THREE.CylinderGeometry(R + .002, R + .002, .006, 32), x + e * (T / 2 - .002), DY, DZ, 0, 0, H2); // rolled rim
+      for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; put(new THREE.BoxGeometry(.003, .006, .012), x + e * (T / 2 + .001), DY + Math.sin(a) * (R - .012), DZ + Math.cos(a) * (R - .012), a, 0, 0); } } // end-cap ribs
+    for (let i = 0; i < 3; i++) put(new THREE.TorusGeometry(R + .0015, .0018, 6, 36), x - T / 3 + i * T / 3, DY, DZ, 0, H2, 0); } // shell bands
+  const shell = new THREE.Mesh(mergeGeometries(parts), M.poly); shell.castShadow = true; g.add(shell);
+  // winding keys + smoked windows showing the rounds
+  const key = new THREE.CylinderGeometry(.013, .013, .012, 6), win = new THREE.CircleGeometry(R * .62, 28), rnd = new THREE.CylinderGeometry(.0042, .0042, .004, 8);
+  const smoke = new THREE.MeshPhysicalMaterial({ color: 0x2a2a2a, roughness: .12, transparent: true, opacity: .55, depthWrite: false });
+  for (const sx of [-1, 1]) { const x = sx * DX, fx = x + sx * (T / 2 + .004);
+    const k = new THREE.Mesh(key, M.steel); k.rotation.z = H2; k.position.set(fx + sx * .004, DY, DZ); g.add(k);
+    const rr = []; for (let ring = 0; ring < 2; ring++) for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2 + ring * .2, rad = R * (.5 - ring * .17); E.set(0, 0, H2); Q.setFromEuler(E); A.compose(V.set(fx - sx * .003, DY + Math.sin(a) * rad, DZ + Math.cos(a) * rad), Q, S1); rr.push(rnd.clone().toNonIndexed().applyMatrix4(A)); }
+    g.add(new THREE.Mesh(mergeGeometries(rr), M.brass));
+    const w = new THREE.Mesh(win, smoke); w.rotation.y = sx * H2; w.position.set(fx, DY, DZ); w.renderOrder = 3; g.add(w); }
+  return g; }
 
 // ---------------- M4A1-style carbine ----------------
 export function buildM4() { const M = modernMats(), K = kit(), BY = .035;
@@ -108,7 +130,7 @@ export function buildM4() { const M = modernMats(), K = kit(), BY = .035;
   for (const z of [-.019, -.081]) { const gl = new THREE.Mesh(new THREE.PlaneGeometry(.028, .026), M.glass); gl.position.set(0, .093, z); gl.renderOrder = 4; g.add(gl); }
   const ret = new THREE.Mesh(new THREE.RingGeometry(.0034, .0042, 24), M.dot); ret.position.set(0, .093, -.08); ret.rotation.y = Math.PI; const rd = new THREE.Mesh(new THREE.CircleGeometry(.0007, 8), M.dot); rd.position.set(0, .093, -.0801); rd.rotation.y = Math.PI; g.add(ret, rd); ret.renderOrder = rd.renderOrder = 5;
   const bolt = new THREE.Group(); { const ch = new THREE.Mesh(new THREE.BoxGeometry(.008, .006, .05), M.anod); ch.position.set(0, .0, 0); const t = new THREE.Mesh(new THREE.BoxGeometry(.036, .006, .008), M.anod); t.position.set(0, 0, .026); bolt.add(ch, t); } bolt.position.set(0, .056, .098); g.add(bolt); // charging handle
-  const mag = curvedMag(M, .022, .06, .17, .32); mag.position.set(0, -.015, -.072); g.add(mag);
+  const mag = twinDrum(M); mag.position.set(0, -.015, -.072); g.add(mag); // v88: 200-round twin drum
   g.traverse(o => { if (o.isMesh && o.material !== M.glass && o.material !== M.dot) o.castShadow = true; });
   return { group: g, muzzle: new THREE.Vector3(0, BY, -.545), ejectionPort: new THREE.Vector3(.018, .036, -.035), bolt, mag, kind: 'm4', boltZ: .12 }; }
 

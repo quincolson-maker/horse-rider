@@ -3,8 +3,8 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=87';
-import { buildM4, buildMP5, detailize } from './hrmodern.js?v=87'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=88';
+import { buildM4, buildMP5, detailize } from './hrmodern.js?v=88'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -27,7 +27,7 @@ export const GUN_SETTINGS = {
   sniperAssistAngle: .9, sniperSticky: .35,
   // v33: Thompson-style SMG with a 100-round drum (full auto) and the Golden Buffalo rifle (huge variable zoom, sees across the map)
   tommyRounds: 100, tommyInterval: .075, reloadTommy: 2.6, tommyRange: 170, recoilTommy: .011, tommyHipSpread: 2.3,
-  m4Rounds: 30, m4Interval: .08, reloadM4: 2.3, m4Range: 280, recoilM4: .0068, m4HipSpread: 1.5, mp5Rounds: 30, mp5Interval: .066, reloadMp5: 2.0, mp5Range: 160, recoilMp5: .0042, mp5HipSpread: 1.2, // v70
+  m4Rounds: 200, m4Interval: .08, reloadM4: 3.4, m4Range: 280, recoilM4: .0068, m4HipSpread: 1.5, mp5Rounds: 30, mp5Interval: .066, reloadMp5: 2.0, mp5Range: 160, recoilMp5: .0042, mp5HipSpread: 1.2, // v70
   gatlingRounds: 150, gatlingInterval: .045, reloadGatling: 3.4, gatlingRange: 165, recoilGatling: .0055, gatlingHipSpread: 2.6, // v41 hand-crank Gatling (spins up)
   goldRounds: 1, goldInterval: .7, reloadGold: 2, goldRange: 3200, goldVelocity: 900, goldFovMax: 8, goldFovMin: .22, recoilGold: .1,
   // upgrade tiers (index 0 = stock, 1 bronze, 2 silver, 3 gold): damage, magazine, reload time, time between shots

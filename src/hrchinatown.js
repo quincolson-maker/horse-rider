@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=320';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=320';
-import { mergeStatic } from './hrmerge.js?v=320';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=321';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=321';
+import { mergeStatic } from './hrmerge.js?v=321';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -311,7 +311,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (k === 'chess') { msg(['♟️ Red pushes a cannon across the river - the old men nod', '♟️ "Check!" - the crowd murmurs', '♟️ A horse jumps, an elephant falls back. A long game.'][(Math.random() * 3) | 0], 2.6); if (sfx.tone && sfx.ctx) sfx.tone('square', 900, 900, .03, .04); }
     else if (k === 'tiles') { tiles(); }
     else if (k === 'lionrub') { if (S.ctRub === day()) msg('🦁 The lion\'s head is already polished bright today', 1.8); else { S.ctRub = day(); earn(30); msg('🦁 You rub the stone lion\'s head - luck is with you (+30)', 2.2); } }
-    else if (k === 'board') { const now = Date.now() / 1000, dn = 360 - (now % 360), ln = 360 - ((now - 180) % 360 + 360) % 360, m = x => x < 60 ? Math.ceil(x) + ' s' : Math.ceil(x / 60) + ' min'; const q = S.ctErr, er = q && q.day === day() ? (q.done ? 'done today' : `${q.got.filter(Boolean).length}/3 roots`) : 'ask the herbalist'; msg(`📜 Dragon dance in ${m(dn)} · Lion dance in ${m(ln)} · Opera: ${S.ctOpera === day() ? 'seen today' : 'tonight'} · Riddles: ${5 - (S.ctRidDay === day() ? S.ctRidN || 0 : 0)} left · Errand: ${er}`, 6); }
+    else if (k === 'board') { const now = Date.now() / 1000, dn = 360 - (now % 360), ln = 360 - ((now - 180) % 360 + 360) % 360, m = x => x < 60 ? Math.ceil(x) + ' s' : Math.ceil(x / 60) + ' min'; const q = S.ctErr, er = q && q.day === day() ? (q.done ? 'done today' : `${q.got.filter(Boolean).length}/3 roots`) : 'ask the herbalist'; msg(`📜 Dragon dance in ${m(dn)} · Lion dance in ${m(ln)} · Opera: ${S.ctOpera === day() ? 'seen today' : 'tonight'} · Riddles: ${5 - (S.ctRidDay === day() ? S.ctRidN || 0 : 0)} left · Errand: ${er} · Cable car runs all day · Avenue sprint starts outside the north gate`, 7); }
     else if (k === 'cooview') { heal(40); msg('🍵 A cup of tea at the upstairs window - the street bustles below', 2.4); }
     else if (k === 'books') { const tips = ['📚 An almanac: "Dead things fear the lantern light of town - and Chinatown\'s gates."', '📚 A railroad map shows six stations on the Mountain Line.', '📚 A field guide: wild ginseng grows on the open hills, never in the pines.', '📚 A dime novel about a safecracker. You recognise the plot.', '📚 A book of riddles - you memorise a few answers for the lanterns.', '📚 A guide to xiangqi: the cannon must jump to capture.']; msg(tips[(Math.random() * tips.length) | 0], 4); if (S.ctRead !== day()) { S.ctRead = day(); earn(20); } }
     else if (k === 'dyn') { const Dn = H.dyn; if (!Dn || !Dn.state) msg('🧨 Not today', 1.5); else if (pay(150)) { Dn.state.count = (Dn.state.count || 0) + 1; try { localStorage.setItem('hr_dyn', String(Dn.state.count)); } catch (_) {} msg('🧨 One stick of blasting powder (×' + Dn.state.count + ') - handle with care', 2.4); } }

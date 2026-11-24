@@ -5,7 +5,7 @@
 const BREEDS = [
   { id: 'mustang', n: 'Mustang', price: 0, spd: 1, drain: 1, armor: 1, s: 1, about: 'tough all-rounder' },
   { id: 'quarter', coat: 1, n: 'Quarter Horse', price: 2500, spd: 1.05, drain: .9, armor: .95, s: .98, about: '+5% speed, steady' },
-  { id: 'appaloosa', coat: 5, n: 'Appaloosa', price: 3000, spd: 1.03, drain: .75, armor: .85, s: 1, about: 'stamina + hardy' },
+  { id: 'appaloosa', coat: 5, n: 'Appaloosa', price: 3000, spd: 1.03, drain: .75, armor: .85, s: 1, about: 'stamina + hardy, jumps higher' },
   { id: 'arabian', coat: 2, n: 'Arabian', price: 4500, spd: 1.1, drain: .7, armor: 1.1, s: .96, about: '+10% speed, tireless, delicate' },
   { id: 'clyde', coat: 3, n: 'Clydesdale', price: 5000, spd: .9, drain: .8, armor: .55, s: 1.08, about: 'huge + armored, tramples zombies' },
 ];

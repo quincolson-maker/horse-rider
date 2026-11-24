@@ -129,6 +129,13 @@ export class SFX {
     if (pn.positionX) { pn.positionX.value = pos.x; pn.positionY.value = pos.y; pn.positionZ.value = pos.z; } else pn.setPosition(pos.x, pos.y, pos.z);
     const dist = this.cam ? this.cam.distanceTo(pos) : 10; const lp = this.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = Math.max(900, 16000 - dist * 220); pn.connect(lp); lp.connect(this.atDest || this.master);
     const prev = this.dest, pw = this.wet; this.dest = pn; this.wet = Math.min(1, wet + dist / 80); try { fn(); } finally { this.dest = prev; this.wet = pw; setTimeout(() => { try { pn.disconnect(); lp.disconnect(); } catch (e) {} }, 3000); } }
+  /* v215 surfaces: boots and hooves sound different on boards, dirt, stone and in water */
+  surf(kind, heavy) { if (!this.ok('surf' + (heavy ? 'h' : ''), heavy ? .07 : .2)) return; const v = heavy ? 1.3 : .8;
+    if (kind === 'wood') { this.nz('bandpass', 950 + Math.random() * 200, 4, .16 * v, .06); this.nz('lowpass', 220, 1, .12 * v, .09); }
+    else if (kind === 'rock') { this.nz('highpass', 3200, 1, .1 * v, .03); this.nz('bandpass', 1400, 3, .1 * v, .04); }
+    else if (kind === 'water') { this.nz('bandpass', 700 + Math.random() * 500, 1.2, .1 * v, .16); this.nz('highpass', 3000, .6, .05 * v, .12); }
+    else { this.nz('lowpass', heavy ? 340 : 420, 1, .14 * v, heavy ? .09 : .07); this.nz('highpass', 2400, .5, .05 * v, .08); } }
+  hoof(gait, kind) { this.surf(kind || 'dirt', true); }
   step(hard) { if (!this.ok('step', .2)) return; const w = this.wet; this.wet = 0; if (hard) { this.nz('bandpass', 1800, 2, .12, .05); this.nz('lowpass', 300, 1, .15, .06); } else { this.nz('highpass', 2500, .5, .07, .09); this.nz('lowpass', 400, 1, .1, .07); } this.wet = w; }
   rainLoop(on) { if (!this.ctx) return; if (on && !this.rainSrc) { const s = this.ctx.createBufferSource(); s.buffer = this.noise; s.loop = true; const f = this.ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2500; f.Q.value = .4; const g = this.ctx.createGain(); g.gain.value = .07; s.connect(f); f.connect(g); g.connect(this.master); s.start(); this.rainSrc = s; }
     if (!on && this.rainSrc) { this.rainSrc.stop(); this.rainSrc = null; } }

@@ -5,66 +5,67 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { createDuel } from './hrduel.js?v=214';
-import { createWell } from './hrwell.js?v=214';
-import { createCemetery } from './hrcemetery.js?v=214';
-import { createDeputies } from './hrdeputy.js?v=214';
-import { createTreasure } from './hrtreasure.js?v=214';
-import { createDrops } from './hrdrops.js?v=214';
-import { createVault } from './hrvault.js?v=214';
-import { createGear } from './hrgear.js?v=214';
-import { createArm } from './hrarm.js?v=214';
-import { createAmbient } from './hrambient.js?v=214';
-import { createCuller, mergeStatic as mergeStaticTree } from './hrmerge.js?v=214';
-import { createStats } from './hrstats.js?v=214';
-import { createBarding } from './hrbarding.js?v=214';
-import { createCamp } from './hrcamp.js?v=214';
-import { createHats } from './hrhats.js?v=214';
-import { createBreeds } from './hrbreed.js?v=214';
-import { createLasso } from './hrlasso.js?v=214';
-import { createRaid } from './hrraid.js?v=214';
-import { createCamo } from './hrcamo.js?v=214';
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=214';
-import { PERF } from './perfopts.js?v=214';
-import { PF } from './perf.js?v=214';
+import { createDuel } from './hrduel.js?v=215';
+import { createWell } from './hrwell.js?v=215';
+import { createCemetery } from './hrcemetery.js?v=215';
+import { createDeputies } from './hrdeputy.js?v=215';
+import { createTreasure } from './hrtreasure.js?v=215';
+import { createDrops } from './hrdrops.js?v=215';
+import { createVault } from './hrvault.js?v=215';
+import { createGear } from './hrgear.js?v=215';
+import { createArm } from './hrarm.js?v=215';
+import { createAmbient } from './hrambient.js?v=215';
+import { createExtra } from './hrextra.js?v=215';
+import { createCuller, mergeStatic as mergeStaticTree } from './hrmerge.js?v=215';
+import { createStats } from './hrstats.js?v=215';
+import { createBarding } from './hrbarding.js?v=215';
+import { createCamp } from './hrcamp.js?v=215';
+import { createHats } from './hrhats.js?v=215';
+import { createBreeds } from './hrbreed.js?v=215';
+import { createLasso } from './hrlasso.js?v=215';
+import { createRaid } from './hrraid.js?v=215';
+import { createCamo } from './hrcamo.js?v=215';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=215';
+import { PERF } from './perfopts.js?v=215';
+import { PF } from './perf.js?v=215';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=214';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=214';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=214';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=214';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=214';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=214';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=214';
-import { createGuns } from './hrguns.js?v=214';
-import { createHrZombies } from './hrzombies.js?v=214';
-import { createFlora } from './hrflora.js?v=214';
-import { createBounty } from './hrbounty.js?v=214';
-import { createNuggets } from './hrnuggets.js?v=214';
-import { createStable } from './hrstable.js?v=214';
-import { createLeaderboard } from './hrlb.js?v=214';
-import { createNight } from './hrnight.js?v=214';
-import { createRace } from './hrrace.js?v=214';
-import { buildPalisade } from './hrpalisade.js?v=214';
-import { createWeather } from './hrweather.js?v=214';
-import { createMusic } from './hrmusic.js?v=214';
-import { createTownLife } from './hrtownlife.js?v=214';
-import { createRanch } from './hrranch.js?v=214';
-import { createEvents } from './hrevents.js?v=214';
-import { createWild } from './hrwild.js?v=214';
-import { createTrain } from './hrtrain.js?v=214';
-import { createFishing } from './hrfish.js?v=214';
-import { createTown, wearJacket, townNight } from './hrtown.js?v=214';
-import { wearKit } from './hrkit.js?v=214';
-import { createMap } from './hrmap.js?v=214';
-import { createPuppets } from './hrpuppet.js?v=214';
-import { createSaloon } from './hrsaloon.js?v=214';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=214';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=214';
-import { createDynamite } from './hrdynamite.js?v=214';
-import { createSunItem } from './hrsunweapon.js?v=214';
-import { createBuild } from './hrbuild.js?v=214';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=214';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=214';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=215';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=215';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=215';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=215';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=215';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=215';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=215';
+import { createGuns } from './hrguns.js?v=215';
+import { createHrZombies } from './hrzombies.js?v=215';
+import { createFlora } from './hrflora.js?v=215';
+import { createBounty } from './hrbounty.js?v=215';
+import { createNuggets } from './hrnuggets.js?v=215';
+import { createStable } from './hrstable.js?v=215';
+import { createLeaderboard } from './hrlb.js?v=215';
+import { createNight } from './hrnight.js?v=215';
+import { createRace } from './hrrace.js?v=215';
+import { buildPalisade } from './hrpalisade.js?v=215';
+import { createWeather } from './hrweather.js?v=215';
+import { createMusic } from './hrmusic.js?v=215';
+import { createTownLife } from './hrtownlife.js?v=215';
+import { createRanch } from './hrranch.js?v=215';
+import { createEvents } from './hrevents.js?v=215';
+import { createWild } from './hrwild.js?v=215';
+import { createTrain } from './hrtrain.js?v=215';
+import { createFishing } from './hrfish.js?v=215';
+import { createTown, wearJacket, townNight } from './hrtown.js?v=215';
+import { wearKit } from './hrkit.js?v=215';
+import { createMap } from './hrmap.js?v=215';
+import { createPuppets } from './hrpuppet.js?v=215';
+import { createSaloon } from './hrsaloon.js?v=215';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=215';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=215';
+import { createDynamite } from './hrdynamite.js?v=215';
+import { createSunItem } from './hrsunweapon.js?v=215';
+import { createBuild } from './hrbuild.js?v=215';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=215';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=215';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -942,7 +943,7 @@ export function createHorseRider(ctx) {
     if (!onS && !(town2 && town2.onStruct(P.pos.x, P.pos.z, P.pos.y)) && !(H.temple && (H.temple.under(P.pos.x, P.pos.z, P.pos.y) || H.temple.inDoor(P.pos.x, P.pos.z))) && !(H.cave && H.cave.under && H.cave.under(P.pos.x, P.pos.z, P.pos.y)) && (nT ? Math.hypot(H.fv.x, H.fv.y) > 2.2 && P.pos.y - gy0 > dt * 2.2 && H.fv.multiplyScalar(.97) && false : slopeGate(P.pos, ox0, oz0, gy0, 1.3, .35, null))) H.fv.multiplyScalar(.9); // scrambling up: only up to ~52 degrees
     let g0 = town2 ? town2.floorAt(P.pos.x, P.pos.z, P.pos.y) : hAt(P.pos.x, P.pos.z); if (H.cave) g0 = H.cave.floorAt(P.pos.x, P.pos.z, P.pos.y, g0); if (H.temple) { const tg = H.temple.groundAt(P.pos.x, P.pos.z, P.pos.y); if (tg !== null) g0 = tg; } /* v39: under the mound the temple's floors decide */ if (jump && H.ground) { H.vy = 7; H.ground = false; }
     H.vy -= 22 * dt; P.pos.y += H.vy * dt; if (P.pos.y <= g0) { P.pos.y = g0; H.vy = 0; H.ground = true; }
-    const ob = P.bob; P.bob += dt * v * 1.6; if (H.ground && v > .5 && Math.floor(ob / Math.PI) !== Math.floor(P.bob / Math.PI)) sfx.step && sfx.step(false);
+    const ob = P.bob; P.bob += dt * v * 1.6; if (H.ground && v > .5 && Math.floor(ob / Math.PI) !== Math.floor(P.bob / Math.PI)) { const wood = town2 && town2.floorAt(P.pos.x, P.pos.z, P.pos.y + .3) > hAt(P.pos.x, P.pos.z) + .2, rock = (H.cave && H.cave.inside && H.cave.inside(P.pos.x, P.pos.z)) || (H.temple && H.temple.groundAt && H.temple.groundAt(P.pos.x, P.pos.z, P.pos.y) !== null), wet = H.wx && H.wx.rain > .5; if (sfx.surf) sfx.surf(wood ? 'wood' : rock ? 'rock' : wet ? 'water' : 'dirt'); else sfx.step && sfx.step(false); } /* v215 surface footsteps */
     if (H.gunFace != null) H.bodyYaw += wrapA(H.gunFace - H.bodyYaw) * Math.min(1, dt * 14); else if (v > .3) { const wy = Math.atan2(-H.fv.x, -H.fv.y); H.bodyYaw += wrapA(wy - H.bodyYaw) * Math.min(1, dt * 10); }
     if (real()) { me.body.position.copy(P.pos); me.body.rotation.y = H.bodyYaw; me.body.visible = !H.fp; if (me.W) me.W.update(dt, H.ground ? v : Math.max(v, 1)); }
   }
@@ -969,7 +970,7 @@ export function createHorseRider(ctx) {
     if (!H.warm && H.t > 2.5 && H.models !== 'loading') prewarm();
     if (sfx.amb) { const C = H.cave, e = C && C.cave ? C.cave.entrance : null, fire = C && C.fireAt ? C.fireAt() : null, river = C && C.riverAt ? C.riverAt() : null, inSal = !!(H.saloon && H.saloon.inside && H.saloon.inside());
       sfx.amb(dt, { outdoors: true, day: 1, saloon: inSal, cave: H.caveDark || 0, falls: e ? Math.hypot(P.pos.x - e.x, P.pos.y - e.y, P.pos.z - e.z) : null, fire: fire ? P.pos.distanceTo(fire) : null, river: river ? P.pos.distanceTo(river) : null }); }
-    if (H.fallT > 0) H.fallT -= dt; PF.s('town'); if (town2) town2.tick(dt); if (H.nuggets) H.nuggets.update(dt); if (H.nightEv) H.nightEv.update(dt); if (H.race) H.race.update(dt); if (H.weather) H.weather.update(dt); if (H.music) H.music.update(dt); if (H.townLife) H.townLife.update(dt); if (H.ranch) H.ranch.update(dt); if (H.events) H.events.update(dt); if (H.wild) H.wild.update(dt); if (H.train) H.train.update(dt); if (H.fish) H.fish.update(dt); if (!H.puppets) H.puppets = createPuppets(H, mobile); H.puppets.tick(dt, camera); if (!H.map) { H.msg = H.msg || msg; H.map = createMap({ H, P, hAt, PEN }); } H.map.tick(); if (!H.raid && H.zombies && H.palisade) { try { H.raid = createRaid({ scene, H, P, hAt, msg, sfx, mobile, fx: ctx.fx }); if (H.raid.item && town2.registerStoreItem) town2.registerStoreItem(H.raid.item); } catch (e) { console.warn('raid', e); H.raid = { tick() {} }; } } if (H.raid) H.raid.tick(dt); if (!H.lasso && H.guns && town2) { try { H.lasso = createLasso({ scene, H, P, camera, hAt, msg, sfx, mobile }); town2.registerStoreItem && town2.registerStoreItem(H.lasso.item); town2.registerStoreItem && H.lasso.item2 && town2.registerStoreItem(H.lasso.item2); } catch (e) { console.warn('lasso', e); H.lasso = { tick() {} }; } } H.lasso && H.lasso.tick(dt); H.breed && H.breed.tick(dt); if (!H.camp && H.guns && town2) { try { H.camp = createCamp({ scene, H, P, hAt, msg, sfx, mobile }); town2.registerStoreItem && town2.registerStoreItem(H.camp.item); } catch (e) { console.warn('camp', e); H.camp = { tick() {}, make() {} }; } } H.camp && H.camp.tick(dt); if (!H.barding) { try { H.barding = createBarding({ H }); } catch (e) { console.warn('barding', e); H.barding = { tick() {} }; } } H.barding.tick(); { const hm = H.mounted, fx = ctx.fx; if (hm && fx && fx.smoke && Math.abs(H.speed) > 8.5 && !(H.wx && H.wx.rain > .5) && (H.dustT = (H.dustT || 0) - dt) <= 0) { H.dustT = mobile ? .12 : .06; const bx = hm.pos.x + Math.sin(hm.yaw) * 1.1, bz = hm.pos.z + Math.cos(hm.yaw) * 1.1; fx.smoke.emit(bx + (Math.random() - .5) * .6, hAt(bx, bz) + .15, bz + (Math.random() - .5) * .6, (Math.random() - .5) * .6, .35 + Math.random() * .3, (Math.random() - .5) * .6, .78, .7, .58, .45, 1.6, 1.1, -.02, .22); } } /* v147 gallop dust */ H.cullTick && H.cullTick(); if (!H.ambient) { try { H.ambient = createAmbient({ scene, H, P, hAt, mobile }); } catch (e) { console.warn('ambient', e); H.ambient = { update() {} }; } } H.ambient.update(dt); H.panTick && H.panTick(dt); if (!H.drops) { try { H.drops = createDrops({ scene, H, P, msg, sfx }); } catch (e) { console.warn('drops', e); H.drops = { update() {}, drop() {} }; } } H.drops.update(dt); H.gear && H.gear.lampTick && H.gear.lampTick(); if (!H.treasure && town2 && town2.spots && H.guns) { try { H.treasure = createTreasure({ scene, H, P, hAt, msg, sfx, T: town2 }); town2.registerStoreItem && town2.registerStoreItem(H.treasure.item); } catch (e) { console.warn('treasure', e); H.treasure = { tick() {} }; } } H.treasure && H.treasure.tick(); if (!H.deputies && town2 && H.guns && real()) { try { H.deputies = createDeputies({ scene, H, P, hAt, msg, sfx, mobile }); town2.registerStoreItem && town2.registerStoreItem(H.deputies.item); } catch (e) { console.warn('deputies', e); H.deputies = { update() {} }; } } H.deputies && H.deputies.update(dt); if (!H.cemetery && town2 && town2.structs && H.cullAdd) { try { H.cemetery = createCemetery({ scene, H, P, T: town2, hAt, msg }) || { update() {} }; } catch (e) { console.warn('cemetery', e); H.cemetery = { update() {} }; } } H.cemetery && H.cemetery.update(dt); if (!H.well && town2 && town2.structs) { try { H.well = createWell({ scene, H, P, T: town2, hAt, msg, sfx }) || { update() {} }; } catch (e) { console.warn('well', e); H.well = { update() {} }; } } H.well && H.well.update(dt); { if (window.__indoorFP === undefined) { try { window.__indoorFP = localStorage.getItem('hr_indoorfp') === '1'; } catch (_) { window.__indoorFP = false; } } const ins = !!(window.__indoorFP && !H.mounted && H.saloon && H.saloon.inside && H.saloon.inside()); if (ins && !H.ifp) { H.ifp = { fp: H.fp }; H.fp = true; } else if (!ins && H.ifp) { H.fp = H.ifp.fp; H.ifp = null; } } /* v205 first person indoors */ if (H.roofSit) { const mv = keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD || Math.abs(input.mx || 0) > .2 || Math.abs(input.mz || 0) > .2 || H.mounted || H.dead; if (mv || Math.hypot(P.pos.x - H.roofSit.x, P.pos.z - H.roofSit.z) > 1.5) H.roofSit = null; else { P.pos.set(H.roofSit.x, H.roofSit.y, H.roofSit.z); H.vy = 0; if (H.fv) H.fv.set(0, 0); const Z = H.zombies; if (Z && Z.state.hp < 100) Z.state.hp = Math.min(100, Z.state.hp + 3 * dt); } } /* v197 sitting */ if (!H.duel && town2 && town2.structs && real()) { try { H.duel = createDuel({ scene, H, P, T: town2, hAt, msg, sfx, mobile }) || { update() {} }; } catch (e) { console.warn('duel', e); H.duel = { update() {} }; } } H.duel && H.duel.update(dt); if ((H.trailT = (H.trailT || 0) - dt) <= 0) { H.trailT = 4; const tr = H.trail || (H.trail = []), l = tr[tr.length - 1]; if (!l || Math.hypot(l[0] - P.pos.x, l[1] - P.pos.z) > 12) { tr.push([+P.pos.x.toFixed(0), +P.pos.z.toFixed(0)]); if (tr.length > 400) tr.shift(); } } if (H.train && H.train.stations && (H.stVisT = (H.stVisT || 0) - dt) <= 0) { H.stVisT = 1; const st = H.stats || (H.stats = {}); const vis = new Set(st.stVis || []); H.train.stations.forEach((q, k) => { if (q.plat && Math.hypot(q.plat.x - P.pos.x, q.plat.z - P.pos.z) < 14 && !vis.has(k)) { vis.add(k); st.stVis = [...vis]; msg(`🚉 ${q.name} station — ${vis.size}/${H.train.stations.length} visited`, 2); if (vis.size === H.train.stations.length && H.guns && !st.allAboard) { st.allAboard = 1; H.guns.state.score += 2500; H.guns.save && H.guns.save(); setTimeout(() => msg('🚂 ALL ABOARD! Every station on the Mountain Line  +2500', 4), 2200); } } }); } /* v179 */ if (!H.cullScan && H.cullAdd && H.models === 'real' && (H.t || 0) > 8) { H.cullScan = true; let n = 0; for (const o of scene.children) if (/saloon upgrade|architectural detail|cabinet|casino tables|Red Garter/i.test(o.name || '')) { const c = o.getWorldPosition(new THREE.Vector3()); if (Math.abs(c.x) + Math.abs(c.z) < 1) { const t = H.places && H.places.town; if (t) { c.x = t[0]; c.z = t[1]; } } H.cullAdd(o, 160, { x: c.x, z: c.z }); n++; } H.cullN = n; } /* v156: saloon interior detail hidden when you're far from town */ if (!H.vault && H.zombies && town2 && town2.structs) { try { H.vault = createVault({ scene, H, P, T: town2, msg, sfx, hAt }) || { tick() {} }; } catch (e) { console.warn('vault', e); H.vault = { tick() {} }; } } H.vault && H.vault.tick(dt); if (!H.arm) { try { H.arm = createArm({ H, msg, sfx }); } catch (e) { console.warn('arm', e); H.arm = {}; } } if (!H.journal) { try { H.journal = createStats({ H, msg }); } catch (e) { console.warn('stats', e); H.journal = {}; } } H.journal.tick && H.journal.tick(dt); if (!H.mounted && H.autoRun) H.autoRun = false; { const b = document.getElementById('tAuto'); if (b) { const sh = !!H.mounted && !H.uiOpen; if (b.hidden === sh) b.hidden = !sh; b.classList.toggle('on', !!H.autoRun); } } /* v86 world map */ { /* v85 new-player guide: a pulsing gold ring + arrow over the nearest horse until the first ride */ let G = H.guide; if (!G) { let rode = false; try { rode = !!localStorage.getItem('hr_rode'); } catch (_) {} G = H.guide = { done: rode };
+    if (H.fallT > 0) H.fallT -= dt; PF.s('town'); if (town2) town2.tick(dt); if (H.nuggets) H.nuggets.update(dt); if (H.nightEv) H.nightEv.update(dt); if (H.race) H.race.update(dt); if (H.weather) H.weather.update(dt); if (H.music) H.music.update(dt); if (H.townLife) H.townLife.update(dt); if (H.ranch) H.ranch.update(dt); if (H.events) H.events.update(dt); if (H.wild) H.wild.update(dt); if (H.train) H.train.update(dt); if (H.fish) H.fish.update(dt); if (!H.puppets) H.puppets = createPuppets(H, mobile); H.puppets.tick(dt, camera); if (!H.map) { H.msg = H.msg || msg; H.map = createMap({ H, P, hAt, PEN }); } H.map.tick(); if (!H.raid && H.zombies && H.palisade) { try { H.raid = createRaid({ scene, H, P, hAt, msg, sfx, mobile, fx: ctx.fx }); if (H.raid.item && town2.registerStoreItem) town2.registerStoreItem(H.raid.item); } catch (e) { console.warn('raid', e); H.raid = { tick() {} }; } } if (H.raid) H.raid.tick(dt); if (!H.lasso && H.guns && town2) { try { H.lasso = createLasso({ scene, H, P, camera, hAt, msg, sfx, mobile }); town2.registerStoreItem && town2.registerStoreItem(H.lasso.item); town2.registerStoreItem && H.lasso.item2 && town2.registerStoreItem(H.lasso.item2); } catch (e) { console.warn('lasso', e); H.lasso = { tick() {} }; } } H.lasso && H.lasso.tick(dt); H.breed && H.breed.tick(dt); if (!H.camp && H.guns && town2) { try { H.camp = createCamp({ scene, H, P, hAt, msg, sfx, mobile }); town2.registerStoreItem && town2.registerStoreItem(H.camp.item); } catch (e) { console.warn('camp', e); H.camp = { tick() {}, make() {} }; } } H.camp && H.camp.tick(dt); if (!H.barding) { try { H.barding = createBarding({ H }); } catch (e) { console.warn('barding', e); H.barding = { tick() {} }; } } H.barding.tick(); { const hm = H.mounted, fx = ctx.fx; if (hm && fx && fx.smoke && Math.abs(H.speed) > 8.5 && !(H.wx && H.wx.rain > .5) && (H.dustT = (H.dustT || 0) - dt) <= 0) { H.dustT = mobile ? .12 : .06; const bx = hm.pos.x + Math.sin(hm.yaw) * 1.1, bz = hm.pos.z + Math.cos(hm.yaw) * 1.1; fx.smoke.emit(bx + (Math.random() - .5) * .6, hAt(bx, bz) + .15, bz + (Math.random() - .5) * .6, (Math.random() - .5) * .6, .35 + Math.random() * .3, (Math.random() - .5) * .6, .78, .7, .58, .45, 1.6, 1.1, -.02, .22); } } /* v147 gallop dust */ H.cullTick && H.cullTick(); if (!H.ambient) { try { H.ambient = createAmbient({ scene, H, P, hAt, mobile }); } catch (e) { console.warn('ambient', e); H.ambient = { update() {} }; } } H.ambient.update(dt); if (!H.extra) { try { H.extra = createExtra({ scene, H, P, hAt, msg, sfx, mobile }); } catch (e) { console.warn('extra', e); H.extra = { update() {} }; } } H.extra.update(dt); H.panTick && H.panTick(dt); if (!H.drops) { try { H.drops = createDrops({ scene, H, P, msg, sfx }); } catch (e) { console.warn('drops', e); H.drops = { update() {}, drop() {} }; } } H.drops.update(dt); H.gear && H.gear.lampTick && H.gear.lampTick(); if (!H.treasure && town2 && town2.spots && H.guns) { try { H.treasure = createTreasure({ scene, H, P, hAt, msg, sfx, T: town2 }); town2.registerStoreItem && town2.registerStoreItem(H.treasure.item); } catch (e) { console.warn('treasure', e); H.treasure = { tick() {} }; } } H.treasure && H.treasure.tick(); if (!H.deputies && town2 && H.guns && real()) { try { H.deputies = createDeputies({ scene, H, P, hAt, msg, sfx, mobile }); town2.registerStoreItem && town2.registerStoreItem(H.deputies.item); } catch (e) { console.warn('deputies', e); H.deputies = { update() {} }; } } H.deputies && H.deputies.update(dt); if (!H.cemetery && town2 && town2.structs && H.cullAdd) { try { H.cemetery = createCemetery({ scene, H, P, T: town2, hAt, msg }) || { update() {} }; } catch (e) { console.warn('cemetery', e); H.cemetery = { update() {} }; } } H.cemetery && H.cemetery.update(dt); if (!H.well && town2 && town2.structs) { try { H.well = createWell({ scene, H, P, T: town2, hAt, msg, sfx }) || { update() {} }; } catch (e) { console.warn('well', e); H.well = { update() {} }; } } H.well && H.well.update(dt); { if (window.__indoorFP === undefined) { try { window.__indoorFP = localStorage.getItem('hr_indoorfp') === '1'; } catch (_) { window.__indoorFP = false; } } const ins = !!(window.__indoorFP && !H.mounted && H.saloon && H.saloon.inside && H.saloon.inside()); if (ins && !H.ifp) { H.ifp = { fp: H.fp }; H.fp = true; } else if (!ins && H.ifp) { H.fp = H.ifp.fp; H.ifp = null; } } /* v205 first person indoors */ if (H.roofSit) { const mv = keys.KeyW || keys.KeyA || keys.KeyS || keys.KeyD || Math.abs(input.mx || 0) > .2 || Math.abs(input.mz || 0) > .2 || H.mounted || H.dead; if (mv || Math.hypot(P.pos.x - H.roofSit.x, P.pos.z - H.roofSit.z) > 1.5) H.roofSit = null; else { P.pos.set(H.roofSit.x, H.roofSit.y, H.roofSit.z); H.vy = 0; if (H.fv) H.fv.set(0, 0); const Z = H.zombies; if (Z && Z.state.hp < 100) Z.state.hp = Math.min(100, Z.state.hp + 3 * dt); } } /* v197 sitting */ if (!H.duel && town2 && town2.structs && real()) { try { H.duel = createDuel({ scene, H, P, T: town2, hAt, msg, sfx, mobile }) || { update() {} }; } catch (e) { console.warn('duel', e); H.duel = { update() {} }; } } H.duel && H.duel.update(dt); if ((H.trailT = (H.trailT || 0) - dt) <= 0) { H.trailT = 4; const tr = H.trail || (H.trail = []), l = tr[tr.length - 1]; if (!l || Math.hypot(l[0] - P.pos.x, l[1] - P.pos.z) > 12) { tr.push([+P.pos.x.toFixed(0), +P.pos.z.toFixed(0)]); if (tr.length > 400) tr.shift(); } } if (H.train && H.train.stations && (H.stVisT = (H.stVisT || 0) - dt) <= 0) { H.stVisT = 1; const st = H.stats || (H.stats = {}); const vis = new Set(st.stVis || []); H.train.stations.forEach((q, k) => { if (q.plat && Math.hypot(q.plat.x - P.pos.x, q.plat.z - P.pos.z) < 14 && !vis.has(k)) { vis.add(k); st.stVis = [...vis]; msg(`🚉 ${q.name} station — ${vis.size}/${H.train.stations.length} visited`, 2); if (vis.size === H.train.stations.length && H.guns && !st.allAboard) { st.allAboard = 1; H.guns.state.score += 2500; H.guns.save && H.guns.save(); setTimeout(() => msg('🚂 ALL ABOARD! Every station on the Mountain Line  +2500', 4), 2200); } } }); } /* v179 */ if (!H.cullScan && H.cullAdd && H.models === 'real' && (H.t || 0) > 8) { H.cullScan = true; let n = 0; for (const o of scene.children) if (/saloon upgrade|architectural detail|cabinet|casino tables|Red Garter/i.test(o.name || '')) { const c = o.getWorldPosition(new THREE.Vector3()); if (Math.abs(c.x) + Math.abs(c.z) < 1) { const t = H.places && H.places.town; if (t) { c.x = t[0]; c.z = t[1]; } } H.cullAdd(o, 160, { x: c.x, z: c.z }); n++; } H.cullN = n; } /* v156: saloon interior detail hidden when you're far from town */ if (!H.vault && H.zombies && town2 && town2.structs) { try { H.vault = createVault({ scene, H, P, T: town2, msg, sfx, hAt }) || { tick() {} }; } catch (e) { console.warn('vault', e); H.vault = { tick() {} }; } } H.vault && H.vault.tick(dt); if (!H.arm) { try { H.arm = createArm({ H, msg, sfx }); } catch (e) { console.warn('arm', e); H.arm = {}; } } if (!H.journal) { try { H.journal = createStats({ H, msg }); } catch (e) { console.warn('stats', e); H.journal = {}; } } H.journal.tick && H.journal.tick(dt); if (!H.mounted && H.autoRun) H.autoRun = false; { const b = document.getElementById('tAuto'); if (b) { const sh = !!H.mounted && !H.uiOpen; if (b.hidden === sh) b.hidden = !sh; b.classList.toggle('on', !!H.autoRun); } } /* v86 world map */ { /* v85 new-player guide: a pulsing gold ring + arrow over the nearest horse until the first ride */ let G = H.guide; if (!G) { let rode = false; try { rode = !!localStorage.getItem('hr_rode'); } catch (_) {} G = H.guide = { done: rode };
         if (!rode) { const ring = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.85, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffd23a, transparent: true, opacity: .8, depthWrite: false, fog: false })), arr = new THREE.Mesh(new THREE.ConeGeometry(.35, .7, 4).rotateX(Math.PI), new THREE.MeshBasicMaterial({ color: 0xffd23a, fog: false })); scene.add(ring, arr); G.ring = ring; G.arr = arr; } }
       if (G.ring) { const show = !G.done && !H.mounted && H.horses && H.horses.length; let best = null, bd = 1e9; if (show) for (const hh of H.horses) { const d = (hh.pos.x - P.pos.x) ** 2 + (hh.pos.z - P.pos.z) ** 2; if (d < bd) { bd = d; best = hh; } }
         G.ring.visible = G.arr.visible = !!best; if (best) { const t = performance.now() / 1000; G.ring.position.set(best.pos.x, best.pos.y + .06, best.pos.z); G.ring.scale.setScalar(1 + Math.sin(t * 4) * .08); G.ring.material.opacity = .55 + Math.sin(t * 4) * .25; G.arr.position.set(best.pos.x, best.pos.y + 3.1 + Math.sin(t * 3) * .2, best.pos.z); G.arr.rotation.y = t * 2; }

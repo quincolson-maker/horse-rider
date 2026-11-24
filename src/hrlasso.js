@@ -5,7 +5,7 @@
 // The rope is drawn with 24 instanced segments, so it's cheap on phones.
 import * as THREE from 'three';
 export function createLasso({ scene, H, P, camera, hAt, msg, sfx, mobile, input }) {
-  const LS = 'hr_lasso', PRICE = 800, RANGE = 20, LEN = 7, HOLD = 7; let owned = false; try { owned = localStorage.getItem(LS) === '1'; } catch (_) {}
+  const LS = 'hr_lasso', PRICE = 800, LEN = 7; let raw = false; try { raw = localStorage.getItem('hr_lasso2') === '1'; } catch (_) {} const RANGE_ = () => raw ? 28 : 20, HOLD_ = () => raw ? 11 : 7; let owned = false; try { owned = localStorage.getItem(LS) === '1'; } catch (_) {}
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const ropeM = new THREE.MeshStandardMaterial({ color: 0xc9a46a, roughness: .95 }), N = 24;
   const seg = new THREE.CylinderGeometry(.022, .022, 1, 5, 1); seg.translate(0, .5, 0);
@@ -17,7 +17,7 @@ export function createLasso({ scene, H, P, camera, hAt, msg, sfx, mobile, input 
   const tgtPos = (v, k, o) => k === 'mustang' ? v.set(o.g.position.x, o.g.position.y + 1.45, o.g.position.z) : v.set(o.pos.x, o.pos.y + (o.kind === 'crawler' ? .35 : 1.05 * (o.K ? o.K.s : 1)), o.pos.z);
 
   function pick() { const f = new THREE.Vector3(); camera.getWorldDirection(f); f.y = 0; f.normalize(); let best = null, bs = 1e9; const me = P.pos;
-    const consider = (k, o, x, z, y) => { const dx = x - me.x, dz = z - me.z, d = Math.hypot(dx, dz); if (d > RANGE || d < .8 || Math.abs(y - me.y) > 6) return; const cos = (dx * f.x + dz * f.z) / d; if (cos < .86) return; const s = d * (2.2 - cos * 1.2); if (s < bs) { bs = s; best = { k, o }; } };
+    const consider = (k, o, x, z, y) => { const dx = x - me.x, dz = z - me.z, d = Math.hypot(dx, dz); if (d > RANGE_() || d < .8 || Math.abs(y - me.y) > 6) return; const cos = (dx * f.x + dz * f.z) / d; if (cos < .86) return; const s = d * (2.2 - cos * 1.2); if (s < bs) { bs = s; best = { k, o }; } };
     const Z = H.zombies; if (Z) for (const o of Z.list) if (o.alive && o.kind !== 'boss' && !o.boss && !o.wantedName) consider('z', o, o.pos.x, o.pos.z, o.pos.y);
     const herd = H.wild && H.wild.herd; if (herd) for (const m of herd) if (!m.gone && m.g.visible) consider('mustang', m, m.g.position.x, m.g.position.z, m.g.position.y);
     return best; }
@@ -25,7 +25,7 @@ export function createLasso({ scene, H, P, camera, hAt, msg, sfx, mobile, input 
     if (L.tgt) release(); const p = pick(); L.state = 'fly'; L.t = 0; L.cd = 1.2; hand(L.from);
     if (p) { L.tgt = p.o; L.kind = p.k; } else { L.tgt = null; const f = new THREE.Vector3(); camera.getWorldDirection(f); f.y = 0; f.normalize(); L.miss.set(P.pos.x + f.x * 14, 0, P.pos.z + f.z * 14); L.miss.y = hAt(L.miss.x, L.miss.z) + .1; }
     tone('triangle', 260, 520, .25, .12); H.vib && H.vib(12); }
-  function catchIt() { const o = L.tgt; L.state = 'held'; L.hold = HOLD; L.dragT = 0; tone('square', 180, 110, .12, .18); H.vib && H.vib(30);
+  function catchIt() { const o = L.tgt; L.state = 'held'; L.hold = HOLD_(); L.dragT = 0; tone('square', 180, 110, .12, .18); H.vib && H.vib(30);
     if (L.kind === 'z') { o.hold = true; o.lassoed = true; msg(o.kind === 'outlaw' ? '🪢 Outlaw roped!' : '🪢 Roped one! Ride off to drag it', 1.6); const s = H.stats || (H.stats = {}); s.lassos = (s.lassos || 0) + 1; }
     else { o.roped = 12; o.flee = 0; msg('🪢 Mustang roped — stay close to tame it', 2.4); } }
   function release() { const o = L.tgt; if (o && L.kind === 'z') { o.hold = false; o.lassoed = false; } L.tgt = null; L.state = 'idle'; rope.visible = loop.visible = false; }
@@ -59,5 +59,7 @@ export function createLasso({ scene, H, P, camera, hAt, msg, sfx, mobile, input 
   const item = { state: { id: 'lasso', name: '🪢 Lasso · rope zombies, outlaws & wild mustangs (T)', price: PRICE, get owned() { return owned; }, maxed: false, get label() { return owned ? 'THROW (T)' : ''; } },
     buy() { const g = H.guns; if (g.pts() < PRICE) { msg('Not enough points', 1.5); return; } g.state.spent = (g.state.spent || 0) + PRICE; g.save(); owned = true; try { localStorage.setItem(LS, '1'); } catch (_) {} msg('🪢 Lasso bought — press T (or 🪢) to throw it at what you aim near', 3.5); },
     toggle() { msg('Aim near a zombie, outlaw or wild mustang and press T / 🪢', 2.2); } };
-  return { tick, throw: throwIt, release, item, L, get owned() { return owned; }, give() { owned = true; } };
+  const item2 = { state: { id: 'lasso2', name: '🪢 Braided rawhide lasso · reach 28 m, holds 11 s (needs the lasso)', price: 1200, get owned() { return raw; }, maxed: false, get label() { return raw ? 'OWNED' : ''; } },
+    buy() { const g = H.guns; if (!owned) { msg('Buy the plain lasso first', 1.6); return; } if (g.pts() < 1200) { msg('Not enough points', 1.5); return; } g.state.spent = (g.state.spent || 0) + 1200; g.save(); raw = true; try { localStorage.setItem('hr_lasso2', '1'); } catch (_) {} msg('🪢 Braided rawhide — longer throw, tighter knot', 2.5); }, toggle() { msg('Already braided', 1.2); } }; // v193
+  return { item2, tick, throw: throwIt, release, item, L, get owned() { return owned; }, give() { owned = true; } };
 }

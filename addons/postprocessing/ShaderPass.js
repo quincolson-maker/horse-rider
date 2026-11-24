@@ -2,7 +2,7 @@ import {
 	ShaderMaterial,
 	UniformsUtils
 } from 'three';
-import { Pass, FullScreenQuad } from './Pass.js?v=141';
+import { Pass, FullScreenQuad } from './Pass.js?v=142';
 
 class ShaderPass extends Pass {
 

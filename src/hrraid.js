@@ -66,7 +66,7 @@ export function createRaid({ scene, H, P, hAt, msg, sfx, mobile, fx }) {
 
   function tick(dt) { const z = Z(), pal = H.palisade; if (!z || !pal || !pal.gates) return;
     if (!R.on) { // trigger: host, deep night, near town, once per night
-      if (host() && (H.night || 0) > .75 && R.doneCyc !== cyc() && !z.chaos && !H.dead) { let best = null, bd = 260; for (const g of pal.gates) { const d = Math.hypot(g.x - P.pos.x, g.z - P.pos.z); if (d < bd) { bd = d; best = g; } }
+      if (host() && z.state.on !== false && (H.night || 0) > .75 && R.doneCyc !== cyc() && !z.chaos && !H.dead) { let best = null, bd = 260; for (const g of pal.gates) { const d = Math.hypot(g.x - P.pos.x, g.z - P.pos.z); if (d < bd) { bd = d; best = g; } }
         if (best) { R.warnT += dt; if (R.warnT > 4) { R.warnT = 0; start(pal.gates[(Math.random() * 4) | 0]); } } } return; }
     for (const q of R.spawnQ) q.t -= dt; while (R.spawnQ.length && R.spawnQ[0].t <= 0) spawnBurst(R.spawnQ.shift());
     // count kills

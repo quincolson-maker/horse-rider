@@ -82,6 +82,12 @@ export function createExtra({ scene, H, P, hAt, msg, sfx, mobile }) {
       const want = on && clear && n > .8 ? .4 : 0; mat.opacity += (want - mat.opacity) * Math.min(1, dt * .3); const vis = mat.opacity > .01; const pp = ppos();
       for (const m of strips) { m.visible = vis; if (!vis) continue; const k = m.userData.k, b = m.userData.base, p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = b[i * 3]; p.setZ(i, Math.sin(x * .008 + t * (.15 + k * .05) + k) * 60 + Math.sin(x * .021 - t * .3) * 18); } p.needsUpdate = true; m.position.set(pp.x + (k - 1) * 160, hAt(pp.x, pp.z) + 540 + k * 40, pp.z - 700 - k * 80); m.rotation.x = -.5; } }; });
 
+  // v258 a handbill on the saloon front advertising Chinatown (dragon dance, night market, stage line)
+  add(() => { let done = false; return () => { if (done) return; const T = H.town, s = T && T.town; if (!s || !H.chinatown || !H.chinatown.info) return; done = true;
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 340; const x = cv.getContext('2d'); x.fillStyle = '#f0e2c0'; x.fillRect(0, 0, 256, 340); x.fillStyle = '#a3201a'; x.fillRect(10, 10, 236, 70); x.fillStyle = '#ffe8a0'; x.textAlign = 'center'; x.font = 'bold 30px Georgia,serif'; x.fillText('CHINATOWN', 128, 52); x.font = '15px Georgia,serif'; x.fillText('唐人街 · south of the pen', 128, 74);
+    x.fillStyle = '#3a2414'; x.font = 'bold 17px Georgia,serif'; ['🐉 Dragon dance', 'every six minutes', '🏮 Night market & riddles', '🍵 Tea · noodles · herbs', '🎭 Opera nightly', '🐎 Stage from this', 'signpost: 40 pts'].forEach((l, i) => x.fillText(l, 128, 112 + i * 30)); const ct = new THREE.CanvasTexture(cv); ct.colorSpace = THREE.SRGBColorSpace;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(.6, .8), new THREE.MeshStandardMaterial({ map: ct, roughness: .95 })), [wx, wz] = T.toW(s, -12.4, -.3); m.position.set(wx, s.y0 + 1.75, wz); m.rotation.set(0, s.rot + Math.PI, -.03); m.name = 'chinatown handbill'; scene.add(m); H.cullAdd && H.cullAdd(m, 90, { x: wx, z: wz }); }; });
+
   X.update = dt => { X.t += dt; for (const f of X.parts) f(dt); };
   return X;
 }

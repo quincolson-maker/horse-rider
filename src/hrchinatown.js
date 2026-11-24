@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=251';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=251';
-import { mergeStatic } from './hrmerge.js?v=251';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=252';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=252';
+import { mergeStatic } from './hrmerge.js?v=252';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -244,7 +244,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const KF = new THREE.InstancedMesh(new THREE.ConeGeometry(.06, .26, 5).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xff7a2a, roughness: .5 }), koi.length * 3); KF.name = 'koi'; scene.add(KF); { const c = new THREE.Color(); for (let i = 0; i < koi.length * 3; i++) KF.setColorAt(i, c.set([0xff7a2a, 0xffffff, 0xffb040][i % 3])); }
   // v251 alley shrines (a little red altar with a candle where each alley meets the ring lane) and fruit carts by the gates
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const ax = sx * 17.5, az = sz * 30.3; box(D, M.red, ax, .45, az, .6, .9, .4); box(D, M.gold, ax, .92, az, .66, .05, .46); box(D, M.tile, ax, 1.35, az, .8, .08, .6); for (const dx of [-.27, .27]) box(D, M.red, ax + dx, 1.1, az - .15, .04, .4, .04); cyl(D, M.cream, ax, 1.0, az, .03, .12, 6); sph(D, M.lamp, ax, 1.08, az, .035); spot(D, ax, 0, az - .9 * sz, 'ct_shrine', '🕯️ Leave an offering at the shrine', 1.3); }
-  for (const [cx2, cz2] of [[-9, -E + 6], [9.5, E - 7]]) { box(D, M.wood, cx2, .75, cz2, 1.8, .12, 1.0); box(D, M.wood, cx2, .95, cz2 - .5, 1.8, .4, .05); box(D, M.wood, cx2, .95, cz2 + .5, 1.8, .4, .05); for (const sz2 of [-.55, .55]) { const w2 = new THREE.CylinderGeometry(.35, .35, .06, 14); w2.rotateX(Math.PI / 2); w2.translate(cx2, .35, cz2 + sz2); push(M.wood, xf(D, w2)); } cyl(D, M.wood, cx2 - 1.3, .7, cz2, .03, 1.1, 5);
+  for (const [cx2, cz2] of [[-9, -E + 6], [11, E - 5.6]]) { box(D, M.wood, cx2, .75, cz2, 1.8, .12, 1.0); box(D, M.wood, cx2, .95, cz2 - .5, 1.8, .4, .05); box(D, M.wood, cx2, .95, cz2 + .5, 1.8, .4, .05); for (const sz2 of [-.55, .55]) { const w2 = new THREE.CylinderGeometry(.35, .35, .06, 14); w2.rotateX(Math.PI / 2); w2.translate(cx2, .35, cz2 + sz2); push(M.wood, xf(D, w2)); } cyl(D, M.wood, cx2 - 1.3, .7, cz2, .03, 1.1, 5);
     for (let k = 0; k < 9; k++) sph(D, [M.lamp, M.gold, M.jade][k % 3], cx2 - .6 + (k % 3) * .55, .92, cz2 - .25 + Math.floor(k / 3) * .25, .11); wall(D, cx2 - .9, cz2 - .55, cx2 + .9, cz2 - .55, -1, 1.1); wall(D, cx2 - .9, cz2 + .55, cx2 + .9, cz2 + .55, -1, 1.1); spot(D, cx2, 0, cz2 - 1.2, 'ct_stall', '🍑 Fresh fruit from the cart (10 pts)', 1.4, { food: '🍑 Sweet peaches and lychees' }); }
   // v229 lantern riddles: a frame of paper lanterns by the crossing, each with a riddle on its tassel
   { const rx = -7.5, rz = -7.5; for (const dx of [-1.2, 1.2]) cyl(D, M.red, rx + dx, 1.4, rz, .06, 2.8, 8); box(D, M.red, rx, 2.8, rz, 2.8, .12, .12); for (let k = 0; k < 4; k++) { sph(D, M.lamp, rx - 1.0 + k * .66, 2.35, rz, .22, 1.3); box(D, M.gold, rx - 1.0 + k * .66, 1.95, rz, .03, .3, .03); box(D, M.paper, rx - 1.0 + k * .66, 1.72, rz, .12, .2, .01); }

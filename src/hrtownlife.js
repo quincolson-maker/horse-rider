@@ -1,9 +1,9 @@
 // v56 TOWN LIFE: townsfolk stroll the lanes between the buildings and the palisade, a sheriff keeps the main gate and briefs
 // you on your bounty, and a two-horse stagecoach runs a loop between town and the horse pen. All local (no net traffic), all
 // asleep when you're far away.
-import { mergeStatic } from './hrmerge.js?v=157';
+import { mergeStatic } from './hrmerge.js?v=158';
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=157';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=158';
 const FOLK = [
   { sex: 'male', coat: 0x5a4632, top: 0xd8cdb4, hatC: 0x4a3a28, skin: 0x8a5a3c, hair: 0x1a120c },
   { sex: 'female', top: 0xe8dcc6, bodice: 0x2e4a6a, skirt: 0x6a2a3a, skin: 0xf0c6a4, hair: 0x9a5a2a },
@@ -29,6 +29,11 @@ export function createTownLife({ scene, H, P, T, hAt, msg, makeRealHorse, realAn
   // v110 rooftop barkeep behind the roof bar counter (wipes the bar, watches you)
   const rk = s.RT ? makeFrontierCharacter({ kind: 'townsfolk', sex: 'male', quality: mobile ? 'low' : 'high', coat: 0x2a2a2e, top: 0xf2ead8, hatC: 0x1a1612, skin: 0xc48c62, hair: 0x2a1a10, bandana: 0x8a1a1a, name: 'Rooftop barkeep' }) : null;
   if (rk) { const w = toW(-5.9, 9.05); rk.g.position.set(w[0], s.y0 + s.RT, w[1]); rk.g.rotation.y = (s.rot || 0) + Math.PI; scene.add(rk.g); try { mergeStatic(rk.g); } catch (_) {} }
+  // v158 townsfolk chatter: a speech bubble when you walk up to someone
+  const LINES = ['Howdy, partner!', 'Watch yourself after dark.', 'They say the falls hide outlaw gold.', 'Rooftop bar has the best view in the territory.', 'Lock the gate when the bell rings!', 'Fine horse you got there.', 'Greta pours a mean whiskey.', 'Train to Eagle Pass leaves soon.', 'I heard coyotes howlin\' last night…', 'Don\'t crack the store safe — the sheriff\'s got deputies.', 'Arm wrestle Big Earl? Ha!', 'Mind the screamers, they bring the whole horde.'];
+  const bub = (D) => { if (!D.bub) { const c = document.createElement('canvas'); c.width = 512; c.height = 96; const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: false })); sp.scale.set(2.6, .49, 1); sp.renderOrder = 9; sp.visible = false; scene.add(sp); D.bub = { sp, c, t: 0, cd: Math.random() * 3 }; } return D.bub; };
+  const say = (D, txt) => { const B = bub(D), x = B.c.getContext('2d'); x.clearRect(0, 0, 512, 96); x.fillStyle = 'rgba(250,244,228,.95)'; x.strokeStyle = '#3a2416'; x.lineWidth = 4; x.beginPath(); x.roundRect ? x.roundRect(6, 6, 500, 70, 22) : x.rect(6, 6, 500, 70); x.fill(); x.stroke(); x.fillStyle = '#2a1a10'; x.font = '700 28px system-ui'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(txt, 256, 42); B.sp.material.map.needsUpdate = true; B.t = 3.5; B.sp.visible = true; };
+  function chatter(D, dt) { const B = bub(D); B.cd -= dt; if (B.t > 0) { B.t -= dt; B.sp.position.set(D.g.position.x, D.g.position.y + 2.35, D.g.position.z); if (B.t <= 0) B.sp.visible = false; return; } const d = Math.hypot(P.pos.x - D.g.position.x, P.pos.z - D.g.position.z); if (d < 5 && B.cd <= 0 && !H.mounted) { B.cd = 14 + Math.random() * 10; say(D, LINES[(Math.random() * LINES.length) | 0]); } }
   let briefT = 0;
   // stagecoach: a box coach on four spoked wheels, two horses in harness
   const coach = new THREE.Group(), wood = new THREE.MeshStandardMaterial({ color: 0x7a2418, roughness: .7 }), trim = new THREE.MeshStandardMaterial({ color: 0xd8a83a, metalness: .4, roughness: .4 }), dark = new THREE.MeshStandardMaterial({ color: 0x2a1c12, roughness: .8 });
@@ -48,7 +53,7 @@ export function createTownLife({ scene, H, P, T, hAt, msg, makeRealHorse, realAn
   const rAt = d => { d = ((d % rLoop) + rLoop) % rLoop; for (let i = 0; i < route.length; i++) { if (d <= rL[i]) { const a = route[i], b = route[(i + 1) % route.length], k = d / rL[i]; return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k]; } d -= rL[i]; } return route[0]; };
   const ctr = toW(CX, CZ), tmp = new THREE.Vector3();
   function update(dt) { const near = Math.hypot(P.pos.x - ctr[0], P.pos.z - ctr[1]) < 170;
-    for (const f of folk) { f.D.g.visible = near; if (!near) continue; if (f.wait > 0) { f.wait -= dt; poseFrontierCharacter(f.D, dt, { speed: 0 }); continue; } if (Math.random() < dt * .04) { f.wait = 2 + Math.random() * 5; if (Math.random() < .3) f.dir *= -1; }
+    for (const f of folk) { f.D.g.visible = near; if (!near) { if (f.D.bub) f.D.bub.sp.visible = false; continue; } chatter(f.D, dt); if (f.wait > 0) { f.wait -= dt; poseFrontierCharacter(f.D, dt, { speed: 0 }); continue; } if (Math.random() < dt * .04) { f.wait = 2 + Math.random() * 5; if (Math.random() < .3) f.dir *= -1; }
       f.d += f.dir * f.sp * dt; const [lx, lz] = at(f.d), [nx, nz] = at(f.d + f.dir * .5), [x, z] = toW(lx, lz), [x2, z2] = toW(nx, nz); f.D.g.position.set(x, yAt(x, z), z); f.D.g.rotation.y = Math.atan2(x2 - x, z2 - z); poseFrontierCharacter(f.D, dt, { speed: f.sp }); }
     if (rk) { const up = near && P.pos.y > s.y0 + s.RT - 3; rk.g.visible = near; if (near) { poseFrontierCharacter(rk, dt, { speed: 0 }); if (up && rk.head) rk.head.rotation.y = Math.max(-.9, Math.min(.9, Math.atan2(P.pos.x - rk.g.position.x, P.pos.z - rk.g.position.z) - rk.g.rotation.y)); if (rk.arms && rk.arms[1]) rk.arms[1][0].rotation.z = Math.sin(H.t * 2.2 || 0) * .25 - .3; } }
     sh.g.visible = near; if (near) { poseFrontierCharacter(sh, dt, { speed: 0 }); const d = Math.hypot(P.pos.x - sh.g.position.x, P.pos.z - sh.g.position.z); briefT = Math.max(0, briefT - dt);

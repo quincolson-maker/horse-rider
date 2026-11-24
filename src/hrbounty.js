@@ -78,6 +78,7 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'ctrun', title: 'Over the Tiles', task: 'Finish the Chinatown rooftop run', pay: 700, p: () => ((H.stats && H.stats.ctRuns) || 0) > 0 ? 1 : 0 },
     { id: 'ctparcel', title: 'Special Delivery', task: 'Carry a parcel from the saloon signpost to Chinatown\'s goods store in time', pay: 300, p: () => ((H.stats && H.stats.ctParcels) || 0) > 0 ? 1 : 0 }, /* v254 */
     { id: 'ctlion', title: 'Follow the Drums', task: 'Catch a lion dance in Chinatown (it comes 3 minutes after each dragon)', pay: 400, p: () => ((H.stats && H.stats.ctLion) || 0) > 0 ? 1 : 0 }, /* v262 */
+    { id: 'cterrand', title: 'The Herbalist\'s Errand', task: 'Bring three wild ginseng roots to the Chinatown herbalist', pay: 300, p: () => ((H.stats && H.stats.ctErrands) || 0) > 0 ? 1 : 0 }, /* v274 */
     { id: 'slayer', title: 'Slayer', task: 'Drop 150 zombies', pay: 3000, ...killsSince('slayer', 150) },
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];

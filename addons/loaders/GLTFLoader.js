@@ -65,7 +65,7 @@ import {
 	SRGBColorSpace,
 	InstancedBufferAttribute
 } from 'three';
-import { toTrianglesDrawMode } from '../utils/BufferGeometryUtils.js?v=268';
+import { toTrianglesDrawMode } from '../utils/BufferGeometryUtils.js?v=269';
 
 class GLTFLoader extends Loader {
 

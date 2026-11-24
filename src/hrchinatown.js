@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=268';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=268';
-import { mergeStatic } from './hrmerge.js?v=268';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=269';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=269';
+import { mergeStatic } from './hrmerge.js?v=269';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -308,6 +308,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const SKIN = [0xe0b48c, 0xd4a27a, 0xc8946c, 0xb88460, 0xe8c09a], HAIR = [0x14100c, 0x1c1410, 0x2a1e14];
   const people = [], mkP = (i, name) => { const [coat, top, sex] = LOOK[i % LOOK.length]; const D = makeFrontierCharacter({ kind: 'townsfolk', sex, quality: mobile ? 'low' : 'high', coat, top, bodice: coat, hatC: [0x1a1612, 0x2a221a, 0x3a2e22][i % 3], skin: SKIN[i % SKIN.length], hair: HAIR[i % HAIR.length], bandana: coat, name }); scene.add(D.g); try { mergeStatic(D.g); } catch (_) {} return D; };
   const WP = []; for (const sx of [-5.6, 5.6]) for (let z = -30; z <= 30; z += 6) WP.push([sx, z]); for (const sz of [-5.6, 5.6]) for (let x = -30; x <= 30; x += 6) if (Math.abs(x) > 7) WP.push([x, sz]);
+  const DOORS = built.map(b => { const [x, z] = toW(b, W / 2, -.4); const q = [x - CX, z - CZ]; q.door = true; return q; }); /* v269 shoppers duck into the shops */
   const NW = mobile ? 4 : 7; for (let i = 0; i < NW; i++) { const D = mkP(i, 'Shopper'), w = WP[(i * 7) % WP.length]; if (i % 3 === 1) { const pr = new THREE.Group(), cn = new THREE.Mesh(new THREE.ConeGeometry(.62, .28, 16, 1, true), new THREE.MeshStandardMaterial({ color: [0xc0392b, 0xe8c070, 0x2f5d50][i % 3], side: THREE.DoubleSide, roughness: .7 })), st2 = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, 1.0, 4), M.dark); cn.position.y = .5; pr.add(cn, st2); pr.position.set(.22, 1.55, .05); D.g.add(pr); } /* v232 paper parasols */ people.push({ D, x: w[0], z: w[1], tg: null, sp: 1 + Math.random() * .4, wait: Math.random() * 3 }); }
   const chess = [[-14.45, 3.0, Math.PI / 2], [-12.75, 3.0, -Math.PI / 2]].slice(0, mobile ? 1 : 2).map(([x, z, ry], i) => { const D2 = mkP(i + 5, 'Xiangqi player'); D2.g.position.set(CX + x, y0, CZ + z); D2.g.rotation.y = ry; D2.g.scale.y = .9; return { D: D2 }; });
   const keepers = built.filter(b => /tea|herb|bakery|noodle|goods/.test(b.shop[2])).slice(0, mobile ? 3 : 6).map((b, i) => { const D = mkP(i + 3, 'Shopkeeper'), [wx, wz] = /tea|noodle/.test(b.shop[2]) ? toW(b, 2.4, 8.1) : toW(b, W / 2 - 1, 3.4); D.g.position.set(wx, y0 + F0, wz); D.g.rotation.y = b.rot + Math.PI; return { D, b }; });
@@ -323,9 +324,9 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     const bm = new THREE.Mesh(new THREE.PlaneGeometry(.8, .8), new THREE.MeshStandardMaterial({ map: bt, roughness: .7 })); bm.rotation.x = -Math.PI / 2; bm.position.set(CX + tx, y0 + .752, CZ + tz); scene.add(bm); H.cullAdd && H.cullAdd(bm, 60, { x: CX + tx, z: CZ + tz }); wall(D, tx - .5, tz - .5, tx + .5, tz - .5, -1, .8); wall(D, tx - .5, tz + .5, tx + .5, tz + .5, -1, .8);
     spot(D, tx, 0, tz - 1.1, 'ct_chess', '♟️ Watch the xiangqi game', 1.4); }
   function peopleTick(dt, me) { const close = Math.hypot(me.x - CX, me.z - CZ) < 110; for (const p of people) p.D.g.visible = close; for (const k of keepers) k.D.g.visible = close; for (const r of roofers) r.D.g.visible = close; for (const c2 of chess) c2.D.g.visible = close; PG.visible = close; if (!close) return;
-    const late = (H.night || 0) > .7; people.forEach((p, i) => { p.D.g.visible = !(late && i % 2); });
-    for (const p of people) { if (p.wait > 0) { p.wait -= dt; poseFrontierCharacter(p.D, dt, { speed: 0 }); } else { if (!p.tg) { const opts = WP.filter(w => { const d = Math.hypot(w[0] - p.x, w[1] - p.z); return d > 3 && d < 7; }); p.tg = opts[(Math.random() * opts.length) | 0] || WP[(Math.random() * WP.length) | 0]; }
-        const dx = p.tg[0] - p.x, dz = p.tg[1] - p.z, d = Math.hypot(dx, dz); if (d < .3) { p.tg = null; if (Math.random() < .35) p.wait = 2 + Math.random() * 5; } else { const st2 = Math.min(d, p.sp * dt); p.x += dx / d * st2; p.z += dz / d * st2; p.D.g.rotation.y = Math.atan2(dx, dz); }
+    const late = (H.night || 0) > .7; people.forEach((p, i) => { p.D.g.visible = !(late && i % 2) && !(p.inside > 0); });
+    for (const p of people) { if (p.inside > 0) p.inside -= dt; if (p.wait > 0) { p.wait -= dt; poseFrontierCharacter(p.D, dt, { speed: 0 }); } else { if (!p.tg) { const dr = DOORS.find(q => Math.hypot(q[0] - p.x, q[1] - p.z) < 6 && Math.random() < .15); if (dr) p.tg = dr; } if (!p.tg) { const opts = WP.filter(w => { const d = Math.hypot(w[0] - p.x, w[1] - p.z); return d > 3 && d < 7; }); p.tg = opts[(Math.random() * opts.length) | 0] || WP[(Math.random() * WP.length) | 0]; }
+        const dx = p.tg[0] - p.x, dz = p.tg[1] - p.z, d = Math.hypot(dx, dz); if (d < .3) { if (p.tg.door) { p.inside = 6 + Math.random() * 12; p.wait = p.inside; } p.tg = null; if (Math.random() < .35) p.wait = Math.max(p.wait, 2 + Math.random() * 5); } else { const st2 = Math.min(d, p.sp * dt); p.x += dx / d * st2; p.z += dz / d * st2; p.D.g.rotation.y = Math.atan2(dx, dz); }
         const pm = me, ddx = CX + p.x - pm.x, ddz = CZ + p.z - pm.z, dd = Math.hypot(ddx, ddz); if (dd < 1.1 && dd > .01) { p.x += ddx / dd * (1.1 - dd); p.z += ddz / dd * (1.1 - dd); } /* step aside for you */
         poseFrontierCharacter(p.D, dt, { speed: p.wait > 0 ? 0 : p.sp }); }
       p.D.g.position.set(CX + p.x, T.floorAt(CX + p.x, CZ + p.z, y0 + .5), CZ + p.z); }

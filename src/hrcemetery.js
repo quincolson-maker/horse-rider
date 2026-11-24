@@ -2,7 +2,7 @@
 // After dark, will-o'-the-wisps drift between the graves. USE the big cross to pay your respects (+100 once a day).
 // Everything is merged per material, so it costs one draw per material.
 import * as THREE from 'three';
-import { mergeStatic } from './hrmerge.js?v=268';
+import { mergeStatic } from './hrmerge.js?v=269';
 export function createCemetery({ scene, H, P, T, hAt, msg }) {
   const s = T.structs.find(q => q.kind === 'town'); if (!s) return null;
   const [cx, cz] = T.toW(s, -50, 6), g = new THREE.Group(); g.position.set(cx, hAt(cx, cz), cz); g.rotation.y = s.rot || 0; scene.add(g);

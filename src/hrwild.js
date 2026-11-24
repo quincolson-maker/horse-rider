@@ -3,6 +3,7 @@
 //  🐎 Wild mustangs: a herd roams the far range in rare coats. Walk up slowly ON FOOT and stay close until the bar fills to
 //     tame one (+500): it's yours — its coat unlocks for the Coat Kit and it joins your ranch corral.
 // Local per player (decorative wildlife doesn't need syncing).
+import { mergeStatic } from './hrmerge.js?v=110';
 import * as THREE from 'three';
 export function createWild({ scene, H, P, hAt, msg, sfx, makeRealHorse, realAnim, mobile }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
@@ -19,7 +20,7 @@ export function createWild({ scene, H, P, hAt, msg, sfx, makeRealHorse, realAnim
     const h = new THREE.Mesh(G.head, coat); h.rotation.x = Math.PI / 2 - .3; h.position.z = .12; hd.add(h); const n = new THREE.Mesh(new THREE.SphereGeometry(.05, 6, 5), dark); n.position.set(0, -.06, .32); hd.add(n);
     for (const s of [-1, 1]) { const e = new THREE.Mesh(G.ear, coat); e.position.set(s * .12, .12, -.02); e.rotation.z = -s * .9; hd.add(e); if (buck) for (const k of [0, 1]) { const a = new THREE.Mesh(G.ant, horn); a.position.set(s * (.08 + k * .1), .3 + k * .05, -.02 - k * .06); a.rotation.set(-.3, 0, -s * (.35 + k * .4)); hd.add(a); } }
     m(G.tail, belly, 0, 1.15, -.72, -2.2); const legs = []; for (const [x, z] of [[-.17, .48], [.17, .48], [-.17, -.48], [.17, -.48]]) { const p = new THREE.Group(); p.position.set(x, .86, z); g.add(p); const l = new THREE.Mesh(G.leg, coat); l.position.y = -.39; l.castShadow = true; p.add(l); const hf = new THREE.Mesh(new THREE.CylinderGeometry(.04, .045, .07, 5), dark); hf.position.y = -.78; p.add(hf); legs.push(p); }
-    g.userData = { legs, hd, nk }; return g; }
+    g.userData = { legs, hd, nk }; nk.userData.keep = true; try { mergeStatic(g); } catch (_) {} return g; } // v110: fewer draws per deer
   // ---------- deer ----------
   const DEER = []; const DN = mobile ? 7 : 12;
   function placeHerd(cx, cz) { for (let k = 0; k < 40; k++) { const a = Math.random() * 6.28, d = 140 + Math.random() * 110, x = cx + Math.sin(a) * d, z = cz + Math.cos(a) * d; if (inMap(x, z) && okGround(x, z) && !safe(x, z)) return [x, z]; } return null; }

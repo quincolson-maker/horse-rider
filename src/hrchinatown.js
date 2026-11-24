@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=247';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=247';
-import { mergeStatic } from './hrmerge.js?v=247';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=248';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=248';
+import { mergeStatic } from './hrmerge.js?v=248';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -216,7 +216,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (kind === 'temple') { box(s, M.red, mid, F0 + .55, DP - 1.4, 4.4, 1.1, 1.4); box(s, M.gold, mid, F0 + 1.15, DP - 1.4, 4.5, .08, 1.45); cyl(s, M.gold, mid, F0 + 1.35, DP - 1.6, .28, .32, 12); for (const sx of [-1.4, 1.4]) { cyl(s, M.red, mid + sx, F0 + 1.5, DP - 1.8, .06, .7, 6); sph(s, M.lamp, mid + sx, F0 + 2.0, DP - 1.8, .1); } box(s, M.gold, mid, F0 + 2.6, DP - .3, 4, 2, .08); for (let k = 0; k < 4; k++) sph(s, M.lamp, 1.5 + k * 2.8, F0 + 2.9, 3, .32, 1.3); }
     else if (kind === 'theatre') { box(s, M.plank, (W - 1.6 + .6) / 2, F0 + .5, DP - 2, W - 2.2, 1.0, 3.2); floor(s, .6, W - 1.6, DP - 3.6, DP - .4, F0 + 1.0); box(s, M.red, mid, F0 + 2.8, DP - .5, W - 1.2, 3.6, .08); for (const sx of [.9, W - .9]) box(s, M.red, sx, F0 + 2.4, DP - 3.5, .5, 3.0, .2); for (let r = 0; r < 3; r++) box(s, M.wood, mid, F0 + .25, 1.6 + r * 1.3, W - 3, .5, .5); }
   }
-  function shopSpot(s, kind, en, mid) { const z = kind === 'theatre' ? 3 : /tea|noodle|hall|temple/.test(kind) ? 3.6 : 1.4, lab = { tea: '🍵 Sit for jasmine tea (20 pts · full heal)', noodle: '🍜 A bowl of noodles (30 pts · heal + well fed 2 min)', herb: '🌿 Ginseng tonic (150 pts · fast regen 3 min)', goods: '📦 Restock ammo (120 pts · fills every gun)', bakery: '🥮 Egg tarts and buns (15 pts · heal 40)', fire: (H.night || 0) > .5 ? '🎆 Fireworks show over Chinatown (400 pts) · firecrackers by day' : '🧨 Set off a string of firecrackers (50 pts)', hall: '🔔 Strike the hall gong', temple: '🕯️ Light incense (a blessing once a day)', tailor: '🧵 Look over the silks', gold: '💍 Look over the jade and gold', books: '📚 Browse the books', theatre: '🎭 Watch the opera (once a day · +100)' }[kind];
+  function shopSpot(s, kind, en, mid) { const z = kind === 'theatre' ? 3 : /tea|noodle|hall|temple/.test(kind) ? 3.6 : 1.4, lab = { tea: '🍵 Sit for jasmine tea (20 pts · full heal)', noodle: '🍜 A bowl of noodles (30 pts · heal + well fed 2 min)', herb: '🌿 Ginseng tonic (150 pts · fast regen 3 min)', goods: '📦 Restock ammo (120 pts · fills every gun)', bakery: '🥮 Egg tarts and buns (15 pts · heal 40)', fire: (H.night || 0) > .5 ? '🎆 Fireworks show over Chinatown (400 pts) · firecrackers by day' : '🧨 Set off a string of firecrackers (50 pts)', hall: '🔔 Strike the hall gong', temple: '🕯️ Light incense (a blessing once a day)', tailor: '🧵 Have your coat mended (free, daily · +25)', gold: (H.stats && H.stats.ctJade) ? '💍 Look over the jade and gold (charm owned)' : '💍 Jade charm (2000 pts · steady healing)', books: '📚 Browse the books', theatre: '🎭 Watch the opera (once a day · +100)' }[kind];
     return spot(s, mid - 1, F0, z, 'ct_' + kind, lab, 1.9, { shopName: en }); }
 
   // ---------- lantern strings over the streets (one instanced mesh) ----------
@@ -282,6 +282,8 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (k === 'riddle') { riddle(); }
     else if (k === 'bench') { heal(60); msg('🪨 You sit by the pond a while - the koi drift past', 2.2); S.ctBench = 1; }
     else if (k === 'view') { msg('🏮 Lanterns, tiled eaves and the range beyond', 2); S.ctView = 1; }
+    else if (k === 'gold') { if (S.ctJade) msg('💚 Your jade charm is warm against your chest', 2); else if (pay(2000)) { S.ctJade = 1; msg('💚 A carved jade charm - you heal slowly but steadily from now on', 3); for (const q of spots) if (q.kind === 'ct_gold') q.label = '💍 Look over the jade and gold (charm owned)'; } }
+    else if (k === 'tailor') { if (S.ctMend === day()) msg('🧵 Your coat is already mended today', 1.8); else { S.ctMend = day(); heal(25); msg('🧵 The tailor patches your torn coat - you feel put together (+25)', 2.5); } }
     else msg('Fine work - but nothing you need today', 1.6);
     if (o.shopName) { const v = new Set(S.ctShops || []); v.add(o.shopName); S.ctShops = [...v]; }
     return true; };
@@ -375,6 +377,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     { const wet = Math.min(1, ((H.wx && H.wx.rain) || 0) * 1.4); if (Math.abs(wet - (update.wet ?? -1)) > .03) { update.wet = wet; M.cobble.roughness = 1 - .6 * wet; M.cobble.metalness = .15 * wet; M.stone.roughness = .9 - .5 * wet; M.tile.roughness = .45 - .3 * wet; M.cobble.color.setScalar(1 - .35 * wet); } } /* v239 rain-slick streets */
     if (n > .3 && Math.hypot(me.x - CX, me.z - CZ) < 150) { const f = 1 + .07 * Math.sin(t * 7.3) + .05 * Math.sin(t * 12.1 + 1); M.lamp.emissiveIntensity = (.5 + 3.2 * n) * f; M.paper.emissiveIntensity = (.15 + 2.2 * n) * (2 - f); } /* v240 lantern flicker */
     if (fx && fx.smoke && Math.hypot(me.x - CX, me.z - CZ) < 60 && (incT -= dt) <= 0) { incT = 1.2; fx.smoke.emit(CX + (Math.random() - .5) * .3, y0 + 2.1, CZ + (Math.random() - .5) * .3, 0, .35, 0, .85, .85, .82, .35, 3, 1.2, -.005, .08); } /* v243 incense smoke from the urn */
+    if (H.stats && H.stats.ctJade && !H.dead) heal(dt * .4); /* v248 jade charm */
     if (fedT > 0) { fedT -= dt; heal(dt * 1.5); } if (tonicT > 0) { tonicT -= dt; heal(dt * 3); }
     if (crackers) { crackers.t -= dt; if (crackers.t <= 0) { crackers.t = .07 + Math.random() * .08; crackers.n++; const x = crackers.x + (Math.random() - .5) * 1.2, z = crackers.z + (Math.random() - .5) * 1.2, y = (H.town ? H.town.floorAt(x, z, me.y + 1) : hAt(x, z)) + .1;
       if (sfx.nz && sfx.ctx) sfx.nz('highpass', 1800 + Math.random() * 1500, .8, .22, .05); if (fx && fx.smoke) fx.smoke.emit(x, y, z, (Math.random() - .5) * 2, 1 + Math.random(), (Math.random() - .5) * 2, .85, .8, .75, .5, .9, .7, -.02, .3); if (fx && fx.spark) fx.spark(x, y + .1, z); if (crackers.n > 40) crackers = null; } } }

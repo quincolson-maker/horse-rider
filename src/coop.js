@@ -1,4 +1,4 @@
-import { PF } from './perf.js?v=133';
+import { PF } from './perf.js?v=134';
 // Co-op transport (up to 25 players): PeerJS (vendored, MIT) WebRTC data channels in a host-authoritative star.
 // The free public PeerJS broker is used for signaling only; gameplay traffic is peer-to-peer. No game server.
 const ALPH = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';

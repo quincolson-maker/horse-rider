@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=156';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=157';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,8 +47,8 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createPoker } from './hrpoker.js?v=156';
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=156';
+import { createPoker } from './hrpoker.js?v=157';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=157';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -418,7 +418,7 @@ function jacketMats() { if (JK) return JK;
   JK = { mat: new THREE.MeshStandardMaterial({ color: 0x0c0d0f, roughness: .55, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
     print: new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: .35, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthWrite: false }) }; JK.print.defines = { STY_SHARP: '' }; return JK; } // crisp: no painterly blur, unlit white
 const JACKET_BONES = ['Spine', 'Spine01', 'Spine02', 'LeftShoulder', 'RightShoulder', 'LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm', 'neck', 'Hips'];
-export function townNight(n) { if (typeof window !== 'undefined' && window.__hrH && window.__hrH.palisade) window.__hrH.palisade.lamps.emissiveIntensity = 1.4 + 3 * n; if (!MATS) return; MATS.lamp.emissiveIntensity = 1.6 + 3.4 * n; // v47: lanterns and windows glow after dark
+export function townNight(n) { if (typeof window !== 'undefined' && window.__hrH && window.__hrH.palisade) window.__hrH.palisade.lamps.emissiveIntensity = 1.4 + 3 * n; if (!MATS) return; MATS.lamp.emissiveIntensity = 1.6 + 3.4 * n; if (MATS.lamp.isMeshBasicMaterial) { const k = Math.min(1, n * 1.6); MATS.lamp.color.setRGB(.55 + .45 * k, .5 + .38 * k, .4 + .2 * k); } /* v157: bulbs and lanterns look unlit by day, glow at night */ // v47: lanterns and windows glow after dark
   if (MATS.glass) { if (!MATS.glass.userData.n0) { MATS.glass.userData.n0 = true; MATS.glass.emissive = new THREE.Color(0xffa64a); } MATS.glass.emissiveIntensity = 1.5 * n; } }
 export function wearJacket(root, on) { if (!root || !root.userData) return false; if (root.userData.skin) on = false; // v36: Frontier characters wear their own coats
   if (root.userData.jacket) { for (const m of root.userData.jacket) m.visible = !!on; return true; } if (!on) return true;

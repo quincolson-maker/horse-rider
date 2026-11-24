@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=246';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=246';
-import { mergeStatic } from './hrmerge.js?v=246';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=247';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=247';
+import { mergeStatic } from './hrmerge.js?v=247';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -293,12 +293,23 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const WP = []; for (const sx of [-5.6, 5.6]) for (let z = -30; z <= 30; z += 6) WP.push([sx, z]); for (const sz of [-5.6, 5.6]) for (let x = -30; x <= 30; x += 6) if (Math.abs(x) > 7) WP.push([x, sz]);
   const NW = mobile ? 4 : 7; for (let i = 0; i < NW; i++) { const D = mkP(i, 'Shopper'), w = WP[(i * 7) % WP.length]; if (i % 3 === 1) { const pr = new THREE.Group(), cn = new THREE.Mesh(new THREE.ConeGeometry(.62, .28, 16, 1, true), new THREE.MeshStandardMaterial({ color: [0xc0392b, 0xe8c070, 0x2f5d50][i % 3], side: THREE.DoubleSide, roughness: .7 })), st2 = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, 1.0, 4), M.dark); cn.position.y = .5; pr.add(cn, st2); pr.position.set(.22, 1.55, .05); D.g.add(pr); } /* v232 paper parasols */ people.push({ D, x: w[0], z: w[1], tg: null, sp: 1 + Math.random() * .4, wait: Math.random() * 3 }); }
   const keepers = built.filter(b => /tea|herb|bakery|noodle|goods/.test(b.shop[2])).slice(0, mobile ? 3 : 6).map((b, i) => { const D = mkP(i + 3, 'Shopkeeper'), [wx, wz] = /tea|noodle/.test(b.shop[2]) ? toW(b, 2.4, 8.1) : toW(b, W / 2 - 1, 3.4); D.g.position.set(wx, y0 + F0, wz); D.g.rotation.y = b.rot + Math.PI; return { D, b }; });
-  function peopleTick(dt, me) { const close = Math.hypot(me.x - CX, me.z - CZ) < 110; for (const p of people) p.D.g.visible = close; for (const k of keepers) k.D.g.visible = close; if (!close) return;
+  // v247 rooftop life: a few residents take the air in the roof pavilions, and pigeons perch on the parapets (they scatter when you come close)
+  const roofers = built.filter(b => b.idx % 3 === 1).slice(0, mobile ? 2 : 4).map((b, i) => { const D = mkP(i + 1, 'Resident'), [wx, wz] = toW(b, W / 2 + 1.5, DP / 2 + .9); D.g.position.set(wx, y0 + RF, wz); D.g.rotation.y = b.rot + Math.PI; return { D }; });
+  const NPG = mobile ? 14 : 28, PG = new THREE.InstancedMesh(new THREE.SphereGeometry(.09, 6, 4).scale(1, .9, 1.6), new THREE.MeshStandardMaterial({ color: 0x6a6e78, roughness: .8 }), NPG); PG.frustumCulled = false; PG.name = 'pigeons'; scene.add(PG);
+  const perch = []; for (const b of built) for (let k = 0; k < 3; k++) { const [x, z] = toW(b, 1 + k * 4.5, .12); perch.push([x, y0 + RF + (/hall|theatre|temple/.test(b.shop[2]) ? 1.6 : 0) + 1.2, z]); }
+  const pigs = Array.from({ length: NPG }, (_, i) => { const p = perch[(i * 5) % perch.length]; return { x: p[0] + (i % 3) * .25, y: p[1], z: p[2], h: p, st: 0, a: Math.random() * 6, t: 0 }; });
+  function peopleTick(dt, me) { const close = Math.hypot(me.x - CX, me.z - CZ) < 110; for (const p of people) p.D.g.visible = close; for (const k of keepers) k.D.g.visible = close; for (const r of roofers) r.D.g.visible = close; PG.visible = close; if (!close) return;
     for (const p of people) { if (p.wait > 0) { p.wait -= dt; poseFrontierCharacter(p.D, dt, { speed: 0 }); } else { if (!p.tg) { const opts = WP.filter(w => { const d = Math.hypot(w[0] - p.x, w[1] - p.z); return d > 3 && d < 7; }); p.tg = opts[(Math.random() * opts.length) | 0] || WP[(Math.random() * WP.length) | 0]; }
         const dx = p.tg[0] - p.x, dz = p.tg[1] - p.z, d = Math.hypot(dx, dz); if (d < .3) { p.tg = null; if (Math.random() < .35) p.wait = 2 + Math.random() * 5; } else { const st2 = Math.min(d, p.sp * dt); p.x += dx / d * st2; p.z += dz / d * st2; p.D.g.rotation.y = Math.atan2(dx, dz); }
         const pm = me, ddx = CX + p.x - pm.x, ddz = CZ + p.z - pm.z, dd = Math.hypot(ddx, ddz); if (dd < 1.1 && dd > .01) { p.x += ddx / dd * (1.1 - dd); p.z += ddz / dd * (1.1 - dd); } /* step aside for you */
         poseFrontierCharacter(p.D, dt, { speed: p.wait > 0 ? 0 : p.sp }); }
       p.D.g.position.set(CX + p.x, T.floorAt(CX + p.x, CZ + p.z, y0 + .5), CZ + p.z); }
+    for (const r of roofers) poseFrontierCharacter(r.D, dt, { speed: 0 });
+    { const m4 = PG.userData.m || (PG.userData.m = new THREE.Matrix4()), q = PG.userData.q || (PG.userData.q = new THREE.Quaternion()), e = PG.userData.e || (PG.userData.e = new THREE.Euler()), v = PG.userData.v || (PG.userData.v = new THREE.Vector3()), one = PG.userData.o || (PG.userData.o = new THREE.Vector3(1, 1, 1));
+      pigs.forEach((p, i) => { const d = Math.hypot(me.x - p.x, me.z - p.z), dy = Math.abs(me.y - p.y); if (p.st === 0 && d < 3.5 && dy < 3) { p.st = 1; p.t = 0; if (i % 7 === 0 && sfx.nz && sfx.ctx) sfx.nz('bandpass', 1400, .8, .08, .3); }
+        if (p.st === 1) { p.t += dt; p.a += dt * 1.6; const r = 6 + (i % 4); p.x = p.h[0] + Math.cos(p.a) * r * Math.min(1, p.t); p.z = p.h[2] + Math.sin(p.a) * r * Math.min(1, p.t); p.y = p.h[1] + Math.min(1, p.t) * 4 + Math.sin(p.t * 3) * .4; if (p.t > 6) { p.st = 2; p.h = perch[(Math.random() * perch.length) | 0]; } }
+        else if (p.st === 2) { const tx = p.h[0] + (i % 3) * .25, tz = p.h[2], dx = tx - p.x, dz = tz - p.z, dd = Math.hypot(dx, dz); if (dd < .2) { p.st = 0; p.y = p.h[1]; } else { p.x += dx / dd * Math.min(dd, 6 * dt); p.z += dz / dd * Math.min(dd, 6 * dt); p.y += (p.h[1] - p.y) * Math.min(1, dt * 2); p.a = Math.atan2(dx, dz); } }
+        e.set(0, p.st ? p.a : p.a + Math.sin(t * .5 + i) * .5, 0); q.setFromEuler(e); m4.compose(v.set(p.x, p.y + (p.st ? 0 : Math.abs(Math.sin(t * 2 + i)) * .02), p.z), q, one); PG.setMatrixAt(i, m4); }); PG.instanceMatrix.needsUpdate = true; }
     for (const k of keepers) { poseFrontierCharacter(k.D, dt, { speed: 0 }); const d = Math.hypot(me.x - k.D.g.position.x, me.z - k.D.g.position.z); if (d < 3.2 && Math.abs(me.y - k.D.g.position.y) < 1.5 && (!k.hi || t - k.hi > 90)) { k.hi = t; msg(['歡迎光臨 - welcome, come in!', 'Good day! Take a look around.', 'Welcome, friend - fresh stock today.', 'Ah, a rider! Welcome.'][(Math.random() * 4) | 0], 2.2); } } }
 
   // ---------- v222 the dragon dance: a long red-and-gold dragon on poles snakes down the avenue to drums and cymbals

@@ -3,8 +3,8 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask } from './hrbeachwave.js?v=350';
-import { createSurf } from './hrsurf.js?v=350';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask } from './hrbeachwave.js?v=351';
+import { createSurf } from './hrsurf.js?v=351';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -54,7 +54,7 @@ export function createBeach(ctx) {
         float a = mix(.42, .93, smoothstep(0.0, 2.5, vDepth)); a = max(a, fm); float dist = length(cameraPosition - vW); col = mix(col, uFogC, 1.0 - exp(-dist * .0007));
         gl_FragColor = vec4(col, a); }` });
   const mkGrid = (xs, zs, skip) => { const pos = [], idx = [], nx = xs.length, nz = zs.length; for (const z of zs) for (const x of xs) pos.push(x, 0, z); for (let j = 0; j < nz - 1; j++) for (let i = 0; i < nx - 1; i++) { if (skip && skip(xs[i], zs[j], xs[i + 1], zs[j + 1])) continue; const a = j * nx + i, b = a + 1, c = a + nx, d = c + 1; idx.push(a, c, b, b, c, d); } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); return g; };
-  const PX0 = 1104, PX1 = 1490, PZ0 = -270, PZ1 = 600; const xs = []; for (let x = PX0; x < 1150; x += 1.4) xs.push(x); for (let x = 1150; x < 1235; x += mobile ? 1.1 : .75) xs.push(x); for (let x = 1235; x <= PX1; x += 3) xs.push(x); const zs = []; for (let z = PZ0; z <= PZ1; z += mobile ? 3 : 2) zs.push(z);
+  const PX0 = 1104, PX1 = 1490, PZ0 = -270, PZ1 = 600; const xs = []; for (let x = PX0; x < 1150; x += mobile ? 2 : 1.4) xs.push(x); for (let x = 1150; x < 1235; x += mobile ? 1.4 : .75) xs.push(x); for (let x = 1235; x <= PX1; x += mobile ? 5 : 3) xs.push(x); const zs = []; for (let z = PZ0; z <= PZ1; z += mobile ? 3.5 : 2) zs.push(z); /* v351 lighter surf grid on phones */
   const surfMesh = new THREE.Mesh(mkGrid(xs, zs), oceanM); surfMesh.frustumCulled = false; surfMesh.renderOrder = 3; surfMesh.name = 'surf'; root.add(surfMesh);
   { const oxs = [], ozs = []; for (let x = 1100; x <= 4400; x += x < 1600 ? 20 : 80) oxs.push(x); for (let z = -900; z <= 1200; z += 30) ozs.push(z); const ring = new THREE.Mesh(mkGrid(oxs, ozs, (x0, z0, x1, z1) => x0 >= PX0 && x1 <= PX1 && z0 >= PZ0 && z1 <= PZ1 || x1 < shoreX((z0 + z1) / 2) - 30), oceanM); ring.frustumCulled = false; ring.renderOrder = 2; ring.position.y = -.02; ring.name = 'open sea'; root.add(ring); }
 

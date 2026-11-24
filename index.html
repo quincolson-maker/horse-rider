@@ -278,7 +278,7 @@ body.touch #hrPrompt,body.touch #hrPrompt.riding{top:auto;bottom:calc(max(6px,en
 </style>
 </head><body>
 <div id="fnSplash"><div class="logo">Horse<br>Rider</div><div class="tag">Wild Frontier · Season 1</div><button class="play" id="fnPlay">Play</button>
-<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v104 · updated Nov 23</div></div>
+<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v105 · updated Nov 23</div></div>
 <script>(function(){var q=new URLSearchParams(location.search);var real=q.get('style')==='real';if(!real)document.body.classList.add('sty');var sp=document.getElementById('fnSplash');
 if(real||q.has('dev')||q.has('auto')||q.get('splash')==='0'){sp.remove();return;}
 if(matchMedia('(pointer: coarse)').matches)document.getElementById('fnHint').textContent='Left side: move & steer · right side: look · tap RIDE near a horse';
@@ -312,7 +312,7 @@ document.getElementById('fnPlay').addEventListener('click',go);addEventListener(
  <div class="tb act" id="tAuto" style="right:2%;bottom:calc(3% + clamp(62px,15vmin,86px))" hidden>🐎<small>AUTO</small></div>
  <div class="tb sm" id="tMore" title="More">⋯</div>
  <div class="tb sm" id="tCall" title="Call your horse">🐴</div>
- <div id="uiMore" class="pill" hidden><button id="mMap">🗺️ Map</button><button id="mCamp">⛺ Camp</button><button id="mLB">🏆 Leaders</button><button id="mHelp">Controls</button><button id="mSet">Settings</button><button id="mFs">Fullscreen</button><button id="mClose">✕ Close</button></div>
+ <div id="uiMore" class="pill" hidden><button id="mMap">🗺️ Map</button><button id="mCamp">⛺ Camp</button><button id="mStats">📓 Journal</button><button id="mLB">🏆 Leaders</button><button id="mHelp">Controls</button><button id="mSet">Settings</button><button id="mFs">Fullscreen</button><button id="mClose">✕ Close</button></div>
 </div>
 <button id="vMute" hidden aria-pressed="false"></button>
 <div id="rot"><div class="ph"></div><p>Rotate your phone to landscape</p><button id="rotskip">Play anyway</button></div>
@@ -345,5 +345,5 @@ document.getElementById('fnPlay').addEventListener('click',go);addEventListener(
 </script>
 <script src="./vendor/peerjs.min.js"></script>
 <script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
-<script type="module" src="./main.js?v=104" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
+<script type="module" src="./main.js?v=105" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
 </body></html>

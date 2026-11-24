@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=242';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=242';
-import { mergeStatic } from './hrmerge.js?v=242';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=243';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=243';
+import { mergeStatic } from './hrmerge.js?v=243';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -173,6 +173,10 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     for (const lz of [2.4, 6.4]) { box(s, M.black, mid - 1.5, F1 - .25, lz, .02, .5, .02); sph(s, M.paper, mid - 1.5, F1 - .75, lz, .3, 1.25); box(s, M.red, mid - 1.5, F1 - .43, lz, .22, .05, .22); }
     for (let k = 0; k < 4; k++) { const px = 1.6 + k * (W - 3.2) / 3; if (Math.abs(px - mid) < 1) continue; cyl(s, M.red, px, F1 + .17, -bd + .35, .17, .3, 8, .13); sph(s, k % 2 ? M.jade : M.green, px, F1 + .43, -bd + .35, .22, .8); sph(s, M.lamp, px + .08, F1 + .55, -bd + .3, .05); }
     for (const [k, x, ry] of [['x0', -.02, -Math.PI / 2], ['xW', W + .02, Math.PI / 2]]) { if (s.open[k]) continue; plane(s, signM, x, F0 + 3.6, DP * .45, 1.4, 4.4, ry, u0, v0, u1, v1); box(s, M.gold, x, F0 + 5.85, DP * .45, .04, .08, 1.5); box(s, M.gold, x, F0 + 1.35, DP * .45, .04, .08, 1.5); }
+    // v243 facade accents by trade: the joss house gets big door lanterns and a gold door frame, the theatre a poster board, the tea house a cloth banner on a pole
+    if (kind === 'temple') { for (const sx of [mid - dw - .5, mid + dw + .5]) { box(s, M.black, sx, F0 + 3.2, -.45, .03, .5, .03); sph(s, M.lamp, sx, F0 + 2.6, -.45, .45, 1.35); box(s, M.gold, sx, F0 + 2.95, -.45, .35, .08, .35); box(s, M.gold, sx, F0 + 2.15, -.45, .28, .08, .28); } box(s, M.gold, mid, F0 + 2.62, -.02, 2 * dw + .5, .22, .12); for (const sx of [mid - dw - .12, mid + dw + .12]) box(s, M.gold, sx, F0 + 1.3, -.02, .18, 2.6, .12); }
+    if (kind === 'theatre') { for (const sx of [1.5, W - 1.5]) { box(s, M.dark, sx, F0 + 1.6, -.05, 1.5, 2.0, .06); box(s, [M.red, M.jade][sx > 5 ? 1 : 0], sx, F0 + 1.6, -.09, 1.3, 1.8, .02); box(s, M.gold, sx, F0 + 2.2, -.1, 1.1, .12, .02); box(s, M.gold, sx, F0 + 1.1, -.1, .9, .5, .02); } }
+    if (kind === 'tea' || kind === 'noodle') { const px = W - .8; cyl(s, M.wood, px, F0 + 1.6, -.9, .04, 3.2, 6); box(s, kind === 'tea' ? M.green : M.red, px, F0 + 2.4, -1.25, .03, 1.4, .6); box(s, M.wood, px, F0 + 3.15, -1.2, .04, .04, .8); }
     // ---- interior fittings by kind ----
     INQ = s.q; interior(s, kind, mid);
     // upper floor: a room with a bed, table, and a window seat
@@ -337,7 +341,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const prevUse4 = T.onUse; T.onUse = o => { if (STG && STG.includes(o)) { if (pay(40)) { const [x, z] = o.to, y = T.floorAt(x, z, 1e9) + .05; if (H.mounted) { H.mounted.pos.set(x, y, z); H.speed = 0; } else P.pos.set(x, y, z); H.vy = 0; msg('🐎 The stage rattles off... and you\'re there', 2.2); const S = st(); S.ctStage = (S.ctStage || 0) + 1; if (sfx.nz && sfx.ctx) sfx.nz('lowpass', 500, 1, .2, .6); } return true; } return prevUse4 ? prevUse4(o) : false; };
 
   // ---------- per frame ----------
-  let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0, musT = 2, musI = 3;
+  let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0, musT = 2, musI = 3, incT = 0;
   function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, inside = Math.abs(me.x - CX) < E && Math.abs(me.z - CZ) < E; peopleTick(dt, me); dragonTick(dt, me); runTick(dt, me); if (inside && (roofT -= dt) <= 0) { roofT = .5; for (const b of built) { if (me.y < b.y0 + RF - .3) break; const [lx, lz] = T.toL ? T.toL(b, me.x, me.z) : [0, 0]; if (lx > 0 && lx < W && lz > 0 && lz < DP && me.y > b.y0 + RF - .3) { const S = st(), v = new Set(S.ctRoofs || []); if (!v.has(b.name + b.cx.toFixed(0) + b.cz.toFixed(0))) { v.add(b.name + b.cx.toFixed(0) + b.cz.toFixed(0)); S.ctRoofs = [...v]; msg(`🏯 Rooftop ${v.size} of ${built.length}`, 1.6); } } } }
     if (inside && !welcome) { welcome = true; msg('🏮 Chinatown - 唐人街', 3); const S = st(); if (!S.ctVisit) { S.ctVisit = 1; earn(200); setTimeout(() => msg('First visit to Chinatown  +200', 2.5), 2000); } } else if (!inside && Math.hypot(me.x - CX, me.z - CZ) > 90) welcome = false;
     if (nightK > .6 && (H.night || 0) <= .6 && Math.hypot(me.x - CX, me.z - CZ) < 200 && sfx.tone && sfx.ctx) { [0, 2.6, 5.2].forEach(d => setTimeout(() => { sfx.tone('sine', 82, 80, .35, 4); sfx.tone('sine', 164, 160, .12, 3); }, d * 1000)); msg('🔔 The temple bell greets the dawn over Chinatown', 2.5); } /* v234 */
@@ -348,6 +352,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     if (Math.hypot(me.x - CX, me.z - CZ) < 80) { const m4 = KF.userData.m || (KF.userData.m = new THREE.Matrix4()), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1); koi.forEach((p, j) => { for (let k = 0; k < 3; k++) { const a = t * (.4 + k * .13) * (k % 2 ? -1 : 1) + k * 2.1 + j, r = .35 + k * .18; e.set(0, a + (k % 2 ? 0 : Math.PI), 0); q.setFromEuler(e); m4.compose(v.set(p[0] + Math.cos(a) * r, y0 + .262, p[1] + Math.sin(a) * r), q, one); KF.setMatrixAt(j * 3 + k, m4); } }); KF.instanceMatrix.needsUpdate = true; }
     { const wet = Math.min(1, ((H.wx && H.wx.rain) || 0) * 1.4); if (Math.abs(wet - (update.wet ?? -1)) > .03) { update.wet = wet; M.cobble.roughness = 1 - .6 * wet; M.cobble.metalness = .15 * wet; M.stone.roughness = .9 - .5 * wet; M.tile.roughness = .45 - .3 * wet; M.cobble.color.setScalar(1 - .35 * wet); } } /* v239 rain-slick streets */
     if (n > .3 && Math.hypot(me.x - CX, me.z - CZ) < 150) { const f = 1 + .07 * Math.sin(t * 7.3) + .05 * Math.sin(t * 12.1 + 1); M.lamp.emissiveIntensity = (.5 + 3.2 * n) * f; M.paper.emissiveIntensity = (.15 + 2.2 * n) * (2 - f); } /* v240 lantern flicker */
+    if (fx && fx.smoke && Math.hypot(me.x - CX, me.z - CZ) < 60 && (incT -= dt) <= 0) { incT = 1.2; fx.smoke.emit(CX + (Math.random() - .5) * .3, y0 + 2.1, CZ + (Math.random() - .5) * .3, 0, .35, 0, .85, .85, .82, .35, 3, 1.2, -.005, .08); } /* v243 incense smoke from the urn */
     if (fedT > 0) { fedT -= dt; heal(dt * 1.5); } if (tonicT > 0) { tonicT -= dt; heal(dt * 3); }
     if (crackers) { crackers.t -= dt; if (crackers.t <= 0) { crackers.t = .07 + Math.random() * .08; crackers.n++; const x = crackers.x + (Math.random() - .5) * 1.2, z = crackers.z + (Math.random() - .5) * 1.2, y = (H.town ? H.town.floorAt(x, z, me.y + 1) : hAt(x, z)) + .1;
       if (sfx.nz && sfx.ctx) sfx.nz('highpass', 1800 + Math.random() * 1500, .8, .22, .05); if (fx && fx.smoke) fx.smoke.emit(x, y, z, (Math.random() - .5) * 2, 1 + Math.random(), (Math.random() - .5) * 2, .85, .8, .75, .5, .9, .7, -.02, .3); if (fx && fx.spark) fx.spark(x, y + .1, z); if (crackers.n > 40) crackers = null; } } }

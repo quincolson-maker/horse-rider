@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=291';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=291';
-import { mergeStatic } from './hrmerge.js?v=291';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=292';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=292';
+import { mergeStatic } from './hrmerge.js?v=292';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -185,6 +185,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     // v244 upstairs by trade: a meeting table in the hall, costume racks over the theatre, a tea room over the tea house, a study over the bookseller
     if (kind === 'hall') { box(s, M.wood, mid - .5, F1 + .75, DP / 2, 5, .1, 1.3); for (let k = 0; k < 5; k++) for (const sz of [-1, 1]) box(s, M.red, mid - 2.5 + k * 1.2, F1 + .25, DP / 2 + sz * 1.0, .45, .5, .45); }
     if (kind === 'theatre') for (let k = 0; k < 3; k++) { box(s, M.dark, 7.2 + k * 1.0, F1 + 1.6, 1.6, .05, .05, 1.2); for (let j = 0; j < 3; j++) box(s, [M.red, M.gold, M.jade][(k + j) % 3], 7.2 + k * 1.0, F1 + .95, 1.2 + j * .4, .5, 1.2, .08); }
+    if (kind === 'tea') spot(s, 8.2, F1, 1.4, 'ct_cooview', '🍵 Tea at the upstairs window (heal)', 1.3);
     if (kind === 'tea') for (const [x, z] of [[8.2, 2.4], [8.2, 5.6]]) { box(s, M.dark, x, F1 + .35, z, 1.2, .1, 1.2); for (const [dx, dz] of [[-.8, 0], [.8, 0]]) box(s, M.red, x + dx, F1 + .12, z + dz, .55, .24, .55); cyl(s, M.white, x, F1 + .47, z, .1, .14, 10); }
     if (kind === 'books' || kind === 'herb') { box(s, M.wood, 8.5, F1 + 1.2, DP - .45, 3.0, 2.4, .4); for (let k = 0; k < 18; k++) box(s, [M.red, M.green, M.cream, M.dark][k % 4], 7.2 + (k % 9) * .3, F1 + .55 + Math.floor(k / 9) * .7, DP - .5, .2, .5, .3); box(s, M.wood, 8.5, F1 + .4, DP - 1.8, 1.6, .8, .8); }
     if (/bakery|noodle|tea/.test(kind)) { box(s, M.brick, W - .9, RF + 1.0, DP - .9, .7, 2.0, .7); box(s, M.stone, W - .9, RF + 2.05, DP - .9, .85, .12, .85); wall(s, W - 1.3, DP - 1.3, W, DP - 1.3, RF, RF + 2); wall(s, W - 1.3, DP - 1.3, W - 1.3, DP, RF, RF + 2); }
@@ -286,7 +287,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const earn = n => { const g = H.guns; if (g) { g.state.score += n; g.save && g.save(); } };
   const heal = n => { const Z = H.zombies; if (Z && Z.state) Z.state.hp = Math.min(100, (Z.state.hp || 0) + n); };
   let fedT = 0, tonicT = 0, crackers = null;
-  const prevUse = T.onUse; T.onUse = o => { if (!o || !o.ct) return prevUse ? prevUse(o) : false; const k = o.kind.slice(3), S = st();
+  const prevUse = T.onUse; T.onUse = o => { if (!o || !o.ct) return prevUse ? prevUse(o) : false; const k = o.kind.slice(3), S = st(); if (/^(gold|tailor|books)$/.test(k) && (H.night || 0) > .85) { msg('🔒 Shuttered for the night - open again at dawn', 2); return true; }
     if (k === 'tea') { if (pay(20)) { heal(100); H.burnT = 0; msg('🍵 Jasmine tea, a quiet table - you feel whole again', 2.5); S.ctTea = (S.ctTea || 0) + 1; } }
     else if (k === 'noodle') { if (pay(30)) { heal(60); fedT = 120; msg('🍜 Hot noodles - well fed for 2 minutes (double regen)', 2.5); S.ctFood = (S.ctFood || 0) + 1; } }
     else if (k === 'bakery') { if (pay(15)) { heal(40); msg('🥮 Warm egg tarts and a pork bun', 2); S.ctFood = (S.ctFood || 0) + 1; } }
@@ -307,6 +308,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (k === 'tiles') { tiles(); }
     else if (k === 'lionrub') { if (S.ctRub === day()) msg('🦁 The lion\'s head is already polished bright today', 1.8); else { S.ctRub = day(); earn(30); msg('🦁 You rub the stone lion\'s head - luck is with you (+30)', 2.2); } }
     else if (k === 'board') { const now = Date.now() / 1000, dn = 360 - (now % 360), ln = 360 - ((now - 180) % 360 + 360) % 360, m = x => x < 60 ? Math.ceil(x) + ' s' : Math.ceil(x / 60) + ' min'; const q = S.ctErr, er = q && q.day === day() ? (q.done ? 'done today' : `${q.got.filter(Boolean).length}/3 roots`) : 'ask the herbalist'; msg(`📜 Dragon dance in ${m(dn)} · Lion dance in ${m(ln)} · Opera: ${S.ctOpera === day() ? 'seen today' : 'tonight'} · Riddles: ${5 - (S.ctRidDay === day() ? S.ctRidN || 0 : 0)} left · Errand: ${er}`, 6); }
+    else if (k === 'cooview') { heal(40); msg('🍵 A cup of tea at the upstairs window - the street bustles below', 2.4); }
     else if (k === 'talk') { const L = ['"Fine weather for riding."', '"The dragon comes down the avenue every six minutes - don\'t miss it."', '"Try the egg tarts at the bakery. Still warm!"', '"Have you been up on the roofs? You can cross a whole block up there."', '"The herbalist pays well for wild ginseng from the hills."', '"Mind the dead out on the range after dark."', '"The old men at the xiangqi table have been at that game since noon."', '"Toss a coin in the urn and make a wish."', '"The opera starts whenever there\'s an audience!"']; msg('💬 ' + L[(Math.random() * L.length) | 0], 3); S.ctTalks = (S.ctTalks || 0) + 1; }
     else if (k === 'view') { msg('🏮 Lanterns, tiled eaves and the range beyond', 2); S.ctView = 1; }
     else if (k === 'gold') { if (S.ctJade) msg('💚 Your jade charm is warm against your chest', 2); else if (pay(2000)) { S.ctJade = 1; msg('💚 A carved jade charm - you heal slowly but steadily from now on', 3); for (const q of spots) if (q.kind === 'ct_gold') q.label = '💍 Look over the jade and gold (charm owned)'; } }

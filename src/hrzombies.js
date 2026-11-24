@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=125';
-import { PERF } from './perfopts.js?v=125';
+import { PF } from './perf.js?v=126';
+import { PERF } from './perfopts.js?v=126';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -14,6 +14,7 @@ export const ZKINDS = {
   runner: { hp: 70, spd: 4.3, dmg: 9, cd: .9, s: .97, reach: 1.2 },
   brute: { hp: 320, spd: 1.15, dmg: 28, cd: 1.6, s: 1.28, reach: 1.5 },
   outlaw: { hp: 140, spd: 1.9, dmg: 5, cd: 1.5, s: 1, reach: 1.2, range: 34 },
+  screamer: { hp: 80, spd: 1.25, dmg: 9, cd: 1.2, s: .97, reach: 1.2 }, // v126: shrieks when it spots you - every zombie within 60 m goes into a frenzy (faster) for 6 s
   coyote: { hp: 55, spd: 5.4, dmg: 7, cd: .8, s: 1, reach: 1.15 }, // v111: undead coyotes - fast, low, run in at night
   crawler: { hp: 60, spd: .95, dmg: 10, cd: 1.1, s: 1, reach: 1.05 }, // v87: low on the ground, hard to hit - heads pop
   bloater: { hp: 150, spd: 1.05, dmg: 0, cd: 1.5, s: 1.12, reach: 1.7, boom: 40, boomR: 4.6 }, // v87: swollen, green - bursts when it reaches you or when shot (chain reactions)
@@ -22,7 +23,7 @@ export const ZKINDS = {
 };
 export const ZSET = { travel: 6, near: 90, capDesktop: 42, capPhone: 18, chaosDesktop: 420, chaosPhone: 180, chaosRows: 120, chaosRowR: 260, startDelay: 10, waveSecs: 75, playerHp: 100, horseHp: 160, regenDelay: 5, regen: 7, respawn: 4,
   dmg: { shotgun: 26, revolver: 50, rifle: 70, sniper: 260, tommy: 34, m4: 46, mp5: 31, gold: 650, sun: 450, dyn: 420, gatling: 40 }, head: 2.4, penMargin: 1.1 };
-const KIND_LIST = ['walker', 'runner', 'brute', 'outlaw', 'boss', 'crawler', 'bloater', 'lawman', 'coyote']; // v87: appended (network ids stay stable)
+const KIND_LIST = ['walker', 'runner', 'brute', 'outlaw', 'boss', 'crawler', 'bloater', 'lawman', 'coyote', 'screamer']; // v87: appended (network ids stay stable)
 
 export function createHrZombies(c) {
   const { scene, H, P, hAt, PEN, EDGE, sfx, fx, mobile } = c, WALK = c.WALK || EDGE;
@@ -41,7 +42,7 @@ export function createHrZombies(c) {
         const alive = Z.list.filter(o => o.alive && o.kind !== 'outlaw').map(o => [far(o), o]).sort((a, b) => b[0] - a[0]); let extra = alive.length - Z.cap;
         for (const [d, o] of alive) { if (extra <= 0) break; if (d > 60) { despawn(o); extra--; } } c.msg && c.msg('Chaos mode off', 2); } } }
   Z.cap = capOf(false);
-  const pool = { walker: [], runner: [], brute: [], outlaw: [], boss: [], crawler: [], bloater: [], lawman: [], coyote: [] }, tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
+  const pool = { walker: [], runner: [], brute: [], outlaw: [], boss: [], crawler: [], bloater: [], lawman: [], coyote: [], screamer: [] }, tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
   const rnd = Math.random;
   // pen rectangle the dead may never enter (fence + gate gap + a little margin)
   const RX = PEN.hw + ZSET.penMargin, RZ = PEN.hd + ZSET.penMargin;
@@ -146,6 +147,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     if (k === 'crawler') { o.B.m.rotation.set(-1.32, Math.PI, 0); o.B.m.position.set(0, .3, .55); }
     else { o.B.m.rotation.set(0, Math.PI, 0); o.B.m.position.set(0, 0, 0); }
     if (k === 'bloater') { o.B.m.scale.set(s * 1.38, s, s * 1.32); for (let i = 0; i < 9; i++) { const a = i * 2.4, h = .95 + (i % 3) * .17; add(M.blob, M.pus, Math.cos(a) * .3, h, Math.sin(a) * .27, 0, 0, 0, .05 + (i % 4) * .018); } o.boomed = false; }
+    if (k === 'screamer') { o.B.m.scale.set(s * .86, s * 1.04, s * .9); add(M.blob, M.hat, 0, 1.56, -.115, 0, 0, 0, .045); }
     if (k === 'lawman') { const pl = add(M.plate, M.tin, 0, 1.22, 0, 0, Math.PI, 0); pl.material = M.tin; add(M.plate, M.rust, 0, 1.22, .01, 0, 0, 0, .985); add(M.badge, M.gold, -.09, 1.33, -.265, Math.PI / 2, 0, 0); add(M.crown, M.hat, 0, 1.86, 0); add(M.brim, M.hat, 0, 1.8, 0); } }
   function boom(o) { if (o.boomed) return; o.boomed = true; const R = o.K.boomR || 4.5, P0 = o.pos;
     if (fx && fx.debris) { fx.debris(P0.x, P0.y + 1, P0.z, 0x8ab030, 26, 1.6); fx.debris(P0.x, P0.y + 1, P0.z, 0x3a5a10, 14, 1.1); }
@@ -154,7 +156,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     if (Z.role() !== 'client') for (const z of Z.list) if (z !== o && z.alive && Math.hypot(z.pos.x - P0.x, z.pos.z - P0.z) < R) damage(z, Math.round(140 * (1 - Math.hypot(z.pos.x - P0.x, z.pos.z - P0.z) / R) + 40), false, z.pos, null, 'bandit'); }
   Z.boom = boom;
   function despawn(o) { scene.remove(o.g); o.g.remove(o.B.m); if (!o.B.stand) { o.B.m.rotation.set(0, Math.PI, 0); o.B.m.position.set(0, 0, 0); o.B.m.scale.setScalar(o.K.s); pool[o.kind].push(o.B); } Z.list.splice(Z.list.indexOf(o), 1); if (Z.byId.get(o.id) === o) Z.byId.delete(o.id); }
-  const pickKind = () => { const w = Z.wave, r = rnd(), r2 = rnd(); if (w >= 2 && (H.night || 0) > .5 && rnd() < .18) return 'coyote'; if (w >= 2 && r2 < .12) return 'crawler'; if (w >= 3 && r2 < .22) return 'bloater'; if (w >= 4 && r2 < .32) return 'lawman'; if (w >= 3 && r < Math.min(.15, .04 * w)) return 'brute'; if (w >= 2 && r < Math.min(.5, .12 * w)) return 'runner'; return 'walker'; };
+  const pickKind = () => { const w = Z.wave, r = rnd(), r2 = rnd(); if (w >= 2 && (H.night || 0) > .5 && rnd() < .18) return 'coyote'; if (w >= 3 && rnd() < .07) return 'screamer'; if (w >= 2 && r2 < .12) return 'crawler'; if (w >= 3 && r2 < .22) return 'bloater'; if (w >= 4 && r2 < .32) return 'lawman'; if (w >= 3 && r < Math.min(.15, .04 * w)) return 'brute'; if (w >= 2 && r < Math.min(.5, .12 * w)) return 'runner'; return 'walker'; };
 
   // ---- who they go for: players on foot or riding (their horse), loose horses outside the pen ----
   // v37 perf: the player list is rebuilt once per tick (not per zombie), into persistent objects keyed by id, so a target a
@@ -245,8 +247,11 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     else if (safe && T && T.up) { /* prey up a lookout: crowd at the foot */ }
     else if (safe) { const dx = tx - PEN.x, dz = tz - PEN.z, ox = PEN.hw - Math.abs(dx), oz = PEN.hd - Math.abs(dz); // prey inside the pen: press up against the rails nearest to it
       if (ox < oz) tx = PEN.x + Math.sign(dx || 1) * (RX + .35); else tz = PEN.z + Math.sign(dz || 1) * (RZ + .35); }
+    if (o.frenzy > 0) o.frenzy -= dt;
+    if (o.kind === 'screamer' && T && dist < 32 && (o.scrT = (o.scrT ?? 1) - dt) <= 0) { o.scrT = 9; o.st = 1; if (sfx.ctx) zAt(o.pos, () => { sfx.tone('sawtooth', 1400, 500, .9, .5); sfx.tone('square', 1900, 700, .7, .25); sfx.nz && sfx.nz('highpass', 2400, 1, .7, .4); }, .6);
+      let n = 0; for (const z of Z.list) if (z.alive && z !== o && z.kind !== 'outlaw' && Math.hypot(z.pos.x - o.pos.x, z.pos.z - o.pos.z) < 60) { z.frenzy = 6; z.retT = 0; n++; } if (n && Math.hypot(P.pos.x - o.pos.x, P.pos.z - o.pos.z) < 70) c.msg && c.msg('😱 A SCREAMER! The dead are frenzied — drop it first', 2.2); }
     const det = penDetour(o, tx, tz); if (det) [tx, tz] = det;
-    const far = dist > ZSET.near, spd = Math.max(o.K.spd * (1 + .18 * (H.night || 0)), far ? ZSET.travel : 0) * (1 - o.flinch * .6), dx = tx - o.pos.x, dz = tz - o.pos.z, l = Math.hypot(dx, dz) || 1;
+    const far = dist > ZSET.near, spd = Math.max(o.K.spd * (1 + .18 * (H.night || 0)) * (o.frenzy > 0 ? 1.6 : 1), far ? ZSET.travel : 0) * (1 - o.flinch * .6), dx = tx - o.pos.x, dz = tz - o.pos.z, l = Math.hypot(dx, dz) || 1;
     const want = Math.atan2(-dx, -dz); o.yaw += Math.atan2(Math.sin(want - o.yaw), Math.cos(want - o.yaw)) * Math.min(1, dt * 4);
     o.sp += (spd - o.sp) * Math.min(1, dt * 3); let mx = -Math.sin(o.yaw) * o.sp * dt, mz = -Math.cos(o.yaw) * o.sp * dt;
     if (o.push) { mx += o.push[0] * dt * 4; mz += o.push[1] * dt * 4; o.push[0] *= 1 - dt * 6; o.push[1] *= 1 - dt * 6; if (Math.abs(o.push[0]) + Math.abs(o.push[1]) < .02) o.push = null; }

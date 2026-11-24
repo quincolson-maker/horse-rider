@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=269';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=269';
-import { mergeStatic } from './hrmerge.js?v=269';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=270';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=270';
+import { mergeStatic } from './hrmerge.js?v=270';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -24,7 +24,7 @@ const SHOPS = [
   ['酒家', 'RESTAURANT', 'noodle', 0x8c2f1f], ['醫館', 'DOCTOR', 'herb', 0x456a74], ['印務', 'PRINT SHOP', 'books', 0x5d4b3a], ['米舖', 'RICE MERCHANT', 'goods', 0x7d6a45]];
 
 export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
-  const { x: CX, z: CZ } = CT;
+  const { x: CX, z: CZ } = CT; try { window.__ctMusic = localStorage.getItem('hr_ctmusic') !== '0'; } catch (_) {}
   // ---------- materials ----------
   const brickT = tex(256, 256, (x, w, h) => { x.fillStyle = '#5a2a1e'; x.fillRect(0, 0, w, h); for (let r = 0; r < 16; r++) for (let c = 0; c < 8; c++) { const o = r % 2 ? 16 : 0; x.fillStyle = `hsl(${8 + rnd() * 10},${38 + rnd() * 14}%,${27 + rnd() * 12}%)`; x.fillRect(c * 32 + o + 1, r * 16 + 1, 30, 14); } });
   const woodT = tex(256, 256, (x, w, h) => { for (let i = 0; i < 8; i++) { x.fillStyle = `hsl(25,${32 + rnd() * 10}%,${18 + rnd() * 9}%)`; x.fillRect(0, i * 32, w, 31); x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(0, i * 32 + 31, w, 1); } for (let k = 0; k < 300; k++) { x.fillStyle = 'rgba(0,0,0,.08)'; x.fillRect(rnd() * w, rnd() * h, 20 + rnd() * 40, 1); } });
@@ -428,7 +428,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     if (nightK > .6 && (H.night || 0) <= .6 && Math.hypot(me.x - CX, me.z - CZ) < 200 && sfx.tone && sfx.ctx) { [0, 2.6, 5.2].forEach(d => setTimeout(() => { sfx.tone('sine', 82, 80, .35, 4); sfx.tone('sine', 164, 160, .12, 3); }, d * 1000)); msg('🔔 The temple bell greets the dawn over Chinatown', 2.5); } /* v234 */
     const n = H.night || 0; if (Math.abs(n - nightK) > .02) { nightK = n; M.lamp.emissiveIntensity = .5 + 3.2 * n; M.paper.emissiveIntensity = .15 + 2.2 * n; M.glass.emissiveIntensity = .06 + 1.2 * n; M.glass2.emissiveIntensity = .04 + .12 * n; signM.emissiveIntensity = .05 + .35 * n; gateM.emissiveIntensity = .08 + .4 * n; } { const nt = n > .5; if (nt !== update.nt) { update.nt = nt; for (const o of spots) if (o.kind === 'ct_fire') o.label = nt ? '🎆 Fireworks show over Chinatown (400 pts)' : '🧨 Set off a string of firecrackers (50 pts)'; } }
     if (n > .45 && fx && fx.smoke && Math.hypot(me.x - CX, me.z - CZ) < 70 && (steamT -= dt) <= 0) { steamT = .35; const q = stalls[(Math.random() * stalls.length) | 0]; fx.smoke.emit(q[0] + (Math.random() - .5) * .6, y0 + 1.5, q[1], 0, .6 + Math.random() * .4, 0, .92, .92, .9, .35, 1.6, 1.3, -.01, .15); }
-    if (inside && sfx.tone && sfx.ctx && !(DR.on) && (musT -= dt) <= 0) { const PEN = [392, 440, 523, 587, 659, 784, 880]; musT = [.45, .45, .9, .45, 1.35][(Math.random() * 5) | 0]; musI = Math.max(0, Math.min(PEN.length - 1, musI + [-2, -1, -1, 1, 1, 2, 0][(Math.random() * 7) | 0])); const f = PEN[musI]; sfx.tone('triangle', f, f * .995, .028, musT * 1.4); if (Math.random() < .25) sfx.tone('sine', f / 2, f / 2, .02, 1.2); } /* v227 a quiet pentatonic street melody */
+    if (inside && window.__ctMusic !== false && sfx.tone && sfx.ctx && !(DR.on) && (musT -= dt) <= 0) { const PEN = [392, 440, 523, 587, 659, 784, 880]; musT = [.45, .45, .9, .45, 1.35][(Math.random() * 5) | 0]; musI = Math.max(0, Math.min(PEN.length - 1, musI + [-2, -1, -1, 1, 1, 2, 0][(Math.random() * 7) | 0])); const f = PEN[musI]; sfx.tone('triangle', f, f * .995, .028, musT * 1.4); if (Math.random() < .25) sfx.tone('sine', f / 2, f / 2, .02, 1.2); } /* v227 a quiet pentatonic street melody */
     { const hm = H.mounted; if (hm) for (const q of troughs) if (Math.hypot(hm.pos.x - q[0], hm.pos.z - q[1]) < 2.8 && Math.abs(H.speed || 0) < 1) { H.stam = Math.min(100, (H.stam || 0) + 30 * dt); if (hm.hp != null) hm.hp = Math.min(100, hm.hp + 10 * dt); if (!hm.ctDrink || t - hm.ctDrink > 20) { hm.ctDrink = t; msg('🐴 Your horse drinks deep', 1.6); } } }
     if (Math.hypot(me.x - CX, me.z - CZ) < 80) { const m4 = KF.userData.m || (KF.userData.m = new THREE.Matrix4()), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1); koi.forEach((p, j) => { for (let k = 0; k < 3; k++) { const a = t * (.4 + k * .13) * (k % 2 ? -1 : 1) + k * 2.1 + j, r = .35 + k * .18; e.set(0, a + (k % 2 ? 0 : Math.PI), 0); q.setFromEuler(e); m4.compose(v.set(p[0] + Math.cos(a) * r, y0 + .262, p[1] + Math.sin(a) * r), q, one); KF.setMatrixAt(j * 3 + k, m4); } }); KF.instanceMatrix.needsUpdate = true; }
     { const wet = Math.min(1, ((H.wx && H.wx.rain) || 0) * 1.4); if (Math.abs(wet - (update.wet ?? -1)) > .03) { update.wet = wet; M.cobble.roughness = 1 - .6 * wet; M.cobble.metalness = .15 * wet; M.stone.roughness = .9 - .5 * wet; M.tile.roughness = .45 - .3 * wet; M.cobble.color.setScalar(1 - .35 * wet); } } /* v239 rain-slick streets */

@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=234';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=234';
-import { mergeStatic } from './hrmerge.js?v=234';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=235';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=235';
+import { mergeStatic } from './hrmerge.js?v=235';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -317,6 +317,13 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
       if (RUN.i > 4) { RUN.on = false; RUN.ring.visible = false; const S = st(), tm = +RUN.t.toFixed(1), best = S.ctRunBest || 0; if (!best) { earn(300); msg(`🏮 Rooftop run: ${tm} s - first finish +300`, 3); } else if (tm < best) { earn(150); msg(`🏮 NEW RECORD ${tm} s (was ${best} s) +150`, 3); } else msg(`🏮 Rooftop run: ${tm} s (best ${best} s)`, 2.5); if (!best || tm < best) S.ctRunBest = tm; S.ctRuns = (S.ctRuns || 0) + 1; }
       else msg(`🏮 Roof ${RUN.i} of 4`, .9); } }
   const prevUse3 = T.onUse; T.onUse = o => { if (RUN && o === RUN.sp) { RUN.on = true; RUN.i = 1; RUN.t = 0; msg('🏮 GO! Run the loop of roofs and back here', 2); return true; } return prevUse3 ? prevUse3(o) : false; };
+
+  // ---------- v235 STAGE LINE: signposts at the saloon and inside Chinatown's north gate - pay 40 pts and the stage carries you (and your horse) across ----------
+  const STG = (() => { const ts = T.town; if (!ts || !T.toW) return null; const [tx, tz] = T.toW(ts, -9, -12), ty = T.floorAt(tx, tz, 1e9), cx = CX - 7.5, cz = CZ - E + 2;
+    const post = (x, y, z, txt) => { const g = new THREE.Group(); g.position.set(x, y, z); const p = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, 2.4, 6), M.wood); p.position.y = 1.2; g.add(p); const bt = tex(256, 64, (c, w, h) => { c.fillStyle = '#e8d6a8'; c.fillRect(0, 0, w, h); c.fillStyle = '#3a2414'; c.font = 'bold 30px Georgia,serif'; c.textAlign = 'center'; c.fillText(txt, w / 2, 42); }, false); const bd = new THREE.Mesh(new THREE.BoxGeometry(1.5, .38, .05), [M.wood, M.wood, M.wood, M.wood, new THREE.MeshStandardMaterial({ map: bt }), new THREE.MeshStandardMaterial({ map: bt })]); bd.position.y = 2.05; g.add(bd); scene.add(g); return g; };
+    post(tx, ty, tz, 'CHINATOWN ➜'); post(cx, y0, cz, '➜ TOWN');
+    const a = { x: tx, z: tz, y: ty, kind: 'ct_stage', label: '🐎 Take the stage to Chinatown (40 pts)', r: 2.2, ct: true, to: [CX - 3, CZ - E + 4] }, b = { x: cx, z: cz, y: y0, kind: 'ct_stage', label: '🐎 Take the stage to town (40 pts)', r: 2.2, ct: true, to: [tx + 2, tz] }; T.spots.push(a, b); return [a, b]; })();
+  const prevUse4 = T.onUse; T.onUse = o => { if (STG && STG.includes(o)) { if (pay(40)) { const [x, z] = o.to, y = T.floorAt(x, z, 1e9) + .05; if (H.mounted) { H.mounted.pos.set(x, y, z); H.speed = 0; } else P.pos.set(x, y, z); H.vy = 0; msg('🐎 The stage rattles off... and you\'re there', 2.2); const S = st(); S.ctStage = (S.ctStage || 0) + 1; if (sfx.nz && sfx.ctx) sfx.nz('lowpass', 500, 1, .2, .6); } return true; } return prevUse4 ? prevUse4(o) : false; };
 
   // ---------- per frame ----------
   let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0, musT = 2, musI = 3;

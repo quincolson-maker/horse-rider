@@ -350,7 +350,7 @@ export function createBanditCave({ position = [0, 0, 0], rotationY = 0, quality 
 }
 
 /* Usage (your page must already resolve the bare 'three' import, e.g. import map):
-import { createBanditCave } from './banditcave.js?v=186';
+import { createBanditCave } from './banditcave.js?v=187';
 const cave = createBanditCave({ position: new THREE.Vector3(120,0,-80), quality:'high' });
 scene.add(cave.group);
 // Spawn your NPCs at cave.spawnPoints[i].position and retain each marker id.

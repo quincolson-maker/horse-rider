@@ -90,7 +90,7 @@ body.touch #hrBounty{top:calc(max(8px,env(safe-area-inset-top)) + 30px);right:ca
   function fanfare() { const t = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a); [[784, 0], [988, 110], [1175, 220], [1568, 360]].forEach(([f, d]) => setTimeout(() => t('triangle', f, f, d === 360 ? .5 : .14, .2), d)); setTimeout(() => t('sine', 392, 392, .6, .12), 360); }
   function startJob() { const j = job(); if (j && j.start && S.base[j.id] === undefined) j.start(); save(); }
   function complete(j) { S.done.push(j.id); const g = G(); if (g) { g.score += j.pay; H.guns.save && H.guns.save(); } H.lb && H.lb.add(j.pay);
-    const before = rank(); S.i = JOBS.findIndex(q => !S.done.includes(q.id)); startJob(); const after = rank();
+    const before = rank(); S.i = JOBS.findIndex(q => !S.done.includes(q.id)); startJob(); const after = rank(); if (after !== before && H.guns) { const ri = RANKS.findIndex(r => r[1] === after), bonus = 500 * Math.max(1, ri); H.guns.state.score += bonus; H.guns.save && H.guns.save(); setTimeout(() => msg(`⭐ Promoted to ${after}!  +${bonus} rank bonus`, 4), 2500); } /* v153 */
     win.innerHTML = `BOUNTY COMPLETE<small>${j.title.toUpperCase()} · +${j.pay.toLocaleString()} PTS${after !== before ? ' · RANK UP: ' + after.toUpperCase() : ''}</small>`; win.className = ''; void win.offsetWidth; win.className = 'on';
     el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); fanfare(); }
   startJob();

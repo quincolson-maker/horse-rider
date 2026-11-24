@@ -8,7 +8,7 @@ export function createExtra({ scene, H, P, hAt, msg, sfx, mobile }) {
   // v216 DUST DEVILS: on clear days a twisting column of dust wanders the range; ride through one and it shoves you and stings your eyes
   add(() => {
     const N = 2, geo = new THREE.CylinderGeometry(2.2, .5, 16, 14, 8, true); geo.translate(0, 8, 0);
-    { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i), a = y * .35, x = p.getX(i), z = p.getZ(i); p.setXZ(i, x * Math.cos(a) - z * Math.sin(a), x * Math.sin(a) + z * Math.cos(a)); } }
+    { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i), a = y * .35, x = p.getX(i), z = p.getZ(i); p.setX(i, x * Math.cos(a) - z * Math.sin(a)); p.setZ(i, x * Math.sin(a) + z * Math.cos(a)); } }
     const mat = new THREE.MeshBasicMaterial({ color: 0xc9a979, transparent: true, opacity: .0, depthWrite: false, side: THREE.DoubleSide });
     const devs = Array.from({ length: N }, () => { const m = new THREE.Mesh(geo, mat); m.frustumCulled = false; m.visible = false; scene.add(m); return { m, x: 0, z: 0, life: 0, vx: 0, vz: 0, cool: 20 + Math.random() * 40 }; });
     let shove = 0;

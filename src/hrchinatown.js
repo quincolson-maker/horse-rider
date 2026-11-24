@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=324';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=324';
-import { mergeStatic } from './hrmerge.js?v=324';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=325';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=325';
+import { mergeStatic } from './hrmerge.js?v=325';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -510,13 +510,14 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     const roof = new THREE.Mesh(new THREE.BoxGeometry(2.4, .14, 6.0), red); roof.position.y = 3.05; g.add(roof); const clere = new THREE.Mesh(new THREE.BoxGeometry(1.2, .25, 5.0), cream); clere.position.y = 3.2; g.add(clere); for (const ez of [-2.5, 2.5]) for (const sx of [-.95, .95]) { const p2 = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 1.6, 6), M.gold); p2.position.set(sx, 2.2, ez); g.add(p2); }
     for (const ez of [-2.1, 2.1]) { const bn = new THREE.Mesh(new THREE.BoxGeometry(1.9, .12, .5), wood); bn.position.set(0, 1.45, ez); g.add(bn); } for (const [wx, wz] of [[-.8, -2], [.8, -2], [-.8, 2], [.8, 2]]) { const wh = new THREE.Mesh(new THREE.CylinderGeometry(.28, .28, .1, 12), M.black); wh.rotation.z = Math.PI / 2; wh.position.set(wx, .28, wz); g.add(wh); }
     const bell = new THREE.Mesh(new THREE.SphereGeometry(.12, 8, 6), M.gold); bell.position.set(0, 3.45, 0); g.add(bell); const num = new THREE.Mesh(new THREE.BoxGeometry(.6, .3, .02), M.gold); num.position.set(0, 2.85, 3.02); g.add(num);
+    { const cd = mkP(3, 'Gripman'); cd.g.position.set(-.5, .9, 0); g.add(cd.g); g.userData.cd = cd; } /* v325 the gripman works the lever */
     scene.add(g); H.cullAdd && H.cullAdd(g, 220, { x: CX, z: CZ });
     const stops = [-Z1, Z1].map(z => spot(D, X0 + 2.2, 0, z - Math.sign(z) * 1.6, 'ct_cable', '🚋 Ride the cable car up the avenue (free)', 2.2));
     return { g, X0, Z1, z: -Z1, dir: 1, wait: 8, ride: false, stops }; })();
   const prevUse9 = T.onUse; T.onUse = o => { if (CC && CC.stops.includes(o)) { const atStop = CC.wait > 0 && Math.abs(CC.z - (o.z - CZ)) < 2; if (H.mounted) msg('🚋 No horses on the cable car - hitch up first', 2); else if (!atStop) msg('🚋 The car is on its way - wait at the stop', 1.8); else { CC.ride = true; CC.wait = Math.min(CC.wait, 1.5); msg('🚋 Ding ding! Hold on to the brass pole', 2); const S = st(); S.ctCable = (S.ctCable || 0) + 1; } return true; } return prevUse9 ? prevUse9(o) : false; };
   function cableTick(dt, me) { if (!CC) return; const near = Math.hypot(me.x - CX, me.z - CZ) < 200; if (!near && !CC.ride) return;
     if (CC.wait > 0) { CC.wait -= dt; if (CC.wait <= 0 && sfx.tone && sfx.ctx && near) { sfx.tone('sine', 1760, 1750, .06, .25); setTimeout(() => sfx.tone('sine', 1760, 1750, .06, .25), 220); } } else { CC.z += CC.dir * 3.5 * dt; if (CC.dir * CC.z >= CC.Z1) { CC.z = CC.dir * CC.Z1; CC.dir *= -1; CC.wait = 12; if (CC.ride) { CC.ride = false; P.pos.set(CX + CC.X0 + 2.2, y0 + .2, CZ + CC.z); msg('🚋 End of the line', 1.6); } } }
-    CC.g.position.set(CX + CC.X0, y0, CZ + CC.z); CC.g.rotation.y = 0; if (CC.ride) { if (H.mounted) { CC.ride = false; } else { P.pos.set(CX + CC.X0 + .95, y0 + 1.0, CZ + CC.z - 2.5 * CC.dir); H.vy = 0; if (H.fv) H.fv.set(0, 0); } } }
+    CC.g.position.set(CX + CC.X0, y0, CZ + CC.z); CC.g.rotation.y = 0; { const cd = CC.g.userData.cd; if (cd) { cd.g.rotation.y = CC.dir > 0 ? 0 : Math.PI; poseFrontierCharacter(cd, dt, { speed: 0 }); } } if (CC.ride) { if (H.mounted) { CC.ride = false; } else { P.pos.set(CX + CC.X0 + .95, y0 + 1.0, CZ + CC.z - 2.5 * CC.dir); H.vy = 0; if (H.fv) H.fv.set(0, 0); } } }
 
   // ---------- v312 AVENUE SPRINT: on horseback, start outside the north gate and gallop the length of the avenue through the south gate against the clock ----------
   const SPR = { sp: { x: CX - 6, z: CZ - E - 12, y: hAt(CX - 6, CZ - E - 12), kind: 'ct_sprint', label: '🏁 Avenue sprint - gallop through Chinatown (on horseback)', r: 3, ct: true }, on: false, t: 0, go: false }; T.spots.push(SPR.sp);

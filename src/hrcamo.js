@@ -12,6 +12,9 @@ const CAMOS = [
   { id: 'bloodmoon', name: 'Blood moon', price: 3000, cols: ['#6e0f12', '#1a0607', '#a3161b', '#3a0a0c'], kind: 'stripe' },
   { id: 'cobalt', name: 'Cobalt', price: 3000, cols: ['#1d3f8a', '#0b1a3d', '#3d6fd1', '#132a5e'], kind: 'pixel' },
   { id: 'gilded', name: 'Gilded', price: 6000, cols: ['#c9a14a', '#8a6a24', '#f0d27a', '#5a4416'], kind: 'blob', metal: true },
+  { id: 'snake', name: 'Rattlesnake', price: 2500, cols: ['#8a7a50', '#3a3020', '#c8b880', '#5a4a30'], kind: 'pixel' }, // v178
+  { id: 'burl', name: 'Walnut burl', price: 2200, cols: ['#6a3a1a', '#3a1e0c', '#9a5a2a', '#4a2a12'], kind: 'scroll' },
+  { id: 'midnight', name: 'Midnight', price: 2800, cols: ['#14161c', '#2a2e3a', '#0a0a0e', '#3a4050'], kind: 'stripe' },
   { id: 'engraved', name: 'Engraved silver', price: 0, rank: 8, cols: ['#c8ccd0', '#6a7076', '#eef0f2', '#8a9096'], kind: 'scroll', metal: true }, // v104 bounty rewards (rank)
   { id: 'goldleaf', name: 'Gold-leaf scrollwork', price: 0, rank: 14, cols: ['#d8b04a', '#7a5a1a', '#f4dc8a', '#a07a2a'], kind: 'scroll', metal: true },
 ];

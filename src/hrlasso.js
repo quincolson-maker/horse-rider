@@ -1,4 +1,4 @@
-// v90 LASSO: buy it at the General Store, then throw it with L or the 🪢 button. It snags whatever you aim near, up to 20 m.
+// v90 LASSO: buy it at the General Store, then throw it with T or the 🪢 button. It snags whatever you aim near, up to 20 m.
 //  🧟 Zombies and outlaws are tied up for 7 s. Ride off while one is roped and you drag it behind your horse,
 //     which hurts it, and anything it's dragged into takes a knock too.
 //  🐎 A roped wild mustang stops bolting, so you can tame it from the saddle at up to 14 m.
@@ -54,10 +54,10 @@ export function createLasso({ scene, H, P, camera, hAt, msg, sfx, mobile, input 
     drawRope(L.from, L.to, Math.max(0, (LEN - d) * .25)); loop.position.copy(L.to); loop.rotation.z = 0; loop.scale.setScalar(L.kind === 'mustang' ? 1.1 : .75); loop.visible = true; }
 
   // input: L key, 🪢 touch button, store item
-  addEventListener('keydown', e => { if (e.code === 'KeyL' && !e.repeat && !(e.target && /input|textarea/i.test(e.target.tagName))) throwIt(); });
+  addEventListener('keydown', e => { if (e.code === 'KeyT' && !e.repeat && !(e.target && /input|textarea/i.test(e.target.tagName))) throwIt(); });
   const btn = typeof document !== 'undefined' && document.getElementById('tLasso'); if (btn) btn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); throwIt(); });
-  const item = { state: { id: 'lasso', name: '🪢 Lasso · rope zombies, outlaws & wild mustangs (L)', price: PRICE, get owned() { return owned; }, maxed: false, get label() { return owned ? 'THROW (L)' : ''; } },
-    buy() { const g = H.guns; if (g.pts() < PRICE) { msg('Not enough points', 1.5); return; } g.state.spent = (g.state.spent || 0) + PRICE; g.save(); owned = true; try { localStorage.setItem(LS, '1'); } catch (_) {} msg('🪢 Lasso bought — press L (or 🪢) to throw it at what you aim near', 3.5); },
-    toggle() { msg('Aim near a zombie, outlaw or wild mustang and press L / 🪢', 2.2); } };
+  const item = { state: { id: 'lasso', name: '🪢 Lasso · rope zombies, outlaws & wild mustangs (T)', price: PRICE, get owned() { return owned; }, maxed: false, get label() { return owned ? 'THROW (T)' : ''; } },
+    buy() { const g = H.guns; if (g.pts() < PRICE) { msg('Not enough points', 1.5); return; } g.state.spent = (g.state.spent || 0) + PRICE; g.save(); owned = true; try { localStorage.setItem(LS, '1'); } catch (_) {} msg('🪢 Lasso bought — press T (or 🪢) to throw it at what you aim near', 3.5); },
+    toggle() { msg('Aim near a zombie, outlaw or wild mustang and press T / 🪢', 2.2); } };
   return { tick, throw: throwIt, release, item, L, get owned() { return owned; }, give() { owned = true; } };
 }

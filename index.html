@@ -274,10 +274,11 @@ body.ui-open #touch .tb{display:none!important}/* v85: only the buttons step asi
 body.touch #hrGun{bottom:calc(max(6px,env(safe-area-inset-bottom)) + 38px);flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;max-width:62vw}
 body.touch #hrGun .sc{display:none}
 body.touch #hrPrompt,body.touch #hrPrompt.riding{top:auto;bottom:calc(max(6px,env(safe-area-inset-bottom)) + 70px);white-space:nowrap;max-width:62vw;overflow:hidden;text-overflow:ellipsis;font-size:.82em;opacity:.95}
+#tAuto.on{background:rgba(217,166,86,.85)!important;color:#2a1d12!important}
 </style>
 </head><body>
 <div id="fnSplash"><div class="logo">Horse<br>Rider</div><div class="tag">Wild Frontier · Season 1</div><button class="play" id="fnPlay">Play</button>
-<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v103 · updated Nov 23</div></div>
+<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v104 · updated Nov 23</div></div>
 <script>(function(){var q=new URLSearchParams(location.search);var real=q.get('style')==='real';if(!real)document.body.classList.add('sty');var sp=document.getElementById('fnSplash');
 if(real||q.has('dev')||q.has('auto')||q.get('splash')==='0'){sp.remove();return;}
 if(matchMedia('(pointer: coarse)').matches)document.getElementById('fnHint').textContent='Left side: move & steer · right side: look · tap RIDE near a horse';
@@ -308,6 +309,7 @@ document.getElementById('fnPlay').addEventListener('click',go);addEventListener(
  <div class="tb act" id="tGun" style="right:2%;bottom:calc(20% + clamp(104px,26vmin,156px))">🔫<small>DRAW</small></div>
  <div class="tb act" id="tAct" style="right:calc(7% + clamp(130px,30vmin,190px));bottom:30%" hidden>USE</div>
  <div class="tb act" id="tLasso" style="right:calc(5% + clamp(98px,25vmin,150px));bottom:calc(10% + clamp(62px,15vmin,88px))" hidden>🪢<small>LASSO</small></div>
+ <div class="tb act" id="tAuto" style="right:2%;bottom:calc(3% + clamp(62px,15vmin,86px))" hidden>🐎<small>AUTO</small></div>
  <div class="tb sm" id="tMore" title="More">⋯</div>
  <div class="tb sm" id="tCall" title="Call your horse">🐴</div>
  <div id="uiMore" class="pill" hidden><button id="mMap">🗺️ Map</button><button id="mCamp">⛺ Camp</button><button id="mLB">🏆 Leaders</button><button id="mHelp">Controls</button><button id="mSet">Settings</button><button id="mFs">Fullscreen</button><button id="mClose">✕ Close</button></div>
@@ -343,5 +345,5 @@ document.getElementById('fnPlay').addEventListener('click',go);addEventListener(
 </script>
 <script src="./vendor/peerjs.min.js"></script>
 <script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
-<script type="module" src="./main.js?v=103" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
+<script type="module" src="./main.js?v=104" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
 </body></html>

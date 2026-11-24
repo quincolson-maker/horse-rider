@@ -1,14 +1,14 @@
 // Graphics core: quality presets, procedural PBR texture atlas, sky/lighting, post-processing.
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=118';
-import { EffectComposer } from '../addons/postprocessing/EffectComposer.js?v=118';
-import { RenderPass } from '../addons/postprocessing/RenderPass.js?v=118';
-import { UnrealBloomPass } from '../addons/postprocessing/UnrealBloomPass.js?v=118';
-import { GTAOPass } from '../addons/postprocessing/GTAOPass.js?v=118';
-import { OutputPass } from '../addons/postprocessing/OutputPass.js?v=118';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=118';
-import { FXAAShader } from '../addons/shaders/FXAAShader.js?v=118';
-import { STYLE_ON } from './stylize.js?v=118';
+import { PERF } from './perfopts.js?v=119';
+import { EffectComposer } from '../addons/postprocessing/EffectComposer.js?v=119';
+import { RenderPass } from '../addons/postprocessing/RenderPass.js?v=119';
+import { UnrealBloomPass } from '../addons/postprocessing/UnrealBloomPass.js?v=119';
+import { GTAOPass } from '../addons/postprocessing/GTAOPass.js?v=119';
+import { OutputPass } from '../addons/postprocessing/OutputPass.js?v=119';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=119';
+import { FXAAShader } from '../addons/shaders/FXAAShader.js?v=119';
+import { STYLE_ON } from './stylize.js?v=119';
 
 // ---------------- Quality ----------------
 export const PRESETS = {
@@ -98,7 +98,9 @@ export function createGraphics(qname) {
     if (composer) { composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(innerWidth, innerHeight); }
     if (fxaa) { const pr = renderer.getPixelRatio(); fxaa.material.uniforms.resolution.value.set(1 / (innerWidth * pr), 1 / (innerHeight * pr)); } };
   addEventListener('resize', resize); resize();
-  function render() { return this.composer ? this.composer.render() : renderer.render(scene, camera); }
+  // v119 shadow budget: on Low / Medium and on phones the shadow map refreshes every other frame (half the shadow-pass draw calls)
+  let shF = 0; const shHalf = Qp.shadow > 0 && (IS_TOUCH || qname === 'low' || qname === 'medium'); if (shHalf) renderer.shadowMap.autoUpdate = false;
+  function render() { if (shHalf) renderer.shadowMap.needsUpdate = (shF++ & 1) === 0; return this.composer ? this.composer.render() : renderer.render(scene, camera); }
   const followSun = p => { sun.position.copy(p).addScaledVector(sunDir, 90); sun.target.position.copy(p); };
   const mats = new Set();
   function setLighting(name, wet) { const L = LIGHTING[name] || LIGHTING.day; sunDir.set(...L.sun).normalize(); sun.color.set(L.col); sun.intensity = L.I * (wet ? .45 : 1); hemi.intensity = L.hemi * (wet ? 1.4 : 1);

@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=299';
-import { PERF } from './perfopts.js?v=299';
+import { PF } from './perf.js?v=300';
+import { PERF } from './perfopts.js?v=300';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -179,7 +179,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     if (Z.role() !== 'client') for (const z of Z.list) if (z !== o && z.alive && Math.hypot(z.pos.x - P0.x, z.pos.z - P0.z) < R) damage(z, Math.round(140 * (1 - Math.hypot(z.pos.x - P0.x, z.pos.z - P0.z) / R) + 40), false, z.pos, null, 'bandit'); }
   Z.boom = boom;
   function despawn(o) { scene.remove(o.g); o.g.remove(o.B.m); if (!o.B.stand) { o.B.m.rotation.set(0, Math.PI, 0); o.B.m.position.set(0, 0, 0); o.B.m.scale.setScalar(o.K.s); pool[o.kind].push(o.B); } Z.list.splice(Z.list.indexOf(o), 1); if (Z.byId.get(o.id) === o) Z.byId.delete(o.id); }
-  const pickKind = () => { const w = Z.wave, r = rnd(), r2 = rnd(); if (w >= 2 && (H.night || 0) > .5 && rnd() < .18) return 'coyote'; if (w >= 3 && rnd() < .07) return 'screamer'; if ((H.night || 0) > .55 && rnd() < .1) return 'torch'; if (w >= 3 && rnd() < .06) return 'miner'; if (w >= 2 && r2 < .12) return 'crawler'; if (w >= 3 && r2 < .22) return 'bloater'; if (w >= 4 && r2 < .32) return 'lawman'; if (w >= 3 && r < Math.min(.15, .04 * w)) return 'brute'; if (w >= 2 && r < Math.min(.5, .12 * w)) return 'runner'; return 'walker'; };
+  const pickKind = () => { const w = Z.wave, r = rnd(), r2 = rnd(); if (w >= 2 && (H.night || 0) > .5 && rnd() < .18) return 'coyote'; if (w >= 3 && rnd() < .07) return 'screamer'; if ((H.night || 0) > .55 && rnd() < .1) return 'torch'; if (w >= 3 && rnd() < .06) return 'miner'; if ((H.night || 0) > .55 && H.places && H.places.minecamp && Math.hypot(P.pos.x - H.places.minecamp.x, P.pos.z - H.places.minecamp.z) < 70 && rnd() < .3) return 'miner'; /* v300 the diggings are miner country after dark */ if (w >= 2 && r2 < .12) return 'crawler'; if (w >= 3 && r2 < .22) return 'bloater'; if (w >= 4 && r2 < .32) return 'lawman'; if (w >= 3 && r < Math.min(.15, .04 * w)) return 'brute'; if (w >= 2 && r < Math.min(.5, .12 * w)) return 'runner'; return 'walker'; };
 
   // ---- who they go for: players on foot or riding (their horse), loose horses outside the pen ----
   // v37 perf: the player list is rebuilt once per tick (not per zombie), into persistent objects keyed by id, so a target a

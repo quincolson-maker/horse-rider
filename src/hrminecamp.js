@@ -3,7 +3,7 @@
 // faces in a rock heap. Swing a pick at the ore (one chunk a minute per face, carry up to 10) and sell it at the assay office.
 // It is NOT a safe zone - dynamite miners like the place after dark. Everything is merged per material and distance-culled.
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=299';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=300';
 
 export const MC = { x: -110, z: -30, r: 30 };
 export const mcAvoid = (x, z) => Math.hypot(x - MC.x, z - MC.z) < MC.r;
@@ -57,6 +57,8 @@ export function createMineCamp({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   for (const sx of [-.45, .45]) box(M.iron, 12 + sx, .06, 4, .08, .08, 12); for (let k = 0; k < 12; k++) box(M.dark, 12, .03, -1.5 + k, 1.3, .06, .2);
   const cart = new THREE.Group(); { const b = new THREE.Mesh(new THREE.BoxGeometry(1.0, .6, 1.4), M.iron); b.position.y = .55; cart.add(b); for (const [wx, wz] of [[-.5, -.45], [.5, -.45], [-.5, .45], [.5, .45]]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(.18, .18, .08, 10), M.dark); w.rotation.z = Math.PI / 2; w.position.set(wx, .2, wz); cart.add(w); } const load = new THREE.Mesh(new THREE.DodecahedronGeometry(.45, 0), M.ore); load.position.y = .9; load.scale.y = .6; cart.add(load); } cart.position.set(CX + 12, y0, CZ + 4); scene.add(cart);
 
+  // v300 a lantern hangs under the headframe wheel and glows after dark
+  const lampM = new THREE.MeshStandardMaterial({ color: 0x302010, emissive: 0xffb050, emissiveIntensity: .2 }); const lamp = new THREE.Mesh(new THREE.SphereGeometry(.22, 10, 8).scale(1, 1.3, 1), lampM); lamp.position.set(CX + hx, y0 + TOP + 1.3, CZ + hz - HW / 2 - .2); scene.add(lamp); H.cullAdd && H.cullAdd(lamp, 300, { x: CX, z: CZ });
   // ---- merge + register ----
   const root = new THREE.Group(); root.name = 'Silver Creek Diggings'; for (const [m, gs] of GEO) { const nonIdx = gs.map(g => g.index ? g.toNonIndexed() : g); const me = new THREE.Mesh(mergeGeometries(nonIdx), m); me.castShadow = !mobile; me.receiveShadow = true; me.matrixAutoUpdate = false; root.add(me); gs.forEach(g => g.dispose()); } GEO.clear(); scene.add(root);
   if (H.cullAdd) { H.cullAdd(root, 300, { x: CX, z: CZ }); H.cullAdd(cart, 150, { x: CX, z: CZ }); H.cullAdd(fireM, 150, { x: CX, z: CZ }); }
@@ -74,6 +76,7 @@ export function createMineCamp({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     return true; };
   let welcome = false, t = 0;
   function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, d = Math.hypot(me.x - CX, me.z - CZ); if (d < 25 && !welcome) { welcome = true; msg('⛏ Silver Creek Diggings', 2.5); const S2 = st(); if (!S2.mcVisit) { S2.mcVisit = 1; earn(150); setTimeout(() => msg('First visit to the diggings  +150 · pick ore at the rock heap, sell it at the assay office', 4), 1500); } } else if (d > 60) welcome = false;
+    lampM.emissiveIntensity = .2 + 3 * (H.night || 0);
     if (d < 150) { fireM.scale.set(1 + Math.sin(t * 9) * .08, 1 + Math.sin(t * 13) * .15, 1 + Math.cos(t * 11) * .08); if (fx && fx.smoke && (update.sm = (update.sm || 0) - dt) <= 0) { update.sm = .3; fx.smoke.emit(CX - 4 + (Math.random() - .5) * .3, y0 + .9, CZ + 9, 0, .8, 0, .5, .48, .46, .4, 2, 1.4, -.01, .05); } } }
   return { update, info: { x: CX, z: CZ, y: y0 }, ore: () => ore };
 }

@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=159';
-import { PERF } from './perfopts.js?v=159';
+import { PF } from './perf.js?v=160';
+import { PERF } from './perfopts.js?v=160';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -155,6 +155,12 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     else if (o.B.torch) o.B.torch.visible = false;
     if (k === 'screamer') { o.B.m.scale.set(s * .86, s * 1.04, s * .9); add(M.blob, M.hat, 0, 1.56, -.115, 0, 0, 0, .045); }
     if (k === 'lawman') { const pl = add(M.plate, M.tin, 0, 1.22, 0, 0, Math.PI, 0); pl.material = M.tin; add(M.plate, M.rust, 0, 1.22, .01, 0, 0, 0, .985); add(M.badge, M.gold, -.09, 1.33, -.265, Math.PI / 2, 0, 0); add(M.crown, M.hat, 0, 1.86, 0); add(M.brim, M.hat, 0, 1.8, 0); } }
+  // v160 THE PREACHER (every 6th wave instead of the Hulking Dead): black coat + hat, glowing eyes; every 11 s he calls 3 crawlers out of the ground and frenzies the horde
+  function preacherLook(o) { const M = dm(), s = o.K.s, add = (geo, mat, x, y, z, sc = 1) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y * s, z); m.scale.setScalar(sc); o.g.add(m); (o.extra || (o.extra = [])).push(m); return m; };
+    add(M.crown, M.hat, 0, 1.86, 0, 1.25); add(M.brim, M.hat, 0, 1.8, 0, 1.3); const eye = M.peye || (M.peye = new THREE.MeshBasicMaterial({ color: 0xff2a1a })); for (const sx of [-.05, .05]) add(M.blob, eye, sx * s, 1.69, -.13 * s, .022 * s); }
+  function preacherTick(o, dt) { if (!o.preacher || !o.alive || Z.role() === 'client') return; o.callT = (o.callT ?? 6) - dt; if (o.callT > 0) return; o.callT = 11;
+    for (let i = 0; i < 3; i++) { const a = rnd() * 6.28, x = o.pos.x + Math.cos(a) * 3, z = o.pos.z + Math.sin(a) * 3; try { spawn('crawler', [x, z]); } catch (_) {} } for (const z of Z.list) if (z.alive && Math.hypot(z.pos.x - o.pos.x, z.pos.z - o.pos.z) < 50) z.frenzy = 5;
+    if (sfx.ctx) zAt(o.pos, () => { sfx.tone('sawtooth', 90, 55, 1.2, .5); sfx.tone('sine', 220, 110, 1, .3); }, .7); if (Math.hypot(P.pos.x - o.pos.x, P.pos.z - o.pos.z) < 90) c.msg && c.msg('📖 The Preacher calls the dead up out of the ground!', 2); }
   function boom(o) { if (o.boomed) return; o.boomed = true; const R = o.K.boomR || 4.5, P0 = o.pos;
     if (fx && fx.debris) { fx.debris(P0.x, P0.y + 1, P0.z, 0x8ab030, 26, 1.6); fx.debris(P0.x, P0.y + 1, P0.z, 0x3a5a10, 14, 1.1); }
     if (sfx.at && sfx.ctx) zAt(P0, () => { sfx.nz('lowpass', 500, 1, .5, .9); sfx.tone('sawtooth', 90, 30, .4, .6); }, .4);
@@ -240,7 +246,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
   function stepHost(o, dt) {
     if (o.kind === 'outlaw') return stepOutlaw(o, dt);
     if (o.hold) { o.sp = 0; o.st = 0; return; } // dev / tests: stand still
-    o.raidGo = null; if (o.raid && Z.raidHook) { const r = Z.raidHook(o, dt); if (r === 1) return; o.raidGo = r || null; } // v89 night raid: march on the gate
+    preacherTick(o, dt); o.raidGo = null; if (o.raid && Z.raidHook) { const r = Z.raidHook(o, dt); if (r === 1) return; o.raidGo = r || null; } // v89 night raid: march on the gate
     const T = o.tgt = (o.retT = (o.retT || 0) - dt) <= 0 || !o.tgt || (o.tgt.kind === 'player' && o.tgt.p.gone) ? chooseTarget(o) : o.tgt; if (o.retT <= 0) o.retT = .5;
     let tx = T ? (T.kind === 'horse' ? T.h.pos.x : T.p.x) : PEN.x, tz = T ? (T.kind === 'horse' ? T.h.pos.z : T.p.z) : PEN.z; if (o.raidGo) { tx = o.raidGo[0]; tz = o.raidGo[1]; }
     const dist = Math.hypot(tx - o.pos.x, tz - o.pos.z), reach = o.K.reach + (T && (T.kind === 'horse' || T.p.horse) ? .8 : 0), safe = !o.raidGo && T && (T.kind === 'horse' ? inPenSafe(tx, tz) : inPenSafe(T.p.x, T.p.z) || ((T.p.y ?? o.pos.y) - o.pos.y > 2.6));
@@ -292,13 +298,13 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     Z.flash = Math.max(0, Z.flash - dt * 1.4); H.dead = Z.dead > 0; if (H.burnT > 0) { H.burnT -= dt; if (!Z.dead) { Z.hp = Math.max(1, Z.hp - 5 * dt); Z.flash = Math.max(Z.flash, .25); } }
     for (const h of H.horses) { if (h.hp == null) h.hp = ZSET.horseHp; if (h.panic > 0) h.panic -= dt; if (h.hp < ZSET.horseHp && (inPenSafe(h.pos.x, h.pos.z) || (Z.t % 1 < dt && h.panic <= 0))) h.hp = Math.min(ZSET.horseHp, h.hp + (inPenSafe(h.pos.x, h.pos.z) ? 12 : 2) * dt); }
     if (host) { // waves: a steady trickle that thickens; capped (phones lower)
-      if ((Z.waveT += dt) > ZSET.waveSecs) { Z.waveT = 0; Z.wave++; if (Z.wave % 3 === 0 && !Z.chaos && !Z.list.some(o => o.alive && o.kind === 'boss')) { spawn('boss'); c.msg && c.msg(`Wave ${Z.wave} — THE HULKING DEAD is coming. Aim for the head!`, 4); sfx.tone && sfx.ctx && [110, 82, 65].forEach((f, i) => setTimeout(() => sfx.tone('sawtooth', f, f * .8, .5, .25), i * 260)); } else c.msg && c.msg(`Wave ${Z.wave} — more of the dead are coming down from the mountains`, 3); }
+      if ((Z.waveT += dt) > ZSET.waveSecs) { Z.waveT = 0; Z.wave++; if (Z.wave % 3 === 0 && !Z.chaos && !Z.list.some(o => o.alive && o.kind === 'boss')) { const bo = spawn('boss'); if (Z.wave % 6 === 0 && bo) { bo.preacher = true; bo.wantedName = null; preacherLook(bo); } c.msg && c.msg(bo && bo.preacher ? `Wave ${Z.wave} — THE PREACHER rises. He calls the crawlers — kill him fast!` : `Wave ${Z.wave} — THE HULKING DEAD is coming. Aim for the head!`, 4); sfx.tone && sfx.ctx && [110, 82, 65].forEach((f, i) => setTimeout(() => sfx.tone('sawtooth', f, f * .8, .5, .25), i * 260)); } else c.msg && c.msg(`Wave ${Z.wave} — more of the dead are coming down from the mountains`, 3); }
       let live = 0; for (const o of Z.list) if (o.alive && o.kind !== 'outlaw') live++; Z.live = live; if (Z.wasRole === 'client') Z.spawnT = Math.min(Z.spawnT, 1); // just became the host: keep the horde coming
       Z.spawnT -= dt; if (Z.spawnT <= 0 && live < Z.cap) { Z.spawnT = Z.chaos ? (live < Z.cap * .5 ? .05 : .18) : live < Z.cap * .5 ? .4 : Math.min(1.2, Math.max(.75, (7 - Z.wave * .7) / 3) * (rnd() * .5 + .75)); spawn(pickKind()); } }
     Z.wasRole = Z.role();
     { let bo = null, bd = 160; for (const o of Z.list) if ((o.kind === 'boss' || o.boss) && o.alive) { const d = Math.hypot(o.pos.x - P.pos.x, o.pos.z - P.pos.z); if (d < bd) { bd = d; bo = o; } } // v43 boss health bar
       if (!Z.bossEl && typeof document !== 'undefined') { const e = Z.bossEl = document.createElement('div'); e.id = 'hrBoss'; e.innerHTML = '<b>☠ THE HULKING DEAD</b><div><i></i></div>'; document.body.appendChild(e); }
-      if (Z.bossEl) { const on = !!bo; if (bo && Z.bossT !== (bo.wantedName || bo.kind)) { Z.bossT = bo.wantedName || bo.kind; Z.bossEl.firstChild.textContent = bo.wantedName ? '📜 WANTED: ' + bo.wantedName.toUpperCase() : bo.boss ? '☠ EL DIABLO — OUTLAW BOSS' : '☠ THE HULKING DEAD'; } if (on !== Z.bossOn) { Z.bossOn = on; Z.bossEl.classList.toggle('on', on); } if (bo) { const f = Math.max(0, Math.min(1, bo.hp / bo.K.hp)); if (Math.abs(f - (Z.bossF ?? -1)) > .004) { Z.bossF = f; Z.bossEl.lastChild.firstChild.style.width = (f * 100).toFixed(1) + '%'; } } } }
+      if (Z.bossEl) { const on = !!bo; if (bo && Z.bossT !== (bo.wantedName || (bo.preacher ? 'preacher' : bo.kind))) { Z.bossT = bo.wantedName || (bo.preacher ? 'preacher' : bo.kind); Z.bossEl.firstChild.textContent = bo.wantedName ? '📜 WANTED: ' + bo.wantedName.toUpperCase() : bo.boss ? '☠ EL DIABLO — OUTLAW BOSS' : bo.preacher ? '📖 THE PREACHER' : '☠ THE HULKING DEAD'; } if (on !== Z.bossOn) { Z.bossOn = on; Z.bossEl.classList.toggle('on', on); } if (bo) { const f = Math.max(0, Math.min(1, bo.hp / bo.K.hp)); if (Math.abs(f - (Z.bossF ?? -1)) > .004) { Z.bossF = f; Z.bossEl.lastChild.firstChild.style.width = (f * 100).toFixed(1) + '%'; } } } }
     const cam = c.camera.position; c.camera.updateMatrixWorld(); PSM.multiplyMatrices(c.camera.projectionMatrix, c.camera.matrixWorldInverse); FR.setFromProjectionMatrix(PSM);
     const range = Z.chaos ? (mobile ? 140 : 220) : (mobile ? 220 : 320), shadowD = Z.chaos ? 28 : 50, poseNear = Z.chaos ? 50 : 90, eyeD = Z.chaos ? 110 : 1e9; Z.groanTok = Math.min(4, Z.groanTok + dt * 2.5); let drawn = 0;
     Z.frame = (Z.frame || 0) + 1; for (let li = Z.list.length - 1; li >= 0; li--) { const o = Z.list[li]; if (!o) continue; o.anim += dt; o.flinch = Math.max(0, o.flinch - dt * 2.5); if (o.B.flame && o.B.torch.visible) { const f = o.B.flame; f.scale.set(1 + Math.sin(o.anim * 23) * .15, 1 + Math.sin(o.anim * 17) * .25, 1); }

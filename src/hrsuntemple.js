@@ -10,7 +10,7 @@
  * boxes: copy event data if retaining it. Events are synchronous and reused.
  */
 import * as THREE from 'three';
-import { buildPyramid } from './hrpyramid.js?v=159';
+import { buildPyramid } from './hrpyramid.js?v=160';
 const TAU = Math.PI * 2, UP = new THREE.Vector3(0, 1, 0);
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const rampY = z => Math.max(-9, z * .14);
@@ -314,7 +314,7 @@ export function createSunPyramidWeapon(){
 }
 
 /* Usage: your page resolves 'three' via its existing import map.
-import {createSunTemple,createSunPyramidWeapon} from './suntemple.js?v=159';
+import {createSunTemple,createSunPyramidWeapon} from './suntemple.js?v=160';
 const temple=createSunTemple({position:[0,0,0],quality:'high'});scene.add(temple.group);
 const off=temple.onEvent(e=>{ // synchronous, reused event: copy fields to retain
   if(e.type==='pickup') grantPickup(e.playerId,e.id,e.value); // host authority!

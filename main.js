@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=230';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=230';
-import './src/hraudio.js?v=230';
-import './src/stylize.js?v=230'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=230';
-import { FX, SFX } from './src/fx.js?v=230';
-import { initTouch } from './src/touch.js?v=230';
-import { createHorseRider } from './src/horse.js?v=230';
-import { createHorseNet } from './src/horsenet.js?v=230';
+import './src/assetshim.js?v=231';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=231';
+import './src/hraudio.js?v=231';
+import './src/stylize.js?v=231'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=231';
+import { FX, SFX } from './src/fx.js?v=231';
+import { initTouch } from './src/touch.js?v=231';
+import { createHorseRider } from './src/horse.js?v=231';
+import { createHorseNet } from './src/horsenet.js?v=231';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=230';
+import { PF, initPerf } from './src/perf.js?v=231';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -123,6 +123,7 @@ function setupSettingsX() { const st = (k, v) => { try { localStorage.setItem(k,
   { const pl = $('perfList'); if (pl) for (const [k, label] of PERF_ITEMS) { const b = document.createElement('button'); b.className = 'tog'; b.setAttribute('aria-pressed', PERF[k]); b.textContent = label + ': ' + (PERF[k] ? 'ON' : 'OFF'); b.onclick = () => { setPerf(k, !PERF[k]); location.reload(); }; pl.appendChild(b); } } // v42u
   { const gb = $('grassBtn'); if (gb && !$('ifpBtn')) { const b = document.createElement('button'); b.id = 'ifpBtn'; b.className = gb.className; const on = () => { try { return localStorage.getItem('hr_indoorfp') === '1'; } catch (_) { return false; } }; const lab = () => { b.textContent = '🏠 First person indoors: ' + (on() ? 'ON' : 'OFF'); window.__indoorFP = on(); }; lab(); b.onclick = () => { try { localStorage.setItem('hr_indoorfp', on() ? '0' : '1'); } catch (_) {} lab(); }; gb.insertAdjacentElement('afterend', b); } } /* v205 */
   { const gb = $('grassBtn'); if (gb && !$('fpsBtn')) { const b = document.createElement('button'); b.id = 'fpsBtn'; b.className = gb.className; const on = () => { try { return localStorage.getItem('hr_fps') === '1'; } catch (_) { return false; } }; const lab = () => { b.textContent = '📊 Show FPS: ' + (on() ? 'ON' : 'OFF'); window.__fpsOn = on(); }; lab(); b.onclick = () => { try { localStorage.setItem('hr_fps', on() ? '0' : '1'); } catch (_) {} lab(); }; gb.insertAdjacentElement('afterend', b); } } /* v202 */
+  { const fb = $('fpsBtn'); if (fb && !$('dynBtn')) { const b = document.createElement('button'); b.id = 'dynBtn'; b.className = fb.className; const on = () => { try { return localStorage.getItem('hr_dynres') !== '0'; } catch (_) { return true; } }; const lab = () => { b.textContent = '🎚️ Auto resolution: ' + (on() ? 'ON' : 'OFF'); }; lab(); b.onclick = () => { try { localStorage.setItem('hr_dynres', on() ? '0' : '1'); } catch (_) {} lab(); const x = horse.state.extra; if (x && x.dynresSet) x.dynresSet(on()); }; fb.insertAdjacentElement('afterend', b); } } /* v231 */
   { const gb = $('grassBtn'); if (gb && !$('vibBtn') && 'vibrate' in navigator) { const b = document.createElement('button'); b.id = 'vibBtn'; b.className = gb.className; const on = () => { try { return localStorage.getItem('hr_vib') !== '0'; } catch (_) { return true; } }; const lab = () => { b.textContent = '📳 Vibration: ' + (on() ? 'ON' : 'OFF'); }; lab(); b.onclick = () => { try { localStorage.setItem('hr_vib', on() ? '0' : '1'); } catch (_) {} horse.state.noVibe = !on(); lab(); }; gb.insertAdjacentElement('afterend', b); } } /* v184 */
   { const gb = $('grassBtn'); if (gb && !$('bigBtn')) { const b = document.createElement('button'); b.id = 'bigBtn'; b.className = gb.className; const on = () => { try { return localStorage.getItem('hr_bigui') === '1'; } catch (_) { return false; } }; const lab = () => { b.textContent = '🔠 Large text: ' + (on() ? 'ON' : 'OFF'); document.body.classList.toggle('bigui', on()); }; lab(); b.onclick = () => { try { localStorage.setItem('hr_bigui', on() ? '0' : '1'); } catch (_) {} lab(); }; gb.insertAdjacentElement('afterend', b); } } /* v183 */
   { const gb = $('grassBtn'); if (gb && !$('rmBtn')) { const b = document.createElement('button'); b.id = 'rmBtn'; b.className = gb.className; const on = () => { try { return localStorage.getItem('hr_calm') === '1'; } catch (_) { return false; } }; const lab = () => { b.textContent = '🧘 Reduce motion: ' + (on() ? 'ON' : 'OFF'); b.setAttribute('aria-pressed', on()); }; lab(); b.onclick = () => { try { localStorage.setItem('hr_calm', on() ? '0' : '1'); } catch (_) {} window.__hrCalm = !on() ? false : true; window.__hrCalm = on(); lab(); }; gb.insertAdjacentElement('afterend', b); } } /* v174 */

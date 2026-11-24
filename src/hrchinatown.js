@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=230';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=230';
-import { mergeStatic } from './hrmerge.js?v=230';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=231';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=231';
+import { mergeStatic } from './hrmerge.js?v=231';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -53,7 +53,8 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const gateM = new THREE.MeshStandardMaterial({ map: gateT, roughness: .5, emissive: 0xffffff, emissiveMap: gateT, emissiveIntensity: .08 });
 
   // ---------- builders ----------
-  const GEO = new Map(); const push = (mat, g) => (GEO.get(mat) || GEO.set(mat, []).get(mat)).push(g);
+  const GEO = new Map(), GEOI = new Map(); let INQ = null; /* v231: interiors go into per-block groups that are culled when you're not near the block */
+  const push = (mat, g) => { const G = INQ ? (GEOI.get(INQ) || GEOI.set(INQ, new Map()).get(INQ)) : GEO; (G.get(mat) || G.set(mat, []).get(mat)).push(g); };
   const mkS = (cx, cz, rot, y0, name) => { const s = { cx, cz, rot, y0, c: Math.cos(rot), s: Math.sin(rot), floors: [], R: 0, geo: new Map(), kind: 'chinatown', name }; T.structs.push(s); return s; };
   const toW = (s, x, z) => [s.cx + x * s.c + z * s.s, s.cz - x * s.s + z * s.c];
   const floor = (s, x0, x1, z0, z1, ya, yb = ya, axis = 'x') => { s.floors.push({ x0, x1, z0, z1, ya, yb, axis }); s.R = Math.max(s.R, Math.hypot(Math.max(Math.abs(x0), Math.abs(x1)), Math.max(Math.abs(z0), Math.abs(z1))) + 2); };
@@ -103,7 +104,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const inFoot = (b, x, z) => { const [lx, lz] = T.toL(b, x, z); return lx > .2 && lx < W - .2 && lz > .2 && lz < DP - .2; };
   const OPEN = { x0: [-2.4, 1.2], xW: [W + 2.4, 1.2], zD: [W / 2, DP + 2.6] };
   for (const b of built) { b.open = {}; for (const k in OPEN) { const [wx, wz] = toW(b, OPEN[k][0], OPEN[k][1]); const nb = built.find(o => o !== b && inFoot(o, wx, wz)); if (nb) b.open[k] = nb; } }
-  built.forEach(s => house(s, s.shop, s.idx, true));
+  built.forEach(s => { const [bx, bz] = toW(s, W / 2, DP / 2); s.q = (bx > CX ? 'E' : 'W') + (bz > CZ ? 'S' : 'N'); s.qc = [CX + Math.sign(bx - CX) * 17.5, CZ + Math.sign(bz - CZ) * 17.5]; house(s, s.shop, s.idx, true); });
 
   function house(s, sh, idx, ave) { const [cn, en, kind, col] = sh, fm = idx % 3 === 0 ? M.brick : fmat(col), tall = kind === 'hall' || kind === 'theatre' || kind === 'temple';
     const mid = W / 2, dw = kind === 'theatre' ? 1.3 : .85, top = tall ? RF + 1.6 : RF;
@@ -154,12 +155,12 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     for (const lx of [1.5, W - 1.5]) { box(s, M.black, lx, RF - .9, -bd + .25, .03, .4, .03); sph(s, M.lamp, lx, RF - 1.35, -bd + .25, .28, 1.3); box(s, M.gold, lx, RF - 1.02, -bd + .25, .2, .06, .2); box(s, M.gold, lx, RF - 1.7, -bd + .25, .16, .06, .16); }
     // ---- stairs ----
     const sx0 = W - 1.35, sx1 = W - .2, zs0 = DP - 7.2, zs1 = DP - 1.5; // ground -> upper (right side)
-    floor(s, sx0, sx1, zs0, zs1, F0, F1, 'z'); steps(s, sx0, sx1, zs0, zs1, F0, F1);
+    floor(s, sx0, sx1, zs0, zs1, F0, F1, 'z'); INQ = s.q; steps(s, sx0, sx1, zs0, zs1, F0, F1); INQ = null;
     floor(s, .2, sx0, 0, DP, F1); floor(s, sx0, W, zs1, DP, F1); floor(s, sx0, W, 0, zs0, F1);
-    slab(s, F1, [[0, sx0, 0, DP], [sx0, W, zs1, DP], [sx0, W, 0, zs0]]);
+    INQ = s.q; slab(s, F1, [[0, sx0, 0, DP], [sx0, W, zs1, DP], [sx0, W, 0, zs0]]); INQ = null;
     wall(s, sx0, zs0, sx0, zs1, F0 + 1.1, F1 + 1.0); wall(s, sx0, zs0, W, zs0, F1, F1 + 1.0); rail(s, sx0, zs0, sx0, zs1, F1); rail(s, sx0, zs0, W - .2, zs0, F1);
     const tx0 = .2, tx1 = 1.35; // upper -> roof (left side)
-    floor(s, tx0, tx1, zs0, zs1, F1, RF, 'z'); steps(s, tx0, tx1, zs0, zs1, F1, RF);
+    floor(s, tx0, tx1, zs0, zs1, F1, RF, 'z'); INQ = s.q; steps(s, tx0, tx1, zs0, zs1, F1, RF); INQ = null;
     floor(s, tx1, W, 0, DP, RF); floor(s, 0, tx1, zs1, DP, RF); floor(s, 0, tx1, 0, zs0, RF);
     slab(s, RF, [[tx1, W, 0, DP], [0, tx1, zs1, DP], [0, tx1, 0, zs0]]);
     wall(s, tx1, zs0, tx1, zs1, F1 + 1.1, RF + 1.0); wall(s, 0, zs0, tx1, zs0, RF, RF + 1.0); rail(s, tx1, zs0, tx1, zs1, RF); rail(s, .2, zs0, tx1, zs0, RF);
@@ -172,10 +173,11 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     for (let k = 0; k < 4; k++) { const px = 1.6 + k * (W - 3.2) / 3; if (Math.abs(px - mid) < 1) continue; cyl(s, M.red, px, F1 + .17, -bd + .35, .17, .3, 8, .13); sph(s, k % 2 ? M.jade : M.green, px, F1 + .43, -bd + .35, .22, .8); sph(s, M.lamp, px + .08, F1 + .55, -bd + .3, .05); }
     for (const [k, x, ry] of [['x0', -.02, -Math.PI / 2], ['xW', W + .02, Math.PI / 2]]) { if (s.open[k]) continue; plane(s, signM, x, F0 + 3.6, DP * .45, 1.4, 4.4, ry, u0, v0, u1, v1); box(s, M.gold, x, F0 + 5.85, DP * .45, .04, .08, 1.5); box(s, M.gold, x, F0 + 1.35, DP * .45, .04, .08, 1.5); }
     // ---- interior fittings by kind ----
-    interior(s, kind, mid);
+    INQ = s.q; interior(s, kind, mid);
     // upper floor: a room with a bed, table, and a window seat
     box(s, M.wood, 3.0, F1 + .3, DP - 1.4, 2.0, .45, 1.0); box(s, M.cream, 3.0, F1 + .55, DP - 1.4, 1.9, .1, .95); box(s, M.wood, mid, F1 + .4, DP / 2, 1.2, .8, .8); box(s, M.wood, mid - .9, F1 + .25, DP / 2, .4, .5, .4); box(s, M.wood, mid + .9, F1 + .25, DP / 2, .4, .5, .4);
     spot(s, 3.0, F1, DP - 2.4, 'ct_bed', '🛏️ Rest a while upstairs (heal)', 1.4);     sph(s, M.paper, mid, RF - .5, DP / 2, .28, 1.2); box(s, M.wood, 5.6, F1 + 1.0, DP - .4, 2.2, 2.0, .5); // paper lantern + cabinet
+    INQ = null;
     // roof dressing: a water tank or a pavilion, potted plants
     if (idx % 3 === 0) { cyl(s, M.wood, W - 2.4, RF + 1.0, DP - 2.4, 1.0, 1.6, 14); for (const k of [.4, 1.6]) cyl(s, M.black, W - 2.4, RF + .2 + k, DP - 2.4, 1.02, .06, 14); wall(s, W - 3.4, DP - 3.4, W - 1.4, DP - 3.4, RF, RF + 1.8); wall(s, W - 3.4, DP - 3.4, W - 3.4, DP - 1.4, RF, RF + 1.8); }
     else if (idx % 3 === 1) { const px = mid + 1.5, pz = DP / 2; for (const [dx, dz] of [[-1.4, -1.4], [1.4, -1.4], [-1.4, 1.4], [1.4, 1.4]]) cyl(s, M.red, px + dx, RF + 1.3, pz + dz, .09, 2.6, 8); cone(s, M.tile, px, RF + 3.25, pz, 2.6, 1.4); sph(s, M.gold, px, RF + 4.05, pz, .14); for (const [dx, dz] of [[-1.85, -1.85], [1.85, -1.85], [-1.85, 1.85], [1.85, 1.85]]) { const t = new THREE.ConeGeometry(.1, .6, 5); t.rotateX(dz < 0 ? -.9 : .9); t.translate(px + dx, RF + 2.65, pz + dz); push(M.tile, xf(s, t)); }
@@ -229,6 +231,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
 
   // ---------- merge ----------
   const root = new THREE.Group(); root.name = 'chinatown'; for (const [m, gs] of GEO) { const me = new THREE.Mesh(mergeGeometries(gs), m); me.castShadow = !mobile && m !== M.glass && m !== M.lamp; me.receiveShadow = true; me.matrixAutoUpdate = false; root.add(me); gs.forEach(g => g.dispose()); } GEO.clear(); scene.add(root);
+  for (const [q, G] of GEOI) { const g = new THREE.Group(); g.name = 'chinatown interiors ' + q; for (const [m, gs] of G) { const me = new THREE.Mesh(mergeGeometries(gs), m); me.receiveShadow = true; me.castShadow = false; me.matrixAutoUpdate = false; g.add(me); gs.forEach(x => x.dispose()); } scene.add(g); const b = built.find(o => o.q === q); if (H.cullAdd && b) H.cullAdd(g, 38, { x: b.qc[0], z: b.qc[1] }); } GEOI.clear();
   if (H.cullAdd) { H.cullAdd(root, 320, { x: CX, z: CZ }); H.cullAdd(LI, 260, { x: CX, z: CZ }); }
   (H.safeRects || (H.safeRects = [])).push({ x: CX, z: CZ, hw: E + 2, hd: E + 10, name: 'CHINATOWN', label: '🛡 NO ZOMBIES · CHINATOWN' });
 

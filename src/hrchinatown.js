@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=235';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=235';
-import { mergeStatic } from './hrmerge.js?v=235';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=236';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=236';
+import { mergeStatic } from './hrmerge.js?v=236';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -38,7 +38,8 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     red: std({ color: 0xa3201a, roughness: .5 }), gold: std({ color: 0xd4a640, roughness: .35, metalness: .6 }), dark: std({ color: 0x2a211b }), cream: std({ color: 0xe6dcc4 }), white: std({ color: 0xd8d2c4 }),
     glass: std({ color: 0x2a2620, emissive: 0xffc070, emissiveIntensity: .3, roughness: .2 }), lamp: new THREE.MeshStandardMaterial({ color: 0xc8281e, emissive: 0xff3a1a, emissiveIntensity: .6, roughness: .6 }),
     paper: std({ color: 0xf0e2c0, emissive: 0xffd890, emissiveIntensity: .2 }), green: std({ color: 0x2f5d50 }), black: std({ color: 0x15120f, roughness: .6 }), jade: std({ color: 0x5c9a7c, roughness: .4 }) };
-  const facade = new Map(); const fmat = col => facade.get(col) || facade.set(col, std({ color: col, roughness: .85 })).get(col);
+  /* v236: every painted colour shares ONE vertex-coloured material (was one material per colour - 16 fewer draw calls) */
+  M.facade = std({ vertexColors: true, roughness: .85 }); const facade = new Map(); const fmat = col => facade.get(col) || facade.set(col, { isFacade: true, col: new THREE.Color(col) }).get(col);
   // signboards: one atlas (16 vertical boards + plaques)
   const ATW = 1024, ATH = 1024, atlas = tex(ATW, ATH, (x) => { x.fillStyle = '#000'; x.fillRect(0, 0, ATW, ATH);
     SHOPS.forEach(([cn, en], i) => { const cx = (i % 8) * 128, cy = Math.floor(i / 8) * 400; // vertical board 128 x 400
@@ -54,7 +55,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
 
   // ---------- builders ----------
   const GEO = new Map(), GEOI = new Map(); let INQ = null; /* v231: interiors go into per-block groups that are culled when you're not near the block */
-  const push = (mat, g) => { const G = INQ ? (GEOI.get(INQ) || GEOI.set(INQ, new Map()).get(INQ)) : GEO; (G.get(mat) || G.set(mat, []).get(mat)).push(g); };
+  const push = (mat, g) => { if (mat.isFacade) { const n = g.attributes.position.count, c = new Float32Array(n * 3); for (let i = 0; i < n; i++) { c[i * 3] = mat.col.r; c[i * 3 + 1] = mat.col.g; c[i * 3 + 2] = mat.col.b; } g.setAttribute('color', new THREE.BufferAttribute(c, 3)); mat = M.facade; } const G = INQ ? (GEOI.get(INQ) || GEOI.set(INQ, new Map()).get(INQ)) : GEO; (G.get(mat) || G.set(mat, []).get(mat)).push(g); };
   const mkS = (cx, cz, rot, y0, name) => { const s = { cx, cz, rot, y0, c: Math.cos(rot), s: Math.sin(rot), floors: [], R: 0, geo: new Map(), kind: 'chinatown', name }; T.structs.push(s); return s; };
   const toW = (s, x, z) => [s.cx + x * s.c + z * s.s, s.cz - x * s.s + z * s.c];
   const floor = (s, x0, x1, z0, z1, ya, yb = ya, axis = 'x') => { s.floors.push({ x0, x1, z0, z1, ya, yb, axis }); s.R = Math.max(s.R, Math.hypot(Math.max(Math.abs(x0), Math.abs(x1)), Math.max(Math.abs(z0), Math.abs(z1))) + 2); };

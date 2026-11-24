@@ -53,7 +53,7 @@ export function createStats({ H, msg }) {
   const toggle = () => (el && el.classList.contains('on') ? close() : open());
   addEventListener('keydown', e => { if (e.target && /input|textarea/i.test(e.target.tagName)) return; if (e.code === 'KeyJ' && !e.repeat && H.on) toggle(); else if (e.code === 'Escape' && H.statsOpen) close(); });
   // v200 WHAT'S NEW: shown once after a big update (and from the journal)
-  const NEWS = ['🏮 <b>CHINATOWN</b> — follow the compass pin south of the pen: four blocks, 16 shops you can walk into, stairs to every roof, rooftop bridges + a timed rooftop run',
+  const NEWS = ['⛏ <b>SILVER CREEK DIGGINGS</b> — a mining camp west of the pen: climb the headframe, pick (or blast) ore, sell it at the assay office, strike gold', '🏠 Rent a home above Chinatown\'s print shop · 🌿 the herbalist\'s daily ginseng errand · 🀄 tile matching · 🦁 lion dance · 🎭 opera performers', '🏮 <b>CHINATOWN</b> — follow the compass pin south of the pen: four blocks, 16 shops you can walk into, stairs to every roof, rooftop bridges + a timed rooftop run',
     '🐉 The dragon dance parades the avenue (strike the association hall gong to call it) · night market stalls · lantern riddles · koi gardens · fireworks shop',
     '🐎 Stage line: signposts at the saloon and Chinatown\'s north gate carry you across for 40 pts',
     '⚰ THE UNDERTAKER (every 9th wave) and 🧨 dynamite miners (wave 3+)',
@@ -62,6 +62,6 @@ export function createStats({ H, msg }) {
     '📷 Photo mode filters (F) · 🎚️ Auto resolution keeps it smooth · phones: drag anywhere to look']
   function news() { ui0(); el.innerHTML = `<button class="sx" data-x="1">✕</button><h3>🤠 WHAT'S NEW ON THE FRONTIER</h3>${NEWS.map(t => `<div class="r" style="justify-content:flex-start;padding:5px 0">${t}</div>`).join('')}<div style="margin-top:10px;opacity:.7;font-size:12px">J opens your journal any time.</div>`; el.classList.add('on'); H.uiOpen = true; H.statsOpen = true; if (document.pointerLockElement) document.exitPointerLock(); }
   function ui0() { if (!el) { open(); close(); } }
-  setTimeout(() => { try { if (localStorage.getItem('hr_news') !== '241' && H.on && !/[?&]dev=/.test(location.search) && !H.mounted) { localStorage.setItem('hr_news', '241'); news(); } } catch (_) {} }, 15000);
+  setTimeout(() => { try { if (localStorage.getItem('hr_news') !== '305' && H.on && !/[?&]dev=/.test(location.search) && !H.mounted) { localStorage.setItem('hr_news', '305'); news(); } } catch (_) {} }, 15000);
   return { open, close, toggle, tick, daily, news };
 }

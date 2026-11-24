@@ -20,11 +20,11 @@ import {
 	WebGLRenderTarget,
 	ZeroFactor
 } from 'three';
-import { Pass, FullScreenQuad } from './Pass.js?v=219';
-import { generateMagicSquareNoise, GTAOShader, GTAODepthShader, GTAOBlendShader } from '../shaders/GTAOShader.js?v=219';
-import { generatePdSamplePointInitializer, PoissonDenoiseShader } from '../shaders/PoissonDenoiseShader.js?v=219';
-import { CopyShader } from '../shaders/CopyShader.js?v=219';
-import { SimplexNoise } from '../math/SimplexNoise.js?v=219';
+import { Pass, FullScreenQuad } from './Pass.js?v=220';
+import { generateMagicSquareNoise, GTAOShader, GTAODepthShader, GTAOBlendShader } from '../shaders/GTAOShader.js?v=220';
+import { generatePdSamplePointInitializer, PoissonDenoiseShader } from '../shaders/PoissonDenoiseShader.js?v=220';
+import { CopyShader } from '../shaders/CopyShader.js?v=220';
+import { SimplexNoise } from '../math/SimplexNoise.js?v=220';
 
 class GTAOPass extends Pass {
 

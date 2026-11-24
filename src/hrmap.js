@@ -7,7 +7,7 @@ export function createMap({ H, P, hAt, PEN }) { let el = null, cv = null, base =
   const saveDisc = () => { try { localStorage.setItem('hr_disc', JSON.stringify([...disc])); } catch (_) {} };
   function places() { const o = [], pl = H.places || {}; const t = H.town2 && H.town2.town; if (t) o.push({ id: 'town', name: 'Town', x: t.cx, z: t.cz, ic: '🏘️' });
     o.push({ id: 'pen', name: 'Horse pen', x: PEN.x, z: PEN.z, ic: '🐎' });
-    if (pl.temple) o.push({ id: 'temple', name: 'Hollow Sun', x: pl.temple.x, z: pl.temple.z, ic: '☀️' }); if (pl.cave) o.push({ id: 'cave', name: 'Bandit Cave', x: pl.cave.x, z: pl.cave.z, ic: '🕳️' });
+    if (pl.temple) o.push({ id: 'temple', name: 'Hollow Sun', x: pl.temple.x, z: pl.temple.z, ic: '☀️' }); if (pl.cave) o.push({ id: 'cave', name: 'Bandit Cave', x: pl.cave.x, z: pl.cave.z, ic: '🕳️' }); if (pl.chinatown) o.push({ id: 'chinatown', name: 'Chinatown', x: pl.chinatown.x, z: pl.chinatown.z, ic: '🏮' });
     if (H.fallsPool) o.push({ id: 'falls', name: 'Bandit Falls', x: H.fallsPool.x ?? H.fallsPool[0], z: H.fallsPool.z ?? H.fallsPool[1], ic: '💧' });
     (pl.towers || []).forEach((q, i) => o.push({ id: 'tower' + i, name: i ? 'Gun shop tower' : 'Lookout tower', x: q.x ?? q[0], z: q.z ?? q[1], ic: '🗼' }));
     if (H.ranch && H.ranch.pos) o.push({ id: 'ranch', name: 'Your ranch', x: H.ranch.pos.x ?? H.ranch.pos[0], z: H.ranch.pos.z ?? H.ranch.pos[1], ic: '🏠', always: true });

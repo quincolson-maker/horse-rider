@@ -9,7 +9,7 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ } from './hrbeachwave.js?v=331';
+import { BEACH, shoreX, waveAt, peelZ } from './hrbeachwave.js?v=332';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});
@@ -118,16 +118,16 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
   function wipeout(why) { const s = S(); s.surfWipes = (s.surfWipes || 0) + 1; R.ride && (score *= .35); bank(); R.mode = 'wipe'; R.wipe = 2.4; R.tube = false; msg(why + ' WIPEOUT', 2.2); if (sfx.nz && sfx.ctx) { sfx.nz('lowpass', 300, 1, .35, 1.2); sfx.nz('bandpass', 1200, .6, .2, .8); } }
   function wipe(dt, t) { R.wipe -= dt; R.x -= 3 * dt; R.z += (Math.random() - .5) * dt; if (R.wipe <= 0) { R.mode = 'paddle'; R.sp = 0; R.a = 0; R.dir = [1, 0]; msg('🏄 You surface and climb back on your board', 2); } }
   // ---------- THE CURL: a translucent lip that pitches over the face at each wave's peel point (CPU-built, ~300 verts) ----------
-  const LZ = 26, LA = 12, lipPos = new Float32Array(LZ * LA * 3), lipFoam = new Float32Array(LZ * LA), lipIdx = []; for (let j = 0; j < LZ - 1; j++) for (let i = 0; i < LA - 1; i++) { const a = j * LA + i, b = a + 1, c2 = a + LA, d = c2 + 1; lipIdx.push(a, c2, b, b, c2, d); }
+  const LZ = 34, LA = 16, lipPos = new Float32Array(LZ * LA * 3), lipFoam = new Float32Array(LZ * LA), lipIdx = []; for (let j = 0; j < LZ - 1; j++) for (let i = 0; i < LA - 1; i++) { const a = j * LA + i, b = a + 1, c2 = a + LA, d = c2 + 1; lipIdx.push(a, c2, b, b, c2, d); }
   const lipG = new THREE.BufferGeometry(); lipG.setAttribute('position', new THREE.BufferAttribute(lipPos, 3)); lipG.setAttribute('foam', new THREE.BufferAttribute(lipFoam, 1)); lipG.setIndex(lipIdx);
   const lipM = new THREE.ShaderMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false, uniforms: { uNight: { value: 0 } }, vertexShader: 'attribute float foam; varying float vF; varying vec3 vW; void main(){ vF = foam; vW = position; gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0); }',
-    fragmentShader: 'uniform float uNight; varying float vF; varying vec3 vW; void main(){ vec3 c = mix(vec3(.2, .82, .76), vec3(.97, .99, 1.0), clamp(vF, 0.0, 1.0)); float n = fract(sin(dot(floor(vW.xz * 3.0), vec2(12.9, 78.2))) * 43758.5); c = mix(c, vec3(1.0), step(.82, n) * vF); c *= mix(1.0, .3, uNight); gl_FragColor = vec4(c, mix(.62, .95, vF)); }' });
+    fragmentShader: 'uniform float uNight; varying float vF; varying vec3 vW; void main(){ vec3 c = mix(vec3(.2, .82, .76), vec3(.97, .99, 1.0), clamp(vF, 0.0, 1.0)); float n = sin(vW.z * 1.7 + vW.y * 3.1) * .5 + .5; c = mix(c, vec3(1.0), smoothstep(.55, 1.0, vF) * (.6 + .4 * n)); c *= mix(1.0, .3, uNight); gl_FragColor = vec4(c, mix(.62, .95, vF)); }' });
   const lip = new THREE.Mesh(lipG, lipM); lip.frustumCulled = false; lip.visible = false; lip.renderOrder = 4; scene.add(lip);
   function curl(t) { const me = P.pos; if (me.x < 1060 || Math.abs(me.z - ZC) > 460) { lip.visible = false; return; }
     // which wave: the one you ride, else the nearest one that is peeling within view
     let k = R.ride ? R.k : null; if (k == null) { const k0 = Math.floor(t / TP); let bd = 1e9; for (let j = 0; j < 6; j++) { const kk = k0 - j, pz = peelZ(kk, t); if (pz < -240 || pz > 560) continue; const d = Math.abs(pz - me.z); if (d < bd) { bd = d; k = kk; } } }
     if (k == null) { lip.visible = false; return; } const pz = peelZ(k, t); if (pz < -240 || pz > 560) { lip.visible = false; return; }
-    const amp = .75 + .6 * ((k * .618034) - Math.floor(k * .618034)) + (k % 5 === 0 ? .55 : 0), A = amp * 2.5; lip.visible = true; lipM.uniforms.uNight.value = H.night || 0;
+    const amp = .75 + .6 * ((k * .618034) - Math.floor(k * .618034)) + (k % 5 === 0 ? .55 : 0), A = amp * 3.1; lip.visible = true; lipM.uniforms.uNight.value = H.night || 0;
     for (let j = 0; j < LZ; j++) { const z = pz - 8 + j * (24 / (LZ - 1)), rel = z - pz, grow = clamp((rel + 8) / 8, 0, 1), fall = clamp(1 - (rel - 2) / 14, 0, 1), cx = crestX(k, z, t);
       const r = A * .55 * grow, cy = A * (.95 - .45 * grow), cu = -r * .9; for (let i = 0; i < LA; i++) { const th = Math.PI / 2 - i / (LA - 1) * (Math.PI * (.35 + .7 * grow)), u = cu + Math.cos(th) * r * (i ? 1 : 0) + (i ? 0 : 0), h = cy + Math.sin(th) * r * fall * (1 - .35 * (1 - grow)) * 1, o = (j * LA + i) * 3;
         lipPos[o] = cx + (i ? u : -.2); lipPos[o + 1] = SEA + Math.max(.1, i ? h * fall + (1 - fall) * A * .2 : A * (.98 - .4 * (1 - fall))); lipPos[o + 2] = z; lipFoam[j * LA + i] = clamp((i / (LA - 1)) * 1.3 * grow + (1 - fall) * .9 + (rel > 0 ? .25 : 0), 0, 1); } }
@@ -140,5 +140,6 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     const me = P.pos; if (board && !H.mounted && !H.trainRide && me.x > shoreX(me.z) + 13 && me.x < 1460 && Math.abs(me.z - ZC) < 430) enter();
     if (me.x > 1040 && Math.abs(me.z - ZC) < 500 && sfx.nz && sfx.ctx && (crashT -= dt) <= 0) { crashT = 1.6 + Math.random() * 2.5; const d = Math.max(20, Math.abs(me.x - XB)); sfx.nz('lowpass', 420 + Math.random() * 300, .7, Math.min(.12, 6 / d), 1.8 + Math.random()); } }
   const testPop = () => { const t = (Date.now() / 1000) % 3600; waveAt(R.x, R.z, t, wv); if (wv.wave && !wv.wave.broken && wv.wave.u > -2.5 && wv.wave.u < 1.5 && wv.wave.s > .45) { popUp(t, wv.wave); return true; } return false; };
-  return { update, get state() { return R; }, enter, leave, testPop, setAssist, get assist() { return assist; }, peel: () => R.ride ? peelZ(R.k, (Date.now() / 1000) % 3600) : null };
+  const peelInfo = zRef => { const t = (Date.now() / 1000) % 3600, k0 = Math.floor(t / TP); let best = null; for (let j = 0; j < 6; j++) { const k = k0 - j, pz = peelZ(k, t); if (pz < -200 || pz > 500) continue; if (!best || Math.abs(pz - zRef) < Math.abs(best.pz - zRef)) best = { k, pz, cx: crestX(k, pz, t) }; } return best; };
+  return { update, peelInfo, get state() { return R; }, enter, leave, testPop, setAssist, get assist() { return assist; }, peel: () => R.ride ? peelZ(R.k, (Date.now() / 1000) % 3600) : null };
 }

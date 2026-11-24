@@ -3,8 +3,8 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt } from './hrbeachwave.js?v=331';
-import { createSurf } from './hrsurf.js?v=331';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt } from './hrbeachwave.js?v=332';
+import { createSurf } from './hrsurf.js?v=332';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -19,7 +19,7 @@ export function createBeach(ctx) {
     for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const x = X0 + i * st, z = Z0 + j * st, k = j * nx + i, h = hs[k]; pos[k * 3] = x; pos[k * 3 + 1] = h + .14; pos[k * 3 + 2] = z;
       const hx = hs[j * nx + Math.min(nx - 1, i + 1)] - hs[j * nx + Math.max(0, i - 1)], hz = hs[Math.min(nz - 1, j + 1) * nx + i] - hs[Math.max(0, j - 1) * nx + i], slope = Math.hypot(hx, hz) / (2 * st);
       const d = shoreX(z) - x, n1 = Math.sin(x * .13 + z * .07) * .5 + Math.sin(x * .031 - z * .043) * .5; let r, g, b;
-      if (d < 38 && h < SEA + 4.5) { const wet = sstep(6, 0, d); r = .95 - wet * .25; g = .88 - wet * .25; b = .7 - wet * .2; if (d < -2) { r = .86; g = .8; b = .62; } }
+      if (d < 38 && h < SEA + 4.5) { const wet = sstep(6, 0, d); r = .86 - wet * .26; g = .77 - wet * .24; b = .58 - wet * .18; if (d < -2) { r = .86; g = .8; b = .62; } }
       else { r = .16 + n1 * .05; g = .4 + n1 * .08; b = .13 + n1 * .03; const edge = sstep(52, 38, d) * (h < SEA + 8 ? 1 : 0); r += (.85 - r) * edge * .6; g += (.8 - g) * edge * .6; b += (.6 - b) * edge * .6; }
       const rock = sstep(.75, 1.15, slope); r += (.62 + n1 * .05 - r) * rock; g += (.6 + n1 * .04 - g) * rock; b += (.53 - b) * rock;
       const a = sstep(X0, X0 + 40, x) * sstep(Z0, Z0 + 60, z) * sstep(Z1, Z1 - 60, z) * (1 - sstep(490, 560, Math.abs(z - ZC)) * sstep(900, 1000, x) * 0) ;
@@ -44,7 +44,8 @@ export function createBeach(ctx) {
       void main(){ vec2 q = vW.xz; vec3 n = normalize(vN + vec3(sin(q.x * 1.3 + uT * 2.1) * .04 + sin(q.y * 1.7 - uT * 1.6) * .03, 0.0, cos(q.y * 1.1 + uT * 1.8) * .04 + sin(q.x * .9 + q.y * .7 + uT) * .03));
         vec3 v = normalize(cameraPosition - vW); float fres = pow(1.0 - max(dot(n, v), 0.0), 4.0);
         vec3 shallow = vec3(.16, .78, .74), mid = vec3(.03, .5, .62), deep = vec3(.01, .2, .4); vec3 col = mix(shallow, mid, smoothstep(.3, 3.0, vDepth)); col = mix(col, deep, smoothstep(3.0, 16.0, vDepth));
-        float face = smoothstep(.1, .7, n.x) * smoothstep(.2, 2.0, vW.y - ${SEA.toFixed(1)}); col = mix(col, vec3(.25, .9, .78), face * .55); // light glowing through the wave face
+        float face = smoothstep(.15, .8, -n.x) * smoothstep(.3, 2.5, vW.y - ${SEA.toFixed(1)}); col = mix(col, vec3(.1, .62, .6), face * .5); col += vec3(.05, .28, .22) * face * smoothstep(1.5, 4.0, vW.y - ${SEA.toFixed(1)}); // the face darkens to deep green-blue with light glowing through its thin top
+        float dif = max(dot(n, normalize(uSun)), 0.0); col *= .62 + .5 * dif;
         vec3 sky = mix(vec3(.62, .8, .96), vec3(.06, .09, .16), uNight); col = mix(col, sky, fres * .55);
         float spec = pow(max(dot(reflect(-uSun, n), v), 0.0), 140.0) * (1.0 - uNight) * 1.6;
         float fm = vFoam * (.55 + .45 * vn(q * .7 + vec2(uT * .25, 0.0))) + smoothstep(.35, 0.0, vDepth) * (.5 + .5 * sin(q.y * .3 + uT * 1.5 + vn(q * .4) * 4.0)) * .6;
@@ -75,8 +76,8 @@ export function createBeach(ctx) {
   // ---------- karst islands: tall limestone towers with jungle caps standing out of the sea ----------
   const karst = (x, z, R, Hh) => { const prof = []; for (let k = 0; k <= 14; k++) { const t = k / 14, r = R * (1.05 - .25 * t + .18 * Math.sin(t * 9 + R) * (1 - t) + (t > .92 ? -(t - .92) * 6 : 0)); prof.push(new THREE.Vector2(Math.max(.5, r), -8 + t * (Hh + 8))); } prof.push(new THREE.Vector2(.01, Hh + R * .15));
     const g = new THREE.LatheGeometry(prof, mobile ? 16 : 26); const p = g.attributes.position, col = []; for (let i = 0; i < p.count; i++) { const px = p.getX(i), py = p.getY(i), pz = p.getZ(i), a = Math.atan2(pz, px), nn = Math.sin(a * 5 + py * .2) * .5 + Math.sin(a * 13 - py * .07) * .5, k = 1 + nn * .12; p.setX(i, px * k); p.setZ(i, pz * k);
-        const top = sstep(Hh * .82, Hh * .95, py), streak = Math.sin(a * 21 + py * .05) > .7 ? .82 : 1; const moss = (Math.sin(a * 7 + py * .11) + Math.sin(a * 3 - py * .23)) > .9 ? 1 : 0; col.push(...(top > .5 || moss ? [.16 + nn * .03, .38 + nn * .06, .13] : [.46 * streak + nn * .04, .45 * streak + nn * .04, .41 * streak])); }
-    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals(); const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95, flatShading: true })); m.position.set(x, SEA, z); m.castShadow = !mobile; m.name = 'karst'; root.add(m); };
+        const top = sstep(Hh * .82, Hh * .95, py), streak = Math.sin(a * 21 + py * .05) > .7 ? .82 : 1; const moss = sstep(.4, 1.2, Math.sin(a * 2.3 + py * .035) + Math.sin(a * 1.7 - py * .05) * .7) * (1 - top), gr = Math.max(top, moss * .85), st2 = .5 + nn * .04 - (streak < 1 ? .06 : 0); col.push(st2 + (.17 - st2) * gr, st2 - .01 + (.4 - st2) * gr, st2 - .06 + (.14 - st2 + .06) * gr); }
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals(); const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95 })); m.position.set(x, SEA, z); m.castShadow = !mobile; m.name = 'karst'; root.add(m); };
   for (const [x, z, R, Hh] of [[1420, -120, 32, 95], [1560, 60, 46, 140], [1500, 330, 28, 80], [1700, 470, 60, 170], [1880, 160, 70, 210], [1640, -260, 40, 120], [1350, 480, 18, 55], [2100, -40, 80, 240]]) karst(x, z, R, Hh);
 
   // ---------- safe zone, swimming, deep-water check ----------

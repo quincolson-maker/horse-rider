@@ -10,7 +10,7 @@ export const shoreX = z => BEACH.SHORE + 150 * sstep(300, 430, Math.abs(z - BEAC
 export const inCove = (x, z) => x > 880 && Math.abs(z - BEACH.ZC) < 640;
 // terrain: blend the eastern mountains down into a jungle-backed beach and a sloping seabed (to the horizon inside the cove's arc)
 export function beachPad(x, z, h) {
-  const wz = 1 - sstep(390, 640, Math.abs(z - BEACH.ZC)), wx = sstep(870, 1050, x), w = wx * wz; if (w <= 0) return h;
+  const open = Math.max(0, x - 1260) * 1.6, wz = 1 - sstep(390 + open, 640 + open, Math.abs(z - BEACH.ZC)), wx = sstep(870, 1050, x), w = wx * wz; if (w <= 0) return h; /* the sea opens out to the horizon offshore */
   const sh = shoreX(z), S = BEACH.SEA; let t;
   if (x >= sh) t = S - Math.min(26, (x - sh) * .06 + Math.max(0, x - sh - 300) * .03);
   else { const d = sh - x; const sand = Math.min(d, 34) * .075; const hill = d > 34 ? Math.pow((d - 34) / 120, 1.45) * 78 : 0; const bumps = d > 50 ? (Math.sin(x * .045 + z * .03) * 6 + Math.sin(z * .07 - x * .02) * 4) * sstep(50, 140, d) : 0; t = S + sand + hill + bumps; }
@@ -25,8 +25,8 @@ export function waveAt(x, z, t, o) {
   for (let j = 0; j < NW; j++) { const k = k0 - j, age = t - k * T, base = XS - C * age, amp = .75 + .6 * frac(k * .618034) + (k % 5 === 0 ? .55 : 0);
     const cx = base - (z - ZC) * K, u = x - cx; if (u < -45 || u > 70) continue;
     const s = Math.max(0, Math.min(1, (XSH - cx) / (XSH - XB)));
-    if (cx > XB) { const A = amp * (1 + 1.5 * s * s), w = u < 0 ? mix(9, 2.4, s * s) : mix(15, 9, s); eta += A * Math.exp(-(u * u) / (w * w)); if (s > .85 && u > -2.5 && u < 1.2) foam = Math.max(foam, (s - .85) * 5 * (1 - Math.abs(u + .6) / 2)); if (Math.abs(u) < nd) { nd = Math.abs(u); near = { k, cx, u, A, s, broken: false, amp }; } }
-    else { const d = XB - cx, A = amp * 2.5 * .4 * Math.max(.12, 1 - d / 55), w = u < 0 ? 2.2 : 10; eta += A * Math.exp(-(u * u) / (w * w)); foam = Math.max(foam, Math.exp(-((u - 3) * (u - 3)) / 40) * Math.min(1, A * 1.6) + (u > 0 && u < 25 ? .35 * Math.max(0, 1 - d / 70) : 0)); if (Math.abs(u) < nd) { nd = Math.abs(u); near = { k, cx, u, A, s: 1, broken: true, amp, d }; } } }
+    if (cx > XB) { const A = amp * (1 + 2.1 * s * s), w = u < 0 ? mix(9, 2.4, s * s) : mix(15, 9, s); eta += A * Math.exp(-(u * u) / (w * w)); if (s > .85 && u > -2.5 && u < 1.2) foam = Math.max(foam, (s - .85) * 5 * (1 - Math.abs(u + .6) / 2)); if (Math.abs(u) < nd) { nd = Math.abs(u); near = { k, cx, u, A, s, broken: false, amp }; } }
+    else { const d = XB - cx, A = amp * 3.1 * .4 * Math.max(.12, 1 - d / 55), w = u < 0 ? 2.2 : 10; eta += A * Math.exp(-(u * u) / (w * w)); foam = Math.max(foam, Math.exp(-((u - 3) * (u - 3)) / 40) * Math.min(1, A * 1.6) + (u > 0 && u < 25 ? .35 * Math.max(0, 1 - d / 70) : 0)); if (Math.abs(u) < nd) { nd = Math.abs(u); near = { k, cx, u, A, s: 1, broken: true, amp, d }; } } }
   const sh = shoreX(z), fade = sstep(sh, sh + 9, x); eta *= fade; foam *= sstep(sh - 1, sh + 3, x);
   eta += (.14 * Math.sin(x * .05 + t * .9) * Math.sin(z * .031 - t * .4) + .05 * Math.sin(x * .21 - t * 1.7 + z * .13)) * sstep(sh, sh + 20, x);
   if (o) { o.eta = eta; o.foam = Math.min(1, foam); o.wave = near; } return eta;
@@ -40,9 +40,9 @@ vec2 surfWave(vec2 p){ float eta = 0.0, foam = 0.0; float k0 = floor(uT / ${BEAC
   for (int j = 0; j < ${BEACH.NW}; j++) { float k = k0 - float(j); float age = uT - k * ${BEACH.T.toFixed(1)}; float base = ${BEACH.XS.toFixed(1)} - ${BEACH.C.toFixed(2)} * age;
     float amp = .75 + .6 * fr(k * .618034) + (mod(k, 5.0) < .5 ? .55 : 0.0); float cx = base - (p.y - ${BEACH.ZC.toFixed(1)}) * ${BEACH.K.toFixed(2)}; float u = p.x - cx;
     if (u < -45.0 || u > 70.0) continue; float s = clamp((${BEACH.XSH.toFixed(1)} - cx) / (${(BEACH.XSH - BEACH.XB).toFixed(1)}), 0.0, 1.0);
-    if (cx > ${BEACH.XB.toFixed(1)}) { float A = amp * (1.0 + 1.5 * s * s); float w = u < 0.0 ? mix(9.0, 2.4, s * s) : mix(15.0, 9.0, s); eta += A * exp(-(u * u) / (w * w));
+    if (cx > ${BEACH.XB.toFixed(1)}) { float A = amp * (1.0 + 2.1 * s * s); float w = u < 0.0 ? mix(9.0, 2.4, s * s) : mix(15.0, 9.0, s); eta += A * exp(-(u * u) / (w * w));
       if (s > .85 && u > -2.5 && u < 1.2) foam = max(foam, (s - .85) * 5.0 * (1.0 - abs(u + .6) / 2.0)); }
-    else { float d = ${BEACH.XB.toFixed(1)} - cx; float A = amp * 2.5 * .4 * max(.12, 1.0 - d / 55.0); float w = u < 0.0 ? 2.2 : 10.0; eta += A * exp(-(u * u) / (w * w));
+    else { float d = ${BEACH.XB.toFixed(1)} - cx; float A = amp * 3.1 * .4 * max(.12, 1.0 - d / 55.0); float w = u < 0.0 ? 2.2 : 10.0; eta += A * exp(-(u * u) / (w * w));
       foam = max(foam, exp(-((u - 3.0) * (u - 3.0)) / 40.0) * min(1.0, A * 1.6) + ((u > 0.0 && u < 25.0) ? .35 * max(0.0, 1.0 - d / 70.0) : 0.0)); } }
   float az = abs(p.y - ${BEACH.ZC.toFixed(1)}); float sh = ${BEACH.SHORE.toFixed(1)} + 150.0 * smoothstep(300.0, 430.0, az) + 6.0 * sin(p.y * .021) + 4.0 * sin(p.y * .053);
   eta *= smoothstep(sh, sh + 9.0, p.x); foam *= smoothstep(sh - 1.0, sh + 3.0, p.x);

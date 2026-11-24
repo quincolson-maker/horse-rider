@@ -5,7 +5,7 @@
 // upright facing +Z); arms and legs are solved with analytic two-bone IK onto the Mixamo hands / feet (poles = elbows /
 // knees), so a gun held by the Mixamo hand sits in the variant's hand and the feet stay in the stirrups.
 import * as THREE from 'three';
-import { createPlayerCharacter, PLAYER_VARIANTS, playerVariant } from './hrcharacters.js?v=313';
+import { createPlayerCharacter, PLAYER_VARIANTS, playerVariant } from './hrcharacters.js?v=314';
 export const CHARACTERS = Object.freeze(['Classic', ...PLAYER_VARIANTS.map(v => v.name)]); // index 0 = our classic rider (fallback)
 export const validCv = v => { v = +v; return Number.isInteger(v) && v >= 0 && v < CHARACTERS.length ? v : 0; };
 const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), v3 = new THREE.Vector3(), v4 = new THREE.Vector3(), v5 = new THREE.Vector3(), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion(), q3 = new THREE.Quaternion();

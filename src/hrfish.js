@@ -29,6 +29,7 @@ export function createFishing({ scene, H, P, T, hAt, msg, sfx }) {
     let r = Math.random(), f = FISH[0]; for (const q of FISH) { if (r < q[2]) { f = q; break; } r -= q[2]; } const [name, pts] = f, lb = (pts / 30 * (1.2 + Math.random() * 2.5)).toFixed(1);
     const g = H.guns && H.guns.state; if (g) { g.score += pts; H.guns.save && H.guns.save(); } H.lb && H.lb.add(pts); const St = H.stats || (H.stats = {}); St.fish = (St.fish || 0) + 1; if (pts >= 600) St.golden = (St.golden || 0) + 1; try { localStorage.setItem('hr_stats', JSON.stringify(St)); } catch (_) {}
     const rk = 'fr_' + name.replace(/\W+/g, '_'), rec = +lb > (+St[rk] || 0); if (rec) { St[rk] = +lb; if (+lb > (+St.fishBest || 0)) { St.fishBest = +lb; St.fishBestN = name; } try { localStorage.setItem('hr_stats', JSON.stringify(St)); } catch (_) {} }
+    if (Math.random() < .05 && H.treasure && H.treasure.newMap) setTimeout(() => H.treasure.newMap('Tangled in the line'), 2600); /* v154 */
     msg(`${name}, ${lb} lb!  +${pts}${rec ? '  🏆 new personal record' : ''}`, pts >= 600 ? 5 : 2.5); (pts >= 600 ? [784, 988, 1175, 1568, 2093] : [660, 880]).forEach((fq, i) => setTimeout(() => tone('triangle', fq, fq, .14, .16), i * 90)); }
   const prev = T.onUse; T.onUse = o => { if (!o || !o.fish) return prev ? prev(o) : false; if (!S) cast(); else if (S.st === 'bite') reel(true); else { reel(false); msg('Reeled in too early — nothing on the hook', 1.6); } return true; };
   let t = 0;

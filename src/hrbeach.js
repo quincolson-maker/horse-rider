@@ -3,8 +3,8 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask } from './hrbeachwave.js?v=343';
-import { createSurf } from './hrsurf.js?v=343';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask } from './hrbeachwave.js?v=344';
+import { createSurf } from './hrsurf.js?v=344';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -146,6 +146,19 @@ export function createBeach(ctx) {
     const mist = new THREE.Mesh(new THREE.SphereGeometry(3, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .18, depthWrite: false })); mist.position.set(x + 1, base + 1.2, z); mist.scale.y = .5; g.add(mist);
     root.add(g); const sp = { x: x + 8, y: base, z: z + 6, kind: 'bch_falls', label: '💧 Stand under the waterfall (heal + cool off)', r: 4, bch: true }; T.spots.push(sp); return { wtex, x, z, base, mist }; })();
 
+  // ---------- v344 sea life: a pod of dolphins arcing offshore, sea turtles paddling the shallows, darting schools of reef fish ----------
+  const SEALIFE = (() => { const std2 = o => new THREE.MeshStandardMaterial(Object.assign({ roughness: .5 }, o));
+    const dg = new THREE.CapsuleGeometry(.35, 1.6, 4, 10); dg.rotateX(Math.PI / 2); { const fin = new THREE.ConeGeometry(.12, .45, 4); fin.translate(0, .45, -.1); const tail = new THREE.ConeGeometry(.3, .5, 4); tail.rotateX(-Math.PI / 2); tail.scale(1, .25, 1); tail.translate(0, 0, -1.25); const nose = new THREE.ConeGeometry(.12, .5, 6); nose.rotateX(Math.PI / 2); nose.translate(0, -.05, 1.25); const parts = [dg, fin, tail, nose].map(g => g.toNonIndexed()); let n = 0; parts.forEach(g => { for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal') g.deleteAttribute(k); n += g.attributes.position.count; }); const P2 = new Float32Array(n * 3), N2 = new Float32Array(n * 3); let o = 0; parts.forEach(g => { P2.set(g.attributes.position.array, o * 3); N2.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; }); dg.dispose(); var dolG = new THREE.BufferGeometry(); dolG.setAttribute('position', new THREE.BufferAttribute(P2, 3)); dolG.setAttribute('normal', new THREE.BufferAttribute(N2, 3)); }
+    const ND = 5, DOL = new THREE.InstancedMesh(dolG, std2({ color: 0x6a7a8a }), ND); DOL.frustumCulled = false; root.add(DOL);
+    const tg = new THREE.SphereGeometry(.5, 10, 6); tg.scale(1, .35, 1.2); const NT = 4, TUR = new THREE.InstancedMesh(tg, std2({ color: 0x5a6a3a }), NT); TUR.frustumCulled = false; root.add(TUR);
+    const fg = new THREE.ConeGeometry(.06, .25, 4); fg.rotateX(Math.PI / 2); const NF = mobile ? 40 : 90, FIS = new THREE.InstancedMesh(fg, new THREE.MeshBasicMaterial({ color: 0xffffff }), NF); FIS.frustumCulled = false; root.add(FIS); { const c = new THREE.Color(); for (let i = 0; i < NF; i++) FIS.setColorAt(i, c.set([0xffd23a, 0x3ac8ff, 0xff7a3a, 0xffffff][(i / (NF / 4)) | 0])); }
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1);
+    return (dt, t, me) => { if (me.x < 950) return; let pod = Math.floor(t / 70); const pt = t - pod * 70; DOL.visible = pt < 40; if (DOL.visible) { const r0 = ((pod * 9301 + 49297) % 233280) / 233280, cz = ZC - 200 + r0 * 400, cx = 1330 + r0 * 60, dirz = r0 < .5 ? 1 : -1;
+        for (let i = 0; i < ND; i++) { const ph = pt * 1.2 + i * 1.3, arc = Math.sin(ph), x = cx + (i % 2) * 3 + Math.sin(pt * .1) * 8, z = cz + dirz * (pt * 6 + i * 3.5), y = SEA - .9 + Math.max(-1, arc) * 1.8; e.set(-Math.cos(ph) * .9 * dirz, dirz > 0 ? 0 : Math.PI, 0); q.setFromEuler(e); m4.compose(v.set(x, y, z), q, one); DOL.setMatrixAt(i, m4); }
+        DOL.instanceMatrix.needsUpdate = true; if (Math.floor(pt * 1.2 / 6.283) !== DOL.userData.lp && sfx.nz && sfx.ctx && Math.abs(me.z - cz) < 150) { DOL.userData.lp = Math.floor(pt * 1.2 / 6.283); sfx.nz('highpass', 2000, .7, .03, .4); } }
+      for (let i = 0; i < NT; i++) { const a = t * .03 + i * 1.6, z = ZC - 150 + i * 90 + Math.sin(a) * 25, x = shoreX(z) + 22 + Math.cos(a * 1.3) * 10, surf = (t * .2 + i) % 7 < 1; e.set(0, a + Math.PI / 2, Math.sin(t * 2 + i) * .1); q.setFromEuler(e); m4.compose(v.set(x, SEA - (surf ? .05 : .9), z), q, one); TUR.setMatrixAt(i, m4); } TUR.instanceMatrix.needsUpdate = true;
+      for (let i = 0; i < NF; i++) { const sc2 = (i / (NF / 4)) | 0, ccz = ZC - 60 + sc2 * 70, ccx = shoreX(ccz) + 30 + sc2 * 4, a = t * (.6 + sc2 * .1) + i * .37, r = 2 + (i % 7) * .4; const x = ccx + Math.cos(a) * r, z = ccz + Math.sin(a) * r * 1.5; e.set(0, -a, 0); q.setFromEuler(e); m4.compose(v.set(x, SEA - .7 - (i % 3) * .2, z), q, one); FIS.setMatrixAt(i, m4); } FIS.instanceMatrix.needsUpdate = true; }; })();
+
   // ---------- safe zone, swimming, deep-water check ----------
   (H.safeRects || (H.safeRects = [])).push({ x: 1090, z: ZC, hw: 160, hd: 440, name: 'PARADISE COVE', label: '🛡 NO ZOMBIES · PARADISE COVE' });
   H.places && (H.places.cove = { x: 1100, z: ZC });
@@ -155,7 +168,7 @@ export function createBeach(ctx) {
   B.update = dt => { const t = surfTime(); oceanU.uT.value = t; oceanU.uNight.value = H.night || 0; if (scene.fog && scene.fog.color) oceanU.uFogC.value.copy(scene.fog.color); const me = H.mounted ? H.mounted.pos : P.pos, near = me.x > 820;
     root.visible = near || me.x > 600; if (!root.visible) return;
     if (me.x > 1000 && Math.abs(me.z - ZC) < 450 && !welcome) { welcome = true; msg('🌴 Paradise Cove', 3); const S = H.stats || (H.stats = {}); if (!S.coveVisit) { S.coveVisit = 1; const g = H.guns; if (g) { g.state.score += 300; g.save && g.save(); } setTimeout(() => msg('First time at the sea!  +300 · rent a board at the surf shack and paddle out', 4.5), 1800); } } else if (me.x < 900) welcome = false;
-    surf.update(dt, t); beachLife(dt, t, me); WF.wtex.offset.y -= dt * 1.6; WF.mist.scale.set(1 + Math.sin(t * 2) * .08, .5, 1 + Math.cos(t * 1.7) * .08); if (sfx.nz && sfx.ctx && Math.hypot(me.x - WF.x, me.z - WF.z) < 60 && Math.random() < dt * 3) sfx.nz('lowpass', 700, .6, Math.min(.06, 2 / Math.max(5, Math.hypot(me.x - WF.x, me.z - WF.z))), .6);
+    surf.update(dt, t); beachLife(dt, t, me); SEALIFE(dt, t, me); WF.wtex.offset.y -= dt * 1.6; WF.mist.scale.set(1 + Math.sin(t * 2) * .08, .5, 1 + Math.cos(t * 1.7) * .08); if (sfx.nz && sfx.ctx && Math.hypot(me.x - WF.x, me.z - WF.z) < 60 && Math.random() < dt * 3) sfx.nz('lowpass', 700, .6, Math.min(.06, 2 / Math.max(5, Math.hypot(me.x - WF.x, me.z - WF.z))), .6);
     if (!B.surfing && !H.mounted && !H.trainRide && P.pos.x > shoreX(P.pos.z) + 2) { waveAt(P.pos.x, P.pos.z, t, wv); const surface = SEA + wv.eta, floor = hAt(P.pos.x, P.pos.z); if (surface - floor > 1.05) { const fy = surface - 1.25; if (P.pos.y < fy) { P.pos.y = fy; H.vy = Math.max(0, H.vy || 0); } if (!swimMsg) { swimMsg = true; msg('🏊 Swimming - rent a board at the surf shack to surf', 2.5); } } } };
   return B;
 }

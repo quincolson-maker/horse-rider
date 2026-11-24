@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=238';
-import { PERF } from './perfopts.js?v=238';
+import { PF } from './perf.js?v=239';
+import { PERF } from './perfopts.js?v=239';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -220,7 +220,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     if (o.hp <= 0) { kill(o, head, by); if (from && c.sendTo) { c.sendTo(from, { t: 'zk', h: head ? 1 : 0, b: Z.byBandit ? 1 : 0, z: o.id, ...(o.kind === 'outlaw' ? { o: 1, ...(o.boss ? { ob: 1 } : {}) } : o.kind === 'boss' ? { bk: 1 } : {}) }); c.creditRemote && c.creditRemote(from, head); } } return true; }
   const zAt = (pos, fn, wet) => sfx.zAt ? sfx.zAt(pos, fn, wet) : sfx.at(pos, fn, wet); // zombie voices: their own (fadeable) bus
   function kill(o, head, by) { if (!o.alive) return; o.alive = false; o.hp = 0; o.st = 2; o.deadT = 0; o.fallDir = rnd() < .5 ? 1 : -1; if (o.kind === 'outlaw') { if (Z.role() !== 'client' && c.onOutlawDown) c.onOutlawDown(o); if (sfx.at && sfx.ctx) sfx.at(o.pos, () => sfx.tone('triangle', 220, 90, .3, .5), .3); return; } // v38
-    if (o.kind === 'bloater' || o.kind === 'miner') boom(o); // v87 / v213
+    if (o.kind === 'bloater' || o.kind === 'miner') boom(o); if (o.kind === 'miner' && by !== 'remote' && H.dyn && H.dyn.state && rnd() < .4) { H.dyn.state.count = (H.dyn.state.count || 0) + 1; try { localStorage.setItem('hr_dyn', String(H.dyn.state.count)); } catch (_) {} c.msg && c.msg('🧨 The miner dropped a stick of dynamite (×' + H.dyn.state.count + ')', 2); } /* v239 */ // v87 / v213
     if (by !== 'remote' && by !== 'bandit' && o.kind !== 'outlaw' && H.drops && Math.random() < (o.kind === 'boss' ? 1 : .08)) H.drops.drop(o.pos); /* v149 loot */
     if (by !== 'remote' && by !== 'bandit') { Z.kills++; if (head) Z.heads++; const st = H.stats || (H.stats = {}); st['zk_' + o.kind] = (st['zk_' + o.kind] || 0) + 1; if (o.preacher) { st.preacher = (st.preacher || 0) + 1; } if (o.undertaker) { st.undertaker = (st.undertaker || 0) + 1; } { const now = performance.now(), S2 = H.kstreak || (H.kstreak = { n: 0, t: 0 }); S2.n = now - S2.t < 2600 ? S2.n + 1 : 1; S2.t = now; const NAMES = { 3: 'TRIPLE KILL', 5: 'RAMPAGE', 8: 'MASSACRE', 12: 'UNSTOPPABLE', 20: 'LEGENDARY' }; if (NAMES[S2.n] && H.guns) { const b = 30 * S2.n; H.guns.state.score += b; H.guns.save && H.guns.save(); c.msg && c.msg(`🔥 ${NAMES[S2.n]}!  +${b}`, 1.8); H.vib && H.vib(25); if (sfx.ctx) sfx.tone('square', 660 + S2.n * 30, 990 + S2.n * 30, .12, .12); st.bestStreak = Math.max(st.bestStreak || 0, S2.n); } } /* v172 kill streaks */ if (head) st['zh_' + o.kind] = (st['zh_' + o.kind] || 0) + 1; try { localStorage.setItem('hr_stats', JSON.stringify(st)); } catch (_) {} } // v98 per-kind stats
     if (sfx.at && sfx.ctx) zAt(o.pos, () => { sfx.tone('sawtooth', 120, 40, .22, .7); sfx.nz('lowpass', 300, 1, .25, .4); }, .3); }

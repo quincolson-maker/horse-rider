@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=238';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=238';
-import { mergeStatic } from './hrmerge.js?v=238';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=239';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=239';
+import { mergeStatic } from './hrmerge.js?v=239';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -346,6 +346,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     if (inside && sfx.tone && sfx.ctx && !(DR.on) && (musT -= dt) <= 0) { const PEN = [392, 440, 523, 587, 659, 784, 880]; musT = [.45, .45, .9, .45, 1.35][(Math.random() * 5) | 0]; musI = Math.max(0, Math.min(PEN.length - 1, musI + [-2, -1, -1, 1, 1, 2, 0][(Math.random() * 7) | 0])); const f = PEN[musI]; sfx.tone('triangle', f, f * .995, .028, musT * 1.4); if (Math.random() < .25) sfx.tone('sine', f / 2, f / 2, .02, 1.2); } /* v227 a quiet pentatonic street melody */
     { const hm = H.mounted; if (hm) for (const q of troughs) if (Math.hypot(hm.pos.x - q[0], hm.pos.z - q[1]) < 2.8 && Math.abs(H.speed || 0) < 1) { H.stam = Math.min(100, (H.stam || 0) + 30 * dt); if (hm.hp != null) hm.hp = Math.min(100, hm.hp + 10 * dt); if (!hm.ctDrink || t - hm.ctDrink > 20) { hm.ctDrink = t; msg('🐴 Your horse drinks deep', 1.6); } } }
     if (Math.hypot(me.x - CX, me.z - CZ) < 80) { const m4 = KF.userData.m || (KF.userData.m = new THREE.Matrix4()), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1); koi.forEach((p, j) => { for (let k = 0; k < 3; k++) { const a = t * (.4 + k * .13) * (k % 2 ? -1 : 1) + k * 2.1 + j, r = .35 + k * .18; e.set(0, a + (k % 2 ? 0 : Math.PI), 0); q.setFromEuler(e); m4.compose(v.set(p[0] + Math.cos(a) * r, y0 + .262, p[1] + Math.sin(a) * r), q, one); KF.setMatrixAt(j * 3 + k, m4); } }); KF.instanceMatrix.needsUpdate = true; }
+    { const wet = Math.min(1, ((H.wx && H.wx.rain) || 0) * 1.4); if (Math.abs(wet - (update.wet ?? -1)) > .03) { update.wet = wet; M.cobble.roughness = 1 - .6 * wet; M.cobble.metalness = .15 * wet; M.stone.roughness = .9 - .5 * wet; M.tile.roughness = .45 - .3 * wet; M.cobble.color.setScalar(1 - .35 * wet); } } /* v239 rain-slick streets */
     if (fedT > 0) { fedT -= dt; heal(dt * 1.5); } if (tonicT > 0) { tonicT -= dt; heal(dt * 3); }
     if (crackers) { crackers.t -= dt; if (crackers.t <= 0) { crackers.t = .07 + Math.random() * .08; crackers.n++; const x = crackers.x + (Math.random() - .5) * 1.2, z = crackers.z + (Math.random() - .5) * 1.2, y = (H.town ? H.town.floorAt(x, z, me.y + 1) : hAt(x, z)) + .1;
       if (sfx.nz && sfx.ctx) sfx.nz('highpass', 1800 + Math.random() * 1500, .8, .22, .05); if (fx && fx.smoke) fx.smoke.emit(x, y, z, (Math.random() - .5) * 2, 1 + Math.random(), (Math.random() - .5) * 2, .85, .8, .75, .5, .9, .7, -.02, .3); if (fx && fx.spark) fx.spark(x, y + .1, z); if (crackers.n > 40) crackers = null; } } }

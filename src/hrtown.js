@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=215';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=216';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,8 +47,8 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createPoker } from './hrpoker.js?v=215';
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=215';
+import { createPoker } from './hrpoker.js?v=216';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=216';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -65,7 +65,13 @@ export function createTown(c) {
   T.floorAt = (x, z, y) => { let g = hAt(x, z); for (const s of T.structs) { const dx = x - s.cx, dz = z - s.cz; if (dx * dx + dz * dz > s.R * s.R) continue; const [lx, lz] = toL(s, x, z);
       for (const f of s.floors) { if (lx < f.x0 || lx > f.x1 || lz < f.z0 || lz > f.z1) continue; const t = f.axis === 'x' ? (lx - f.x0) / (f.x1 - f.x0) : (lz - f.z0) / (f.z1 - f.z0), h = s.y0 + f.ya + (f.yb - f.ya) * t; if (h <= y + .62 && h > g) g = h; } } return g; };
   T.onStruct = (x, z, y) => T.floorAt(x, z, y) > hAt(x, z) + .25;
-  T.wallHit = (x, z, r, y) => { for (const w of T.walls) { if (y + 1.7 < w[4] || y > w[5] - .05) continue; const ex = w[2] - w[0], ez = w[3] - w[1], L = ex * ex + ez * ez, t = L ? Math.max(0, Math.min(1, ((x - w[0]) * ex + (z - w[1]) * ez) / L)) : 0; if (Math.hypot(x - w[0] - ex * t, z - w[1] - ez * t) < r + .08) return true; } return false; };
+  /* v216 optimization: wall colliders live in an 8 m grid (rebuilt when the list changes or every 1.5 s), so a big town costs
+     the same per check as a small one */
+  const WG = { n: -1, t: 0, m: new Map(), C: 8 }; const wkey = (i, j) => i * 73856 + j;
+  T.wallsNear = (x, z, r) => { const now = performance.now(); if (WG.n !== T.walls.length || now - WG.t > 1500) { WG.n = T.walls.length; WG.t = now; WG.m.clear(); for (const w of T.walls) { const i0 = Math.floor(Math.min(w[0], w[2]) / WG.C), i1 = Math.floor(Math.max(w[0], w[2]) / WG.C), j0 = Math.floor(Math.min(w[1], w[3]) / WG.C), j1 = Math.floor(Math.max(w[1], w[3]) / WG.C); for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) { const k = wkey(i, j); let b = WG.m.get(k); if (!b) WG.m.set(k, b = []); b.push(w); } } }
+    const out = T._wn || (T._wn = []), seen = T._ws || (T._ws = new Set()); out.length = 0; seen.clear(); const i0 = Math.floor((x - r) / WG.C), i1 = Math.floor((x + r) / WG.C), j0 = Math.floor((z - r) / WG.C), j1 = Math.floor((z + r) / WG.C);
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) { const b = WG.m.get(wkey(i, j)); if (b) for (const w of b) if (!seen.has(w)) { seen.add(w); out.push(w); } } return out; };
+  T.wallHit = (x, z, r, y) => { for (const w of T.wallsNear(x, z, r + .2)) { if (y + 1.7 < w[4] || y > w[5] - .05) continue; const ex = w[2] - w[0], ez = w[3] - w[1], L = ex * ex + ez * ez, t = L ? Math.max(0, Math.min(1, ((x - w[0]) * ex + (z - w[1]) * ez) / L)) : 0; if (Math.hypot(x - w[0] - ex * t, z - w[1] - ez * t) < r + .08) return true; } return false; };
 
   // ---- v34 fire lookout: a US Forest Service style steel tower (Aermotor-like) ----
   // Tapered galvanized lattice (4 angled legs, girts + X bracing every 4 m) on concrete footings; an external switchback

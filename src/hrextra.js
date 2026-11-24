@@ -19,6 +19,15 @@ export function createExtra({ scene, H, P, hAt, msg, sfx, mobile }) {
         const dist = Math.hypot(pp.x - d.x, pp.z - d.z); if (dist < 3 && ok) { const k = dt * 6 * (1 - dist / 3); if (H.mounted) { H.mounted.pos.x += (pp.z - d.z) * k * .3; H.mounted.pos.z -= (pp.x - d.x) * k * .3; } else { P.pos.x += (pp.z - d.z) * k * .3; P.pos.z -= (pp.x - d.x) * k * .3; } H.shake = Math.max(H.shake || 0, .25); if ((shove -= dt) <= 0) { shove = 6; msg('🌪️ Dust devil!', 1.4); const st = H.stats || (H.stats = {}); st.devils = (st.devils || 0) + 1; if (sfx.nz && sfx.ctx) sfx.nz('bandpass', 600, .7, .25, 1.2); } } } };
   });
 
+  // v217 WANTED POSTER: crack the store safe and your poster goes up on the saloon front; the reward climbs with every job
+  add(() => { let shown = -1, mesh = null; const tex = document.createElement('canvas'); tex.width = 256; tex.height = 352; const ct = new THREE.CanvasTexture(tex); ct.colorSpace = THREE.SRGBColorSpace;
+    function draw(n) { const x = tex.getContext('2d'); x.fillStyle = '#e8d6a8'; x.fillRect(0, 0, 256, 352); for (let i = 0; i < 400; i++) { x.fillStyle = `rgba(120,90,40,${Math.random() * .12})`; x.fillRect(Math.random() * 256, Math.random() * 352, 2 + Math.random() * 6, 2 + Math.random() * 6); }
+      x.strokeStyle = '#3a2414'; x.lineWidth = 5; x.strokeRect(8, 8, 240, 336); x.fillStyle = '#3a2414'; x.textAlign = 'center'; x.font = 'bold 54px Georgia,serif'; x.fillText('WANTED', 128, 66); x.font = 'bold 18px Georgia,serif'; x.fillText('DEAD OR ALIVE', 128, 92);
+      x.fillStyle = '#c9b48a'; x.fillRect(58, 106, 140, 124); x.fillStyle = '#3a2414'; x.beginPath(); x.arc(128, 150, 26, 0, 7); x.fill(); x.fillRect(84, 186, 88, 44); x.fillRect(80, 118, 96, 12); x.fillRect(100, 100, 56, 22);
+      x.font = 'bold 20px Georgia,serif'; x.fillText('THE SAFECRACKER', 128, 258); x.font = '14px Georgia,serif'; x.fillText(`for ${n} job${n === 1 ? '' : 's'} on the General Store`, 128, 280); x.font = 'bold 34px Georgia,serif'; x.fillText('$' + (500 * n).toLocaleString(), 128, 322); ct.needsUpdate = true; }
+    return () => { const n = (H.stats && H.stats.safes) || 0, T = H.town, s = T && T.town; if (!s || n === shown) return; shown = n; if (!n) return; draw(n);
+      if (!mesh) { mesh = new THREE.Mesh(new THREE.PlaneGeometry(.62, .85), new THREE.MeshStandardMaterial({ map: ct, roughness: .95 })); const [wx, wz] = T.toW(s, -11.2, -.3); mesh.position.set(wx, s.y0 + 1.75, wz); mesh.rotation.set(0, s.rot + Math.PI, .04); mesh.name = 'wanted poster'; scene.add(mesh); H.cullAdd && H.cullAdd(mesh, 90, { x: wx, z: wz }); if (n > 0) msg('📜 Your WANTED poster just went up on the saloon front', 3); } }; });
+
   X.update = dt => { X.t += dt; for (const f of X.parts) f(dt); };
   return X;
 }

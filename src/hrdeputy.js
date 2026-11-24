@@ -1,7 +1,7 @@
 // v170 HIRED GUNS (sheriff's office, 500): two deputies follow you for 3 minutes and shoot the dead near you.
 // They keep up when you ride by catching up out of sight. Hire them at the store (Gear tab).
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=215';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=216';
 export function createDeputies({ scene, H, P, hAt, msg, sfx, mobile }) {
   let D = [], T = 0, pool = []; const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const flashM = new THREE.MeshBasicMaterial({ color: 0xffd080, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
@@ -12,9 +12,12 @@ export function createDeputies({ scene, H, P, hAt, msg, sfx, mobile }) {
       const fl = new THREE.Mesh(new THREE.SphereGeometry(.12, 6, 4), flashM.clone()); scene.add(fl); const a = i ? -2.2 : 2.2; c.g.position.set(P.pos.x + Math.sin(a) * 3, P.pos.y, P.pos.z + Math.cos(a) * 3); scene.add(c.g); D.push({ c, fl, off: a, cd: Math.random(), sp: 0 }); }
     T = 180; msg('🤠 Two deputies ride with you for 3 minutes', 3); tone('triangle', 392, 523, .3, .15); }
   function dismiss() { for (const d of D) { d.c.g.removeFromParent(); d.fl.removeFromParent(); } pool = D; D = []; } // v204: kept for next time (no rebuild, no leak)
-  function update(dt) { if (!D.length) return; T -= dt; if (T <= 0 || H.dead && T < 170) { dismiss(); msg('Your deputies head back to town', 2); return; }
+  let guardMsg = false; function update(dt) { if (!D.length) return; const RD = H.raid && H.raid.on && H.raid.gate; T -= RD ? 0 : dt; /* v218: the clock stops while they hold a raid gate */ if (T <= 0 || H.dead && T < 170) { dismiss(); msg('Your deputies head back to town', 2); return; }
     const me = H.mounted ? H.mounted.pos : P.pos, Z = H.zombies;
-    for (const d of D) { const g = d.c.g, ang = (H.mounted ? H.mounted.yaw : (P.yaw || 0)) + d.off, tx = me.x + Math.sin(ang) * 3.2, tz = me.z + Math.cos(ang) * 3.2, dx = tx - g.position.x, dz = tz - g.position.z, dist = Math.hypot(dx, dz);
+    const tw = H.places && H.places.town, guard = RD && tw && Math.hypot(me.x - RD.x, me.z - RD.z) < 70; if (guard && !guardMsg) { guardMsg = true; msg('🤠 Your deputies take up the barricade', 2.5); } if (!RD) guardMsg = false;
+    for (const d of D) { const g = d.c.g, ang = (H.mounted ? H.mounted.yaw : (P.yaw || 0)) + d.off; let tx = me.x + Math.sin(ang) * 3.2, tz = me.z + Math.cos(ang) * 3.2;
+      if (guard) { const ix = tw[0] - RD.x, iz = tw[1] - RD.z, il = Math.hypot(ix, iz) || 1, k = D.indexOf(d) ? 1 : -1; tx = RD.x + ix / il * 3.5 + (-iz / il) * k * 2.2; tz = RD.z + iz / il * 3.5 + (ix / il) * k * 2.2; } /* v218 raid guard post */
+      const dx = tx - g.position.x, dz = tz - g.position.z, dist = Math.hypot(dx, dz);
       if (dist > 30) { g.position.set(tx, hAt(tx, tz), tz); } else if (dist > .6) { const sp = Math.min(H.mounted ? 12 : 5.5, dist * 1.6); g.position.x += dx / dist * sp * dt; g.position.z += dz / dist * sp * dt; d.sp = sp; } else d.sp = 0;
       g.position.y = hAt(g.position.x, g.position.z);
       // shoot the nearest zombie within 32 m

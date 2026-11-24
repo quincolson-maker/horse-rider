@@ -4,9 +4,9 @@
 // → showdown, best hand takes the pot. Cash out whenever you like and your chips go back into your points.
 // Networking: the host (or a solo player) runs the table. Clients send actions ({t:'pk'}) and the host sends each
 // seated rider their own view ({t:'pks'}) via H.zSendTo, so nobody's hole cards ever reach another player's machine.
-import { mergeStatic } from './hrmerge.js?v=302';
+import { mergeStatic } from './hrmerge.js?v=303';
 import * as THREE from 'three';
-import { makeFrontierCharacter } from './hrcharacters.js?v=302';
+import { makeFrontierCharacter } from './hrcharacters.js?v=303';
 const RANKS = '23456789TJQKA', SUITS = '♠♥♦♣', ANTE = 10, BET = 25, BUYIN = 200, MAXS = 6;
 const BOTS = [{ n: 'DOC', loose: .35, bluff: .08 }, { n: 'SLIM', loose: .6, bluff: .16 }, { n: 'ROSA', loose: .45, bluff: .1 }];
 const rk = c => c % 13, st = c => (c / 13) | 0;

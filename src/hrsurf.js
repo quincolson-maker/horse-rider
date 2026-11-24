@@ -9,7 +9,9 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ } from './hrbeachwave.js?v=349';
+import { BEACH, shoreX, waveAt, peelZ } from './hrbeachwave.js?v=350';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=350';
+import { mergeStatic } from './hrmerge.js?v=350';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});
@@ -150,15 +152,27 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
   // ---------- set warnings, first-time tutorial ----------
   let setWarn = -1; function setTick(t) { if (!B.surfing) return; const k0 = Math.floor(t / TP); for (let j = -3; j <= 0; j++) { const k = k0 - j; if (k % 5 !== 0 || k === setWarn) continue; const cx = crestX(k, R.z, t); if (cx > R.x + 25 && cx < R.x + 80) { setWarn = k; msg('🌊 SET WAVE coming - the big one! Paddle for it', 2.4); } } }
 
+  // ---------- v350 LOCALS: three AI surfers share the lineup - they sit out the back, take their pick of the waves and ride them along the face ----------
+  const LOC = [[0xff7a2a, 'Kai'], [0x3ac8ff, 'Tala'], [0xffffff, 'Rafa']].slice(0, mobile ? 2 : 3).map(([col, nm], i) => { const g = new THREE.Group(); const bd = brd.clone(true); bd.traverse(o => { if (o.isMesh && o.material === bMat) o.material = new THREE.MeshStandardMaterial({ color: col, roughness: .35 }); }); bd.visible = true; bd.scale.set(1, 1, 1); g.add(bd);
+    const D = makeFrontierCharacter({ kind: 'townsfolk', sex: i === 1 ? 'female' : 'male', quality: 'low', coat: [0x1a5a7a, 0x7a2a5a, 0x2a2a2a][i], top: [0x1a5a7a, 0x7a2a5a, 0x2a2a2a][i], bodice: 0x1a5a7a, hatC: 0x1a1612, skin: [0xb87a50, 0xc8946c, 0x9a6a48][i], hair: 0x14100c, bandana: col, name: nm }); try { mergeStatic(D.g); } catch (_) {} D.g.scale.setScalar(.95); g.add(D.g); g.visible = false; scene.add(g); return { g, D, nm, z: ZC - 80 + i * 90, x: XS - 40, k: null, u: 0, sp: 0, th: 0, mode: 'wait', bob: Math.random() * 6, pick: i }; });
+  let locT = -1; function locTick(dt0, t) { const dt = locT < 0 || t < locT ? dt0 : Math.min(.5, t - locT); locT = t; const me = P.pos, near = me.x > 1000 && Math.abs(me.z - ZC) < 500; for (const L of LOC) { L.g.visible = near; if (!near) continue; const k0 = Math.floor(t / TP);
+      if (L.mode === 'wait') { const tx = XB + 26, tz = ZC + 40 + L.pick * 45; L.x += (tx - L.x) * Math.min(1, dt * .5); L.z += (tz - L.z) * Math.min(1, dt * .5); const k = k0 - 1; const cx = crestX(k, L.z, t); if ((k + L.pick) % 3 === 0 && cx > L.x && cx - L.x < 6 && L.lastK !== k && L.x < XB + 45 && Math.abs(peelZ(k, t) - L.z) < 45) { L.mode = 'ride'; L.k = k; L.lastK = k; L.u = L.x - cx; L.sp = 8; L.th = .1; }
+        const y = surfaceAt(L.x, L.z, t); L.g.position.set(L.x, y + .05, L.z); L.g.rotation.set(0, Math.PI / 2, 0); L.D.g.position.set(0, -.25, 0); L.D.g.rotation.set(0, 0, 0); poseFrontierCharacter(L.D, dt, { speed: 0 }); continue; }
+      // ride: hold a trim line mid-face, racing ahead of the peel
+      waveAt(L.x, L.z, t, wv2); const A = wv2.wave ? wv2.wave.A : 1.5, tgt = -A * .55; L.u += (tgt - L.u) * Math.min(1, dt * 1.5); L.sp = 9 + Math.sin(t * .9 + L.pick) * 2.5; L.z -= L.sp * dt; const cx = crestX(L.k, L.z, t); L.x = cx + L.u; const y = surfaceAt(L.x, L.z, t);
+      L.g.position.set(L.x, y + .1, L.z); const carve = Math.sin(t * 1.4 + L.pick * 2) * .45; L.g.rotation.set(0, Math.PI + carve * .4, carve * .5); L.D.g.position.set(0, .05, 0); L.D.g.rotation.set(0, Math.PI / 2, -carve * .3); poseFrontierCharacter(L.D, dt, { speed: 0 });
+      if (fx && fx.smoke && Math.random() < dt * 8) fx.smoke.emit(L.x, y + .2, L.z + 1, (Math.random() - .5), 1.2, 1.5, .96, .98, 1, .6, .7, .5, -.06, .3);
+      if (L.z < ZC - 280 || L.x < shoreX(L.z) + 14 || Math.abs(L.z - me.z) > 300) { L.mode = 'wait'; L.x = XB + 40; } } }
+
   // ---------- per frame (not surfing): rentals, entering the water, ambient crash sounds ----------
   const RIV = ['Kai', 'Luzviminda', 'Joaquin', 'Mahina', 'Rafa', 'Tala', 'Dex', 'Isla'];
   function heatEnd() { const h = heat; heat = null; const mine = (h.rides[0] || 0) + (h.rides[1] || 0), sk = Math.max(800, (best || 1500) * .9); const riv = h.riv.map(n => ({ n, sc: Math.round(sk * (.45 + Math.random() * .9)) })); const all = [{ n: 'YOU', sc: mine }, ...riv].sort((a2, b2) => b2.sc - a2.sc), place = all.findIndex(q => q.n === 'YOU') + 1, pay = [0, 2000, 900, 400, 0][place];
     if (pay) earn(pay); const s2 = S(); s2.surfHeats = (s2.surfHeats || 0) + 1; if (place === 1) s2.surfWins = (s2.surfWins || 0) + 1; msg(`🏆 HEAT OVER - ${all.map((q, i) => `${i + 1}. ${q.n} ${q.sc.toLocaleString()}`).join(' · ')}${pay ? `  +${pay}` : ''}`, 7); if (place === 1 && sfx.tone && sfx.ctx) [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => sfx.tone('triangle', f, f, .08, .3), i * 140)); }
   const prevUse = T.onUse; T.onUse = o => { if (o === cont) { if (heat) msg(`🏆 Heat on - ${Math.ceil(heat.t)} s left`, 1.6); else if (!board) msg('🏄 Rent a board first', 1.6); else { const r3 = RIV.slice().sort(() => Math.random() - .5).slice(0, 3); heat = { t: 180, rides: [], riv: r3 }; msg(`🏆 HEAT STARTS! You vs ${r3.join(', ')} - best two waves in 3 minutes. Paddle out!`, 4); } return true; } if (o === rent) { board = (board % COLS.length) + 1; bMat.color.setHex(COLS[board - 1]); try { localStorage.setItem('hr_board', String(board)); } catch (_) {} setRentLabel(); msg(`🏄 The ${QB().n} is yours - ${['all-rounder', 'catches anything, turns slow (nose rides!)', 'fast and loose', 'tight turns, hard to paddle, big scores', 'built for the big sets', 'soft-top: easiest to catch, slow'][(board - 1) % 6]}`, 3.5); brd.scale.set(1, 1, QB().len / 1.65); const s = S(); s.surfBoard = 1; return true; } return prevUse ? prevUse(o) : false; };
-  function update(dt, t) { curl(t); wakeTick(dt, t); setTick(t); if (heat) { heat.t -= dt; if (heat.t <= 0) heatEnd(); } if (B.surfing) { if (H.mounted || H.dead) leave(); return; }
+  function update(dt, t) { curl(t); wakeTick(dt, t); setTick(t); locTick(dt, t); if (heat) { heat.t -= dt; if (heat.t <= 0) heatEnd(); } if (B.surfing) { if (H.mounted || H.dead) leave(); return; }
     const me = P.pos; if (board && !H.mounted && !H.trainRide && me.x > shoreX(me.z) + 13 && me.x < 1460 && Math.abs(me.z - ZC) < 430) enter();
     if (me.x > 1040 && Math.abs(me.z - ZC) < 500 && sfx.nz && sfx.ctx && (crashT -= dt) <= 0) { crashT = 1.6 + Math.random() * 2.5; const d = Math.max(20, Math.abs(me.x - XB)); sfx.nz('lowpass', 420 + Math.random() * 300, .7, Math.min(.12, 6 / d), 1.8 + Math.random()); } }
   const testPop = () => { const t = (Date.now() / 1000) % 3600; waveAt(R.x, R.z, t, wv); if (wv.wave && !wv.wave.broken && wv.wave.u > -2.5 && wv.wave.u < 1.5 && wv.wave.s > .45) { popUp(t, wv.wave); return true; } return false; };
   const peelInfo = zRef => { const t = (Date.now() / 1000) % 3600, k0 = Math.floor(t / TP); let best = null; for (let j = 0; j < 6; j++) { const k = k0 - j, pz = peelZ(k, t); if (pz < -200 || pz > 500) continue; if (!best || Math.abs(pz - zRef) < Math.abs(best.pz - zRef)) best = { k, pz, cx: crestX(k, pz, t) }; } return best; };
-  return { update, peelInfo, get state() { return R; }, enter, leave, testPop, setAssist, get assist() { return assist; }, peel: () => R.ride ? peelZ(R.k, (Date.now() / 1000) % 3600) : null };
+  return { update, peelInfo, locals: LOC, get state() { return R; }, enter, leave, testPop, setAssist, get assist() { return assist; }, peel: () => R.ride ? peelZ(R.k, (Date.now() / 1000) % 3600) : null };
 }

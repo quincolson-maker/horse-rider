@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=168';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=168';
-import './src/hraudio.js?v=168';
-import './src/stylize.js?v=168'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=168';
-import { FX, SFX } from './src/fx.js?v=168';
-import { initTouch } from './src/touch.js?v=168';
-import { createHorseRider } from './src/horse.js?v=168';
-import { createHorseNet } from './src/horsenet.js?v=168';
+import './src/assetshim.js?v=169';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=169';
+import './src/hraudio.js?v=169';
+import './src/stylize.js?v=169'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=169';
+import { FX, SFX } from './src/fx.js?v=169';
+import { initTouch } from './src/touch.js?v=169';
+import { createHorseRider } from './src/horse.js?v=169';
+import { createHorseNet } from './src/horsenet.js?v=169';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=168';
+import { PF, initPerf } from './src/perf.js?v=169';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -41,7 +41,7 @@ function look(dx, dy, src) { const ls = P.lookScale || 1; dx *= ls; dy *= ls; P.
 renderer.domElement.addEventListener('mousedown', () => { gesture(); if (!IS_TOUCH && !locked()) renderer.domElement.requestPointerLock(); });
 addEventListener('contextmenu', e => e.preventDefault());
 const input = { mx: 0, mz: 0, fire: false, jump: false, ads: false };
-const act = { photo: () => { document.body.classList.toggle('photo'); if (document.body.classList.contains('photo')) setTimeout(() => { const off = e => { document.body.classList.remove('photo'); removeEventListener('pointerdown', off, true); }; addEventListener('pointerdown', off, true); }, 300); }, stats: () => horse.state.journal && horse.state.journal.toggle && horse.state.journal.toggle(), camp: () => horse.state.camp && horse.state.camp.make(), map: () => horse.state.map && horse.state.map.toggle(), settings: () => openSettings(true), build: () => horse.use(), ads() { input.ads = !input.ads; }, help() { setupSettingsX(); const k = $('keys'); k.hidden = !k.hidden; },
+const act = { nvg: () => dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyI' })), feed: () => horse.state.gear && horse.state.gear.feed(), photo: () => { document.body.classList.toggle('photo'); if (document.body.classList.contains('photo')) setTimeout(() => { const off = e => { document.body.classList.remove('photo'); removeEventListener('pointerdown', off, true); }; addEventListener('pointerdown', off, true); }, 300); }, stats: () => horse.state.journal && horse.state.journal.toggle && horse.state.journal.toggle(), camp: () => horse.state.camp && horse.state.camp.make(), map: () => horse.state.map && horse.state.map.toggle(), settings: () => openSettings(true), build: () => horse.use(), ads() { input.ads = !input.ads; }, help() { setupSettingsX(); const k = $('keys'); k.hidden = !k.hidden; },
   fs() { if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document); else goFullscreen(); } };
 function onKey(c) { if (G.phase == 'menu') return; if (c == 'KeyP') act.photo(); if (c == 'KeyO') openSettings($('hrSettings').hidden); if (c == 'KeyE') horse.use(); if (c == 'KeyL' && horse.state.lb) horse.state.lb.open(); if (c == 'KeyM' && horse.state.map && !horse.state.map.isOpen) horse.state.map.open(); if (c == 'KeyZ' && horse.state.whistle) horse.state.whistle(); if (c == 'KeyH') act.help(); if (c == 'KeyV') hnet.voice.toggle(); }
 // first tap / click / key: unlock audio, re-ask for the mic if it was refused without a gesture, phones go fullscreen

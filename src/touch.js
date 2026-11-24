@@ -59,7 +59,7 @@ export function initTouch(input, look, act, unlockAudio) {
   const more = $('uiMore'), setMore = v => { more.hidden = !v; $('tMore').classList.toggle('down', v); };
   btn('tMore', () => setMore(more.hidden));
   const item = (id, fn, keep) => { const el = $(id); if (!el || !fn) return; el.addEventListener('pointerdown', e => { e.stopPropagation(); }); el.addEventListener('click', e => { e.preventDefault(); unlockAudio(); fn(); if (!keep) setMore(false); }); };
-  item('mMap', act.map); item('mCamp', act.camp); item('mStats', act.stats); item('mPhoto', act.photo); item('mSlide', act.slide); item('mInspect', act.inspect); item('mScore', act.score); item('mHelp', act.help); item('mSet', act.settings); item('mFs', act.fs); item('mQuit', act.quit); item('mClose', () => {});
+  item('mMap', act.map); item('mCamp', act.camp); item('mStats', act.stats); item('mPhoto', act.photo); item('mNvg', act.nvg); item('mFeed', act.feed); item('mSlide', act.slide); item('mInspect', act.inspect); item('mScore', act.score); item('mHelp', act.help); item('mSet', act.settings); item('mFs', act.fs); item('mQuit', act.quit); item('mClose', () => {});
   // block page scroll/zoom gestures that would otherwise steal touches (iOS Safari)
   document.addEventListener('touchmove', e => { if (e.target.closest && e.target.closest('#touch')) e.preventDefault(); }, { passive: false });
   document.addEventListener('gesturestart', e => e.preventDefault());

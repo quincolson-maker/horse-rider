@@ -31,8 +31,11 @@ export function initTouch(input, look, act, unlockAudio) {
   const btns = []; // v36: every button's finger ownership + pressed look is released by the reset too
   const touchReset = () => { jid = null; input.mx = input.mz = 0; lk.clear(); restStick(); for (const b of btns) b(); dbg(); }; window.__touchReset = touchReset;
   for (const ev of ['touchend', 'touchcancel']) addEventListener(ev, e => { if (!e.touches || e.touches.length === 0) touchReset(); }, true);
-  lookEl.addEventListener('pointerdown', e => { e.preventDefault(); unlockAudio(); cap(lookEl, e); lookStart(e.pointerId, e.clientX, e.clientY); });
-  lookEl.addEventListener('pointermove', e => { if (!lk.has(e.pointerId)) return; e.preventDefault(); lookMove(e.pointerId, e.clientX, e.clientY); });
+  // v146 pinch to zoom the camera: two fingers on the look area
+  const pz = new Map(); let pd0 = 0; const pdist = () => { const v = [...pz.values()]; return v.length < 2 ? 0 : Math.hypot(v[0][0] - v[1][0], v[0][1] - v[1][1]); };
+  lookEl.addEventListener('pointerdown', e => { e.preventDefault(); unlockAudio(); cap(lookEl, e); pz.set(e.pointerId, [e.clientX, e.clientY]); if (pz.size === 2) { pd0 = pdist(); for (const k of pz.keys()) lookEnd(k); return; } lookStart(e.pointerId, e.clientX, e.clientY); });
+  lookEl.addEventListener('pointermove', e => { if (pz.has(e.pointerId)) pz.set(e.pointerId, [e.clientX, e.clientY]); if (pz.size >= 2) { e.preventDefault(); const d = pdist(), H = window.__hrH; if (pd0 > 20 && d > 20 && H) { H.zoom = Math.max(.5, Math.min(1.6, (H.zoom || 1) * pd0 / d)); } pd0 = d; return; } if (!lk.has(e.pointerId)) return; e.preventDefault(); lookMove(e.pointerId, e.clientX, e.clientY); });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) lookEl.addEventListener(ev, e => { pz.delete(e.pointerId); pd0 = 0; });
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) lookEl.addEventListener(ev, e => lookEnd(e.pointerId));
   // ?touchzones=1: draw the joystick zone and live touches (green = move, yellow = steering look, grey = waiting look)
   let dbgEl = null; const showDbg = new URLSearchParams(location.search).has('touchzones');

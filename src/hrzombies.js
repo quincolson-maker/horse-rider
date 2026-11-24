@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=295';
-import { PERF } from './perfopts.js?v=295';
+import { PF } from './perf.js?v=296';
+import { PERF } from './perfopts.js?v=296';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -304,7 +304,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     if (!Z.on || !H.on) return; Z.t += dt;
     { const q = !!(H.saloon && H.saloon.inside && H.saloon.inside()); if (q !== !!Z.quiet) { Z.quiet = q; sfx.zFade && sfx.zFade(q ? 0 : 1, .5); } } dt = Math.min(dt, .1); const host = Z.role() !== 'client'; // hotfix: zombie groans / moans fade out inside the saloon (0.5 s), back on leaving
     // the player: regen, death + respawn at the pen
-    if (Z.dead > 0) { Z.dead -= dt; if (Z.dead <= 0) { Z.dead = 0; Z.hp = ZSET.playerHp; const cp = H.campPos, x = cp ? cp[0] + 1.2 : PEN.x + 2, z = cp ? cp[1] + 1.2 : PEN.z - 2; P.pos.set(x, hAt(x, z), z); c.msg && c.msg(cp ? '⛺ Back at your camp — the dead cannot get in' : 'Safe inside the pen — the dead cannot get in', 2.5); /* v102 camp respawn */ } }
+    if (Z.dead > 0) { Z.dead -= dt; if (Z.dead <= 0) { Z.dead = 0; Z.hp = ZSET.playerHp; const cp = H.campPos, hm = !cp && H.homePos, x = cp ? cp[0] + 1.2 : hm ? hm[0] : PEN.x + 2, z = cp ? cp[1] + 1.2 : hm ? hm[1] : PEN.z - 2; P.pos.set(x, hm ? hm[2] + .05 : hAt(x, z), z); if (hm) setTimeout(() => c.msg && c.msg('🏠 You wake in your rooms above the Chinatown shop', 3), 300); /* v296 Chinatown home */ c.msg && c.msg(cp ? '⛺ Back at your camp — the dead cannot get in' : 'Safe inside the pen — the dead cannot get in', 2.5); /* v102 camp respawn */ } }
     else if (Z.t - Z.hurtT > ZSET.regenDelay && Z.hp < ZSET.playerHp) Z.hp = Math.min(ZSET.playerHp, Z.hp + ZSET.regen * (H.regenMul || 1) * dt);
     Z.flash = Math.max(0, Z.flash - dt * 1.4); H.dead = Z.dead > 0; if (H.burnT > 0) { H.burnT -= dt; if (!Z.dead) { Z.hp = Math.max(1, Z.hp - 5 * dt); Z.flash = Math.max(Z.flash, .25); } }
     for (const h of H.horses) { if (h.hp == null) h.hp = ZSET.horseHp; if (h.panic > 0) h.panic -= dt; if (h.hp < ZSET.horseHp && (inPenSafe(h.pos.x, h.pos.z) || (Z.t % 1 < dt && h.panic <= 0))) h.hp = Math.min(ZSET.horseHp, h.hp + (inPenSafe(h.pos.x, h.pos.z) ? 12 : 2) * dt); }

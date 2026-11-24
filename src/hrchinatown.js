@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=295';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=295';
-import { mergeStatic } from './hrmerge.js?v=295';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=296';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=296';
+import { mergeStatic } from './hrmerge.js?v=296';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -488,6 +488,10 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     const face = new THREE.Mesh(new THREE.CircleGeometry(.62, 32), new THREE.MeshStandardMaterial({ map: ft, roughness: .6, emissive: 0xfff0c0, emissiveMap: ft, emissiveIntensity: .05 })); g.add(face); const rim = new THREE.Mesh(new THREE.TorusGeometry(.64, .05, 6, 32), M.gold); g.add(rim);
     const hm = new THREE.Mesh(new THREE.BoxGeometry(.05, .34, .02).translate(0, .15, .02), M.black), mm = new THREE.Mesh(new THREE.BoxGeometry(.035, .5, .02).translate(0, .23, .03), M.black); g.add(hm, mm); scene.add(g); H.cullAdd && H.cullAdd(g, 120, { x, z }); return { hm, mm, face, last: -1 }; })();
   function clockTick() { if (!CLK) return; const d = new Date(), m = d.getMinutes() + d.getSeconds() / 60, hh = (d.getHours() % 12) + m / 60; if (Math.abs(m - CLK.last) < .05) return; CLK.last = m; CLK.mm.rotation.z = -m / 60 * Math.PI * 2; CLK.hm.rotation.z = -hh / 12 * Math.PI * 2; CLK.face.material.emissiveIntensity = .05 + (H.night || 0) * .6; }
+
+  // ---------- v296 a HOME in Chinatown: rent the rooms above the print shop and you respawn there (when you have no camp pitched) ----------
+  const HOME = (() => { const hb = built.find(b => b.shop[1] === 'PRINT SHOP') || built[3]; const [x, z] = toW(hb, W / 2 - 1, DP / 2 + 1.6), y = y0 + F1; const sp = spot(hb, W / 2 - 1, F1, DP / 2 + 1.6, 'ct_home', '', 1.6); const set = () => { const S = st(); sp.label = S.ctHome ? '🏠 Your rooms - rest here (heal)' : '🏠 Rent these rooms as your home (3000 pts · respawn here)'; if (S.ctHome) H.homePos = [x, z, y]; }; set(); return { sp, set }; })();
+  const prevUse8 = T.onUse; T.onUse = o => { if (o === HOME.sp) { const S = st(); if (S.ctHome) { heal(100); msg('🏠 You rest in your own rooms. Home.', 2.2); } else if (pay(3000)) { S.ctHome = 1; HOME.set(); msg('🏠 The rooms are yours! If you fall (and have no camp pitched) you\'ll wake up here.', 4); } return true; } return prevUse8 ? prevUse8(o) : false; };
 
   // ---------- per frame ----------
   let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0, musT = 2, musI = 3, incT = 0, swT = 0, chatT = 0, chimeT = 3, chimT = 0, errT = 0, memT = 3;

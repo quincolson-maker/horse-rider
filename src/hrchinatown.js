@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=228';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=228';
-import { mergeStatic } from './hrmerge.js?v=228';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=229';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=229';
+import { mergeStatic } from './hrmerge.js?v=229';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -212,6 +212,9 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   cyl(D, M.stone, 0, .35, 0, 1.6, .7, 20); cyl(D, M.gold, 0, 1.1, 0, .9, .9, 16, .65); for (const a of [0, 2.1, 4.2]) cyl(D, M.gold, Math.cos(a) * .7, .75, Math.sin(a) * .7, .08, .6, 6); for (let k = 0; k < 3; k++) cyl(D, M.red, -.2 + k * .2, 1.85, 0, .015, .6, 4);
   for (let k = 0; k < 12; k++) wall(D, Math.cos(k / 12 * 6.283) * 1.65, Math.sin(k / 12 * 6.283) * 1.65, Math.cos((k + 1) / 12 * 6.283) * 1.65, Math.sin((k + 1) / 12 * 6.283) * 1.65, -1, 1.2);
   spot(D, 0, 0, 0, 'ct_urn', '🕯️ Burn a joss stick at the urn', 2.6);
+  // v229 lantern riddles: a frame of paper lanterns by the crossing, each with a riddle on its tassel
+  { const rx = -7.5, rz = -7.5; for (const dx of [-1.2, 1.2]) cyl(D, M.red, rx + dx, 1.4, rz, .06, 2.8, 8); box(D, M.red, rx, 2.8, rz, 2.8, .12, .12); for (let k = 0; k < 4; k++) { sph(D, M.lamp, rx - 1.0 + k * .66, 2.35, rz, .22, 1.3); box(D, M.gold, rx - 1.0 + k * .66, 1.95, rz, .03, .3, .03); box(D, M.paper, rx - 1.0 + k * .66, 1.72, rz, .12, .2, .01); }
+    spot(D, rx, 0, rz - .9, 'ct_riddle', '🏮 Lantern riddles (guess right for points)', 2); }
   // v224 night market: food stalls along the cross street (steam rises after dark)
   const STALL = [['🍢 Skewers off the grill (10 pts)', 0xc0392b], ['🥟 Steamed dumplings (10 pts)', 0xe6dcc4], ['🍠 Roast sweet potato (10 pts)', 0x8a5a2a], ['🍵 Almond tea (10 pts)', 0x2f5d50], ['🥮 Sesame balls (10 pts)', 0xb8862e], ['🍜 Wonton soup (10 pts)', 0x9a3324]], stalls = [];
   STALL.forEach(([lab, col], i) => { const x = (i < 3 ? -1 : 1) * (10 + (i % 3) * 7), z = 3.0, cm = fmat(col); box(D, M.wood, x, .5, z, 2.2, 1.0, 1.1); box(D, M.plank, x, 1.03, z, 2.3, .06, 1.2); for (const [dx, dz] of [[-1.05, -.5], [1.05, -.5], [-1.05, .5], [1.05, .5]]) box(D, M.wood, x + dx, 1.2, z + dz, .07, 2.4, .07);
@@ -245,6 +248,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (k === 'theatre') { if (S.ctOpera === day()) msg('🎭 Tonight\'s performance is over - come back tomorrow', 2); else { S.ctOpera = day(); earn(100); msg('🎭 Gongs, cymbals and a soaring voice - the crowd roars (+100)', 3); if (sfx.tone && sfx.ctx) [523, 587, 659, 784, 659, 587, 523, 440].forEach((f, i) => setTimeout(() => { sfx.tone('triangle', f, f, .08, .3); if (i % 2 === 0) sfx.nz && sfx.nz('highpass', 5000, .7, .1, .25); }, i * 260)); } }
     else if (k === 'bed') { heal(100); msg('🛏️ You stretch out for a while - rested and healed', 2.2); S.ctRest = (S.ctRest || 0) + 1; }
     else if (k === 'stall') { if (pay(10)) { heal(30); msg(o.food || '🍢 Skewers off the grill', 1.8); S.ctFood = (S.ctFood || 0) + 1; } }
+    else if (k === 'riddle') { riddle(); }
     else if (k === 'view') { msg('🏮 Lanterns, tiled eaves and the range beyond', 2); S.ctView = 1; }
     else msg('Fine work - but nothing you need today', 1.6);
     if (o.shopName) { const v = new Set(S.ctShops || []); v.add(o.shopName); S.ctShops = [...v]; }
@@ -283,6 +287,17 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     if (sfx.tone && sfx.ctx && near) { DR.beat = (DR.beat || 0) - dt; if (DR.beat <= 0) { DR.beat = .42; DR.b = (DR.b || 0) + 1; sfx.tone('sine', 95, 60, .35, .18); if (DR.b % 4 === 3) sfx.nz && sfx.nz('highpass', 4500, .6, .14, .35); if (DR.b % 8 === 7) sfx.tone('sine', 140, 132, .15, 1.2); } }
     if (z0 - DR.NS * .95 > E + 6) { DR.on = false; DR.g.visible = false; } }
   const prevUse2 = T.onUse; T.onUse = o => { if (o && o.kind === 'ct_hall' && !DR.on && DR.gcool <= 0) { DR.gcool = 180; setTimeout(() => startDragon('🐉 The gong calls out the dragon!'), 1500); } return prevUse2 ? prevUse2(o) : false; };
+
+  const RID = [['What has keys but can\'t open a lock?', 'A piano', 'A jailer', 'A map'], ['What gets wetter the more it dries?', 'A towel', 'A river', 'A sponge cake'], ['What has a face and two hands but no arms or legs?', 'A clock', 'A scarecrow', 'A playing card'],
+    ['What has a neck but no head?', 'A bottle', 'A shirt collar', 'A guitar case'], ['The more you take, the more you leave behind. What are they?', 'Footsteps', 'Coins', 'Photographs'], ['What travels the world but stays in a corner?', 'A stamp', 'The moon', 'A spider'],
+    ['What has many teeth but cannot bite?', 'A comb', 'A saw', 'A crocodile skull'], ['What runs but never walks, has a mouth but never talks?', 'A river', 'A clock', 'A train'], ['What belongs to you, but others use it more than you?', 'Your name', 'Your horse', 'Your hat'],
+    ['What can you catch but not throw?', 'A cold', 'A fish', 'A train'], ['What has an eye but cannot see?', 'A needle', 'A storm', 'A potato'], ['What goes up but never comes down?', 'Your age', 'Smoke', 'A kite'],
+    ['What is full of holes but still holds water?', 'A sponge', 'A net', 'A sieve'], ['What has a head and a tail but no body?', 'A coin', 'A comet', 'A snake'], ['What comes once in a minute, twice in a moment, but never in a thousand years?', 'The letter M', 'A heartbeat', 'A blink']];
+  let rEl = null; function riddle() { const S = st(), d = day(); if (S.ctRidDay !== d) { S.ctRidDay = d; S.ctRidN = 0; } if ((S.ctRidN || 0) >= 5) { msg('🏮 You\'ve read every lantern tonight - new riddles tomorrow', 2.2); return; }
+    const q = RID[(d * 7 + (S.ctRidN || 0) * 5) % RID.length], opts = [q[1], q[2], q[3]].sort(() => Math.random() - .5);
+    if (!rEl) { rEl = document.createElement('div'); rEl.id = 'ctRiddle'; rEl.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:80;background:#2a120e;border:3px solid #d4a640;border-radius:14px;color:#f6e6c0;font:600 16px Georgia,serif;padding:16px 18px;max-width:min(92vw,420px);text-align:center;box-shadow:0 8px 30px #000a'; document.body.appendChild(rEl); }
+    rEl.innerHTML = `<div style="font:900 13px system-ui;letter-spacing:.1em;color:#e8b23a;margin-bottom:6px">🏮 LANTERN RIDDLE ${(S.ctRidN || 0) + 1} / 5</div><div style="margin-bottom:12px">${q[0]}</div>` + opts.map(o => `<button data-a="${o}" style="display:block;width:100%;margin:6px 0;padding:10px;border-radius:10px;border:2px solid #d4a640;background:#7a1c14;color:#fff3d6;font:700 15px system-ui">${o}</button>`).join('');
+    rEl.hidden = false; H.uiOpen = true; try { document.exitPointerLock && document.exitPointerLock(); } catch (_) {} for (const b of rEl.querySelectorAll('button')) b.onclick = () => { const ok = b.dataset.a === q[1]; S.ctRidN = (S.ctRidN || 0) + 1; rEl.hidden = true; H.uiOpen = false; S.ctRidDone = 1; if (ok) { earn(150); S.ctRiddles = (S.ctRiddles || 0) + 1; msg('🏮 Correct! +150', 2); sfx.tone && sfx.ctx && [784, 988, 1175].forEach((f, i) => setTimeout(() => sfx.tone('triangle', f, f, .06, .3), i * 110)); } else msg('🏮 Not quite - it was "' + q[1] + '"', 2.5); }; }
 
   // ---------- per frame ----------
   let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0, musT = 2, musI = 3;

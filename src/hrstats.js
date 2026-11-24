@@ -9,7 +9,9 @@ export function createStats({ H, msg }) {
     { t: 'Rope 6 zombies with the lasso', n: 6, v: () => st('lassos'), pay: 1200 }, { t: 'Drop 25 zombies with the coach gun', n: 25, v: () => st('k_shotgun'), pay: 1400 },
     { t: 'Burst 5 bloaters', n: 5, v: () => st('zk_bloater'), pay: 1200 }, { t: 'Put down 4 armored lawmen', n: 4, v: () => st('zk_lawman'), pay: 1300 },
     { t: 'Crush 10 crawlers', n: 10, v: () => st('zk_crawler'), pay: 1200 }, { t: 'Hunt 3 deer', n: 3, v: () => st('deer'), pay: 1000 }, { t: 'Catch 4 fish', n: 4, v: () => st('fish'), pay: 1000 },
-    { t: 'Drop 30 zombies with the six-shooter', n: 30, v: () => st('k_revolver'), pay: 1300 }, { t: 'Repel a night raid', n: 1, v: () => st('raids'), pay: 2000 } ];
+    { t: 'Drop 30 zombies with the six-shooter', n: 30, v: () => st('k_revolver'), pay: 1300 }, { t: 'Repel a night raid', n: 1, v: () => st('raids'), pay: 2000 },
+    { t: 'Put down 8 undead coyotes', n: 8, v: () => st('zk_coyote'), pay: 1300 }, { t: 'Drop 5 torch-bearers', n: 5, v: () => st('zk_torch'), pay: 1200 }, { t: 'Pick up 10 bits of loot', n: 10, v: () => st('loot'), pay: 1100 },
+    { t: 'Win 3 arm-wrestling matches', n: 3, v: () => st('armWins'), pay: 1000 }, { t: 'Strike gold panning 3 times', n: 3, v: () => st('panned'), pay: 1000 }, { t: 'Rope 4 zombies and drag them', n: 4, v: () => st('lassos'), pay: 1100 } ];
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
   const pickFor = day => { let h = 7; for (const ch of day) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return DAILY[h % DAILY.length]; };
   let D = (() => { try { return JSON.parse(localStorage.getItem('hr_daily') || 'null'); } catch (_) { return null; } })();

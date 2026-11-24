@@ -2,10 +2,10 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
-import { mergeStatic } from './hrmerge.js?v=363';
+import { mergeStatic } from './hrmerge.js?v=364';
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=363';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=363';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=364';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=364';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['dining', 11], ['express', 10], ['caboose', 7]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
@@ -13,7 +13,7 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
   // ---------- choose the loop ----------
   // v77 THE MOUNTAIN LINE: one grand loop round the whole map - out of Dry Gulch, up through the foothills and every ridge
   // (rock tunnels where the mountain is higher than the grade, timber trestles where the ground falls away), six stations
-  let STATIONS = [], TUN = [], SPUR = null, CONDUCTOR = null, callAt = -1;
+  let STATIONS = [], TUN = [], SPUR = null, CONDUCTOR = null, callAt = -1, STLAMP = null;
   function plan() { const town = H.places && H.places.town; if (!town) return false; const W = (H.WALK || 1000) - 80;
     const WP = [[town[0] + 40, town[1] - 105, 'Dry Gulch'], [-200, -470], [-500, -520, 'Eagle Pass'], [-660, -150], [-560, 330, 'Silver Ridge'], [-250, 630], [150, 660, 'North Pass'], [520, 520], [640, 120, 'Summit Junction'], [560, -150], [430, -330, 'Outlaw Flats'], [260, -320]];
     const curve = new THREE.CatmullRomCurve3(WP.map(([x, z]) => new THREE.Vector3(Math.max(-W, Math.min(W, x)), 0, Math.max(-W, Math.min(W, z)))), true, 'centripetal', .5);
@@ -82,7 +82,7 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
     { const LP = []; TUN.forEach(([a, b]) => { for (let i = a + 3; i < b - 2; i += 5) { at(path.cum[i], p, t); const rx = t.z, rz = -t.x, rl = Math.hypot(rx, rz) || 1; for (const sd of [-1, 1]) LP.push([p.x + rx / rl * sd * (Wd - .25), p.y + 2.6, p.z + rz / rl * sd * (Wd - .25)]); } });
       if (LP.length) { const lm = new THREE.InstancedMesh(new THREE.SphereGeometry(.16, 8, 6).scale(1, 1.3, 1), new THREE.MeshBasicMaterial({ color: 0xffc070 }), LP.length), m4 = new THREE.Matrix4(); LP.forEach(([x, y, z], i) => { m4.makeTranslation(x, y, z); lm.setMatrixAt(i, m4); }); lm.frustumCulled = false; lm.name = 'tunnel lamps'; scene.add(lm); } } /* v338 lamps light the way through every tunnel */
     return TUN.length; }
-  function buildStations() { const T = H.town2; const p = new THREE.Vector3(), t = new THREE.Vector3(); const wood0 = new THREE.MeshStandardMaterial({ color: 0x6a4a2c, roughness: .85 }), dk = new THREE.MeshStandardMaterial({ color: 0x3a2818, roughness: .8 }), roof0 = new THREE.MeshStandardMaterial({ color: 0x7a2a1e, roughness: .7 }), lampM = new THREE.MeshStandardMaterial({ color: 0x222, emissive: 0xffd08a, emissiveIntensity: 2 });
+  function buildStations() { const T = H.town2; const p = new THREE.Vector3(), t = new THREE.Vector3(); const wood0 = new THREE.MeshStandardMaterial({ color: 0x6a4a2c, roughness: .85 }), dk = new THREE.MeshStandardMaterial({ color: 0x3a2818, roughness: .8 }), roof0 = new THREE.MeshStandardMaterial({ color: 0x7a2a1e, roughness: .7 }), lampM = STLAMP = new THREE.MeshStandardMaterial({ color: 0x222, emissive: 0xffd08a, emissiveIntensity: 2 });
     const bamboo = new THREE.MeshStandardMaterial({ color: 0xc8a868, roughness: .8 }), thatch = new THREE.MeshStandardMaterial({ color: 0xb08a4a, roughness: 1 });
     STATIONS.forEach((st, k) => { const trop = st.name === 'Paradise Cove', wood = trop ? bamboo : wood0, roof = trop ? thatch : roof0; at(st.s, p, t); const side = new THREE.Vector3(t.z, 0, -t.x).normalize(), c = p.clone().addScaledVector(side, 3.25), g = new THREE.Group(); g.position.copy(c); g.rotation.y = Math.atan2(t.x, t.z); scene.add(g); const gy = hAt(c.x, c.z), deckY = Math.max(p.y + .6, gy + .25) - c.y;
       const deck = new THREE.Mesh(new THREE.BoxGeometry(3, .2, 26), wood); deck.position.y = deckY; deck.receiveShadow = deck.castShadow = true; g.add(deck); const edge = new THREE.Mesh(new THREE.BoxGeometry(.25, .22, 26), new THREE.MeshStandardMaterial({ color: 0xd8c070 })); edge.position.set(-1.4, deckY + .01, 0); g.add(edge);
@@ -194,6 +194,7 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
         const q4 = Math.floor(drv / (Math.PI / 2)); if (q4 !== lastQ && VNOW > .4) { lastQ = q4; const dd = Math.hypot(P.pos.x - c.g.position.x, P.pos.z - c.g.position.z); if (dd < 160 && sfx && sfx.ctx && sfx.nz) sfx.nz('lowpass', 900 + VNOW * 30, .8, Math.min(.12, 3 / Math.max(8, dd)) * (q4 % 2 ? .7 : 1), .18); if (dd < 300) { tmp.set(0, 5.2, 3.1).applyQuaternion(c.g.quaternion).add(c.g.position); sp.set([tmp.x, tmp.y, tmp.z], si * 3); sAge[si] = 0; si = (si + 1) % SN; } } } }
     const L0 = cars[0]; if (!L0.lamp) { const lm = new THREE.Mesh(new THREE.CylinderGeometry(.28, .32, .4, 12), new THREE.MeshBasicMaterial({ color: 0xfff2c0 })); lm.rotation.x = Math.PI / 2; lm.position.set(0, 3.3, 4.7); L0.g.add(lm);
       const cg = new THREE.ConeGeometry(4, 26, 16, 1, true); cg.translate(0, -13, 0); cg.rotateX(-Math.PI / 2); const cone = new THREE.Mesh(cg, new THREE.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false })); cone.position.set(0, 3.3, 4.8); L0.g.add(cone); L0.lamp = { lm, cone }; } // v199 headlamp
+    { const n = H.night || 0; M.glass.emissiveIntensity = .4 + n * 2.2; if (STLAMP) STLAMP.emissiveIntensity = .3 + n * 3; } /* v364 coach windows glow warm after dark */
     { const n = H.night || 0; L0.lamp.cone.material.opacity = Math.max(0, n - .35) * .16; L0.lamp.cone.visible = n > .4; L0.lamp.lm.material.color.setScalar(.55 + .45 * Math.min(1, n * 1.5)); }
     const loco = cars[0]; H.trainPos = [loco.g.position.x, loco.g.position.z]; const dl = Math.hypot(P.pos.x - loco.g.position.x, P.pos.z - loco.g.position.z);
     sT -= dt; if (sT <= 0 && dl < 400) { sT = .12; tmp.set(0, 5.2, 3.1).applyQuaternion(loco.g.quaternion).add(loco.g.position); sp.set([tmp.x, tmp.y, tmp.z], si * 3); sAge[si] = 0; si = (si + 1) % SN; }

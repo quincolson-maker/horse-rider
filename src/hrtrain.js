@@ -2,10 +2,10 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
-import { mergeStatic } from './hrmerge.js?v=329';
+import { mergeStatic } from './hrmerge.js?v=330';
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=329';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=329';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=330';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=330';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['express', 10]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
@@ -13,14 +13,22 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
   // ---------- choose the loop ----------
   // v77 THE MOUNTAIN LINE: one grand loop round the whole map - out of Dry Gulch, up through the foothills and every ridge
   // (rock tunnels where the mountain is higher than the grade, timber trestles where the ground falls away), six stations
-  let STATIONS = [], TUN = [];
+  let STATIONS = [], TUN = [], SPUR = null;
   function plan() { const town = H.places && H.places.town; if (!town) return false; const W = (H.WALK || 1000) - 80;
     const WP = [[town[0] + 40, town[1] - 105, 'Dry Gulch'], [-200, -470], [-500, -520, 'Eagle Pass'], [-660, -150], [-560, 330, 'Silver Ridge'], [-250, 630], [150, 660, 'North Pass'], [520, 520], [640, 120, 'Summit Junction'], [560, -150], [430, -330, 'Outlaw Flats'], [260, -320]];
     const curve = new THREE.CatmullRomCurve3(WP.map(([x, z]) => new THREE.Vector3(Math.max(-W, Math.min(W, x)), 0, Math.max(-W, Math.min(W, z)))), true, 'centripetal', .5);
-    const n = Math.round(curve.getLength() / 4), P2 = curve.getSpacedPoints(n).slice(0, n).map(v => [v.x, 0, v.z]);
+    const n = Math.round(curve.getLength() / 4); let P2 = curve.getSpacedPoints(n).slice(0, n).map(v => [v.x, 0, v.z]);
+    // v330 THE COVE LINE: at Summit Junction a spur leaves the loop, tunnels east through the mountains and drops to Paradise Cove,
+    // where a balloon loop turns the train round; it runs back up the same track and rejoins the loop. (Out and back share the track.)
+    let J0 = 0; { let bd = 1e18; P2.forEach((q, k) => { const d = (q[0] - 640) ** 2 + (q[2] - 120) ** 2; if (d < bd) { bd = d; J0 = k; } }); }
+    const sc = new THREE.CatmullRomCurve3([[P2[J0][0], P2[J0][2]], [700, 112], [790, 92], [880, 98], [960, 140], [1030, 196], [1075, 218]].map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal', .5);
+    const ns = Math.round(sc.getLength() / 4), out = sc.getSpacedPoints(ns).map(v => [v.x, 0, v.z]); const BC = [1075, 250], BR = 32, nb = Math.round(2 * Math.PI * BR / 4), bal = [];
+    for (let k = 1; k < nb; k++) { const a2 = -Math.PI / 2 + k / nb * Math.PI * 2; bal.push([BC[0] + Math.cos(a2) * BR, 0, BC[1] + Math.sin(a2) * BR]); }
+    const rev = out.slice(1).reverse(); P2 = [...P2.slice(0, J0 + 1), ...out.slice(1), ...bal, ...rev, ...P2.slice(J0)]; const B0 = J0 + ns + bal.length + 1; SPUR = { J0, ns, nb: bal.length, B0, out0: J0 + 1, back0: B0, back1: B0 + ns };
     const g = P2.map(p => hAt(p[0], p[2])), N2 = P2.length; let y = g.slice();
     // stations: nearest sample to each named waypoint; the grade is pinned to the ground there
-    STATIONS = WP.filter(w => w[2]).map(([x, z, name]) => { let bi = 0, bd = 1e18; P2.forEach((p, k) => { const d = (p[0] - x) ** 2 + (p[2] - z) ** 2; if (d < bd) { bd = d; bi = k; } }); return { name, i: bi }; });
+    { const sx = BC[0] + BR, sz = BC[1]; let bi = 0, bd = 1e18; for (let k = J0 + ns; k < B0; k++) { const d = (P2[k][0] - sx) ** 2 + (P2[k][2] - sz) ** 2; if (d < bd) { bd = d; bi = k; } } SPUR.cove = bi; }
+    STATIONS = [...WP.filter(w => w[2]), [0, 0, 'Paradise Cove']].map(([x, z, name]) => { if (name === 'Paradise Cove') return { name, i: SPUR.cove }; let bi = 0, bd = 1e18; P2.forEach((p, k) => { const d = (p[0] - x) ** 2 + (p[2] - z) ** 2; if (d < bd) { bd = d; bi = k; } }); return { name, i: bi }; });
     const pin = new Float32Array(N2).fill(0); for (const st of STATIONS) for (let k = -12; k <= 12; k++) pin[(st.i + k + N2) % N2] = 1 - Math.abs(k) / 13;
     for (let it = 0; it < 3; it++) { const w = 6, ny = new Array(N2); for (let i = 0; i < N2; i++) { let a = 0; for (let k = -w; k <= w; k++) a += y[(i + k + N2) % N2]; ny[i] = a / (2 * w + 1); } y = ny.map((v, i) => v + (g[i] - v) * pin[i]); }
     const GR = .18 * 4; for (let pass = 0; pass < 8; pass++) { for (let i = 1; i < N2 * 2; i++) { const a = (i - 1) % N2, b = i % N2; y[b] = Math.max(y[a] - GR, Math.min(y[a] + GR, y[b])); } for (let i = N2 * 2; i > 0; i--) { const a = i % N2, b = (i - 1) % N2; y[b] = Math.max(y[a] - GR, Math.min(y[a] + GR, y[b])); } } // v77: 12% mountain grade, no hard pins (no cliffs)
@@ -29,9 +37,10 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
       for (let it = 0; it < 40; it++) for (let k = 0; k < ord.length; k++) { const a = ord[k], b = ord[(k + 1) % ord.length], d = ((b.i - a.i + N2) % N2) * 4, lim = G1 * d; const kb = (k + 1) % ord.length; if (ord[kb].name !== 'Dry Gulch') tgt[kb] = Math.max(tgt[k] - lim, Math.min(tgt[k] + lim, tgt[kb])); if (ord[k].name !== 'Dry Gulch') tgt[k] = Math.max(tgt[kb] - lim, Math.min(tgt[kb] + lim, tgt[k])); } // Dry Gulch (by town) is the anchor
       const fix = new Uint8Array(N2), Wn = 60; ord.forEach((st, si) => { const T0 = tgt[si]; st.y = T0; for (let k = -Wn; k <= Wn; k++) { const i = (st.i + k + N2) % N2, w = Math.abs(k) <= 4 ? 1 : (t => t * t * (3 - 2 * t))(1 - (Math.abs(k) - 4) / (Wn - 4)); y[i] = y[i] + (T0 - y[i]) * w; if (Math.abs(k) <= 4) { y[i] = T0; fix[i] = 1; } } });
       const G2 = .2 * 4; for (let pass = 0; pass < 12; pass++) { for (let i = 1; i < N2 * 2; i++) { const a = (i - 1) % N2, b = i % N2; if (!fix[b]) y[b] = Math.max(y[a] - G2, Math.min(y[a] + G2, y[b])); } for (let i = N2 * 2; i > 0; i--) { const a = i % N2, b = (i - 1) % N2; if (!fix[b]) y[b] = Math.max(y[a] - G2, Math.min(y[a] + G2, y[b])); } } }
+    for (let i = 1; i <= SPUR.ns; i++) y[SPUR.B0 + SPUR.ns - i] = y[SPUR.J0 + i]; y[SPUR.B0 + SPUR.ns] = y[SPUR.J0]; /* v330 the way back rides the same rails */
     for (let i = 0; i < N2; i++) P2[i][1] = y[i] + .35;
     // tunnels: runs where the ground stands more than 1.2 m over the rails (min 6 samples)
-    TUN = []; let st = -1; for (let i = 0; i <= N2; i++) { const under = i < N2 && g[i] > P2[i][1] + 4; if (under && st < 0) st = i; if (!under && st >= 0) { if (i - st >= 6) TUN.push([Math.max(0, st - 2), Math.min(N2 - 1, i + 1)]); st = -1; } }
+    TUN = []; let st = -1; for (let i = 0; i <= N2; i++) { const under = i < N2 && g[i] > P2[i][1] + 4; if (under && st < 0) st = i; if (!under && st >= 0) { if (i - st >= 6 && !(st >= SPUR.B0 - 1 && st <= SPUR.B0 + SPUR.ns)) TUN.push([Math.max(0, st - 2), Math.min(N2 - 1, i + 1)]); st = -1; } }
     path = P2; const cum = [0]; for (let i = 1; i <= N2; i++) { const a = P2[i - 1], b = P2[i % N2]; cum.push(cum[i - 1] + Math.hypot(b[0] - a[0], b[2] - a[2], b[1] - a[1])); } L = cum[N2]; path.cum = cum;
     for (const S0 of STATIONS) S0.s = cum[S0.i]; STATIONS.sort((a, b) => a.s - b.s); buildSchedule(); return true; }
   // timetable: run (trapezoid speed: ACC s to accelerate / brake) to the next station, dwell, repeat - a pure function of the wall clock, same for everyone
@@ -50,8 +59,9 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
     const rn = Math.floor(L / 2.6), railG = new THREE.BoxGeometry(.1, .14, 2.62), rails = new THREE.InstancedMesh(railG, new THREE.MeshStandardMaterial({ color: 0x6a6a72, metalness: .7, roughness: .4 }), rn * 2);
     const bedG = new THREE.BoxGeometry(3.6, .5, 2.62), bed = new THREE.InstancedMesh(bedG, new THREE.MeshStandardMaterial({ color: 0x8a7a66, roughness: 1 }), rn);
     const postG = new THREE.CylinderGeometry(.18, .22, 1, 6), posts = [], m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(1, 1, 1), p = new THREE.Vector3(), t = new THREE.Vector3();
-    for (let i = 0; i < n; i++) { at(i * 1.3, p, t); e.set(0, Math.atan2(t.x, t.z), 0); q.setFromEuler(e); m4.compose(p, q, sc); ties.setMatrixAt(i, m4); }
-    for (let i = 0; i < rn; i++) { at(i * 2.6 + 1.3, p, t); const yaw = Math.atan2(t.x, t.z), pitch = -Math.asin(Math.max(-1, Math.min(1, t.y))); e.set(pitch, yaw, 0, 'YXZ'); q.setFromEuler(e);
+    const sb0 = path.cum[SPUR.B0] + .5, sb1 = path.cum[SPUR.B0 + SPUR.ns] - .5, skipS = sv => sv > sb0 && sv < sb1; /* v330 don't lay the spur twice */
+    for (let i = 0; i < n; i++) { at(i * 1.3, p, t); if (skipS(i * 1.3)) { m4.makeScale(0, 0, 0); ties.setMatrixAt(i, m4); continue; } e.set(0, Math.atan2(t.x, t.z), 0); q.setFromEuler(e); m4.compose(p, q, sc); ties.setMatrixAt(i, m4); }
+    for (let i = 0; i < rn; i++) { at(i * 2.6 + 1.3, p, t); if (skipS(i * 2.6 + 1.3)) { m4.makeScale(0, 0, 0); rails.setMatrixAt(i * 2, m4); rails.setMatrixAt(i * 2 + 1, m4); bed.setMatrixAt(i, m4); continue; } const yaw = Math.atan2(t.x, t.z), pitch = -Math.asin(Math.max(-1, Math.min(1, t.y))); e.set(pitch, yaw, 0, 'YXZ'); q.setFromEuler(e);
       for (const sd of [-.72, .72]) { const v = new THREE.Vector3(sd, .14, 0).applyQuaternion(q).add(p); m4.compose(v, q, sc); rails.setMatrixAt(i * 2 + (sd > 0 ? 1 : 0), m4); }
       const gnd = hAt(p.x, p.z); const v = p.clone(); v.y -= .3; m4.compose(v, q, sc); bed.setMatrixAt(i, m4); if (p.y - gnd > 1.4 && i % 3 === 0) for (const sd of [-1.2, 1.2]) { const pv = new THREE.Vector3(sd, 0, 0).applyQuaternion(q).add(p); posts.push([pv.x, gnd, pv.z, p.y - gnd]); } }
     const tr = new THREE.InstancedMesh(postG, new THREE.MeshStandardMaterial({ color: 0x5a3e24, roughness: .9 }), Math.max(1, posts.length)); posts.forEach(([x, y, z, h], i) => { m4.compose(p.set(x, y + h / 2 - .3, z), q.identity(), sc.set(1, h + .2, 1)); tr.setMatrixAt(i, m4); }); tr.count = posts.length; sc.set(1, 1, 1);

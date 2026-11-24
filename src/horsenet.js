@@ -5,11 +5,11 @@
 // lobby. Transport is the existing PeerJS co-op star (src/coop.js); voice is the existing mesh (src/voice.js).
 // Synced: each rider's position / facing / walking speed, which horse they ride and its pose; the host is the authority
 // for the free herd (clients mirror it). Guns: other riders see your drawn gun, aim and shots (tracer, flash, smoke, sound) — visual only, no combat.
-import { createNet, MAX_PLAYERS } from './coop.js?v=329';
-import { PERF } from './perfopts.js?v=329';
-import { validCv } from './hrskin.js?v=329';
-import { createVoice } from './voice.js?v=329';
-import { createAdvert, LOBBY_URL } from './lobby.js?v=329';
+import { createNet, MAX_PLAYERS } from './coop.js?v=330';
+import { PERF } from './perfopts.js?v=330';
+import { validCv } from './hrskin.js?v=330';
+import { createVoice } from './voice.js?v=330';
+import { createAdvert, LOBBY_URL } from './lobby.js?v=330';
 const $ = id => document.getElementById(id);
 const QS = new URLSearchParams(location.search);
 const LOOP = QS.get('loopnet') === '1', LOCAL = /^(localhost|127\.|\[::1\])/.test(location.hostname);

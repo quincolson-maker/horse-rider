@@ -27,5 +27,11 @@ export function createAmbient({ scene, H, P, hAt, mobile }) {
     vu.forEach((o, i) => { o.cx += (vc[0] - o.cx) * Math.min(1, dt * .1); o.cz += (vc[1] - o.cz) * Math.min(1, dt * .1); o.a += o.sp * dt; const x = o.cx + Math.cos(o.a) * o.r, z = o.cz + Math.sin(o.a) * o.r, y = hAt(o.cx, o.cz) + o.h + Math.sin(t * .4 + i) * 2;
       E.set(0, -o.a, .35 + Math.sin(t * 1.3 + i) * .08); Q.setFromEuler(E); S.setScalar(1.3); M.compose(V.set(x, y, z), Q, S); VW.setMatrixAt(i, M); }); VW.instanceMatrix.needsUpdate = true; }
   for (const o of vu) { o.cx = P.pos.x; o.cz = P.pos.z; }
-  return { update };
+  // v127 night: shooting stars streak across the sky, and coyotes howl in the distance
+  const starM = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }), star = new THREE.Mesh(new THREE.CylinderGeometry(.0, .35, 26, 5, 1, true), starM); star.frustumCulled = false; scene.add(star);
+  let starT = 12, sk = null, howlT = 25; const sfx = window.__sfx;
+  function night(dt) { const n = H.night || 0; starT -= dt; if (n > .7 && starT <= 0 && !sk) { starT = 18 + Math.random() * 30; const a = Math.random() * 6.28, d = 380; sk = { t: 0, p: new THREE.Vector3(P.pos.x + Math.cos(a) * d, P.pos.y + 230 + Math.random() * 80, P.pos.z + Math.sin(a) * d), v: new THREE.Vector3(Math.cos(a + 1.9), -.35, Math.sin(a + 1.9)).normalize().multiplyScalar(260) }; }
+    if (sk) { sk.t += dt; sk.p.addScaledVector(sk.v, dt); star.position.copy(sk.p); star.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), sk.v.clone().normalize()); starM.opacity = Math.sin(Math.min(1, sk.t / .9) * Math.PI) * .9; if (sk.t > .9) { sk = null; starM.opacity = 0; } }
+    howlT -= dt; if (n > .6 && howlT <= 0) { howlT = 40 + Math.random() * 50; if (!hidden() && sfx && sfx.ctx && sfx.tone) { const b = 480 + Math.random() * 120; sfx.tone('sine', b, b * 1.45, 1.1, .05); setTimeout(() => sfx.tone('sine', b * 1.45, b * 1.1, 1.6, .045), 1000); setTimeout(() => sfx.tone('sine', b * 1.3, b * 1.5, .9, .03), 2300); } } }
+  return { update(dt) { update(dt); night(dt); } };
 }

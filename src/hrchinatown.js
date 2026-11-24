@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=241';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=241';
-import { mergeStatic } from './hrmerge.js?v=241';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=242';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=242';
+import { mergeStatic } from './hrmerge.js?v=242';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -297,7 +297,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     const NL = Math.floor(NS / 2) + 1, IL = new THREE.InstancedMesh(new THREE.BoxGeometry(.35, .9, .25), new THREE.MeshStandardMaterial({ color: 0x1a1a22 }), NL); IL.frustumCulled = false; g.add(IL); const legs = Array.from({ length: NL }, (_, k) => [new THREE.Object3D(), k * 2]);
     return { g, head, segs, legs, IB, IF, IP, IL, NS, on: false, t: 0, cool: 90 + Math.random() * 120, gcool: 0 }; })();
   const startDragon = why => { if (DR.on) return; DR.on = true; DR.t = 0; DR.g.visible = true; msg(why || '🐉 The dragon dance comes down the avenue!', 3); const S = st(); S.ctDragon = (S.ctDragon || 0) + 1; };
-  function dragonTick(dt, me) { const near = Math.hypot(me.x - CX, me.z - CZ) < 120; if (DR.gcool > 0) DR.gcool -= dt; if (!DR.on) { DR.cool -= dt; if (DR.cool <= 0 && near) { DR.cool = 480; startDragon(); } return; }
+  function dragonTick(dt, me) { const near = Math.hypot(me.x - CX, me.z - CZ) < 120; if (DR.gcool > 0) DR.gcool -= dt; if (!DR.on) { const slot = Math.floor(Date.now() / 360000), into = Date.now() / 1000 - slot * 360; if (near && slot !== DR.slot && into < 30) { DR.slot = slot; startDragon(); DR.t = into; } return; } /* v242: the parade runs on the shared clock - every 6 minutes on the dot, so everyone in Chinatown sees the same dragon */
     DR.t += dt; const sp = 2.2, z0 = -E + 2 + DR.t * sp, path = d => { const z = z0 - d; return [Math.sin(z * .35 + DR.t * .8) * 2.2, z]; };
     const place = (o, d, bob) => { const [x, z] = path(d), [x2, z2] = path(d + .6); o.position.set(CX + x, y0 + 2.2 + Math.sin(DR.t * 4 - d * .9) * .45 * bob, CZ + z); o.rotation.y = Math.atan2(x - x2, z - z2); };
     place(DR.head, 0, 1); DR.segs.forEach((sg, i) => { place(sg, (i + 1) * .95, 1); sg.updateMatrix(); DR.IB.setMatrixAt(i, sg.matrix); DR.IF.setMatrixAt(i, sg.matrix); DR.IP.setMatrixAt(i, sg.matrix); }); DR.legs.forEach(([lg, i], k) => { const [x, z] = path(i * .95); lg.position.set(CX + x + Math.sin(DR.t * 9 + i) * .1, y0 + .45, CZ + z); lg.updateMatrix(); DR.IL.setMatrixAt(k, lg.matrix); }); for (const m of [DR.IB, DR.IF, DR.IP, DR.IL]) m.instanceMatrix.needsUpdate = true;

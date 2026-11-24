@@ -9,9 +9,9 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=361';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=361';
-import { mergeStatic } from './hrmerge.js?v=361';
+import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=362';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=362';
+import { mergeStatic } from './hrmerge.js?v=362';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});
@@ -70,7 +70,7 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     // place the board + rider
     const x = R.x, z = R.z, y = surfaceAt(x, z, t), dir = R.dir || [Math.cos(R.a), Math.sin(R.a)], yAir = R.mode === 'air' ? R.air.y : y;
     const ex2 = surfaceAt(x + .5, z, t) - surfaceAt(x - .5, z, t), ez = surfaceAt(x, z + .5, t) - surfaceAt(x, z - .5, t); nrm.set(-ex2, 1, -ez).normalize(); if (R.mode === 'air') nrm.set(0, 1, 0);
-    const yaw = Math.atan2(dir[0], dir[1]); qb.setFromUnitVectors(up, nrm); e3.set(R.mode === 'air' ? R.air.pitch : 0, yaw + (R.mode === 'air' ? R.air.spin : 0), R.mode === 'ride' ? clamp(-R.carve * .45, -.6, .6) : 0, 'YXZ'); q.setFromEuler(e3); brd.quaternion.copy(qb).multiply(q);
+    const yaw = Math.atan2(dir[0], dir[1]); qb.setFromUnitVectors(up, nrm); e3.set(R.mode === 'air' ? R.air.pitch + (R.air.flip || 0) * Math.PI * 2 : 0, yaw + (R.mode === 'air' ? R.air.spin : 0), R.mode === 'ride' ? clamp(-R.carve * .45, -.6, .6) : 0, 'YXZ'); q.setFromEuler(e3); brd.quaternion.copy(qb).multiply(q);
     brd.position.set(x, yAir + (R.mode === 'paddle' ? (R.duck > 0 ? -.6 : .05) : .08), z); if (R.mode === 'wipe') { brd.position.y = y + .1; brd.rotation.z += dt * 6; }
     P.pos.set(x, brd.position.y + (R.mode === 'paddle' ? -.55 : .02), z); H.vy = 0; if (H.fv) H.fv.set(0, 0);
     const av = H.meAv; if (av && av.body) { av.body.visible = !H.fp; av.body.position.copy(P.pos); if (R.mode === 'paddle') { av.body.rotation.set(-1.35, yaw + Math.PI, 0, 'YXZ'); av.body.position.y += .45; } else if (R.mode === 'wipe') { av.body.rotation.set(Math.sin(t * 9) * 2, yaw, Math.cos(t * 7) * 2, 'YXZ'); } else { av.body.rotation.set(0, yaw + Math.PI / 2 + (R.mode === 'air' ? R.air.spin : 0), clamp(R.carve * .25, -.4, .4), 'YXZ'); av.body.position.y -= .05; }
@@ -113,15 +113,15 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     if (QB().nose && Math.abs(Math.cos(R.th)) > .9 && R.sp > 6 && R.u > -A * .7) { r.nose = (r.nose || 0) + dt; if (r.nose > 2 && !r.noseCall) { r.noseCall = 1; flash('🦶 HANG TEN!', 300); } } else { r.nose = 0; r.noseCall = 0; }
     if (R.u > -.6 && R.u < .6 && behind > 0 && behind < 6 && R.sp > 5) { if (!r.fl) { r.fl = 1; flash('🌊 FLOATER', 160); } } else r.fl = 0;
     // launch off the lip
-    if (R.u > -.4 && down < -.3 && R.sp > 6.5 && (jumpEdge || R.sp * -down > 7.5)) { R.mode = 'air'; R.air = { y: surfaceAt(R.x, R.z, t) + .1, vy: 3 + R.sp * .32 * -down, spin: 0, pitch: 0, th0: R.th }; msg('🛫 AIR!', 1); return; }
+    if (R.u > -.4 && down < -.3 && R.sp > 6.5 && (jumpEdge || R.sp * -down > 7.5)) { R.mode = 'air'; R.air = { y: surfaceAt(R.x, R.z, t) + .1, vy: 3 + R.sp * .32 * -down, spin: 0, pitch: 0, th0: R.th, grab: 0, flip: 0 }; msg('🛫 AIR! (A/D spin · S grab · W flip)', 1.2); return; }
     // ends: over the back, outran the wave, caught by the curl
     if (R.u > 1.6) { bank(); R.mode = 'paddle'; R.a = Math.atan2(R.dir[1], R.dir[0]); R.sp = 1; msg('🏄 You kick out over the back', 1.8); return; }
     if (R.sp < 1.4 && face < .06) { bank(); R.mode = 'paddle'; R.sp = .5; R.a = Math.PI; msg('🏄 The wave runs away from you', 1.8); return; }
     if (behind > 6 && R.u > -A * 1.6 && crestX(R.k, R.z, t) < XB + 2) { if (R.sp < 3.5) { bank(); R.mode = 'paddle'; R.sp = .5; R.a = Math.PI; msg('🏄 The wave closes out - you straighten out and ride the foam in', 2); } else wipeout('🌊 The curl caught you!'); return; }
     if (R.x < shoreX(R.z) + 8) { bank(); const sx = shoreX(R.z) - 2; P.pos.set(sx, hAt(sx, R.z), R.z); leave('🏖️ You ride it all the way to the sand'); return; } }
-  function air(dt, t, c) { const a = R.air, r = R.ride; a.vy -= G * dt; a.y += a.vy * dt; a.spin += c.sd * 7.5 * dt; a.pitch = Math.sin(Math.min(1, (a.vy + 6) / 12) * Math.PI) * -.2;
+  function air(dt, t, c) { const a = R.air, r = R.ride; a.vy -= G * dt; a.y += a.vy * dt; a.spin += c.sd * 7.5 * dt; if (c.bk > .5) a.grab = (a.grab || 0) + dt; if (c.fw > .5 && a.vy > 0) a.flip = Math.min(1, (a.flip || 0) + dt * 1.2); a.pitch = Math.sin(Math.min(1, (a.vy + 6) / 12) * Math.PI) * -.2;
     R.u += 2.4 * dt; R.z += -R.sp * Math.cos(R.th) * dt * .6; R.x = crestX(R.k, R.z, t) + R.u; R.dir = [-Math.sin(R.th), -Math.cos(R.th)];
-    const s = surfaceAt(R.x, R.z, t); if (a.y <= s && a.vy < 0) { const turns = a.spin / Math.PI, half = Math.round(turns), off = Math.abs(turns - half); if (off < .3) { const spins = Math.abs(half); R.th = R.th + half * Math.PI; if (spins % 2) R.th += 0; R.th = Math.atan2(Math.sin(R.th), Math.cos(R.th)); if (Math.sin(R.th) < -.2) R.th = Math.PI / 2 * .7 * (Math.cos(R.th) >= 0 ? 1 : -1) + (Math.cos(R.th) < 0 ? Math.PI : 0); R.u = Math.min(R.u, -.3); R.sp *= .85; R.mode = 'ride'; r.airs++; flash(spins >= 2 ? `🔄 ${spins * 180} AIR!` : spins === 1 ? '🔄 180 AIR REVERSE' : '🛬 AIR - stomped!', 350 + spins * 300); }
+    const s = surfaceAt(R.x, R.z, t); if (a.y <= s && a.vy < 0) { const turns = a.spin / Math.PI, half = Math.round(turns), off = Math.abs(turns - half); if (off < .3 && !(a.flip > .2 && a.flip < .9)) { const spins = Math.abs(half); R.th = R.th + half * Math.PI; if (spins % 2) R.th += 0; R.th = Math.atan2(Math.sin(R.th), Math.cos(R.th)); if (Math.sin(R.th) < -.2) R.th = Math.PI / 2 * .7 * (Math.cos(R.th) >= 0 ? 1 : -1) + (Math.cos(R.th) < 0 ? Math.PI : 0); R.u = Math.min(R.u, -.3); R.sp *= .85; R.mode = 'ride'; r.airs++; const grab = (a.grab || 0) > .35, flip = (a.flip || 0) >= .9, clean = off < .1; flash((flip ? '🤸 FLIP ' : '') + (spins >= 2 ? `🔄 ${spins * 180}` : spins === 1 ? '🔄 180 REVERSE' : '🛬 AIR') + (grab ? ' + GRAB' : '') + (clean ? ' · PERFECT' : ''), 350 + spins * 300 + (grab ? 250 : 0) + (flip ? 700 : 0) + (clean ? 150 : 0)); }
       else wipeout('💥 Bad landing!'); } }
   function wipeout(why) { R.why = why + ' u' + R.u.toFixed(1) + ' sp' + R.sp.toFixed(1); const s = S(); s.surfWipes = (s.surfWipes || 0) + 1; R.ride && (score *= .35); bank(); R.mode = 'wipe'; R.wipe = 2.4; R.tube = false; msg(why + ' WIPEOUT', 2.2); if (sfx.nz && sfx.ctx) { sfx.nz('lowpass', 300, 1, .35, 1.2); sfx.nz('bandpass', 1200, .6, .2, .8); } }
   function wipe(dt, t) { R.wipe -= dt; R.x -= 3 * dt; R.z += (Math.random() - .5) * dt; if (R.wipe <= 0) { R.mode = 'paddle'; R.sp = 0; R.a = 0; R.dir = [1, 0]; msg('🏄 You surface and climb back on your board', 2); } }

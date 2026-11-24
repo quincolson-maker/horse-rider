@@ -3,7 +3,7 @@
 // Meshes are left alone if they have children, a name, userData.keep, a multi-material, skinning / instancing,
 // or a custom onBeforeRender (mirrors).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=361';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=362';
 const NOOP = THREE.Object3D.prototype.onBeforeRender;
 const sig = g => Object.keys(g.attributes).sort().join(',') + (g.morphAttributes && Object.keys(g.morphAttributes).length ? '+m' : '');
 export function mergeStatic(root, { minGroup = 2 } = {}) { if (!root) return 0; let saved = 0; const parents = [];

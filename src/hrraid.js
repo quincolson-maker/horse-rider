@@ -29,7 +29,7 @@ export function createRaid({ scene, H, P, hAt, msg, sfx, mobile, fx }) {
     const n = mobile ? 10 : 16, w = z.state.wave || 1; R.total = n + 1;
     for (let b = 0; b < 3; b++) R.spawnQ.push({ t: b * 9, n: b === 2 ? n - 2 * Math.floor(n / 3) : Math.floor(n / 3), boss: b === 2 });
     msg(`🔔 NIGHT RAID! The dead are marching on the ${gateName(gate)} Gate — hold the barricade!`, 5); bell(); H.vib && H.vib(80); }
-  function spawnBurst(q) { const z = Z(), g = R.gate; const kinds = ['walker', 'walker', 'runner', 'crawler', 'lawman', 'bloater', 'runner', 'walker'];
+  function spawnBurst(q) { const z = Z(), g = R.gate; const kinds = ['walker', 'coyote', 'runner', 'crawler', 'lawman', 'bloater', 'torch', 'walker', 'coyote', 'screamer'];
     for (let i = 0; i < q.n + (q.boss ? 1 : 0); i++) { const d = 55 + Math.random() * 20, side = (Math.random() - .5) * 30, tx = -g.nz, tz = g.nx; // tangent
       const x = g.x + g.nx * d + tx * side, zz = g.z + g.nz * d + tz * side, k = q.boss && i === q.n ? 'brute' : kinds[(i + R.waves * 3) % kinds.length];
       try { const o = z.spawnKind(k, [x, zz]); o.raid = R.gate; o.raidSlot = (Math.random() - .5) * g.half * 1.4; R.raiders.push(o); } catch (e) { console.warn('raid spawn', e); } }

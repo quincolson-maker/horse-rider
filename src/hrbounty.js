@@ -85,6 +85,10 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'mclook', title: 'Top of the Headframe', task: 'Climb the headframe at Silver Creek Diggings', pay: 250, p: () => ((H.stats && H.stats.mcLook) || 0) > 0 ? 1 : 0 },
     { id: 'ctcable', title: 'Hold the Brass Pole', task: 'Ride the cable car the length of Chinatown\'s avenue', pay: 200, p: () => ((H.stats && H.stats.ctCable) || 0) > 0 ? 1 : 0 }, /* v311 */
     { id: 'ctjoin', title: 'Join the Dance', task: 'Take a pole in the dragon dance or dance the lion\'s tail in Chinatown', pay: 400, p: () => ((H.stats && ((H.stats.ctDrDance || 0) + (H.stats.ctLnDance || 0))) || 0) > 0 ? 1 : 0 }, /* v321 */
+    { id: 'cove', title: 'Over the Mountains', task: 'Ride the train to Paradise Cove', pay: 400, p: () => ((H.stats && H.stats.coveVisit) || 0) > 0 ? 1 : 0 }, /* v337 */
+    { id: 'surf1', title: 'Learn to Surf', task: 'Catch and ride a wave at Paradise Cove', pay: 500, p: () => ((H.stats && H.stats.surfRides) || 0) > 0 ? 1 : 0 },
+    { id: 'surfbarrel', title: 'Get Barreled', task: 'Ride 1 second inside the barrel of a wave', pay: 1000, p: () => ((H.stats && H.stats.surfTube) || 0) >= 1 ? 1 : 0 },
+    { id: 'surf5', title: 'Five Good Waves', task: 'Ride 5 waves at Paradise Cove', pay: 800, p: () => Math.min(1, ((H.stats && H.stats.surfRides) || 0) / 5), txt: () => `${Math.min(5, ((H.stats && H.stats.surfRides) || 0))} / 5` },
     { id: 'slayer', title: 'Slayer', task: 'Drop 150 zombies', pay: 3000, ...killsSince('slayer', 150) },
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];

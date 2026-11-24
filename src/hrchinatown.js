@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=232';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=232';
-import { mergeStatic } from './hrmerge.js?v=232';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=233';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=233';
+import { mergeStatic } from './hrmerge.js?v=233';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -305,9 +305,21 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     rEl.innerHTML = `<div style="font:900 13px system-ui;letter-spacing:.1em;color:#e8b23a;margin-bottom:6px">🏮 LANTERN RIDDLE ${(S.ctRidN || 0) + 1} / 5</div><div style="margin-bottom:12px">${q[0]}</div>` + opts.map(o => `<button data-a="${o}" style="display:block;width:100%;margin:6px 0;padding:10px;border-radius:10px;border:2px solid #d4a640;background:#7a1c14;color:#fff3d6;font:700 15px system-ui">${o}</button>`).join('');
     rEl.hidden = false; H.uiOpen = true; try { document.exitPointerLock && document.exitPointerLock(); } catch (_) {} for (const b of rEl.querySelectorAll('button')) b.onclick = () => { const ok = b.dataset.a === q[1]; S.ctRidN = (S.ctRidN || 0) + 1; rEl.hidden = true; H.uiOpen = false; S.ctRidDone = 1; if (ok) { earn(150); S.ctRiddles = (S.ctRiddles || 0) + 1; msg('🏮 Correct! +150', 2); sfx.tone && sfx.ctx && [784, 988, 1175].forEach((f, i) => setTimeout(() => sfx.tone('triangle', f, f, .06, .3), i * 110)); } else msg('🏮 Not quite - it was "' + q[1] + '"', 2.5); }; }
 
+  // ---------- v233 ROOFTOP RUN: race the loop of four roofs in the north-east block (over the plank bridges) against the clock ----------
+  const RUN = (() => { const blk = built.filter(b => b.q === built[0].q); if (blk.length < 4) return null; const qc = blk[0].qc; const cps = blk.map(b => { const [x, z] = toW(b, W / 2 + 1, DP / 2 - 1); return [x, z, Math.atan2(x - qc[0], z - qc[1])]; }).sort((a, b) => a[2] - b[2]);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.1, .09, 8, 28), new THREE.MeshBasicMaterial({ color: 0xffc040, transparent: true, opacity: .9 })); ring.visible = false; scene.add(ring);
+    const b0 = blk.find(b => { const [x, z] = toW(b, W / 2 + 1, DP / 2 - 1); return Math.hypot(x - cps[0][0], z - cps[0][1]) < .1; }), sp = spot(b0, W / 2 + 1, RF, DP / 2 - 1, 'ct_run', '🏮 Rooftop run - race the four roofs', 1.6);
+    return { cps, ring, sp, on: false, i: 0, t: 0, lap: 0 }; })();
+  function runTick(dt, me) { if (!RUN || !RUN.on) return; RUN.t += dt; const c = RUN.cps[RUN.i % 4]; RUN.ring.visible = true; RUN.ring.position.set(c[0], y0 + RF + 1.2, c[1]); RUN.ring.rotation.y += dt * 2;
+    if (H.mounted || RUN.t > 120) { RUN.on = false; RUN.ring.visible = false; msg('🏮 Rooftop run abandoned', 1.6); return; }
+    if (Math.hypot(me.x - c[0], me.z - c[1]) < 1.8 && me.y > y0 + RF - .5) { RUN.i++; sfx.tone && sfx.ctx && sfx.tone('triangle', 660 + RUN.i * 110, 660 + RUN.i * 110, .06, .2);
+      if (RUN.i > 4) { RUN.on = false; RUN.ring.visible = false; const S = st(), tm = +RUN.t.toFixed(1), best = S.ctRunBest || 0; if (!best) { earn(300); msg(`🏮 Rooftop run: ${tm} s - first finish +300`, 3); } else if (tm < best) { earn(150); msg(`🏮 NEW RECORD ${tm} s (was ${best} s) +150`, 3); } else msg(`🏮 Rooftop run: ${tm} s (best ${best} s)`, 2.5); if (!best || tm < best) S.ctRunBest = tm; S.ctRuns = (S.ctRuns || 0) + 1; }
+      else msg(`🏮 Roof ${RUN.i} of 4`, .9); } }
+  const prevUse3 = T.onUse; T.onUse = o => { if (RUN && o === RUN.sp) { RUN.on = true; RUN.i = 1; RUN.t = 0; msg('🏮 GO! Run the loop of roofs and back here', 2); return true; } return prevUse3 ? prevUse3(o) : false; };
+
   // ---------- per frame ----------
   let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0, musT = 2, musI = 3;
-  function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, inside = Math.abs(me.x - CX) < E && Math.abs(me.z - CZ) < E; peopleTick(dt, me); dragonTick(dt, me); if (inside && (roofT -= dt) <= 0) { roofT = .5; for (const b of built) { if (me.y < b.y0 + RF - .3) break; const [lx, lz] = T.toL ? T.toL(b, me.x, me.z) : [0, 0]; if (lx > 0 && lx < W && lz > 0 && lz < DP && me.y > b.y0 + RF - .3) { const S = st(), v = new Set(S.ctRoofs || []); if (!v.has(b.name + b.cx.toFixed(0) + b.cz.toFixed(0))) { v.add(b.name + b.cx.toFixed(0) + b.cz.toFixed(0)); S.ctRoofs = [...v]; msg(`🏯 Rooftop ${v.size} of ${built.length}`, 1.6); } } } }
+  function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, inside = Math.abs(me.x - CX) < E && Math.abs(me.z - CZ) < E; peopleTick(dt, me); dragonTick(dt, me); runTick(dt, me); if (inside && (roofT -= dt) <= 0) { roofT = .5; for (const b of built) { if (me.y < b.y0 + RF - .3) break; const [lx, lz] = T.toL ? T.toL(b, me.x, me.z) : [0, 0]; if (lx > 0 && lx < W && lz > 0 && lz < DP && me.y > b.y0 + RF - .3) { const S = st(), v = new Set(S.ctRoofs || []); if (!v.has(b.name + b.cx.toFixed(0) + b.cz.toFixed(0))) { v.add(b.name + b.cx.toFixed(0) + b.cz.toFixed(0)); S.ctRoofs = [...v]; msg(`🏯 Rooftop ${v.size} of ${built.length}`, 1.6); } } } }
     if (inside && !welcome) { welcome = true; msg('🏮 Chinatown - 唐人街', 3); const S = st(); if (!S.ctVisit) { S.ctVisit = 1; earn(200); setTimeout(() => msg('First visit to Chinatown  +200', 2.5), 2000); } } else if (!inside && Math.hypot(me.x - CX, me.z - CZ) > 90) welcome = false;
     const n = H.night || 0; if (Math.abs(n - nightK) > .02) { nightK = n; M.lamp.emissiveIntensity = .5 + 3.2 * n; M.paper.emissiveIntensity = .15 + 2.2 * n; M.glass.emissiveIntensity = .06 + 1.2 * n; signM.emissiveIntensity = .05 + .35 * n; gateM.emissiveIntensity = .08 + .4 * n; } { const nt = n > .5; if (nt !== update.nt) { update.nt = nt; for (const o of spots) if (o.kind === 'ct_fire') o.label = nt ? '🎆 Fireworks show over Chinatown (400 pts)' : '🧨 Set off a string of firecrackers (50 pts)'; } }
     if (n > .45 && fx && fx.smoke && Math.hypot(me.x - CX, me.z - CZ) < 70 && (steamT -= dt) <= 0) { steamT = .35; const q = stalls[(Math.random() * stalls.length) | 0]; fx.smoke.emit(q[0] + (Math.random() - .5) * .6, y0 + 1.5, q[1], 0, .6 + Math.random() * .4, 0, .92, .92, .9, .35, 1.6, 1.3, -.01, .15); }

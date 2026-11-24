@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=271';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=271';
-import { mergeStatic } from './hrmerge.js?v=271';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=272';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=272';
+import { mergeStatic } from './hrmerge.js?v=272';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -316,7 +316,8 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const chess = [[-14.45, 3.0, Math.PI / 2], [-12.75, 3.0, -Math.PI / 2]].slice(0, mobile ? 1 : 2).map(([x, z, ry], i) => { const D2 = mkP(i + 5, 'Xiangqi player'); D2.g.position.set(CX + x, y0, CZ + z); D2.g.rotation.y = ry; D2.g.scale.y = .9; return { D: D2 }; });
   const keepers = built.filter(b => /tea|herb|bakery|noodle|goods/.test(b.shop[2])).slice(0, mobile ? 3 : 6).map((b, i) => { const D = mkP(i + 3, 'Shopkeeper'), [wx, wz] = /tea|noodle/.test(b.shop[2]) ? toW(b, 2.4, 8.1) : toW(b, W / 2 - 1, 3.4); D.g.position.set(wx, y0 + F0, wz); D.g.rotation.y = b.rot + Math.PI; return { D, b }; });
   // v247 rooftop life: a few residents take the air in the roof pavilions, and pigeons perch on the parapets (they scatter when you come close)
-  const roofers = built.filter(b => b.idx % 3 === 1).slice(0, mobile ? 2 : 4).map((b, i) => { const D = mkP(i + 1, 'Resident'), [wx, wz] = toW(b, W / 2 + 1.5, DP / 2 + .9); D.g.position.set(wx, y0 + RF, wz); D.g.rotation.y = b.rot + Math.PI; return { D }; });
+  let roofers = built.filter(b => b.idx % 3 === 1).slice(0, mobile ? 2 : 4).map((b, i) => { const D = mkP(i + 1, 'Resident'), [wx, wz] = toW(b, W / 2 + 1.5, DP / 2 + .9); D.g.position.set(wx, y0 + RF, wz); D.g.rotation.y = b.rot + Math.PI; return { D }; });
+  roofers.push(...built.filter(b => b.idx % 5 === 3).slice(0, mobile ? 1 : 3).map((b, i) => { const D = mkP(i + 4, 'Neighbour'), [wx, wz] = toW(b, 2.4 + i * 2, -.9); D.g.position.set(wx, y0 + F1, wz); D.g.rotation.y = b.rot + Math.PI; return { D }; })); /* v272 neighbours lean on the balconies */
   const NPG = mobile ? 14 : 28, PG = new THREE.InstancedMesh(new THREE.SphereGeometry(.09, 6, 4).scale(1, .9, 1.6), new THREE.MeshStandardMaterial({ color: 0x6a6e78, roughness: .8 }), NPG); PG.frustumCulled = false; PG.name = 'pigeons'; scene.add(PG);
   const perch = []; for (const b of built) for (let k = 0; k < 3; k++) { const [x, z] = toW(b, 1 + k * 4.5, .12); perch.push([x, y0 + RF + (/hall|theatre|temple/.test(b.shop[2]) ? 1.6 : 0) + 1.2, z]); }
   const pigs = Array.from({ length: NPG }, (_, i) => { const p = perch[(i * 5) % perch.length]; return { x: p[0] + (i % 3) * .25, y: p[1], z: p[2], h: p, st: 0, a: Math.random() * 6, t: 0 }; });

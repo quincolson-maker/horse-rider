@@ -57,6 +57,17 @@ export function createExtra({ scene, H, P, hAt, msg, sfx, mobile }) {
     if (ct <= 0) { ct = .6 + Math.random() * 1.6; const f = 4200 + Math.random() * 600; for (let k = 0; k < 3; k++) setTimeout(() => sfx.tone('sine', f, f * .98, .018, .03), k * 55); }
     if (ot <= 0) { ot = 25 + Math.random() * 40; const f = 380 + Math.random() * 40; sfx.tone('sine', f, f * .92, .07, .35); setTimeout(() => sfx.tone('sine', f * .95, f * .85, .06, .6), 420); } }; });
 
+  // v220 DYNAMIC RESOLUTION: when the frame rate sags under ~40 fps for a few seconds the render resolution steps down
+  // (never below 60% of your quality setting) and climbs back when there's headroom - smoother play in busy fights
+  add(() => { const GX = window.__GX; if (!GX || !GX.renderer || !GX.setPR) return null; let base = GX.renderer.getPixelRatio(), cur = base, last = performance.now(), acc = 0, n = 0, coolT = 0, slow = 0, fast = 0;
+    try { if (localStorage.getItem('hr_dynres') === '0') return null; } catch (_) {}
+    X.dynres = () => ({ base, cur });
+    return () => { const now = performance.now(), f = now - last; last = now; if (document.hidden || f > 400) return; acc += f; n++; if (acc < 1000) return; const ms = acc / n; acc = 0; n = 0; coolT--;
+      const want = GX.renderer.getPixelRatio(); if (Math.abs(want - cur) > .01) { base = want; cur = want; } /* the player changed quality */
+      if (ms > 25) { slow++; fast = 0; } else if (ms < 17) { fast++; slow = 0; } else { slow = fast = 0; }
+      if (slow >= 3 && coolT <= 0 && cur > base * .62) { cur = Math.max(base * .6, cur - .1); GX.setPR(cur); coolT = 4; slow = 0; }
+      else if (fast >= 6 && coolT <= 0 && cur < base - .01) { cur = Math.min(base, cur + .1); GX.setPR(cur); coolT = 6; fast = 0; } }; });
+
   X.update = dt => { X.t += dt; for (const f of X.parts) f(dt); };
   return X;
 }

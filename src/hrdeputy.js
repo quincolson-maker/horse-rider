@@ -1,7 +1,7 @@
 // v170 HIRED GUNS (sheriff's office, 500): two deputies follow you for 3 minutes and shoot the dead near you.
 // They keep up when you ride by catching up out of sight. Hire them at the store (Gear tab).
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=218';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=219';
 export function createDeputies({ scene, H, P, hAt, msg, sfx, mobile }) {
   let D = [], T = 0, pool = []; const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const flashM = new THREE.MeshBasicMaterial({ color: 0xffd080, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });

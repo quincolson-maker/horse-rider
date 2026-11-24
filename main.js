@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=100';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=100';
-import './src/hraudio.js?v=100';
-import './src/stylize.js?v=100'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=100';
-import { FX, SFX } from './src/fx.js?v=100';
-import { initTouch } from './src/touch.js?v=100';
-import { createHorseRider } from './src/horse.js?v=100';
-import { createHorseNet } from './src/horsenet.js?v=100';
+import './src/assetshim.js?v=101';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=101';
+import './src/hraudio.js?v=101';
+import './src/stylize.js?v=101'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=101';
+import { FX, SFX } from './src/fx.js?v=101';
+import { initTouch } from './src/touch.js?v=101';
+import { createHorseRider } from './src/horse.js?v=101';
+import { createHorseNet } from './src/horsenet.js?v=101';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=100';
+import { PF, initPerf } from './src/perf.js?v=101';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -34,7 +34,7 @@ const dropInput = () => { for (const k in keys) keys[k] = false; input.mx = inpu
 addEventListener('blur', dropInput); addEventListener('pagehide', dropInput); document.addEventListener('visibilitychange', () => { if (document.hidden) dropInput(); }); window.__dropInput = dropInput;
 const locked = () => document.pointerLockElement === renderer.domElement;
 const lookSens = () => { try { return (+localStorage.getItem('hr_sens') || 100) / 100; } catch (_) { return 1; } }; window.__lookSens = lookSens;
-document.addEventListener('mousemove', e => { if (!locked()) return; const k = lookSens(); look(e.movementX * .0022 * k, e.movementY * .0022 * k); });
+document.addEventListener('mousemove', e => { if (!locked() || (window.__hrH && window.__hrH.wheelOpen)) return; const k = lookSens(); look(e.movementX * .0022 * k, e.movementY * .0022 * k); });
 function look(dx, dy, src) { const ls = P.lookScale || 1; dx *= ls; dy *= ls; P.swX = (P.swX || 0) + dx; P.swY = (P.swY || 0) + dy;
   if (src === 'touch' && P.lookSmooth) { const q = P.lookPend || (P.lookPend = { x: 0, y: 0 }); q.x += dx; q.y += dy; return; } // in the rifle scope a finger's look is low-pass filtered (drained per frame by hrguns)
   P.yaw -= dx; P.pitch = Math.max(-1.553, Math.min(1.553, P.pitch - dy)); }

@@ -47,7 +47,13 @@ export function createWeather({ scene, H, camera, sfx, msg, mobile }) {
     const kind = tr > .5 ? 'rain' : td > .5 ? 'dust' : ''; if (kind !== wasKind) { if (kind === 'rain' && H.on) msg('🌧️ A storm rolls in — the dead are harder to see', 3); if (kind === 'dust' && H.on) msg('🌪️ Dust storm! Stay close to your horse', 3); wasKind = kind; }
     const vr = under ? 0 : W.rain, vd = under ? 0 : W.dust; RU.uT.value = DU.uT.value = t; RU.uC.value.copy(camera.position); DU.uC.value.copy(camera.position); RU.uK.value = vr; DU.uK.value = vd; DU.uPx.value = innerHeight * .9;
     rain.visible = vr > .01; dust.visible = vd > .01;
-    W.flash = Math.max(0, W.flash - dt * 3.2); if (vr > .6) { boltT -= dt; if (boltT < 0) { boltT = 6 + Math.random() * 12; W.flash = 1; setTimeout(() => { W.flash = Math.max(W.flash, .7); }, 120); thunder(400 + Math.random() * 1800); } }
+    W.flash = Math.max(0, W.flash - dt * 3.2); if (vr > .6) { boltT -= dt; if (boltT < 0) { boltT = 6 + Math.random() * 12; W.flash = 1; setTimeout(() => { W.flash = Math.max(W.flash, .7); }, 120); thunder(400 + Math.random() * 1800); if (Math.random() < .45) strike(); } }
     const s = sound(); if (s) { const c = sfx.ctx.currentTime; s.rain.gain.setTargetAtTime(vr * .16 * (under ? .3 : 1), c, .4); s.wind.gain.setTargetAtTime((vd * .22 + vr * .04) * (under ? .3 : 1), c, .4); } }
-  return { update, get state() { return W; } };
+  // v162 lightning strikes: some bolts hit a zombie near you (it drops; no points), with a visible bolt
+  const boltM = new THREE.MeshBasicMaterial({ color: 0xdfe8ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }), bolt = new THREE.Mesh(new THREE.CylinderGeometry(.12, .25, 120, 5, 8, true), boltM); bolt.frustumCulled = false; scene.add(bolt);
+  { const p = bolt.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i); if (Math.abs(y) < 59) { p.setX(i, p.getX(i) + Math.sin(y * .7) * 1.6); p.setZ(i, p.getZ(i) + Math.cos(y * .5) * 1.4); } } }
+  let boltK = 0; function strike() { const Z = H.zombies, P0 = window.__P; if (!Z || !P0 || (Z.state.role && Z.state.role() === 'client')) return; const c = Z.list.filter(o => o.alive && o.kind !== 'outlaw' && o.kind !== 'boss' && Math.hypot(o.pos.x - P0.pos.x, o.pos.z - P0.pos.z) < 80); if (!c.length) return; const o = c[(Math.random() * c.length) | 0];
+    bolt.position.set(o.pos.x, o.pos.y + 60, o.pos.z); boltK = 1; try { Z.damage(o, 9999, false, o.pos, null, 'bandit'); } catch (_) {} if (msg && Math.hypot(o.pos.x - P0.pos.x, o.pos.z - P0.pos.z) < 40) msg('⚡ Lightning took one of them!', 1.4); }
+  const upd0 = update;
+  return { update(dt) { upd0(dt); if (boltK > 0) { boltK -= dt * 5; boltM.opacity = Math.max(0, boltK); } }, get state() { return W; } };
 }

@@ -6,7 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=220';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=221';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=221';
+import { mergeStatic } from './hrmerge.js?v=221';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -78,7 +80,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     if (dz) { const z0 = dz > 0 ? E : -far, z1 = dz > 0 ? far : -E; floor(D, -4.5, 4.5, z0, z1, dz > 0 ? 0 : gy, dz > 0 ? gy : 0, 'z'); const g = new THREE.BoxGeometry(9, .3, 8); g.translate(0, -.15, 0); const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const zz = p.getZ(i), t = (zz + 4) / 8, k = dz > 0 ? t : 1 - t; p.setY(i, p.getY(i) + gy * k); } g.translate(0, 0, dz * (E + 4)); push(M.stone, xf(D, g)); }
     else { const x0 = dx > 0 ? E : -far, x1 = dx > 0 ? far : -E; floor(D, x0, x1, -4.5, 4.5, dx > 0 ? 0 : gy, dx > 0 ? gy : 0, 'x'); const g = new THREE.BoxGeometry(8, .3, 9); g.translate(0, -.15, 0); const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const xx = p.getX(i), t = (xx + 4) / 8, k = dx > 0 ? t : 1 - t; p.setY(i, p.getY(i) + gy * k); } g.translate(dx * (E + 4), 0, 0); push(M.stone, xf(D, g)); } }
   // raised sidewalks (visual curbs) along the avenue and the cross street
-  for (const sd of [-1, 1]) { box(D, M.stone, sd * 5.5, .08, 0, 2, .16, 2 * E - 1); box(D, M.stone, 0, .08, sd * 5.5, 2 * E - 1, .16, 2, 0); }
+  for (const sd of [-1, 1]) { box(D, M.stone, sd * 5.5, .08, 0, 2, .16, 2 * E - 1); box(D, M.stone, 0, .08, sd * 5.5, 2 * E - 1, .16, 2, 0); floor(D, sd * 5.5 - 1, sd * 5.5 + 1, -E + .5, E - .5, .16); floor(D, -E + .5, E - .5, sd * 5.5 - 1, sd * 5.5 + 1, .16); }
 
   // ---------- paifang gates ----------
   function gate(px, pz, ry) { const s = mkS(CX + px, CZ + pz, ry, y0, 'gate'); for (const sx of [-4.6, 4.6]) { cyl(s, M.red, sx, 3.6, 0, .32, 7.2, 12); box(s, M.stone, sx, .4, 0, 1.1, .8, 1.1); wall(s, sx - .4, 0, sx + .4, 0, -1, 7); wall(s, sx, -.4, sx, .4, -1, 7); }
@@ -181,7 +183,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (kind === 'temple') { box(s, M.red, mid, F0 + .55, DP - 1.4, 4.4, 1.1, 1.4); box(s, M.gold, mid, F0 + 1.15, DP - 1.4, 4.5, .08, 1.45); cyl(s, M.gold, mid, F0 + 1.35, DP - 1.6, .28, .32, 12); for (const sx of [-1.4, 1.4]) { cyl(s, M.red, mid + sx, F0 + 1.5, DP - 1.8, .06, .7, 6); sph(s, M.lamp, mid + sx, F0 + 2.0, DP - 1.8, .1); } box(s, M.gold, mid, F0 + 2.6, DP - .3, 4, 2, .08); for (let k = 0; k < 4; k++) sph(s, M.lamp, 1.5 + k * 2.8, F0 + 2.9, 3, .32, 1.3); }
     else if (kind === 'theatre') { box(s, M.plank, (W - 1.6 + .6) / 2, F0 + .5, DP - 2, W - 2.2, 1.0, 3.2); floor(s, .6, W - 1.6, DP - 3.6, DP - .4, F0 + 1.0); box(s, M.red, mid, F0 + 2.8, DP - .5, W - 1.2, 3.6, .08); for (const sx of [.9, W - .9]) box(s, M.red, sx, F0 + 2.4, DP - 3.5, .5, 3.0, .2); for (let r = 0; r < 3; r++) box(s, M.wood, mid, F0 + .25, 1.6 + r * 1.3, W - 3, .5, .5); }
   }
-  function shopSpot(s, kind, en, mid) { const z = kind === 'theatre' ? 3 : 3.6, lab = { tea: '🍵 Sit for jasmine tea (20 pts · full heal)', noodle: '🍜 A bowl of noodles (30 pts · heal + well fed 2 min)', herb: '🌿 Ginseng tonic (150 pts · fast regen 3 min)', goods: '📦 Restock ammo (120 pts · fills every gun)', bakery: '🥮 Egg tarts and buns (15 pts · heal 40)', fire: '🧨 Set off a string of firecrackers (50 pts)', hall: '🔔 Strike the hall gong', temple: '🕯️ Light incense (a blessing once a day)', tailor: '🧵 Look over the silks', gold: '💍 Look over the jade and gold', books: '📚 Browse the books', theatre: '🎭 Watch the opera (once a day · +100)' }[kind];
+  function shopSpot(s, kind, en, mid) { const z = kind === 'theatre' ? 3 : /tea|noodle|hall|temple/.test(kind) ? 3.6 : 1.4, lab = { tea: '🍵 Sit for jasmine tea (20 pts · full heal)', noodle: '🍜 A bowl of noodles (30 pts · heal + well fed 2 min)', herb: '🌿 Ginseng tonic (150 pts · fast regen 3 min)', goods: '📦 Restock ammo (120 pts · fills every gun)', bakery: '🥮 Egg tarts and buns (15 pts · heal 40)', fire: '🧨 Set off a string of firecrackers (50 pts)', hall: '🔔 Strike the hall gong', temple: '🕯️ Light incense (a blessing once a day)', tailor: '🧵 Look over the silks', gold: '💍 Look over the jade and gold', books: '📚 Browse the books', theatre: '🎭 Watch the opera (once a day · +100)' }[kind];
     return spot(s, mid - 1, F0, z, 'ct_' + kind, lab, 1.9, { shopName: en }); }
 
   // ---------- lantern strings over the streets (one instanced mesh) ----------
@@ -222,9 +224,24 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     if (o.shopName) { const v = new Set(S.ctShops || []); v.add(o.shopName); S.ctShops = [...v]; }
     return true; };
 
+  // ---------- v221 people: shoppers stroll the sidewalks, shopkeepers mind their counters ----------
+  const LOOK = [[0x2c3a4a, 0xe8e0cc, 'male'], [0x4a2a2a, 0xece4d0, 'female'], [0x2e3e34, 0xe0d6c0, 'male'], [0x3a3448, 0xeee6d4, 'female'], [0x5a4630, 0xe6dccc, 'male'], [0x283238, 0xf0e8d8, 'male'], [0x4a3a2a, 0xe8dcc8, 'female']];
+  const SKIN = [0xe0b48c, 0xd4a27a, 0xc8946c, 0xb88460, 0xe8c09a], HAIR = [0x14100c, 0x1c1410, 0x2a1e14];
+  const people = [], mkP = (i, name) => { const [coat, top, sex] = LOOK[i % LOOK.length]; const D = makeFrontierCharacter({ kind: 'townsfolk', sex, quality: mobile ? 'low' : 'high', coat, top, bodice: coat, hatC: [0x1a1612, 0x2a221a, 0x3a2e22][i % 3], skin: SKIN[i % SKIN.length], hair: HAIR[i % HAIR.length], bandana: coat, name }); scene.add(D.g); try { mergeStatic(D.g); } catch (_) {} return D; };
+  const WP = []; for (const sx of [-5.6, 5.6]) for (let z = -30; z <= 30; z += 6) WP.push([sx, z]); for (const sz of [-5.6, 5.6]) for (let x = -30; x <= 30; x += 6) if (Math.abs(x) > 7) WP.push([x, sz]);
+  const NW = mobile ? 4 : 7; for (let i = 0; i < NW; i++) { const D = mkP(i, 'Shopper'), w = WP[(i * 7) % WP.length]; people.push({ D, x: w[0], z: w[1], tg: null, sp: 1 + Math.random() * .4, wait: Math.random() * 3 }); }
+  const keepers = built.filter(b => /tea|herb|bakery|noodle|goods/.test(b.shop[2])).slice(0, mobile ? 3 : 6).map((b, i) => { const D = mkP(i + 3, 'Shopkeeper'), [wx, wz] = /tea|noodle/.test(b.shop[2]) ? toW(b, 2.4, 8.1) : toW(b, W / 2 - 1, 3.4); D.g.position.set(wx, y0 + F0, wz); D.g.rotation.y = b.rot + Math.PI; return { D, b }; });
+  function peopleTick(dt, me) { const close = Math.hypot(me.x - CX, me.z - CZ) < 110; for (const p of people) p.D.g.visible = close; for (const k of keepers) k.D.g.visible = close; if (!close) return;
+    for (const p of people) { if (p.wait > 0) { p.wait -= dt; poseFrontierCharacter(p.D, dt, { speed: 0 }); } else { if (!p.tg) { const opts = WP.filter(w => { const d = Math.hypot(w[0] - p.x, w[1] - p.z); return d > 3 && d < 7; }); p.tg = opts[(Math.random() * opts.length) | 0] || WP[(Math.random() * WP.length) | 0]; }
+        const dx = p.tg[0] - p.x, dz = p.tg[1] - p.z, d = Math.hypot(dx, dz); if (d < .3) { p.tg = null; if (Math.random() < .35) p.wait = 2 + Math.random() * 5; } else { const st2 = Math.min(d, p.sp * dt); p.x += dx / d * st2; p.z += dz / d * st2; p.D.g.rotation.y = Math.atan2(dx, dz); }
+        const pm = me, ddx = CX + p.x - pm.x, ddz = CZ + p.z - pm.z, dd = Math.hypot(ddx, ddz); if (dd < 1.1 && dd > .01) { p.x += ddx / dd * (1.1 - dd); p.z += ddz / dd * (1.1 - dd); } /* step aside for you */
+        poseFrontierCharacter(p.D, dt, { speed: p.wait > 0 ? 0 : p.sp }); }
+      p.D.g.position.set(CX + p.x, T.floorAt(CX + p.x, CZ + p.z, y0 + .5), CZ + p.z); }
+    for (const k of keepers) poseFrontierCharacter(k.D, dt, { speed: 0 }); }
+
   // ---------- per frame ----------
   let welcome = false, nightK = -1, t = 0;
-  function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, inside = Math.abs(me.x - CX) < E && Math.abs(me.z - CZ) < E;
+  function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, inside = Math.abs(me.x - CX) < E && Math.abs(me.z - CZ) < E; peopleTick(dt, me);
     if (inside && !welcome) { welcome = true; msg('🏮 Chinatown - 唐人街', 3); const S = st(); if (!S.ctVisit) { S.ctVisit = 1; earn(200); setTimeout(() => msg('First visit to Chinatown  +200', 2.5), 2000); } } else if (!inside && Math.hypot(me.x - CX, me.z - CZ) > 90) welcome = false;
     const n = H.night || 0; if (Math.abs(n - nightK) > .02) { nightK = n; M.lamp.emissiveIntensity = .5 + 3.2 * n; M.paper.emissiveIntensity = .15 + 2.2 * n; M.glass.emissiveIntensity = .06 + 1.2 * n; signM.emissiveIntensity = .05 + .35 * n; gateM.emissiveIntensity = .08 + .4 * n; }
     if (fedT > 0) { fedT -= dt; heal(dt * 1.5); } if (tonicT > 0) { tonicT -= dt; heal(dt * 3); }

@@ -51,6 +51,12 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'popper', title: 'Pop Goes the Bloater', task: 'Burst a bloater from a safe distance', pay: 500, p: () => ((H.stats && H.stats.zk_bloater) || 0) > 0 ? 1 : 0 },
     { id: 'trader', title: 'Horse Trader', task: 'Trade up to a new horse breed at the General Store', pay: 600, p: () => H.breed && H.breed.breed().id !== 'mustang' ? 1 : 0 },
     { id: 'revue', title: 'Opening Night', task: 'Put on the Full Revue in the saloon', pay: 400, p: () => ((H.stats && H.stats.revues) || 0) > 0 ? 1 : 0, to: () => H.places && H.places.town },
+    { id: 'roofbar', title: 'Drinks on the Roof', task: 'Climb to the saloon rooftop bar (upstairs side door, outside stair) and order a drink', pay: 400, p: () => ((H.stats && H.stats.roofDrinks) || 0) > 0 ? 1 : 0, to: () => H.places && H.places.town }, // v117
+    { id: 'spyglass', title: 'Lookout', task: 'Use the brass telescope on the saloon roof', pay: 250, p: () => ((H.stats && H.stats.scoped) || 0) > 0 ? 1 : 0, to: () => H.places && H.places.town },
+    { id: 'armwrestle', title: 'Iron Grip', task: 'Win 3 arm-wrestling matches at the saloon front table', pay: 600, p: () => Math.min(1, ((H.stats && H.stats.armWins) || 0) / 3), txt: () => `${Math.min(3, ((H.stats && H.stats.armWins) || 0))} / 3` },
+    { id: 'coyotes', title: 'Varmint Control', task: 'Put down 5 undead coyotes (they run in at night)', pay: 700, p: () => Math.min(1, ((H.stats && H.stats.zk_coyote) || 0) / 5), txt: () => `${Math.min(5, ((H.stats && H.stats.zk_coyote) || 0))} / 5` },
+    { id: 'cookout', title: 'Cookout', task: 'Hunt a deer, then cook the venison at your camp fire (Camp kit)', pay: 500, p: () => ((H.stats && H.stats.cooked) || 0) > 0 ? 1 : 0, to: () => H.campPos || null },
+    { id: 'panner', title: 'Gold Fever', task: 'Strike gold 3 times panning on the falls shore', pay: 500, p: () => Math.min(1, ((H.stats && H.stats.panned) || 0) / 3), txt: () => `${Math.min(3, ((H.stats && H.stats.panned) || 0))} / 3`, to: () => H.fishSpot || null },
     { id: 'slayer', title: 'Slayer', task: 'Drop 150 zombies', pay: 3000, ...killsSince('slayer', 150) },
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];

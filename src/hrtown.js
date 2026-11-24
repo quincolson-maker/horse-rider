@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=116';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=117';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,8 +47,8 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createPoker } from './hrpoker.js?v=116';
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=116';
+import { createPoker } from './hrpoker.js?v=117';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=117';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -306,7 +306,7 @@ export function createTown(c) {
   T.use = () => { const o = T.nearSpot(); if (!o || !T.label(o)) return false; const g = H.guns; if (T.onUse && T.onUse(o)) { sfx.ui && sfx.ui(); return true; }
     if (o.kind === 'tommy') { g.give('tommy'); g.draw('tommy'); msg('Tommy gun — 100-round drum, full auto (4)', 3); if (o.s.tommyMesh) o.s.tommyMesh.visible = false; }
     else if (o.kind === 'gold') { g.give('gold'); g.draw('gold'); msg('The Golden Buffalo — aim, then scroll / pinch / + − to zoom across the map (5)', 4); if (o.s.goldMesh) o.s.goldMesh.visible = false; }
-    else if (o.kind === 'shop') openShop('guns'); else if (o.kind === 'store') openShop('store'); else if (o.kind === 'drink') drink(); else if (o.kind === 'armwrestle') { H.arm && H.arm.open(); } else if (o.kind === 'telescope') { H.telescope = !H.telescope; if (H.telescope) { H.teleSave = { fp: H.fp }; H.fp = true; P.pitch = .02; msg('🔭 Telescope — look around; walk away or USE to stop', 2.5); } else { H.fp = H.teleSave ? H.teleSave.fp : H.fp; } } else if (o.kind === 'darts') openDarts(); else if (o.kind === 'drawpoker') pk.open(); else if (o.kind === 'checkers') ck.open();
+    else if (o.kind === 'shop') openShop('guns'); else if (o.kind === 'store') openShop('store'); else if (o.kind === 'drink') { if (T.town && o === T.town.roofSpot) { const st = H.stats || (H.stats = {}); st.roofDrinks = (st.roofDrinks || 0) + 1; } drink(); } else if (o.kind === 'armwrestle') { H.arm && H.arm.open(); } else if (o.kind === 'telescope') { H.telescope = !H.telescope; if (H.telescope) { const st = H.stats || (H.stats = {}); st.scoped = (st.scoped || 0) + 1; H.teleSave = { fp: H.fp }; H.fp = true; P.pitch = .02; msg('🔭 Telescope — look around; walk away or USE to stop', 2.5); } else { H.fp = H.teleSave ? H.teleSave.fp : H.fp; } } else if (o.kind === 'darts') openDarts(); else if (o.kind === 'drawpoker') pk.open(); else if (o.kind === 'checkers') ck.open();
     sfx.ui && sfx.ui(); return true; };
   // show the actual gun models on the desk / in the box (each rider takes their own copy)
   T.dressGuns = models => { const s = T.towers.find(t => t.kind === 'armory'); if (!s || s.tommyMesh) return;

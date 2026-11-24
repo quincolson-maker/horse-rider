@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=222';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=222';
-import { mergeStatic } from './hrmerge.js?v=222';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=223';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=223';
+import { mergeStatic } from './hrmerge.js?v=223';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -215,7 +215,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (k === 'bakery') { if (pay(15)) { heal(40); msg('🥮 Warm egg tarts and a pork bun', 2); S.ctFood = (S.ctFood || 0) + 1; } }
     else if (k === 'herb') { if (pay(150)) { tonicT = 180; heal(30); msg('🌿 Ginseng tonic - fast regen for 3 minutes', 2.5); } }
     else if (k === 'goods') { const g = H.guns; if (g && g.state && g.state.ammo && pay(120)) { for (const w of Object.keys(g.state.ammo)) { try { const mx = g.maxAmmo(w); if (mx > g.state.ammo[w]) g.state.ammo[w] = mx; } catch (_) {} } g.syncUI && g.syncUI(); g.save && g.save(); msg('📦 Every gun topped up', 2); } }
-    else if (k === 'fire') { if (pay(50)) { crackers = { t: 0, n: 0, x: P.pos.x + Math.sin(P.yaw || 0) * -2, z: P.pos.z + Math.cos(P.yaw || 0) * -2 }; S.ctFire = (S.ctFire || 0) + 1; msg('🧨 Stand back!', 1.5); } }
+    else if (k === 'fire') { if (pay(50)) { crackers = { t: 0, n: 0, x: P.pos.x + Math.sin(P.yaw || 0) * -2, z: P.pos.z + Math.cos(P.yaw || 0) * -2 }; S.ctFire = (S.ctFire || 0) + 1; if ((H.night || 0) > .5) S.ctFireNight = (S.ctFireNight || 0) + 1; msg('🧨 Stand back!', 1.5); } }
     else if (k === 'hall' || k === 'urn') { if (sfx.tone && sfx.ctx) { if (k === 'hall') { sfx.tone('sine', 110, 104, .5, 3.5); sfx.tone('triangle', 220, 208, .2, 2.5); sfx.tone('sine', 331, 320, .1, 2); } else sfx.tone('sine', 880, 870, .05, 1.2); } if (k === 'urn') msg('🕯️ A thin line of fragrant smoke curls up', 2); if (k === 'hall') { S.ctGong = (S.ctGong || 0) + 1; msg('🔔 The gong rolls down the street', 2); } if (k === 'urn' && fx && fx.smoke) for (let i = 0; i < 10; i++) fx.smoke.emit(o.x, o.y + 2, o.z, 0, .5 + Math.random() * .3, 0, .8, .8, .78, .5, 2.2, 1.6, -.01, .1); }
     else if (k === 'temple') { if (S.ctIncense === day()) msg('🕯️ The incense from this morning still burns', 2); else { S.ctIncense = day(); earn(250); heal(100); msg('🕯️ You light incense at the altar - a blessing: +250 and fully healed', 3); } }
     else if (k === 'theatre') { if (S.ctOpera === day()) msg('🎭 Tonight\'s performance is over - come back tomorrow', 2); else { S.ctOpera = day(); earn(100); msg('🎭 Gongs, cymbals and a soaring voice - the crowd roars (+100)', 3); if (sfx.tone && sfx.ctx) [523, 587, 659, 784, 659, 587, 523, 440].forEach((f, i) => setTimeout(() => { sfx.tone('triangle', f, f, .08, .3); if (i % 2 === 0) sfx.nz && sfx.nz('highpass', 5000, .7, .1, .25); }, i * 260)); } }
@@ -259,8 +259,8 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const prevUse2 = T.onUse; T.onUse = o => { if (o && o.kind === 'ct_hall' && !DR.on && DR.gcool <= 0) { DR.gcool = 180; setTimeout(() => startDragon('🐉 The gong calls out the dragon!'), 1500); } return prevUse2 ? prevUse2(o) : false; };
 
   // ---------- per frame ----------
-  let welcome = false, nightK = -1, t = 0;
-  function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, inside = Math.abs(me.x - CX) < E && Math.abs(me.z - CZ) < E; peopleTick(dt, me); dragonTick(dt, me);
+  let welcome = false, nightK = -1, t = 0, roofT = 0;
+  function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, inside = Math.abs(me.x - CX) < E && Math.abs(me.z - CZ) < E; peopleTick(dt, me); dragonTick(dt, me); if (inside && (roofT -= dt) <= 0) { roofT = .5; for (const b of built) { if (me.y < b.y0 + RF - .3) break; const [lx, lz] = T.toL ? T.toL(b, me.x, me.z) : [0, 0]; if (lx > 0 && lx < W && lz > 0 && lz < DP && me.y > b.y0 + RF - .3) { const S = st(), v = new Set(S.ctRoofs || []); if (!v.has(b.name + b.cx.toFixed(0) + b.cz.toFixed(0))) { v.add(b.name + b.cx.toFixed(0) + b.cz.toFixed(0)); S.ctRoofs = [...v]; msg(`🏯 Rooftop ${v.size} of ${built.length}`, 1.6); } } } }
     if (inside && !welcome) { welcome = true; msg('🏮 Chinatown - 唐人街', 3); const S = st(); if (!S.ctVisit) { S.ctVisit = 1; earn(200); setTimeout(() => msg('First visit to Chinatown  +200', 2.5), 2000); } } else if (!inside && Math.hypot(me.x - CX, me.z - CZ) > 90) welcome = false;
     const n = H.night || 0; if (Math.abs(n - nightK) > .02) { nightK = n; M.lamp.emissiveIntensity = .5 + 3.2 * n; M.paper.emissiveIntensity = .15 + 2.2 * n; M.glass.emissiveIntensity = .06 + 1.2 * n; signM.emissiveIntensity = .05 + .35 * n; gateM.emissiveIntensity = .08 + .4 * n; }
     if (fedT > 0) { fedT -= dt; heal(dt * 1.5); } if (tonicT > 0) { tonicT -= dt; heal(dt * 3); }

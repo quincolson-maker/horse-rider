@@ -2,10 +2,10 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
-import { mergeStatic } from './hrmerge.js?v=345';
+import { mergeStatic } from './hrmerge.js?v=346';
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=345';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=345';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=346';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=346';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['dining', 11], ['express', 10], ['caboose', 7]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
@@ -104,7 +104,7 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
   function boardP(cab) { if (heist || pass) return; if (H.dismountNow) H.dismountNow(); const car = cab ? cars[0] : cars.find(c => c.kind === 'open'); pass = cab ? { car, off: -1.2, side: 1.55, inside: true, cab: true, fp0: H.fp }  : { car, off: (Math.random() - .5) * 5, side: Math.random() < .5 ? -.95 : .95 }; if (cab) { H.fp = true; { const fw = new THREE.Vector3(0, 0, 1).applyQuaternion(cars[0].g.quaternion); P.yaw = Math.atan2(-fw.x, -fw.z); P.pitch = -.05; } setTimeout(() => msg('🚂 You climb into the cab beside the engineer - Z blows the whistle', 3.5), 1200); const S1 = H.stats || (H.stats = {}); S1.cabRides = (S1.cabRides || 0) + 1; } H.trainRide = rideP; H.trainUse = useP; H.onTrain = true;
     const S0 = sched(Date.now()); msg(`🚂 All aboard! Next stop: ${STATIONS[(S0.at + 1) % STATIONS.length].name}.  USE at a station to get off · JUMP to leap off`, 4); whistle(); }
   addEventListener('keydown', e => { if (pass && e.code === 'KeyZ' && pass.cab) { whistle(); e.stopPropagation(); } }, true);
-  function rideP(dt) { const c = pass.car; tmp.set(pass.side, pass.cab ? 1.95 : pass.inside ? 1.25 : 1.47, pass.off).applyQuaternion(c.g.quaternion).add(c.g.position); P.pos.copy(tmp); if (pass.inside) { const Z = H.zombies; if (Z && Z.state) Z.state.hp = Math.min(100, (Z.state.hp || 0) + 4 * dt); } if (input && input.jump) leaveP(null, true); if (H.dead) leaveP(); }
+  function rideP(dt) { const c = pass.car; tmp.set(pass.side, pass.cab ? 1.95 : pass.inside ? 1.25 : 1.47, pass.off).applyQuaternion(c.g.quaternion).add(c.g.position); P.pos.copy(tmp); { const av = H.meAv; if (av && av.body) { av.body.visible = !H.fp; av.body.position.copy(tmp); av.body.position.y -= pass.cab ? 0 : .4; const fw = new THREE.Vector3(0, 0, 1).applyQuaternion(c.g.quaternion); av.body.rotation.set(0, Math.atan2(fw.x, fw.z) + (pass.cab ? Math.PI : pass.side > 0 ? -Math.PI / 2 : Math.PI / 2) + Math.PI, 0); if (av.W) av.W.update(dt, 0); } } /* v346 you can see yourself riding */ if (pass.inside) { const Z = H.zombies; if (Z && Z.state) Z.state.hp = Math.min(100, (Z.state.hp || 0) + 4 * dt); } if (input && input.jump) leaveP(null, true); if (H.dead) leaveP(); }
   function useP() { const S0 = sched(Date.now()); if (S0.at >= 0) { leaveP(STATIONS[S0.at]); return true; } if (pass.cab) { whistle(); msg('🚂 Between stations - JUMP to leap off', 1.6); return true; } const din = cars.find(c => c.kind === 'dining'); if (pass.car !== din && din) { pass.car = din; pass.side = .55; pass.off = (Math.random() - .5) * 6; pass.inside = true; msg('🍽️ You take a table in the dining car - coffee, pie and the view (you heal while you sit). USE again for the open car', 3.5); } else { pass.car = cars.find(c => c.kind === 'open'); pass.side = .95; pass.inside = false; msg('🚃 Back out to the open car', 2); } return true; }
   function leaveP(st, jump) { H.trainRide = null; H.trainUse = null; H.onTrain = false; const c = pass && pass.car; if (pass && pass.cab) H.fp = pass.fp0; pass = null;
     if (st) { const x = st.plat.x + st.side.x * 2.4, z = st.plat.z + st.side.z * 2.4; P.pos.set(x, hAt(x, z), z); msg('🚉 ' + st.name + ' — whistle (Z) for your horse', 3); }

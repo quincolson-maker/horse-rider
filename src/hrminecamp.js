@@ -3,9 +3,9 @@
 // faces in a rock heap. Swing a pick at the ore (one chunk a minute per face, carry up to 10) and sell it at the assay office.
 // It is NOT a safe zone - dynamite miners like the place after dark. Everything is merged per material and distance-culled.
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=345';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=345';
-import { mergeStatic } from './hrmerge.js?v=345';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=346';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=346';
+import { mergeStatic } from './hrmerge.js?v=346';
 
 export const MC = { x: -110, z: -30, r: 30 };
 export const mcAvoid = (x, z) => Math.hypot(x - MC.x, z - MC.z) < MC.r;

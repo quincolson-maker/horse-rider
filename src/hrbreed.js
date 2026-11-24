@@ -16,8 +16,12 @@ export function createBreeds({ H, msg, sfx }) {
   // v159 bond: every 3 km you ride together = +1 bond level (max 5): +1% speed and 4% less tiring per level
   st.km = st.km || {}; const bond = () => Math.min(5, Math.floor((st.km[st.on] || 0) / 3)); let kmAcc = 0;
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
-  function onMount(h) { const b = cur(); if (h.baseS == null) h.baseS = h.g.scale.x; h.g.scale.setScalar(h.baseS * b.s); }
-  function onDismount(h) { if (h && h.baseS != null) h.g.scale.setScalar(h.baseS); }
+  // v163 Clydesdale feathering: white feathered fetlocks on all four lower legs while you ride one
+  let feath = null; const HOOF = [[7, -.13, .27], [10, .13, .27], [13, -.14, -.89], [16, .14, -.89]];
+  function feathers(h, on) { if (feath) { for (const m of feath) m.removeFromParent(); feath = null; } const THREE = window.__THREE; if (!on || !THREE || !h || !h.g.userData.bones || h.g.userData.kind !== 'real') return; const u = h.g.userData, mat = new THREE.MeshStandardMaterial({ color: 0xf2ede2, roughness: 1 }); feath = [];
+    h.g.updateMatrixWorld(true); for (const [bi, x, z] of HOOF) { const m = new THREE.Mesh(new THREE.CylinderGeometry(.075, .13, .24, 10, 1, true), mat); m.material.side = THREE.DoubleSide; m.position.set(x, .16, z); u.mdl.add(m); m.updateMatrixWorld(true); if (u.bones[bi]) u.bones[bi].attach(m); feath.push(m); } }
+  function onMount(h) { const b = cur(); if (h.baseS == null) h.baseS = h.g.scale.x; h.g.scale.setScalar(h.baseS * b.s); feathers(h, b.id === 'clyde'); }
+  function onDismount(h) { if (h && h.baseS != null) h.g.scale.setScalar(h.baseS); feathers(h, false); }
   const hit = new WeakMap();
   // v139 name tag above your horse when you're on foot nearby
   let tag = null, tagName = ''; function tagTick() { const h = H.lastHorse, P0 = window.__P; const show = !!(name && h && !H.mounted && P0 && Math.hypot(h.pos.x - P0.pos.x, h.pos.z - P0.pos.z) < 18);

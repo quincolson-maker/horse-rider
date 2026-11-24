@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=245';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=245';
-import { mergeStatic } from './hrmerge.js?v=245';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=246';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=246';
+import { mergeStatic } from './hrmerge.js?v=246';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -192,7 +192,13 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     if (idx % 3 === 0) { cyl(s, M.wood, W - 2.4, RF + 1.0, DP - 2.4, 1.0, 1.6, 14); for (const k of [.4, 1.6]) cyl(s, M.black, W - 2.4, RF + .2 + k, DP - 2.4, 1.02, .06, 14); wall(s, W - 3.4, DP - 3.4, W - 1.4, DP - 3.4, RF, RF + 1.8); wall(s, W - 3.4, DP - 3.4, W - 3.4, DP - 1.4, RF, RF + 1.8); }
     else if (idx % 3 === 1) { const px = mid + 1.5, pz = DP / 2; for (const [dx, dz] of [[-1.4, -1.4], [1.4, -1.4], [-1.4, 1.4], [1.4, 1.4]]) cyl(s, M.red, px + dx, RF + 1.3, pz + dz, .09, 2.6, 8); cone(s, M.tile, px, RF + 3.25, pz, 2.6, 1.4); sph(s, M.gold, px, RF + 4.05, pz, .14); for (const [dx, dz] of [[-1.85, -1.85], [1.85, -1.85], [-1.85, 1.85], [1.85, 1.85]]) { const t = new THREE.ConeGeometry(.1, .6, 5); t.rotateX(dz < 0 ? -.9 : .9); t.translate(px + dx, RF + 2.65, pz + dz); push(M.tile, xf(s, t)); }
       box(s, M.wood, px, RF + .25, pz + .9, 2.0, .1, .5); box(s, M.wood, px, RF + .12, pz + .9, .1, .24, .4); spot(s, px, RF, pz, 'ct_view', '🏮 Take in the view from the pavilion', 2); }
-    for (const [x, z] of [[W - .9, 2.4], [3.5, 2.4]]) { cyl(s, M.red, x, RF + .25, z, .28, .5, 10, .22); sph(s, M.green, x, RF + .75, z, .42, .9); }
+    // v246 PAGODA CORNER TOWERS on the four corners of the main crossing (like the old Grant Avenue towers): three tiled tiers rising off the roof
+    { const [ax, az] = toW(s, 0, 0), [bx, bz] = toW(s, W, 0), da = Math.hypot(ax - CX, az - CZ), db = Math.hypot(bx - CX, bz - CZ); if (Math.min(da, db) < 9) { s.tower = true; const tx = da < db ? 1.9 : W - 1.9, tz = 1.9;
+      for (let k = 0; k < 3; k++) { const w2 = 3.2 - k * .55, yb = RF + k * 2.1, hh = 1.7; box(s, k % 2 ? M.red : fm, tx, yb + hh / 2, tz, w2, hh, w2); for (const [wx2, wz2] of [[0, -w2 / 2 - .01], [-w2 / 2 - .01, 0]]) box(s, M.glass, tx + wx2, yb + hh * .55, tz + wz2, wx2 ? .04 : w2 * .5, hh * .5, wz2 ? .04 : w2 * .5);
+        cone(s, M.tile, tx, yb + hh + .35, tz, w2 * .95, .8); for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const t2 = new THREE.ConeGeometry(.1, .55, 5); t2.rotateZ(-dx * .9); t2.rotateX(dz * .9); t2.translate(tx + dx * w2 * .68, yb + hh + .25, tz + dz * w2 * .68); push(M.tile, xf(s, t2)); } }
+      cyl(s, M.gold, tx, RF + 6.9, tz, .05, 1.2, 6); sph(s, M.gold, tx, RF + 7.5, tz, .18); sph(s, M.lamp, tx, RF + 6.35, tz - 1.35, .22, 1.3);
+      for (const [a1, b1, a2, b2] of [[tx - 1.6, tz - 1.6, tx + 1.6, tz - 1.6], [tx - 1.6, tz + 1.6, tx + 1.6, tz + 1.6], [tx - 1.6, tz - 1.6, tx - 1.6, tz + 1.6], [tx + 1.6, tz - 1.6, tx + 1.6, tz + 1.6]]) wall(s, a1, b1, a2, b2, RF - .5, RF + 6); } }
+    if (!s.tower) for (const [x, z] of [[W - .9, 2.4], [3.5, 2.4]]) { cyl(s, M.red, x, RF + .25, z, .28, .5, 10, .22); sph(s, M.green, x, RF + .75, z, .42, .9); }
     // shop spot (by the counter) + upstairs window
     s.useSpot = shopSpot(s, kind, en, mid);
   }

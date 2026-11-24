@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=224';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=224';
-import { mergeStatic } from './hrmerge.js?v=224';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=225';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=225';
+import { mergeStatic } from './hrmerge.js?v=225';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -91,14 +91,19 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     for (const sx of [-6.2, 6.2]) { const lx = sx; sph(s, M.lamp, lx, 4.2, -.6, .32, 1.3); sph(s, M.lamp, lx, 4.2, .6, .32, 1.3); }
     // guardian lions (stylised stone)
     for (const sx of [-3.4, 3.4]) { box(s, M.stone, sx, .45, -1.6, 1.0, .9, 1.0); sph(s, M.stone, sx, 1.25, -1.6, .42, 1.1); sph(s, M.stone, sx, 1.75, -1.75, .34); box(s, M.stone, sx, 1.62, -2.0, .3, .2, .2); wall(s, sx - .5, -2.1, sx + .5, -2.1, -1, 2); wall(s, sx - .5, -1.1, sx + .5, -1.1, -1, 2); wall(s, sx - .5, -2.1, sx - .5, -1.1, -1, 2); wall(s, sx + .5, -2.1, sx + .5, -1.1, -1, 2); } }
-  gate(0, -E - .3, Math.PI); gate(0, E + .3, 0);
+  gate(0, -E - .3, Math.PI); gate(0, E + .3, 0); gate(E + .3, 0, Math.PI / 2); gate(-E - .3, 0, -Math.PI / 2); /* v225: east and west gates on the cross street */
 
   // ---------- shophouses ----------
   const W = 11.5, DP = 10, F0 = .3, F1 = F0 + 3.5, RF = F1 + 3.4;
   const lots = []; for (const qx of [-1, 1]) for (const qz of [-1, 1]) for (const [za, zb] of [[5.25, 16.75], [18.25, 29.75]]) { const z0 = qz > 0 ? za : -zb, z1 = qz > 0 ? zb : -za;
       lots.push({ fx: qx > 0 ? -1 : 1, front: qx * 6.5, z0, z1, ave: true }); lots.push({ fx: qx > 0 ? 1 : -1, front: qx * 28.5, z0, z1, ave: false }); }
   const built = [];
-  lots.forEach((L, i) => { const sh = SHOPS[i % SHOPS.length], rot = L.fx < 0 ? Math.PI / 2 : -Math.PI / 2, oz = L.fx < 0 ? L.z1 : L.z0, s = mkS(CX + L.front, CZ + oz, rot, y0, sh[1]); s.shop = sh; built.push(s); house(s, sh, i, L.ave); });
+  lots.forEach((L, i) => { const sh = SHOPS[i % SHOPS.length], rot = L.fx < 0 ? Math.PI / 2 : -Math.PI / 2, oz = L.fx < 0 ? L.z1 : L.z0, s = mkS(CX + L.front, CZ + oz, rot, y0, sh[1]); s.shop = sh; s.idx = i; built.push(s); });
+  // v225 rooftop bridges: wherever a neighbour's roof is across the gap, the parapet opens and a plank bridge crosses (run a whole block over the rooftops)
+  const inFoot = (b, x, z) => { const [lx, lz] = T.toL(b, x, z); return lx > .2 && lx < W - .2 && lz > .2 && lz < DP - .2; };
+  const OPEN = { x0: [-2.4, 1.2], xW: [W + 2.4, 1.2], zD: [W / 2, DP + 2.6] };
+  for (const b of built) { b.open = {}; for (const k in OPEN) { const [wx, wz] = toW(b, OPEN[k][0], OPEN[k][1]); const nb = built.find(o => o !== b && inFoot(o, wx, wz)); if (nb) b.open[k] = nb; } }
+  built.forEach(s => house(s, s.shop, s.idx, true));
 
   function house(s, sh, idx, ave) { const [cn, en, kind, col] = sh, fm = idx % 3 === 0 ? M.brick : fmat(col), tall = kind === 'hall' || kind === 'theatre' || kind === 'temple';
     const mid = W / 2, dw = kind === 'theatre' ? 1.3 : .85, top = tall ? RF + 1.6 : RF;
@@ -106,8 +111,15 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     box(s, M.stone, mid, F0 / 2, DP / 2, W, F0, DP); floor(s, 0, W, 0, DP, F0); box(s, M.plank, mid, F0 + .01, DP / 2, W - .5, .02, DP - .5);
     // ---- outer walls (visual) ----
     // sides + back: full height to the parapet
-    box(s, fm, .12, (top + 1) / 2, DP / 2, .24, top + 1, DP); box(s, fm, W - .12, (top + 1) / 2, DP / 2, .24, top + 1, DP); box(s, fm, mid, (top + 1) / 2, DP - .12, W, top + 1, .24);
-    wall(s, 0, 0, 0, DP, -1, top + 1); wall(s, W, 0, W, DP, -1, top + 1); wall(s, 0, DP, W, DP, -1, top + 1);
+    const OA = .6, OB = 1.8, BA = mid - .6, BB = mid + .6, pt = top + 1 - RF;
+    box(s, fm, .12, RF / 2, DP / 2, .24, RF, DP); box(s, fm, W - .12, RF / 2, DP / 2, .24, RF, DP); box(s, fm, mid, RF / 2, DP - .12, W, RF, .24);
+    wall(s, 0, 0, 0, DP, -1, RF); wall(s, W, 0, W, DP, -1, RF); wall(s, 0, DP, W, DP, -1, RF);
+    for (const [k, x] of [['x0', .12], ['xW', W - .12]]) { const segs = s.open[k] ? [[0, OA], [OB, DP]] : [[0, DP]]; for (const [a, b] of segs) { box(s, fm, x, RF + pt / 2, (a + b) / 2, .24, pt, b - a); wall(s, x < 1 ? 0 : W, a, x < 1 ? 0 : W, b, RF, top + 1); } }
+    { const segs = s.open.zD ? [[0, BA], [BB, W]] : [[0, W]]; for (const [a, b] of segs) { box(s, fm, (a + b) / 2, RF + pt / 2, DP - .12, b - a, pt, .24); wall(s, a, DP, b, DP, RF, top + 1); } }
+    // bridges (built once per pair, from the lower index): planks, rope rails, rail colliders
+    for (const k of ['x0', 'xW', 'zD']) { const nb = s.open[k]; if (!nb) continue; if (built.indexOf(nb) < built.indexOf(s) && nb.open && Object.values(nb.open).includes(s)) continue;
+      const L2 = k === 'zD' ? 2.3 : 1.8; if (k === 'zD') { floor(s, BA, BB, DP, DP + L2, RF); box(s, M.plank, mid, RF - .05, DP + L2 / 2, 1.2, .1, L2 + .4); for (const x of [BA, BB]) { wall(s, x, DP, x, DP + L2, RF, RF + 1); box(s, M.red, x, RF + .95, DP + L2 / 2, .05, .05, L2 + .4); box(s, M.red, x, RF + .5, DP + L2 / 2, .04, .04, L2 + .4); } for (const z of [DP, DP + L2]) for (const x of [BA, BB]) box(s, M.red, x, RF + .5, z, .08, 1.0, .08); }
+      else { const sx = k === 'xW' ? 1 : -1, x0 = k === 'xW' ? W : -L2, x1 = k === 'xW' ? W + L2 : 0; floor(s, x0, x1, OA, OB, RF); box(s, M.plank, (x0 + x1) / 2, RF - .05, (OA + OB) / 2, L2 + .4, .1, OB - OA); for (const z of [OA, OB]) { wall(s, x0, z, x1, z, RF, RF + 1); box(s, M.red, (x0 + x1) / 2, RF + .95, z, L2 + .4, .05, .05); box(s, M.red, (x0 + x1) / 2, RF + .5, z, L2 + .4, .04, .04); } } }
     // front, ground floor: piers, shop windows, door
     const win = [[.6, mid - dw - .35], [mid + dw + .35, W - .6]];
     box(s, fm, .3, (F0 + F1) / 2, .12, .6, F1 - F0, .24); box(s, fm, W - .3, (F0 + F1) / 2, .12, .6, F1 - F0, .24);
@@ -154,7 +166,6 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     // roof hatch housing (a little stair head with a tiled cap) so the opening reads from the street
     box(s, M.tile, tx1 / 2 + .1, RF + 2.3, zs1 - 1.2, tx1 + .5, .12, 3.0); for (const pz of [zs1 - 2.6, zs1 + .2]) box(s, M.wood, tx1 + .05, RF + 1.15, pz, .1, 2.3, .1);
     // parapets on the other three roof edges
-    for (const [a, b, c2, d2] of [[0, 0, 0, DP], [W, 0, W, DP], [0, DP, W, DP]]) { wall(s, a, b, c2, d2, RF, RF + 1); }
     wall(s, 0, 0, W, 0, RF, RF + 1);
     // ---- interior fittings by kind ----
     interior(s, kind, mid);
@@ -165,7 +176,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     if (idx % 3 === 0) { cyl(s, M.wood, W - 2.4, RF + 1.0, DP - 2.4, 1.0, 1.6, 14); for (const k of [.4, 1.6]) cyl(s, M.black, W - 2.4, RF + .2 + k, DP - 2.4, 1.02, .06, 14); wall(s, W - 3.4, DP - 3.4, W - 1.4, DP - 3.4, RF, RF + 1.8); wall(s, W - 3.4, DP - 3.4, W - 3.4, DP - 1.4, RF, RF + 1.8); }
     else if (idx % 3 === 1) { const px = mid + 1.5, pz = DP / 2; for (const [dx, dz] of [[-1.4, -1.4], [1.4, -1.4], [-1.4, 1.4], [1.4, 1.4]]) cyl(s, M.red, px + dx, RF + 1.3, pz + dz, .09, 2.6, 8); cone(s, M.tile, px, RF + 3.25, pz, 2.6, 1.4); sph(s, M.gold, px, RF + 4.05, pz, .14); for (const [dx, dz] of [[-1.85, -1.85], [1.85, -1.85], [-1.85, 1.85], [1.85, 1.85]]) { const t = new THREE.ConeGeometry(.1, .6, 5); t.rotateX(dz < 0 ? -.9 : .9); t.translate(px + dx, RF + 2.65, pz + dz); push(M.tile, xf(s, t)); }
       box(s, M.wood, px, RF + .25, pz + .9, 2.0, .1, .5); box(s, M.wood, px, RF + .12, pz + .9, .1, .24, .4); spot(s, px, RF, pz, 'ct_view', '🏮 Take in the view from the pavilion', 2); }
-    for (const [x, z] of [[W - .9, .9], [3.5, .9]]) { cyl(s, M.red, x, RF + .25, z, .28, .5, 10, .22); sph(s, M.green, x, RF + .75, z, .42, .9); }
+    for (const [x, z] of [[W - .9, 2.4], [3.5, 2.4]]) { cyl(s, M.red, x, RF + .25, z, .28, .5, 10, .22); sph(s, M.green, x, RF + .75, z, .42, .9); }
     // shop spot (by the counter) + upstairs window
     s.useSpot = shopSpot(s, kind, en, mid);
   }

@@ -3,8 +3,9 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=358';
-import { createSurf } from './hrsurf.js?v=358';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=359';
+import { createSurf } from './hrsurf.js?v=359';
+import { mergeStatic } from './hrmerge.js?v=359';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -116,6 +117,7 @@ export function createBeach(ctx) {
     for (const sx of [-2.6, 2.6]) { const fl = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, 5.6, 6), BM.bamboo); fl.rotation.x = Math.PI / 2; fl.position.set(sx, -.15, 0); g.add(fl); for (const z of [-1.6, 1.6]) { const arm = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, 5.3, 5), BM.bamboo); arm.rotation.z = Math.PI / 2; arm.position.set(0, .35, z); g.add(arm); } }
     const roofB = new THREE.Mesh(new THREE.BoxGeometry(1.4, .06, 2.4), std({ color: 0xc8382a })); roofB.position.set(0, 1.6, -.6); roofB.name = 'roof'; g.add(roofB); for (const [dx, dz] of [[-.6, -1.7], [.6, -1.7], [-.6, .5], [.6, .5]]) { const pp = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 1.3, 4), BM.bamboo); pp.position.set(dx, .95, dz); g.add(pp); }
     const z = ZC - 200 + i * 95 + (i % 2) * 20, x = shoreX(z) + 7 + (i % 3) * 4; g.position.set(x, SEA, z); g.rotation.y = .3 + i * .4; g.name = 'bangka'; root.add(g); boats.push(g); }
+  /* v359 each boat merges to a few draws; the roof stays separate (hidden on the tour) */ for (const b of boats) { const rf = b.getObjectByName('roof'); if (rf) b.remove(rf); try { mergeStatic(b); } catch (_) {} if (rf) b.add(rf); }
   // v353 lifeguard tower (flag shows the day's surf), a volleyball net, a sandcastle
   const LGz = ZC + 60, LGx = shoreX(LGz) - 12, LGy = hAt(LGx, LGz); for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) cy(BM.white, LGx + dx, LGy + 1.6, LGz + dz, .08, 3.2, 6); bx(BM.white, LGx, LGy + 3.2, LGz, 2.6, .12, 2.6); bx(BM.red, LGx, LGy + 4.1, LGz, 2.2, 1.6, 2.2); bx(BM.white, LGx, LGy + 5.0, LGz, 2.8, .14, 2.8); cy(BM.white, LGx - 1.2, LGy + 5.9, LGz - 1.2, .03, 1.8, 5);
   for (let k = 0; k < 8; k++) bx(BM.white, LGx + 1.4 + k * .3, LGy + 3.2 - (k + .5) * .4, LGz, .3, .05, .9);
@@ -184,6 +186,7 @@ export function createBeach(ctx) {
     for (let x = px0 + 2; x <= px1; x += 4) for (const sz of [-1.1, 1.1]) { const g = new THREE.CylinderGeometry(.1, .1, 4, 6); g.translate(x, py - 1.8, pz + sz); push(BM.wood, g); }
     SH.floors.push({ x0: px0 - 1080, x1: px1 - 1080, z0: pz - 1.2 - ZC, z1: pz + 1.2 - ZC, ya: py + .05, yb: py + .05, axis: 'x' });
     const boat = boats[0]; const path = new THREE.CatmullRomCurve3([[px1 + 3, pz], [1380, -200], [1600, -330], [1720, -200], [1650, -40], [1500, 140], [1560, 250], [1460, 400], [1330, 420], [1280, 200], [px1 + 3, pz + 1]].map(([x, z]) => new THREE.Vector3(x, 0, z)), true, 'centripetal');
+    try { mergeStatic(pierG); } catch (_) {}
     const sp = { x: px1 - 1, y: py, z: pz, kind: 'bch_tour', label: '⛵ Island-hopping tour on the bangka (50 pts · ~2 min)', r: 2.5, bch: true }; T.spots.push(sp); return { boat, path, len: path.getLength(), sp, on: false, u: 0, home: boat.position.clone(), homeRy: boat.rotation.y }; })();
   function tourTick(dt, t) { if (!TOUR.on) return; TOUR.u = (performance.now() - TOUR.t0) / 1000 * 7 / TOUR.len; const b = TOUR.boat; if (TOUR.u >= 1) { TOUR.on = false; H.trainRide = null; H.trainUse = null; b.position.copy(TOUR.home); b.rotation.y = TOUR.homeRy; { const rf = b.getObjectByName('roof'); if (rf) rf.visible = true; } H.camDist = 0; P.pos.set(TOUR.sp.x, TOUR.sp.y + .1, TOUR.sp.z); msg('⛵ Back at the pier - salamat po!', 2.5); const S = H.stats || (H.stats = {}); S.tours = (S.tours || 0) + 1; return; }
     const p = TOUR.path.getPointAt(TOUR.u), tn = TOUR.path.getTangentAt(TOUR.u); waveAt(p.x, p.z, t, wv); b.position.set(p.x, SEA + wv.eta + .05, p.z); b.rotation.y = Math.atan2(tn.x, tn.z); b.rotation.z = Math.sin(t * 1.3) * .06; P.pos.set(p.x - tn.z * .2, b.position.y + .55, p.z + tn.x * .2); H.vy = 0; if (H.fv) H.fv.set(0, 0); { const av = H.meAv; if (av && av.body) { av.body.visible = !H.fp; av.body.position.set(P.pos.x, P.pos.y - .35, P.pos.z); av.body.rotation.set(0, b.rotation.y + Math.PI, 0); if (av.W) av.W.update(dt || .016, 0); } }

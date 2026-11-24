@@ -2,10 +2,10 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
-import { mergeStatic } from './hrmerge.js?v=354';
+import { mergeStatic } from './hrmerge.js?v=355';
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=354';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=354';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=355';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=355';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['dining', 11], ['express', 10], ['caboose', 7]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
@@ -100,6 +100,10 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
         const spout = new THREE.Mesh(new THREE.CylinderGeometry(.18, .22, 3, 8), dk); spout.rotation.z = Math.PI / 2 - .3; spout.position.set(-3.6, 6.0, 0); spout.scale.y = 1.5; tw.add(spout); }
       g.traverse(o => { if (o.isMesh) o.castShadow = true; }); try { mergeStatic(g); } catch (_) {} H.cullAdd && H.cullAdd(g, 380); // v109: one draw per material + hidden when far
       st.plat = c.clone(); st.side = side; st.deckY = c.y + deckY; st.spot = { x: c.x, y: gy, z: c.z, kind: 'train', label: '🚂 ' + st.name + ' station', r: 4.5, st: k }; if (T && T.spots) T.spots.push(st.spot); { const cp = c.clone().addScaledVector(t, 11); st.cab = { x: cp.x, y: gy, z: cp.z, kind: 'train_cab', label: '', r: 3, st: k }; if (T && T.spots) T.spots.push(st.cab); } { const bp = c.clone().addScaledVector(t, -11.5); st.cabo = { x: bp.x, y: gy, z: bp.z, kind: 'train_cabo', label: '', r: 3, st: k }; if (T && T.spots) T.spots.push(st.cabo); } });
+    /* v355 semaphore signals at the far end of every platform: the arm drops to "clear" and the lamp turns green as the train is ready to leave */
+    STATIONS.forEach(st => { at(st.s, p, t); const pp = st.plat.clone().addScaledVector(t, 16).addScaledVector(st.side, -.2), gy = hAt(pp.x, pp.z), g = new THREE.Group(); g.position.set(pp.x, gy, pp.z); g.rotation.y = Math.atan2(t.x, t.z); scene.add(g); const post = new THREE.Mesh(new THREE.CylinderGeometry(.08, .1, 6, 8), dk); post.position.y = 3; g.add(post);
+      const arm = new THREE.Group(); arm.position.set(0, 5.4, 0); const blade = new THREE.Mesh(new THREE.BoxGeometry(.06, .22, 1.4), new THREE.MeshStandardMaterial({ color: 0xc8382a })); blade.position.z = .7; arm.add(blade); const stripe = new THREE.Mesh(new THREE.BoxGeometry(.07, .23, .12), new THREE.MeshStandardMaterial({ color: 0xffffff })); stripe.position.z = 1.1; arm.add(stripe); g.add(arm);
+      const lamp = new THREE.Mesh(new THREE.SphereGeometry(.12, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff3020 })); lamp.position.set(.1, 5.0, 0); g.add(lamp); H.cullAdd && H.cullAdd(g, 220, { x: pp.x, z: pp.z }); st.sig = { arm, lamp }; });
     /* v351 departure boards: a chalk slate on every platform with the next train and the next stops (redrawn every 5 s while you're near) */
     STATIONS.forEach((st, k) => { const cv = document.createElement('canvas'); cv.width = 256; cv.height = 160; const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; const m = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.0), new THREE.MeshStandardMaterial({ map: tx, roughness: .9 })); at(st.s, p, t); const pp = st.plat.clone().addScaledVector(t, 2.5).addScaledVector(st.side, 1.2); m.position.set(pp.x, st.deckY + 1.6, pp.z); m.rotation.y = Math.atan2(-st.side.x, -st.side.z); scene.add(m); H.cullAdd && H.cullAdd(m, 80, { x: pp.x, z: pp.z }); st.board = { cv, tx, m, t: 0 }; });
     /* v347 travellers wait on every platform; they climb aboard when the train comes in */ const LOOKS = [[0x3a3a4a, 0xe8e0cc, 'male'], [0x6a2a3a, 0xf0e8d8, 'female'], [0x2e4a3a, 0xe0d6c0, 'male'], [0x5a4a2a, 0xece4d0, 'female'], [0x2a3a5a, 0xf0e8d8, 'male']]; let li = 0;
@@ -193,6 +197,7 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
     sT -= dt; if (sT <= 0 && dl < 400) { sT = .12; tmp.set(0, 5.2, 3.1).applyQuaternion(loco.g.quaternion).add(loco.g.position); sp.set([tmp.x, tmp.y, tmp.z], si * 3); sAge[si] = 0; si = (si + 1) % SN; }
     for (let i = 0; i < SN; i++) { sAge[i] += dt; sp[i * 3 + 1] += dt * 2.2; } sg.attributes.position.needsUpdate = true; smoke.material.size = 4.5;
     wT -= dt; if (wT <= 0) { wT = 25 + Math.random() * 20; if (dl < 260 && VNOW > 1) whistle(); }
+    for (const [k, st] of STATIONS.entries()) { const sg = st.sig; if (sg) { const clear = SS.at === k && SS.left < 8; const want = clear ? -.75 : 0; sg.arm.rotation.x += (want - sg.arm.rotation.x) * Math.min(1, dt * 3); sg.lamp.material.color.setHex(clear ? 0x30ff60 : 0xff3020); } }
     for (const [k, st] of STATIONS.entries()) { const b = st.board; if (!b || (b.t -= dt) > 0) continue; b.t = 5; if (Math.hypot(P.pos.x - st.plat.x, P.pos.z - st.plat.z) > 70) continue; const x = b.cv.getContext('2d'), w = Math.round(untilAt(k)), nx = [1, 2, 3].map(j => STATIONS[(k + j) % STATIONS.length].name);
       x.fillStyle = '#20241f'; x.fillRect(0, 0, 256, 160); x.strokeStyle = '#7a5a3a'; x.lineWidth = 10; x.strokeRect(5, 5, 246, 150); x.fillStyle = '#efeadc'; x.textAlign = 'center'; x.font = 'bold 20px Georgia,serif'; x.fillText(st.name.toUpperCase(), 128, 34); x.font = '16px Georgia,serif'; x.fillText(SS.at === k ? 'TRAIN IN - ALL ABOARD!' : 'NEXT TRAIN  ' + (w >= 60 ? Math.floor(w / 60) + ' min ' + (w % 60) + ' s' : w + ' s'), 128, 62); x.font = '14px Georgia,serif'; x.fillStyle = '#d8d0b0'; nx.forEach((n2, j) => x.fillText((j ? '· ' : 'then ') + n2, 128, 92 + j * 20)); b.tx.needsUpdate = true; }
     { const at0 = SS.at; for (const [k, st] of STATIONS.entries()) { if (!st.folk) continue; const near = Math.hypot(P.pos.x - st.plat.x, P.pos.z - st.plat.z) < 140; const board = at0 === k && SS.left < DWELL - 4; for (const D of st.folk) { const v = near && !board; if (D.g.visible !== v) D.g.visible = v; if (v) poseFrontierCharacter(D, dt, { speed: 0 }); } } }

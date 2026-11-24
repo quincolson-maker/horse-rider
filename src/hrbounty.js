@@ -73,6 +73,9 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'ctvisit', title: 'Gold Mountain Errand', task: 'Ride to Chinatown and have tea at the tea house', pay: 400, p: () => ((H.stats && H.stats.ctTea) || 0) > 0 ? 1 : 0 }, /* v223 */
     { id: 'ctroof', title: 'Rooftop Lookout', task: 'Climb to the roof of 3 Chinatown buildings', pay: 600, p: () => Math.min(1, ((H.stats && H.stats.ctRoofs) || []).length / 3), txt: () => `${Math.min(3, ((H.stats && H.stats.ctRoofs) || []).length)} / 3` },
     { id: 'ctfire', title: 'Firecracker Night', task: 'Set off firecrackers in Chinatown after dark', pay: 500, p: () => ((H.stats && H.stats.ctFireNight) || 0) > 0 ? 1 : 0 },
+    { id: 'ctriddle', title: 'Riddles by Lantern Light', task: 'Solve 3 lantern riddles in Chinatown', pay: 500, p: () => Math.min(1, ((H.stats && H.stats.ctRiddles) || 0) / 3), txt: () => `${Math.min(3, ((H.stats && H.stats.ctRiddles) || 0))} / 3` }, /* v241 */
+    { id: 'ctstage', title: 'Stage Passenger', task: 'Ride the stage line between town and Chinatown', pay: 200, p: () => ((H.stats && H.stats.ctStage) || 0) > 0 ? 1 : 0 },
+    { id: 'ctrun', title: 'Over the Tiles', task: 'Finish the Chinatown rooftop run', pay: 700, p: () => ((H.stats && H.stats.ctRuns) || 0) > 0 ? 1 : 0 },
     { id: 'slayer', title: 'Slayer', task: 'Drop 150 zombies', pay: 3000, ...killsSince('slayer', 150) },
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];

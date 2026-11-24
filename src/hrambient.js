@@ -52,5 +52,10 @@ export function createAmbient({ scene, H, P, hAt, mobile }) {
       const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz); if (d > .1 && c.peck <= 0) { c.x += dx / d * 1.2 * dt; c.z += dz / d * 1.2 * dt; c.a = Math.atan2(dx, dz); } c.peck = Math.max(0, c.peck - dt);
       const y = hAt(c.x, c.z) + .2, bob = c.peck > 0 ? Math.abs(Math.sin(c.peck * 14)) * .08 : 0; E.set(c.peck > 0 ? .5 : 0, c.a, 0); Q.setFromEuler(E); S.setScalar(1); M.compose(V.set(c.x, y, c.z), Q, S); CH.setMatrixAt(i, M);
       M.compose(V.set(c.x + Math.sin(c.a) * .16, y + .15 - bob, c.z + Math.cos(c.a) * .16), Q, S); CR.setMatrixAt(i, M); }); henInit = true; CH.instanceMatrix.needsUpdate = CR.instanceMatrix.needsUpdate = true; }
-  return { update(dt) { update(dt); night(dt); fireworks(dt); chickens(dt); }, fireworks: () => { fwT = 0; H.night = Math.max(H.night || 0, .9); } };
+  // v171 high-country snow: above ~150 m the air fills with drifting flakes (one Points draw around the camera)
+  const SN = mobile ? 500 : 1400, spos = new Float32Array(SN * 3), sg = new THREE.BufferGeometry(); for (let i = 0; i < SN; i++) { spos[i * 3] = (Math.random() - .5) * 60; spos[i * 3 + 1] = Math.random() * 30; spos[i * 3 + 2] = (Math.random() - .5) * 60; } sg.setAttribute('position', new THREE.BufferAttribute(spos, 3));
+  const SM = new THREE.PointsMaterial({ color: 0xffffff, size: .14, transparent: true, opacity: 0, depthWrite: false }), SNOW = new THREE.Points(sg, SM); SNOW.frustumCulled = false; scene.add(SNOW); let snowK = 0;
+  function snow(dt) { const hi = P.pos.y > 150 && !hidden(); snowK += ((hi ? 1 : 0) - snowK) * Math.min(1, dt * .5); SM.opacity = snowK * .85; SNOW.visible = snowK > .02; if (!SNOW.visible) return; SNOW.position.set(P.pos.x, P.pos.y - 8, P.pos.z);
+    for (let i = 0; i < SN; i++) { let y = spos[i * 3 + 1] - dt * (1.2 + (i % 5) * .2); if (y < 0) y += 30; spos[i * 3 + 1] = y; spos[i * 3] += Math.sin(t * .7 + i) * dt * .3; } sg.attributes.position.needsUpdate = true; }
+  return { update(dt) { update(dt); night(dt); fireworks(dt); chickens(dt); snow(dt); }, fireworks: () => { fwT = 0; H.night = Math.max(H.night || 0, .9); } };
 }

@@ -83,6 +83,7 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'cttiles', title: 'Sharp Eyes', task: 'Clear the tile-matching table at a tea house', pay: 300, p: () => ((H.stats && H.stats.ctTileWins) || 0) > 0 ? 1 : 0 },
     { id: 'mcore', title: 'Pay Dirt', task: 'Sell 5 chunks of ore at the Silver Creek assay office', pay: 500, p: () => Math.min(1, ((H.stats && H.stats.mcSold) || 0) / 5), txt: () => `${Math.min(5, ((H.stats && H.stats.mcSold) || 0))} / 5` }, /* v300 */
     { id: 'mclook', title: 'Top of the Headframe', task: 'Climb the headframe at Silver Creek Diggings', pay: 250, p: () => ((H.stats && H.stats.mcLook) || 0) > 0 ? 1 : 0 },
+    { id: 'ctcable', title: 'Hold the Brass Pole', task: 'Ride the cable car the length of Chinatown\'s avenue', pay: 200, p: () => ((H.stats && H.stats.ctCable) || 0) > 0 ? 1 : 0 }, /* v311 */
     { id: 'slayer', title: 'Slayer', task: 'Drop 150 zombies', pay: 3000, ...killsSince('slayer', 150) },
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];

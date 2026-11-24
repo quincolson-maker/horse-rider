@@ -1,6 +1,6 @@
 // v49 GLOBAL WEEKLY LEADERBOARD: your points earned this week (kills, bosses, bounties; never dev/gift money) are posted to the
 // lobby server every minute; the 🏆 panel shows the top riders. Works offline (just shows your own week until the server answers).
-import { LOBBY_URL } from './lobby.js?v=283';
+import { LOBBY_URL } from './lobby.js?v=284';
 const isoWeek = (d = new Date()) => { const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return t.getUTCFullYear() + '-W' + String(Math.ceil(((t - y0) / 864e5 + 1) / 7)).padStart(2, '0'); };
 export function createLeaderboard({ H }) {
   const ls = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (_) { return null; } };

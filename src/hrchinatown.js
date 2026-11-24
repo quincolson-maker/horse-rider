@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=283';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=283';
-import { mergeStatic } from './hrmerge.js?v=283';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=284';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=284';
+import { mergeStatic } from './hrmerge.js?v=284';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -317,7 +317,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   // ---------- v221 people: shoppers stroll the sidewalks, shopkeepers mind their counters ----------
   const LOOK = [[0x2c3a4a, 0xe8e0cc, 'male'], [0x4a2a2a, 0xece4d0, 'female'], [0x2e3e34, 0xe0d6c0, 'male'], [0x3a3448, 0xeee6d4, 'female'], [0x5a4630, 0xe6dccc, 'male'], [0x283238, 0xf0e8d8, 'male'], [0x4a3a2a, 0xe8dcc8, 'female']];
   const SKIN = [0xe0b48c, 0xd4a27a, 0xc8946c, 0xb88460, 0xe8c09a], HAIR = [0x14100c, 0x1c1410, 0x2a1e14];
-  const people = [], mkP = (i, name) => { const [coat, top, sex] = LOOK[i % LOOK.length]; const D = makeFrontierCharacter({ kind: 'townsfolk', sex, quality: mobile ? 'low' : 'high', coat, top, bodice: coat, hatC: [0x1a1612, 0x2a221a, 0x3a2e22][i % 3], skin: SKIN[i % SKIN.length], hair: HAIR[i % HAIR.length], bandana: coat, name }); scene.add(D.g); try { mergeStatic(D.g); } catch (_) {} return D; };
+  const people = [], mkP = (i, name) => { const [coat, top, sex] = LOOK[i % LOOK.length]; const D = makeFrontierCharacter({ kind: 'townsfolk', sex, quality: mobile || name !== 'Shopkeeper' ? 'low' : 'high', coat, top, bodice: coat, hatC: [0x1a1612, 0x2a221a, 0x3a2e22][i % 3], skin: SKIN[i % SKIN.length], hair: HAIR[i % HAIR.length], bandana: coat, name }); scene.add(D.g); try { mergeStatic(D.g); } catch (_) {} return D; };
   const WP = []; for (const sx of [-5.6, 5.6]) for (let z = -30; z <= 30; z += 6) WP.push([sx, z]); for (const sz of [-5.6, 5.6]) for (let x = -30; x <= 30; x += 6) if (Math.abs(x) > 7) WP.push([x, sz]);
   const DOORS = built.map(b => { const [x, z] = toW(b, W / 2, -.4); const q = [x - CX, z - CZ]; q.door = true; return q; }); /* v269 shoppers duck into the shops */
   const NW = mobile ? 4 : 7; for (let i = 0; i < NW; i++) { const D = mkP(i, 'Shopper'), w = WP[(i * 7) % WP.length]; if (i % 3 === 1) { const pr = new THREE.Group(), cn = new THREE.Mesh(new THREE.ConeGeometry(.62, .28, 16, 1, true), new THREE.MeshStandardMaterial({ color: [0xc0392b, 0xe8c070, 0x2f5d50][i % 3], side: THREE.DoubleSide, roughness: .7 })), st2 = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, 1.0, 4), M.dark); cn.position.y = .5; pr.add(cn, st2); pr.position.set(.22, 1.55, .05); D.g.add(pr); } /* v232 paper parasols */ people.push({ D, x: w[0], z: w[1], tg: null, sp: 1 + Math.random() * .4, wait: Math.random() * 3 }); }

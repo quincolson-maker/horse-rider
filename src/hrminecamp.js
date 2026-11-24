@@ -1,0 +1,79 @@
+// v299 SILVER CREEK DIGGINGS: a mining camp on the flats west of the pen. A timber headframe you can climb (switchback stairs to a
+// lookout under the wheel), a walk-in assay office, miners' tents around a fire, an ore cart on a short rail, and three ore
+// faces in a rock heap. Swing a pick at the ore (one chunk a minute per face, carry up to 10) and sell it at the assay office.
+// It is NOT a safe zone - dynamite miners like the place after dark. Everything is merged per material and distance-culled.
+import * as THREE from 'three';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=299';
+
+export const MC = { x: -110, z: -30, r: 30 };
+export const mcAvoid = (x, z) => Math.hypot(x - MC.x, z - MC.z) < MC.r;
+
+export function createMineCamp({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
+  const { x: CX, z: CZ } = MC, std = o => new THREE.MeshStandardMaterial(Object.assign({ roughness: .9 }, o));
+  const M = { wood: std({ color: 0x6a4a2c }), dark: std({ color: 0x3a2a1a }), plank: std({ color: 0x8a6a42 }), canvas: std({ color: 0xd8cfb4 }), rock: std({ color: 0x6e6a62, roughness: 1 }), ore: std({ color: 0x8a8a90, metalness: .6, roughness: .4, emissive: 0x101018 }), iron: std({ color: 0x3a3a3e, metalness: .6, roughness: .5 }), fire: new THREE.MeshBasicMaterial({ color: 0xffa040 }), sign: null };
+  const GEO = new Map(), push = (m, g) => (GEO.get(m) || GEO.set(m, []).get(m)).push(g);
+  let y0 = -1e9; for (let i = -16; i <= 16; i += 4) for (let j = -16; j <= 16; j += 4) y0 = Math.max(y0, hAt(CX + i, CZ + j)); y0 += .05;
+  const S = { cx: CX, cz: CZ, rot: 0, y0, c: 1, s: 0, floors: [], R: 40, geo: new Map(), kind: 'minecamp' }; T.structs.push(S);
+  const floor = (x0, x1, z0, z1, ya, yb = ya, axis = 'x') => S.floors.push({ x0, x1, z0, z1, ya, yb, axis }), wall = (ax, az, bx, bz, ya, yb) => T.walls.push([CX + ax, CZ + az, CX + bx, CZ + bz, y0 + ya, y0 + yb]);
+  const box = (m, x, y, z, w, h, d, ry = 0) => { const g = new THREE.BoxGeometry(w, h, d); if (ry) g.rotateY(ry); g.translate(CX + x, y0 + y, CZ + z); push(m, g); };
+  const cyl = (m, x, y, z, r, h, n = 8, r2 = r) => { const g = new THREE.CylinderGeometry(r2, r, h, n); g.translate(CX + x, y0 + y, CZ + z); push(m, g); };
+  const spots = [], spot = (x, y, z, kind, label, r = 1.6, extra) => { const o = Object.assign({ x: CX + x, z: CZ + z, y: y0 + y, kind, label, r, mc: true }, extra || {}); T.spots.push(o); spots.push(o); return o; };
+
+  // ---- headframe: four legs, cross braces, switchback stairs up to a lookout platform under the sheave wheel ----
+  const hx = 8, hz = -6, HW = 3.2, TOP = 9.6; for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { box(M.wood, hx + dx * HW / 2, TOP / 2 + .6, hz + dz * HW / 2, .35, TOP + 1.2, .35); wall(hx + dx * HW / 2 - .2, hz + dz * HW / 2, hx + dx * HW / 2 + .2, hz + dz * HW / 2, -1, TOP + 1); }
+  for (let k = 1; k <= 3; k++) { const y = k * TOP / 3.4; box(M.dark, hx, y, hz - HW / 2, HW, .14, .14); box(M.dark, hx, y, hz + HW / 2, HW, .14, .14); box(M.dark, hx - HW / 2, y, hz, .14, .14, HW); box(M.dark, hx + HW / 2, y, hz, .14, .14, HW); }
+  // stairs: three flights outside the tower on its east side, landings at 3.2 and 6.4, top platform at TOP
+  const sx0 = hx + HW / 2 + .2, sx1 = sx0 + 1.2; const flights = [[hz + HW / 2 + 1.5, hz - HW / 2 - .4, 0, 3.2], [hz - HW / 2 - .4, hz + HW / 2 + 1.5, 3.2, 6.4], [hz + HW / 2 + 1.5, hz - HW / 2 - .4, 6.4, TOP]];
+  flights.forEach(([za, zb, ya, yb], i) => { const z0 = Math.min(za, zb), z1 = Math.max(za, zb); floor(sx0, sx1, z0, z1, za < zb ? ya : yb, za < zb ? yb : ya, 'z'); const n = Math.round((yb - ya) / .22); for (let k = 0; k < n; k++) { const t = (k + .5) / n, z = za + (zb - za) * t; box(M.plank, (sx0 + sx1) / 2, ya + (yb - ya) * t - .06, z, 1.2, .1, Math.abs(zb - za) / n + .03); }
+    wall(sx1, z0, sx1, z1, ya + .3, yb + 1.1); box(M.wood, sx1, (ya + yb) / 2 + .9, (z0 + z1) / 2, .06, .06, z1 - z0); });
+  for (const [yl, zl] of [[3.2, hz - HW / 2 - .4], [6.4, hz + HW / 2 + 1.5]]) { const z0 = zl - (zl < hz ? 1.2 : 0), z1 = zl + (zl < hz ? 0 : 1.2); floor(sx0, sx1, z0, z1, yl); box(M.plank, (sx0 + sx1) / 2, yl - .06, (z0 + z1) / 2, 1.2, .12, 1.2); }
+  floor(hx - HW / 2 - .3, sx1, hz - HW / 2 - .3, hz + HW / 2 + .3, TOP); box(M.plank, (hx - HW / 2 - .3 + sx1) / 2, TOP - .06, hz, sx1 - hx + HW / 2 + .3, .12, HW + .6);
+  for (const [a, b, c2, d] of [[hx - HW / 2 - .3, hz - HW / 2 - .3, sx0, hz - HW / 2 - .3], [hx - HW / 2 - .3, hz + HW / 2 + .3, sx1, hz + HW / 2 + .3], [hx - HW / 2 - .3, hz - HW / 2 - .3, hx - HW / 2 - .3, hz + HW / 2 + .3]]) { wall(a, b, c2, d, TOP, TOP + 1.05); box(M.wood, (a + c2) / 2, TOP + 1.0, (b + d) / 2, Math.abs(c2 - a) + .06, .06, Math.abs(d - b) + .06); }
+  wall(sx1, hz - HW / 2 - .3, sx1, hz + HW / 2 + .3, TOP, TOP + 1.05); box(M.wood, sx1, TOP + 1.0, hz, .06, .06, HW + .6);
+  { const wh = new THREE.TorusGeometry(1.3, .1, 6, 20); wh.translate(CX + hx, y0 + TOP + 2.4, CZ + hz); push(M.iron, wh); cyl(M.iron, hx, TOP + 2.4, hz, .12, HW, 8); box(M.wood, hx, TOP + 1.2, hz - HW / 2, .25, 2.4, .25); box(M.wood, hx, TOP + 1.2, hz + HW / 2, .25, 2.4, .25); }
+  spot(hx, TOP, hz, 'mc_look', '🔭 Look out over the diggings', 2);
+
+  // ---- assay office: a walk-in shack with a counter and scales ----
+  const ax = -9, az = -5, AW = 6, AD = 5, AH = 3.2; floor(ax - AW / 2, ax + AW / 2, az - AD / 2, az + AD / 2, .25); box(M.plank, ax, .12, az, AW, .25, AD);
+  box(M.wood, ax - AW / 2, AH / 2, az, .16, AH, AD); box(M.wood, ax + AW / 2, AH / 2, az, .16, AH, AD); box(M.wood, ax, AH / 2, az + AD / 2, AW, AH, .16); box(M.wood, ax - AW / 4 - .45, AH / 2, az - AD / 2, AW / 2 - .9, AH, .16); box(M.wood, ax + AW / 4 + .45, AH / 2, az - AD / 2, AW / 2 - .9, AH, .16); box(M.wood, ax, AH - .3, az - AD / 2, 1.8, .6, .16);
+  wall(ax - AW / 2, az - AD / 2, ax - AW / 2, az + AD / 2, -1, AH); wall(ax + AW / 2, az - AD / 2, ax + AW / 2, az + AD / 2, -1, AH); wall(ax - AW / 2, az + AD / 2, ax + AW / 2, az + AD / 2, -1, AH); wall(ax - AW / 2, az - AD / 2, ax - .9, az - AD / 2, -1, AH); wall(ax + .9, az - AD / 2, ax + AW / 2, az - AD / 2, -1, AH);
+  { const r = new THREE.BoxGeometry(AW + .8, .14, AD + 1.2); r.rotateX(.08); r.translate(CX + ax, y0 + AH + .2, CZ + az - .2); push(M.dark, r); box(M.wood, ax, AH + .9, az - AD / 2 - .05, AW, 1.4, .12); }
+  box(M.wood, ax, .75, az + 1.2, 3.6, 1.0, .6); box(M.iron, ax + 1, 1.35, az + 1.2, .5, .2, .3); cyl(M.iron, ax + .8, 1.5, az + 1.2, .12, .02, 10); cyl(M.iron, ax + 1.2, 1.5, az + 1.2, .12, .02, 10);
+  const assay = spot(ax, .25, az + .1, 'mc_assay', '', 1.8);
+  { const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128; const c = cv.getContext('2d'); c.fillStyle = '#3a2614'; c.fillRect(0, 0, 512, 128); c.strokeStyle = '#e8d6a8'; c.lineWidth = 6; c.strokeRect(8, 8, 496, 112); c.fillStyle = '#f0e0b0'; c.textAlign = 'center'; c.font = 'bold 54px Georgia,serif'; c.fillText('ASSAY OFFICE', 256, 84); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
+    const sg = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 1.3), new THREE.MeshStandardMaterial({ map: t, roughness: .8 })); sg.position.set(CX + ax, y0 + AH + .9, CZ + az - AD / 2 - .13); sg.rotation.y = Math.PI; scene.add(sg); H.cullAdd && H.cullAdd(sg, 200, { x: CX + ax, z: CZ + az }); }
+
+  // ---- tents around a fire ----
+  for (let k = 0; k < 4; k++) { const a = k / 4 * Math.PI * 2 + .4, tx = -4 + Math.cos(a) * 6.5, tz = 9 + Math.sin(a) * 5; const g = new THREE.ConeGeometry(1.6, 2.2, 4, 1, true); g.rotateY(Math.PI / 4 + a); g.scale(1, 1, 1.4); g.translate(CX + tx, y0 + 1.1, CZ + tz); push(M.canvas, g); cyl(M.wood, tx, 1.2, tz, .05, 2.4, 5); for (let q = 0; q < 6; q++) wall(tx + Math.cos(q / 6 * 6.28) * 1.5, tz + Math.sin(q / 6 * 6.28) * 1.5, tx + Math.cos((q + 1) / 6 * 6.28) * 1.5, tz + Math.sin((q + 1) / 6 * 6.28) * 1.5, -1, 2); }
+  for (let k = 0; k < 8; k++) cyl(M.rock, -4 + Math.cos(k / 8 * 6.28) * .8, .12, 9 + Math.sin(k / 8 * 6.28) * .8, .2, .24, 6); for (let k = 0; k < 3; k++) { const g = new THREE.CylinderGeometry(.06, .06, 1.2, 5); g.rotateZ(Math.PI / 2); g.rotateY(k * 1.05); g.translate(CX - 4, y0 + .2, CZ + 9); push(M.dark, g); }
+  const fireM = new THREE.Mesh(new THREE.ConeGeometry(.35, .8, 7), M.fire); fireM.position.set(CX - 4, y0 + .5, CZ + 9); scene.add(fireM); spot(-4, 0, 7.4, 'mc_fire', '🔥 Warm up by the miners\' fire (heal)', 1.6);
+  for (const [lx, lz] of [[-1.4, 9.6], [-6.6, 8.4]]) { const g = new THREE.CylinderGeometry(.22, .22, 1.8, 8); g.rotateZ(Math.PI / 2); g.rotateY(lz > 9 ? .3 : -.3); g.translate(CX + lx, y0 + .22, CZ + lz); push(M.wood, g); }
+
+  // ---- the rock heap with three ore faces, rails and an ore cart ----
+  const rx = 4, rz = 10; for (let k = 0; k < 14; k++) { const g = new THREE.DodecahedronGeometry(.8 + (k % 4) * .35, 0); g.translate(CX + rx + Math.cos(k * 2.4) * (1 + k * .18), y0 + .4 + (k % 3) * .3, CZ + rz + Math.sin(k * 2.4) * (1 + k * .14)); push(M.rock, g); }
+  for (let k = 0; k < 12; k++) wall(rx + Math.cos(k / 12 * 6.28) * 3.2, rz + Math.sin(k / 12 * 6.28) * 3.2, rx + Math.cos((k + 1) / 12 * 6.28) * 3.2, rz + Math.sin((k + 1) / 12 * 6.28) * 3.2, -1, 2.6);
+  const faces = [0, 2.1, 4.2].map((a, i) => { const fx2 = rx + Math.cos(a + .6) * 3.3, fz2 = rz + Math.sin(a + .6) * 3.3; for (let q = 0; q < 5; q++) { const g = new THREE.OctahedronGeometry(.18 + (q % 2) * .08, 0); g.translate(CX + fx2 + Math.cos(q * 1.7) * .4, y0 + .5 + (q % 3) * .25, CZ + fz2 + Math.sin(q * 1.7) * .4); push(M.ore, g); }
+    return spot(rx + Math.cos(a + .6) * 4.3, 0, rz + Math.sin(a + .6) * 4.3, 'mc_ore', '⛏ Swing a pick at the ore', 1.6, { i }); });
+  for (const sx of [-.45, .45]) box(M.iron, 12 + sx, .06, 4, .08, .08, 12); for (let k = 0; k < 12; k++) box(M.dark, 12, .03, -1.5 + k, 1.3, .06, .2);
+  const cart = new THREE.Group(); { const b = new THREE.Mesh(new THREE.BoxGeometry(1.0, .6, 1.4), M.iron); b.position.y = .55; cart.add(b); for (const [wx, wz] of [[-.5, -.45], [.5, -.45], [-.5, .45], [.5, .45]]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(.18, .18, .08, 10), M.dark); w.rotation.z = Math.PI / 2; w.position.set(wx, .2, wz); cart.add(w); } const load = new THREE.Mesh(new THREE.DodecahedronGeometry(.45, 0), M.ore); load.position.y = .9; load.scale.y = .6; cart.add(load); } cart.position.set(CX + 12, y0, CZ + 4); scene.add(cart);
+
+  // ---- merge + register ----
+  const root = new THREE.Group(); root.name = 'Silver Creek Diggings'; for (const [m, gs] of GEO) { const nonIdx = gs.map(g => g.index ? g.toNonIndexed() : g); const me = new THREE.Mesh(mergeGeometries(nonIdx), m); me.castShadow = !mobile; me.receiveShadow = true; me.matrixAutoUpdate = false; root.add(me); gs.forEach(g => g.dispose()); } GEO.clear(); scene.add(root);
+  if (H.cullAdd) { H.cullAdd(root, 300, { x: CX, z: CZ }); H.cullAdd(cart, 150, { x: CX, z: CZ }); H.cullAdd(fireM, 150, { x: CX, z: CZ }); }
+  H.places && (H.places.minecamp = { x: CX, z: CZ });
+
+  // ---- gameplay: ore, assay, fire, lookout ----
+  const st = () => H.stats || (H.stats = {}), earn = n => { const g = H.guns; if (g) { g.state.score += n; g.save && g.save(); } };
+  const ORE_PAY = 120; let ore = 0; try { ore = +localStorage.getItem('hr_ore') || 0; } catch (_) {} const saveOre = () => { try { localStorage.setItem('hr_ore', String(ore)); } catch (_) {} };
+  const faceT = [0, 0, 0]; const label = () => { assay.label = ore ? `⚖️ Sell ${ore} chunk${ore === 1 ? '' : 's'} of ore at the assay office (+${ore * ORE_PAY})` : '⚖️ The assayer weighs ore here (bring some from the heap)'; }; label();
+  const prev = T.onUse; T.onUse = o => { if (!o || !o.mc) return prev ? prev(o) : false; const S2 = st();
+    if (o.kind === 'mc_ore') { const now = performance.now() / 1000; if (ore >= 10) msg('⛏ Your sack is full - sell at the assay office', 2); else if (now < faceT[o.i]) msg(`⛏ This face is worked out for now (${Math.ceil(faceT[o.i] - now)} s)`, 1.6); else { faceT[o.i] = now + 60; ore++; saveOre(); label(); S2.mcOre = (S2.mcOre || 0) + 1; msg(`⛏ Clang! A chunk of silver ore (${ore}/10)`, 1.8); if (sfx.tone && sfx.ctx) { sfx.tone('square', 1800, 1500, .06, .08); setTimeout(() => sfx.tone('square', 1600, 1300, .05, .08), 180); } if (fx && fx.smoke) for (let k = 0; k < 5; k++) fx.smoke.emit(o.x, o.y + .6, o.z, (Math.random() - .5), .6, (Math.random() - .5), .6, .58, .55, .4, .7, .5, -.02, .3); } }
+    else if (o.kind === 'mc_assay') { if (!ore) msg('⚖️ "Bring me ore from the heap and I\'ll weigh it fair."', 2.2); else { const n = ore; ore = 0; saveOre(); earn(n * ORE_PAY); S2.mcSold = (S2.mcSold || 0) + n; msg(`⚖️ The assayer weighs ${n} chunk${n === 1 ? '' : 's'} - +${n * ORE_PAY}`, 2.6); label(); } }
+    else if (o.kind === 'mc_fire') { const Z = H.zombies; if (Z && Z.state) Z.state.hp = Math.min(100, (Z.state.hp || 0) + 35); H.burnT = 0; msg('🔥 Coffee on the coals and a seat by the fire', 2); }
+    else if (o.kind === 'mc_look') { msg('🔭 The diggings below, Chinatown\'s lanterns to the south-east, the mountains all round', 2.6); S2.mcLook = 1; }
+    return true; };
+  let welcome = false, t = 0;
+  function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, d = Math.hypot(me.x - CX, me.z - CZ); if (d < 25 && !welcome) { welcome = true; msg('⛏ Silver Creek Diggings', 2.5); const S2 = st(); if (!S2.mcVisit) { S2.mcVisit = 1; earn(150); setTimeout(() => msg('First visit to the diggings  +150 · pick ore at the rock heap, sell it at the assay office', 4), 1500); } } else if (d > 60) welcome = false;
+    if (d < 150) { fireM.scale.set(1 + Math.sin(t * 9) * .08, 1 + Math.sin(t * 13) * .15, 1 + Math.cos(t * 11) * .08); if (fx && fx.smoke && (update.sm = (update.sm || 0) - dt) <= 0) { update.sm = .3; fx.smoke.emit(CX - 4 + (Math.random() - .5) * .3, y0 + .9, CZ + 9, 0, .8, 0, .5, .48, .46, .4, 2, 1.4, -.01, .05); } } }
+  return { update, info: { x: CX, z: CZ, y: y0 }, ore: () => ore };
+}

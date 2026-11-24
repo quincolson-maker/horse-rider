@@ -74,6 +74,14 @@ export function createExtra({ scene, H, P, hAt, msg, sfx, mobile }) {
     document.body.dataset.pf = F[0][0]; addEventListener('keydown', e => { if (e.code === 'KeyF' && document.body.classList.contains('photo')) { k = (k + 1) % F.length; apply(); e.stopPropagation(); } }, true);
     new MutationObserver(apply).observe(document.body, { attributes: true, attributeFilter: ['class'] }); return null; });
 
+  // v249 NORTHERN LIGHTS: on some clear nights green-and-violet curtains ripple across the northern sky
+  add(() => { const SEG = 48, strips = []; const mat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, side: THREE.DoubleSide });
+    for (let k = 0; k < 3; k++) { const g = new THREE.PlaneGeometry(900, 160, SEG, 2), col = [], p = g.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i); if (y < -1) col.push(0, .03, .02); else if (y < 1) col.push(.08, .8, .42); else col.push(.22, .08, .45); } g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); const m = new THREE.Mesh(g, mat); m.frustumCulled = false; m.visible = false; m.userData.base = Float32Array.from(p.array); m.userData.k = k; scene.add(m); strips.push(m); }
+    let tonight = -1, on = false, t = 0;
+    return dt => { t += dt; const n = H.night || 0, clear = !(H.wx && (H.wx.rain > .1 || H.wx.dust > .2)); const nightId = Math.floor(Date.now() / 6e5); if (n < .5) tonight = -1; else if (tonight !== nightId && tonight === -1) { tonight = nightId; on = ((nightId * 9301 + 49297) % 233280) / 233280 < .35; if (on && clear && n > .8) setTimeout(() => msg('🌌 Northern lights over the range tonight', 3), 4000); }
+      const want = on && clear && n > .8 ? .4 : 0; mat.opacity += (want - mat.opacity) * Math.min(1, dt * .3); const vis = mat.opacity > .01; const pp = ppos();
+      for (const m of strips) { m.visible = vis; if (!vis) continue; const k = m.userData.k, b = m.userData.base, p = m.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = b[i * 3]; p.setZ(i, Math.sin(x * .008 + t * (.15 + k * .05) + k) * 60 + Math.sin(x * .021 - t * .3) * 18); } p.needsUpdate = true; m.position.set(pp.x + (k - 1) * 160, hAt(pp.x, pp.z) + 540 + k * 40, pp.z - 700 - k * 80); m.rotation.x = -.5; } }; });
+
   X.update = dt => { X.t += dt; for (const f of X.parts) f(dt); };
   return X;
 }

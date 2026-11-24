@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=292';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=292';
-import { mergeStatic } from './hrmerge.js?v=292';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=293';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=293';
+import { mergeStatic } from './hrmerge.js?v=293';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -309,6 +309,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (k === 'lionrub') { if (S.ctRub === day()) msg('🦁 The lion\'s head is already polished bright today', 1.8); else { S.ctRub = day(); earn(30); msg('🦁 You rub the stone lion\'s head - luck is with you (+30)', 2.2); } }
     else if (k === 'board') { const now = Date.now() / 1000, dn = 360 - (now % 360), ln = 360 - ((now - 180) % 360 + 360) % 360, m = x => x < 60 ? Math.ceil(x) + ' s' : Math.ceil(x / 60) + ' min'; const q = S.ctErr, er = q && q.day === day() ? (q.done ? 'done today' : `${q.got.filter(Boolean).length}/3 roots`) : 'ask the herbalist'; msg(`📜 Dragon dance in ${m(dn)} · Lion dance in ${m(ln)} · Opera: ${S.ctOpera === day() ? 'seen today' : 'tonight'} · Riddles: ${5 - (S.ctRidDay === day() ? S.ctRidN || 0 : 0)} left · Errand: ${er}`, 6); }
     else if (k === 'cooview') { heal(40); msg('🍵 A cup of tea at the upstairs window - the street bustles below', 2.4); }
+    else if (k === 'books') { const tips = ['📚 An almanac: "Dead things fear the lantern light of town - and Chinatown\'s gates."', '📚 A railroad map shows six stations on the Mountain Line.', '📚 A field guide: wild ginseng grows on the open hills, never in the pines.', '📚 A dime novel about a safecracker. You recognise the plot.', '📚 A book of riddles - you memorise a few answers for the lanterns.', '📚 A guide to xiangqi: the cannon must jump to capture.']; msg(tips[(Math.random() * tips.length) | 0], 4); if (S.ctRead !== day()) { S.ctRead = day(); earn(20); } }
     else if (k === 'talk') { const L = ['"Fine weather for riding."', '"The dragon comes down the avenue every six minutes - don\'t miss it."', '"Try the egg tarts at the bakery. Still warm!"', '"Have you been up on the roofs? You can cross a whole block up there."', '"The herbalist pays well for wild ginseng from the hills."', '"Mind the dead out on the range after dark."', '"The old men at the xiangqi table have been at that game since noon."', '"Toss a coin in the urn and make a wish."', '"The opera starts whenever there\'s an audience!"']; msg('💬 ' + L[(Math.random() * L.length) | 0], 3); S.ctTalks = (S.ctTalks || 0) + 1; }
     else if (k === 'view') { msg('🏮 Lanterns, tiled eaves and the range beyond', 2); S.ctView = 1; }
     else if (k === 'gold') { if (S.ctJade) msg('💚 Your jade charm is warm against your chest', 2); else if (pay(2000)) { S.ctJade = 1; msg('💚 A carved jade charm - you heal slowly but steadily from now on', 3); for (const q of spots) if (q.kind === 'ct_gold') q.label = '💍 Look over the jade and gold (charm owned)'; } }

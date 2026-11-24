@@ -3,9 +3,9 @@
 // faces in a rock heap. Swing a pick at the ore (one chunk a minute per face, carry up to 10) and sell it at the assay office.
 // It is NOT a safe zone - dynamite miners like the place after dark. Everything is merged per material and distance-culled.
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=316';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=316';
-import { mergeStatic } from './hrmerge.js?v=316';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=317';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=317';
+import { mergeStatic } from './hrmerge.js?v=317';
 
 export const MC = { x: -110, z: -30, r: 30 };
 export const mcAvoid = (x, z) => Math.hypot(x - MC.x, z - MC.z) < MC.r;
@@ -91,9 +91,12 @@ export function createMineCamp({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const folk = [[-2.2, 10.6, 0x5a4a3a], [-6, 10.2, 0x3a4a5a]].slice(0, mobile ? 1 : 2).map(([x, z, coat], i) => { const D = makeFrontierCharacter({ kind: 'townsfolk', sex: 'male', quality: 'low', coat, top: 0xd8ccb0, hatC: 0x3a2a1a, skin: 0xc89470, hair: 0x6a6a6a, bandana: 0x8a2a1a, name: 'Prospector' }); scene.add(D.g); try { mergeStatic(D.g); } catch (_) {} D.g.position.set(CX + x, y0, CZ + z); D.g.rotation.y = Math.atan2(-4 - x, 9 - z); return D; });
   // v316 two photo spots at the diggings (press P): the top of the headframe and the miners' fire
   const PH = [['Headframe lookout', CX + hx, CZ + hz, y0 + TOP], ['Miners\' fire', CX - 4, CZ + 9, y0]]; new MutationObserver(() => { if (!document.body.classList.contains('photo')) return; const S2 = st(), got = new Set(S2.mcPhotos || []), me = H.mounted ? H.mounted.pos : P.pos; for (const [nm, x, z, y] of PH) if (!got.has(nm) && Math.hypot(me.x - x, me.z - z) < 6 && Math.abs(me.y - y) < 3) { got.add(nm); S2.mcPhotos = [...got]; earn(60); setTimeout(() => msg(`📷 Photo spot: ${nm}  +60`, 2.5), 600); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  // v317 the assayer minds his scales, and a small HUD tag shows the ore in your sack
+  const assayer = (() => { const D = makeFrontierCharacter({ kind: 'townsfolk', sex: 'male', quality: 'low', coat: 0x2a2a2e, top: 0xf0e8d8, hatC: 0x1a1612, skin: 0xd8a882, hair: 0x3a2a1a, bandana: 0x2a2a2a, name: 'Assayer' }); scene.add(D.g); try { mergeStatic(D.g); } catch (_) {} D.g.position.set(CX + ax, y0 + .25, CZ + az + 1.8); D.g.rotation.y = Math.PI; return D; })();
+  const tag = document.createElement('div'); tag.id = 'hrOre'; tag.style.cssText = 'position:fixed;left:50%;bottom:118px;transform:translateX(-50%);font:700 13px system-ui,sans-serif;color:#d8dce8;text-shadow:0 1px 3px #000;pointer-events:none;z-index:30;display:none'; document.body.appendChild(tag);
   let welcome = false, t = 0;
   function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, d = Math.hypot(me.x - CX, me.z - CZ); if (d < 25 && !welcome) { welcome = true; msg('⛏ Silver Creek Diggings', 2.5); const S2 = st(); if (!S2.mcVisit) { S2.mcVisit = 1; earn(150); setTimeout(() => msg('First visit to the diggings  +150 · pick ore at the rock heap, sell it at the assay office', 4), 1500); } } else if (d > 60) welcome = false;
-    lampM.emissiveIntensity = .2 + 3 * (H.night || 0); poolM.opacity = Math.max(0, (H.night || 0) - .35) * (.85 + .1 * Math.sin(t * 9)); { const hm = H.mounted; if (hm && Math.hypot(hm.pos.x - (CX - 9), hm.pos.z - (CZ - 11)) < 2.8 && Math.abs(H.speed || 0) < 1) { H.stam = Math.min(100, (H.stam || 0) + 30 * dt); if (hm.hp != null) hm.hp = Math.min(100, hm.hp + 10 * dt); if (!update.dr || t - update.dr > 20) { update.dr = t; msg('🐴 Your horse drinks deep', 1.6); } } } { const vis = d < 90 && (H.night || 0) < .92; for (const D of folk) { D.g.visible = vis; if (vis) poseFrontierCharacter(D, dt, { speed: 0 }); } }
+    lampM.emissiveIntensity = .2 + 3 * (H.night || 0); { const show = ore > 0 && !H.uiOpen; if (tag.style.display !== (show ? '' : 'none')) tag.style.display = show ? '' : 'none'; const tx = `⛏ ${ore}/10 ore - sell at the Silver Creek assay office`; if (show && tag.textContent !== tx) tag.textContent = tx; } assayer.g.visible = d < 60; if (d < 60) poseFrontierCharacter(assayer, dt, { speed: 0 }); poolM.opacity = Math.max(0, (H.night || 0) - .35) * (.85 + .1 * Math.sin(t * 9)); { const hm = H.mounted; if (hm && Math.hypot(hm.pos.x - (CX - 9), hm.pos.z - (CZ - 11)) < 2.8 && Math.abs(H.speed || 0) < 1) { H.stam = Math.min(100, (H.stam || 0) + 30 * dt); if (hm.hp != null) hm.hp = Math.min(100, hm.hp + 10 * dt); if (!update.dr || t - update.dr > 20) { update.dr = t; msg('🐴 Your horse drinks deep', 1.6); } } } { const vis = d < 90 && (H.night || 0) < .92; for (const D of folk) { D.g.visible = vis; if (vis) poseFrontierCharacter(D, dt, { speed: 0 }); } }
     if (d < 150) { fireM.scale.set(1 + Math.sin(t * 9) * .08, 1 + Math.sin(t * 13) * .15, 1 + Math.cos(t * 11) * .08); if (fx && fx.smoke && (update.sm = (update.sm || 0) - dt) <= 0) { update.sm = .3; fx.smoke.emit(CX - 4 + (Math.random() - .5) * .3, y0 + .9, CZ + 9, 0, .8, 0, .5, .48, .46, .4, 2, 1.4, -.01, .05); } } }
   return { update, info: { x: CX, z: CZ, y: y0 }, ore: () => ore };
 }

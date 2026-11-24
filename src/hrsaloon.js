@@ -2,15 +2,15 @@
 // their table (hire one for 100: follows you on foot or on its own horse, shoots zombies, can die), bar fistfights (bump a
 // bandit or a random brawl), the dealer in the dark corner (snow = fast, green = slow), three slot machines upstairs (seated
 // first-person view, 10/50/100 bets, jackpot 6000), swinging batwing doors, warm lamps, light shafts and dust.
-import { mergeStatic } from './hrmerge.js?v=142';
+import { mergeStatic } from './hrmerge.js?v=143';
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=142';
-import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=142';
-import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=142';
-import {createCasino} from './hrcasino.js?v=142';
-import {createSaloonDecor} from './hrsaloondecor.js?v=142';
-import { createSaloonPlus } from './hrsaloonplus.js?v=142';
-import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=142';
+import { PERF } from './perfopts.js?v=143';
+import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=143';
+import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=143';
+import {createCasino} from './hrcasino.js?v=143';
+import {createSaloonDecor} from './hrsaloondecor.js?v=143';
+import { createSaloonPlus } from './hrsaloonplus.js?v=143';
+import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=143';
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
 // ---------------- slots: pure math (tests use it) ----------------
 export const SLOT = { NAMES: ['cactus', 'cherry', 'horseshoe', 'bell', 'buffalo'], W: [10, 9, 7, 4, 2], THREE: [0, 5, 10, 25, 60], TWO_CHERRY: 3, ONE_CHERRY: 1, BETS: [10, 50, 100] };
@@ -101,7 +101,8 @@ export function createSaloon(c) {
   S.dancers = DANCERS.map((o, i) => { const D = makeDoll({ kind: 'dancer', ...o }); D.mode = 'idle'; D.home = [-16.2 + i * .9, 1.4 + (i % 2) * .5]; place(D, D.home[0], F + .4, D.home[1], Math.PI / 2 + .3); return D; });
   const greta = makeDoll({ kind: 'barmaid', top: 0xe6d8bd, bust: 0xe6d8bd, sleeve: 0xe9dcc3, bodice: 0x2f5e2c, skirt: 0x8a1e22, hair: 0xd6a94e, skin: 0xeebf9d, legs: 0x3b2c26, shoe: 0x2c1a10, name: 'Greta' }); greta.route = [[-4.2,3.1],[-3,4.8],[-6,4.2],[-8.6,4.5],[-9.2,3.8],[-6,3.4]]; greta.ri = 0; greta.wait = 2; place(greta, -6, F, 4.2, 0); S.greta = greta;
   const dealer = makeDoll({ kind: 'dealer', top: 0x1c1a1c, hair: 0x111111, skin: 0xb88a6a, legs: 0x1c1a1c }); place(dealer, -16.45, F, 8.2, Math.PI / 2); dealer.mode = 'lean'; S.dealer = dealer;
-  const staticNPCs=[...S.seated,...S.drifters,...S.dancers,greta,dealer];
+  const pianist = makeDoll({ kind: 'bandit', ...BANDIT_LOOKS[3] }); pianist.mode = 'sit'; place(pianist, -2.72, F, 8.6, Math.PI / 2); S.pianist = pianist; // v143 the piano player
+  const staticNPCs=[...S.seated,...S.drifters,...S.dancers,greta,dealer,pianist];
   try { let sv = 0; for (const D of staticNPCs) sv += mergeStatic(D.g); for (const o of scene.children) if (/saloon upgrade|architectural detail|cabinet/i.test(o.name || '')) sv += mergeStatic(o); S.mergedSaved = sv; } catch (e) { console.warn('saloon merge', e); } // v100: fewer draw calls
   // v37 perf: saloon NPCs are culled when off screen (fixed bounding sphere around the body: they move as whole groups),
   // switch to a low-detail body (same skeleton, a third of the triangles) beyond 13 m, and cast sun shadows only while you
@@ -338,7 +339,7 @@ export function createSaloon(c) {
     for (const D of S.dancers) { if ((S.dance && (S.dance.all || S.dancers[S.dance.i] === D)) || S.mat > 0) { poseDoll(D, dt, 'dance'); continue; } poseDoll(D, dt, D.remoteDance ? 'dance' : 'idle'); D.remoteDance = 0; }
     { const D = greta, r = D.route[D.ri], tgt = Lh(r[0], F, r[1]), dx = tgt.x - D.g.position.x, dz = tgt.z - D.g.position.z, d = Math.hypot(dx, dz); if (D.wait > 0) { D.wait -= dt; poseDoll(D, dt, 'idle'); const aR = D.arms && D.arms[1]; if (aR) { const w = D.t * 4.2; aR[0].rotation.x = -.85 + Math.sin(w) * .12; aR[0].rotation.z = Math.cos(w) * .22; aR[1].rotation.x = -.7 + Math.sin(w) * .1; } } /* v122: Greta wipes the bar while she waits */ else if (d < .2) { D.wait = 3 + Math.random() * 4; D.ri = (D.ri + 1) % D.route.length; } else { const v = 1.1; D.g.position.x += dx / d * v * dt; D.g.position.z += dz / d * v * dt; D.g.rotation.y = lerpA(D.g.rotation.y, Math.atan2(dx, dz), Math.min(1, dt * 6)); poseDoll(D, dt, 'walk', v); }
       gretaSpot.x = D.g.position.x; gretaSpot.z = D.g.position.z; }
-    poseDoll(dealer, dt, 'lean');
+    poseDoll(dealer, dt, 'lean'); { const D = pianist; poseDoll(D, dt, 'sit'); const [aL, aR] = D.arms || []; const k = D.t * 9; if (aL && aR) { aL[0].rotation.x = -1.05 + Math.sin(k) * .08; aR[0].rotation.x = -1.05 + Math.sin(k + 1.7) * .08; aL[1].rotation.x = -.5 + Math.sin(k * 1.3) * .12; aR[1].rotation.x = -.5 + Math.cos(k * 1.1) * .12; } if (D.head) D.head.rotation.z = Math.sin(D.t * 2.2) * .12; }
     // random brawl between the two drifters (rare), dust, doors
     if ((S.brawlT = (S.brawlT ?? 120 + Math.random() * 120) - dt) <= 0) { S.brawlT = 150 + Math.random() * 200; if (!S.fight) { for (const D of S.drifters) D.brawl = 6; msg('A brawl breaks out at the bar!', 2.5); S.brawls = (S.brawls || 0) + 1; } }
     if (dust.visible) { for (let i = 0; i < DN; i++) { const q = dseed[i], t = H.t * .08 + q[3]; const lx=q[0]+Math.sin(t)*.4,lz=q[2]+Math.cos(t*.7)*.4;const v=tmpV.set(s.cx+lx*s.c+lz*s.s,s.y0+q[1]+Math.sin(t*1.3)*.2,s.cz-lx*s.s+lz*s.c); dp[i * 3] = v.x; dp[i * 3 + 1] = v.y; dp[i * 3 + 2] = v.z; } dust.geometry.attributes.position.needsUpdate = true; }

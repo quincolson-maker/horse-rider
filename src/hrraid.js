@@ -49,10 +49,19 @@ export function createRaid({ scene, H, P, hAt, msg, sfx, mobile, fx }) {
     if (R.hp <= 0) end(false); }
   function end(win, quiet) { if (!R.on) return; R.on = false; R.spawnQ.length = 0;
     for (const o of R.raiders) o.raid = null;
+    if (win) chest(R.gate);
     if (win) { const p = 600 + R.kills * 40 + Math.round(R.hp * 6); award(p, 'raid'); bump('raids'); msg(`🏆 RAID REPELLED — the ${gateName(R.gate)} Gate held at ${Math.round(R.hp)}%  +${p}`, 5); tone('triangle', 523, 784, .5, .4); H.vib && H.vib([40, 40, 80]); }
     else if (!quiet) { const p = R.kills * 25; if (p) award(p, 'raid'); msg(`💥 The ${gateName(R.gate)} Gate fell! The town still stands — they can't get past the stakes.${p ? '  +' + p : ''}`, 5); }
     else msg('🌅 Dawn — the raiders scatter.', 3);
     if (!win && fxSplinter) fxSplinter(); bar.visible = false; if (el) el.style.display = 'none'; }
+  // v128 the town's thank-you: a strongbox appears inside the gate after a win (USE to open: 300-900 + a few apples)
+  function chest(g) { const T = H.town2; if (!T || !T.spots) return; const x = g.x - g.nx * 3, z = g.z - g.nz * 3, y = hAt(x, z), box = new THREE.Group(); box.position.set(x, y, z); box.rotation.y = g.ang; scene.add(box);
+    const wd = new THREE.MeshStandardMaterial({ color: 0x5a3a1e, roughness: .8 }), mt = new THREE.MeshStandardMaterial({ color: 0xd8b04a, metalness: .9, roughness: .3, emissive: 0x4a3000, emissiveIntensity: .6 });
+    const b = new THREE.Mesh(new THREE.BoxGeometry(.9, .5, .55), wd); b.position.y = .25; box.add(b); const lid = new THREE.Mesh(new THREE.CylinderGeometry(.275, .275, .9, 12, 1, false, 0, Math.PI), wd); lid.rotation.z = Math.PI / 2; lid.position.y = .5; box.add(lid);
+    for (const xx of [-.3, .3]) { const s2 = new THREE.Mesh(new THREE.BoxGeometry(.06, .82, .58), mt); s2.position.set(xx, .4, 0); box.add(s2); }
+    const sp = { x, z, y, kind: 'raidchest', label: 'Open the town\'s strongbox', r: 1.8 }; T.spots.push(sp); if (T.TL) T.TL.raidchest = 'OPEN<small>STRONGBOX</small>';
+    const prev = T.onUse; T.onUse = o => { if (o !== sp || sp.used) return prev ? prev(o) : false; sp.used = true; const pts = 300 + ((Math.random() * 7) | 0) * 100; award(pts, 'raid'); if (H.gear) { H.gear.state.apples = Math.min(10, (H.gear.state.apples || 0) + 2); try { localStorage.setItem('hr_gear', JSON.stringify(H.gear.state)); } catch (_) {} }
+      msg(`💰 The town's strongbox: +${pts} and 2 apples for your horse`, 3); tone('triangle', 523, 1046, .4, .25); const i = T.spots.indexOf(sp); if (i >= 0) T.spots.splice(i, 1); box.removeFromParent(); return true; }; }
   const fxSplinter = () => { if (fx && fx.debris) fx.debris(bar.position.x, bar.position.y + 1.2, bar.position.z, 0x7a5636, 30, 1.4); };
 
   function tick(dt) { const z = Z(), pal = H.palisade; if (!z || !pal || !pal.gates) return;

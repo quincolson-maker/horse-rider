@@ -64,6 +64,7 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'scavenger', title: 'Scavenger', task: 'Pick up 15 things the dead drop (gold teeth, pouches, apples)', pay: 500, p: () => Math.min(1, ((H.stats && H.stats.loot) || 0) / 15), txt: () => `${Math.min(15, (H.stats && H.stats.loot) || 0)} / 15` },
     { id: 'torchlight', title: 'Fire Brigade', task: 'Put out 5 torch-bearer zombies (they come at night)', pay: 600, p: () => Math.min(1, ((H.stats && H.stats.zk_torch) || 0) / 5), txt: () => `${Math.min(5, (H.stats && H.stats.zk_torch) || 0)} / 5` },
     { id: 'sermon', title: 'End of the Sermon', task: 'Put down THE PREACHER (he rises every 6th wave)', pay: 3000, p: () => ((H.stats && H.stats.preacher) || 0) > 0 ? 1 : 0 }, // v161
+    { id: 'boothill', title: 'Boot Hill', task: 'Pay your respects at the big cross in the cemetery west of town', pay: 300, p: () => ((H.stats && H.stats.respects) || 0) > 0 ? 1 : 0, to: () => H.bootHill || null }, // v176
     { id: 'slayer', title: 'Slayer', task: 'Drop 150 zombies', pay: 3000, ...killsSince('slayer', 150) },
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];

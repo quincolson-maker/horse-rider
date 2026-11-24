@@ -2,13 +2,13 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
-import { mergeStatic } from './hrmerge.js?v=333';
+import { mergeStatic } from './hrmerge.js?v=334';
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=333';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=333';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=334';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=334';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
-  const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['express', 10]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
+  const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['dining', 11], ['express', 10], ['caboose', 7]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
   let path = null, L = 0, built = false; const yS = [];
   // ---------- choose the loop ----------
   // v77 THE MOUNTAIN LINE: one grand loop round the whole map - out of Dry Gulch, up through the foothills and every ridge
@@ -101,8 +101,8 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
   function platformUse(k) { const S0 = sched(Date.now()); if (S0.at === k) { boardP(); return; } const w = Math.round(untilAt(k)); msg(`🚂 Next train at ${STATIONS[k].name} in ${w >= 60 ? Math.floor(w / 60) + ' min ' + (w % 60) + ' s' : w + ' s'}`, 2.5); }
   function boardP() { if (heist || pass) return; if (H.dismountNow) H.dismountNow(); const car = cars.find(c => c.kind === 'open'); pass = { car, off: (Math.random() - .5) * 5, side: Math.random() < .5 ? -.95 : .95 }; H.trainRide = rideP; H.trainUse = useP; H.onTrain = true;
     const S0 = sched(Date.now()); msg(`🚂 All aboard! Next stop: ${STATIONS[(S0.at + 1) % STATIONS.length].name}.  USE at a station to get off · JUMP to leap off`, 4); whistle(); }
-  function rideP(dt) { const c = pass.car; tmp.set(pass.side, 1.47, pass.off).applyQuaternion(c.g.quaternion).add(c.g.position); P.pos.copy(tmp); if (input && input.jump) leaveP(null, true); if (H.dead) leaveP(); }
-  function useP() { const S0 = sched(Date.now()); if (S0.at >= 0) { leaveP(STATIONS[S0.at]); return true; } msg('Between stations — wait for the next stop, or JUMP to leap off', 2); return true; }
+  function rideP(dt) { const c = pass.car; tmp.set(pass.side, pass.inside ? 1.25 : 1.47, pass.off).applyQuaternion(c.g.quaternion).add(c.g.position); P.pos.copy(tmp); if (pass.inside) { const Z = H.zombies; if (Z && Z.state) Z.state.hp = Math.min(100, (Z.state.hp || 0) + 4 * dt); } if (input && input.jump) leaveP(null, true); if (H.dead) leaveP(); }
+  function useP() { const S0 = sched(Date.now()); if (S0.at >= 0) { leaveP(STATIONS[S0.at]); return true; } const din = cars.find(c => c.kind === 'dining'); if (pass.car !== din && din) { pass.car = din; pass.side = .55; pass.off = (Math.random() - .5) * 6; pass.inside = true; msg('🍽️ You take a table in the dining car - coffee, pie and the view (you heal while you sit). USE again for the open car', 3.5); } else { pass.car = cars.find(c => c.kind === 'open'); pass.side = .95; pass.inside = false; msg('🚃 Back out to the open car', 2); } return true; }
   function leaveP(st, jump) { H.trainRide = null; H.trainUse = null; H.onTrain = false; const c = pass && pass.car; pass = null;
     if (st) { const x = st.plat.x + st.side.x * 2.4, z = st.plat.z + st.side.z * 2.4; P.pos.set(x, hAt(x, z), z); msg('🚉 ' + st.name + ' — whistle (Z) for your horse', 3); }
     else if (c) { tan.set(0, 0, 1).applyQuaternion(c.g.quaternion); const x = c.g.position.x - tan.z * 3.8, z = c.g.position.z + tan.x * 3.8; P.pos.set(x, hAt(x, z), z); if (jump) msg('You leap clear of the train', 2); } }
@@ -127,10 +127,14 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
         for (const sx of [-1.3, 1.3]) { B(g, .06, .06, len - .2, M.gold, sx, 2.35, 0); B(g, .04, .04, len - .2, M.gold, sx, 1.95, 0); }
         B(g, .5, .42, len - 1.6, M.red, 0, 1.66, 0); B(g, .12, .55, len - 1.6, M.wood, 0, 2.1, 0); for (const sx of [-.5, .5]) B(g, .5, .08, len - 1.6, M.wood, sx * .45, 1.9, 0); // back-to-back bench facing out
         for (const z of [-len / 2 + .05, len / 2 - .05]) B(g, 2.6, .9, .06, M.wood, 0, 1.9, z); }
-      else { ws = wheelsFor(g, len); const body = kind === 'express' ? M.green : M.red; B(g, 2.6, 2.4, len, body, 0, 2.3, 0); B(g, 2.9, .22, len + .4, M.black, 0, 3.6, 0); B(g, 2.7, .2, len, M.gold, 0, 1.2, 0);
-        if (kind === 'express') { B(g, 2.64, .14, len, M.gold, 0, 3.3, 0); const cv = document.createElement('canvas'); cv.width = 256; cv.height = 48; const c2 = cv.getContext('2d'); c2.fillStyle = '#2a4a34'; c2.fillRect(0, 0, 256, 48); c2.fillStyle = '#e8c060'; c2.font = '900 34px Georgia, serif'; c2.textAlign = 'center'; c2.fillText('EXPRESS', 128, 36); const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
+      else if (kind === 'caboose') { ws = wheelsFor(g, len); B(g, 2.6, 2.3, len - 1.2, M.red, 0, 2.25, 0); B(g, 2.9, .2, len - .8, M.black, 0, 3.5, 0); B(g, 1.8, 1.0, 2.2, M.red, 0, 4.1, -.4); B(g, 2.0, .14, 2.5, M.black, 0, 4.65, -.4); for (const sx of [-.91, .91]) B(g, .02, .5, 1.4, M.glass, sx, 4.15, -.4); for (const sx of [-1.31, 1.31]) for (const z of [-1.6, 1.6]) B(g, .02, .6, .8, M.glass, sx, 2.6, z);
+        B(g, 2.6, .12, 1.0, M.wood, 0, 1.2, len / 2 - .4); B(g, 2.6, .12, 1.0, M.wood, 0, 1.2, -len / 2 + .4); for (const sx of [-1.2, 1.2]) C(g, .03, 1.0, M.gold, sx, 1.75, -len / 2 + .1, 0); const ml = B(g, .22, .3, .22, M.glass, .9, 3.0, -len / 2 + .5); ml.material = new THREE.MeshStandardMaterial({ color: 0x400, emissive: 0xff2010, emissiveIntensity: 2 }); C(g, .08, .7, M.black, -.5, 4.6, .6, 0); } /* v334 a red caboose with a cupola, marker lamp and stove pipe */
+      else { ws = wheelsFor(g, len); const body = kind === 'express' ? M.green : kind === 'dining' ? (M.dine || (M.dine = new THREE.MeshStandardMaterial({ color: 0x1f3a5a, roughness: .55 }))) : M.red; B(g, 2.6, 2.4, len, body, 0, 2.3, 0); B(g, 2.9, .22, len + .4, M.black, 0, 3.6, 0); B(g, 2.7, .2, len, M.gold, 0, 1.2, 0);
+        if (kind === 'dining') { B(g, 2.64, .14, len, M.gold, 0, 3.3, 0); const cv = document.createElement('canvas'); cv.width = 256; cv.height = 48; const c2 = cv.getContext('2d'); c2.fillStyle = '#1f3a5a'; c2.fillRect(0, 0, 256, 48); c2.fillStyle = '#e8c060'; c2.font = '900 30px Georgia, serif'; c2.textAlign = 'center'; c2.fillText('DINING CAR', 128, 34); const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
+          for (const sx of [-1.31, 1.31]) { const pl = new THREE.Mesh(new THREE.PlaneGeometry(4.2, .7), new THREE.MeshStandardMaterial({ map: tx })); pl.position.set(sx * 1.005, 3.0, 0); pl.rotation.y = sx > 0 ? Math.PI / 2 : -Math.PI / 2; g.add(pl); for (let k = -3; k <= 3; k++) { B(g, .02, .75, 1.1, M.glass, sx, 2.35, k * 1.45); } } const lampP = []; for (let k = -3; k <= 3; k++) for (const sx of [-1.33, 1.33]) { const bg = new THREE.SphereGeometry(.06, 6, 4); bg.translate(sx, 2.5, k * 1.45); lampP.push(bg); } g.add(new THREE.Mesh(mergeGeometries(lampP), new THREE.MeshBasicMaterial({ color: 0xffe0a0 }))); }
+        else if (kind === 'express') { B(g, 2.64, .14, len, M.gold, 0, 3.3, 0); const cv = document.createElement('canvas'); cv.width = 256; cv.height = 48; const c2 = cv.getContext('2d'); c2.fillStyle = '#2a4a34'; c2.fillRect(0, 0, 256, 48); c2.fillStyle = '#e8c060'; c2.font = '900 34px Georgia, serif'; c2.textAlign = 'center'; c2.fillText('EXPRESS', 128, 36); const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
           for (const sx of [-1.31, 1.31]) { const pl = new THREE.Mesh(new THREE.PlaneGeometry(4.5, .85), new THREE.MeshStandardMaterial({ map: tx })); pl.position.set(sx, 2.4, 0); pl.rotation.y = sx > 0 ? Math.PI / 2 : -Math.PI / 2; g.add(pl); } }
-        else { for (let k = -3; k <= 3; k++) for (const sx of [-1.31, 1.31]) B(g, .02, .7, .9, M.glass, sx, 2.6, k * 1.4);
+        else if (kind !== 'dining') { for (let k = -3; k <= 3; k++) for (const sx of [-1.31, 1.31]) B(g, .02, .7, .9, M.glass, sx, 2.6, k * 1.4);
           /* v219 passengers: dark silhouettes against the lamp-lit windows (hats on some), one merged mesh */ const pg = []; for (let k = -3; k <= 3; k++) for (const sx of [-1.322, 1.322]) { if (Math.random() < .35) continue; const o = (Math.random() - .5) * .35, q = (a, b, c, x, y, z) => { const bg = new THREE.BoxGeometry(a, b, c); bg.translate(sx, y, k * 1.4 + o + z); pg.push(bg); };
             q(.01, .2, .44, 0, 2.36, 0); q(.01, .18, .15, 0, 2.58, 0); if (Math.random() < .5) { q(.01, .04, .3, 0, 2.68, 0); q(.01, .1, .17, 0, 2.73, 0); } else if (Math.random() < .5) q(.01, .1, .22, 0, 2.62, -.03); }
           if (pg.length) { const pm = new THREE.Mesh(mergeGeometries(pg), M.sil || (M.sil = new THREE.MeshBasicMaterial({ color: 0x1a120c }))); g.add(pm); pg.forEach(x => x.dispose()); } } }
@@ -152,7 +156,7 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
   function ride(dt) { const c = heist.car; tan.set(0, 0, 1).applyQuaternion(c.g.quaternion); const v = new THREE.Vector3(0, 3.75, heist.off).applyQuaternion(c.g.quaternion).add(c.g.position); P.pos.copy(v);
     if (input && (input.jump || input.mx * input.mx > .8)) leave('You jump clear of the train'); }
   const tmp = new THREE.Vector3();
-  function heistTick(dt) { if (!heist && pass) return; if (!heist) { const ex = cars[cars.length - 1], h = H.mounted; if (!h || !ready()) { alongT = 0; return; } const d = Math.hypot(h.pos.x - ex.g.position.x, h.pos.z - ex.g.position.z); if (d < 6 && Math.abs(H.speed || 0) > 8) { alongT += dt; if (alongT > 1.2) { alongT = 0; board(ex); } } else alongT = 0; return; }
+  function heistTick(dt) { if (!heist && pass) return; if (!heist) { const ex = cars.find(c => c.kind === 'express'), h = H.mounted; if (!h || !ready()) { alongT = 0; return; } const d = Math.hypot(h.pos.x - ex.g.position.x, h.pos.z - ex.g.position.z); if (d < 6 && Math.abs(H.speed || 0) > 8) { alongT += dt; if (alongT > 1.2) { alongT = 0; board(ex); } } else alongT = 0; return; }
     heist.t += dt; const alive = guards.filter(g => g.alive);
     for (const g of guards) { const car = cars[g.car]; tmp.set(0, 3.75, g.off).applyQuaternion(car.g.quaternion).add(car.g.position); g.D.g.position.copy(tmp); if (!g.alive) { g.D.g.rotation.x = Math.min(1.5, (g.dead = (g.dead || 0) + dt) * 3); continue; }
       g.D.g.rotation.y = Math.atan2(P.pos.x - tmp.x, P.pos.z - tmp.z); poseFrontierCharacter(g.D, dt, { speed: 0 }); g.cd -= dt; if (g.cd <= 0) { g.cd = 1.6 + Math.random(); tone('sawtooth', 900, 200, .12, .12); if (Math.random() < .45 && H.zombies && H.zombies.hurt) H.zombies.hurt(7); } }
@@ -177,5 +181,5 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
     for (let i = 0; i < SN; i++) { sAge[i] += dt; sp[i * 3 + 1] += dt * 2.2; } sg.attributes.position.needsUpdate = true; smoke.material.size = 4.5;
     wT -= dt; if (wT <= 0) { wT = 25 + Math.random() * 20; if (dl < 260 && VNOW > 1) whistle(); }
     passTick(); heistTick(dt); }
-  return { update, get stations() { return STATIONS; }, get tunnels() { return TUN.length; }, sched: () => sched(Date.now()), boardP, get passenger() { return !!pass; }, get guards() { return guards; }, get heist() { return heist; }, get cars() { return cars; }, get length() { return L; }, board: () => cars.length && board(cars[cars.length - 1]) };
+  return { update, get stations() { return STATIONS; }, get tunnels() { return TUN.length; }, sched: () => sched(Date.now()), boardP, get passenger() { return !!pass; }, get guards() { return guards; }, get heist() { return heist; }, get cars() { return cars; }, get length() { return L; }, board: () => cars.length && board(cars.find(c => c.kind === 'express')) };
 }

@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=196';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=197';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,8 +47,8 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createPoker } from './hrpoker.js?v=196';
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=196';
+import { createPoker } from './hrpoker.js?v=197';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=197';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -214,7 +214,7 @@ export function createTown(c) {
     // sign + cacti in barrels
     { const sg = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .7), new THREE.MeshStandardMaterial({ map: signTex('ROOFTOP BAR', '#5a1a12'), roughness: .8 })); sg.position.set((BX0 + BX1) / 2, RT + 2.75, D - .18); sg.rotation.y = Math.PI; (s.signs = s.signs || []).push(sg); }
     for (const [x, z] of [[x0 + .8, D - .8], [x1 - .8, 1], [x0 + .8, 1]]) { cyl(s, M.crate, x, RT + .3, z, .3, .6, 10); cyl(s, M.dark, x, RT + .9, z, .1, .9, 8); cyl(s, M.dark, x + .14, RT + 1.0, z, .06, .3, 6); }
-    s.roofSpot = spot(s, (BX0 + BX1) / 2, RT, BZf - 1.1, 'drink', 'Order at the rooftop bar', 1.8); s.RT = RT;
+    s.roofSpot = spot(s, (BX0 + BX1) / 2, RT, BZf - 1.1, 'drink', 'Order at the rooftop bar', 1.8); s.RT = RT; s.sitSpot = spot(s, BX0 + .6, RT, BZf - .65, 'roofsit', 'Sit at the bar and take in the view', 1.1); /* v197 */
     // v112 brass telescope on a tripod at the front-west corner: USE to look out over the range
     { const tx = x0 + 1.6, tz = 1.3; for (let k = 0; k < 3; k++) { const a = k / 3 * TAU; beam(s, M.trim, [tx + Math.cos(a) * .35, RT, tz + Math.sin(a) * .35], [tx, RT + 1.15, tz], .035); } beam(s, M.brass, [tx - .05, RT + 1.2, tz + .3], [tx + .05, RT + 1.38, tz - .45], .09); cyl(s, M.dark, tx + .05, RT + 1.37, tz - .48, .06, .05, 10);
       s.scopeSpot = spot(s, tx + .4, RT, tz + .6, 'telescope', 'Look through the telescope', 1.4); }
@@ -300,13 +300,13 @@ export function createTown(c) {
   T.nearSpot = () => { if (H.mounted) return null; let best = null, bd = 1e9; for (const o of T.spots) { if (Math.abs(P.pos.y - o.y) > 1.3) continue; const d = Math.hypot(P.pos.x - o.x, P.pos.z - o.z); if (d < o.r && d < bd) { bd = d; best = o; } } return best; };
   T.label = o => !o ? '' : o.kind === 'tommy' && H.guns && H.guns.state.owned.tommy ? '' : o.kind === 'gold' && H.guns && H.guns.state.owned.gold ? '' : o.label;
   // hotfix: every interactable gets an on-screen button (phones had none for the v35 saloon spots); unknown kinds fall back to USE
-  T.TL = { coffee: 'COFFEE<small>15</small>', sars: 'SODA<small>10</small>', armwrestle: 'ARM<small>WRESTLE</small>', telescope: 'LOOK<small>TELESCOPE</small>', tommy: 'TAKE<small>TOMMY GUN</small>', gold: 'TAKE<small>GOLD BUFFALO</small>', shop: 'UPGRADES', drink: 'DRINK', darts: 'PLAY<small>DARTS</small>', checkers: 'PLAY<small>CHECKERS</small>', drawpoker: 'DRAW POKER<small>REAL POINTS</small>', store: 'STORE' };
+  T.TL = { roofsit: 'SIT<small>STOOL</small>', coffee: 'COFFEE<small>15</small>', sars: 'SODA<small>10</small>', armwrestle: 'ARM<small>WRESTLE</small>', telescope: 'LOOK<small>TELESCOPE</small>', tommy: 'TAKE<small>TOMMY GUN</small>', gold: 'TAKE<small>GOLD BUFFALO</small>', shop: 'UPGRADES', drink: 'DRINK', darts: 'PLAY<small>DARTS</small>', checkers: 'PLAY<small>CHECKERS</small>', drawpoker: 'DRAW POKER<small>REAL POINTS</small>', store: 'STORE' };
   T.touchLabel = o => !o ? '' : T.TL[o.kind] || (T.label(o) ? 'USE' : '');
   T.touchText = o => T.touchLabel(o).replace(/<small>/g, ' ').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&');
   T.use = () => { const o = T.nearSpot(); if (!o || !T.label(o)) return false; const g = H.guns; if (T.onUse && T.onUse(o)) { sfx.ui && sfx.ui(); return true; }
     if (o.kind === 'tommy') { g.give('tommy'); g.draw('tommy'); msg('Tommy gun — 100-round drum, full auto (4)', 3); if (o.s.tommyMesh) o.s.tommyMesh.visible = false; }
     else if (o.kind === 'gold') { g.give('gold'); g.draw('gold'); msg('The Golden Buffalo — aim, then scroll / pinch / + − to zoom across the map (5)', 4); if (o.s.goldMesh) o.s.goldMesh.visible = false; }
-    else if (o.kind === 'shop') openShop('guns'); else if (o.kind === 'store') openShop('store'); else if (o.kind === 'drink') { if (T.town && o === T.town.roofSpot) { const st = H.stats || (H.stats = {}); st.roofDrinks = (st.roofDrinks || 0) + 1; const n = H.night || 0, day = new Date().toDateString(); if (n > .2 && n < .75 && st.toastDay !== day && H.guns) { st.toastDay = day; H.guns.state.score += 150; H.guns.save && H.guns.save(); setTimeout(() => msg('🌅 A sunset toast on the roof  +150', 3), 1600); } } /* v135 */ drink(); } else if (o.kind === 'coffee' || o.kind === 'sars') { const g = H.guns, c2 = o.kind === 'coffee' ? 15 : 10; if (g.pts() < c2) { msg('Not enough points', 1.4); } else { g.state.spent += c2; save(); if (o.kind === 'coffee') { T.drunk = Math.max(0, T.drunk - 3); msg(T.drunk > 0 ? '☕ Black coffee… the room slows down' : '☕ Clear-headed again', 2); } else { const Z = H.zombies; if (Z) Z.state.hp = Math.min(100, Z.state.hp + 15); msg('🥤 Sarsaparilla — sweet and cold  +15 health', 1.8); } } } else if (o.kind === 'armwrestle') { H.arm && H.arm.open(); } else if (o.kind === 'telescope') { H.telescope = !H.telescope; if (H.telescope) { const st = H.stats || (H.stats = {}); st.scoped = (st.scoped || 0) + 1; H.teleSave = { fp: H.fp }; H.fp = true; P.pitch = .02; msg('🔭 Telescope — look around; walk away or USE to stop', 2.5); } else { H.fp = H.teleSave ? H.teleSave.fp : H.fp; } } else if (o.kind === 'darts') openDarts(); else if (o.kind === 'drawpoker') pk.open(); else if (o.kind === 'checkers') ck.open();
+    else if (o.kind === 'shop') openShop('guns'); else if (o.kind === 'store') openShop('store'); else if (o.kind === 'drink') { if (T.town && o === T.town.roofSpot) { const st = H.stats || (H.stats = {}); st.roofDrinks = (st.roofDrinks || 0) + 1; const n = H.night || 0, day = new Date().toDateString(); if (n > .2 && n < .75 && st.toastDay !== day && H.guns) { st.toastDay = day; H.guns.state.score += 150; H.guns.save && H.guns.save(); setTimeout(() => msg('🌅 A sunset toast on the roof  +150', 3), 1600); } } /* v135 */ drink(); } else if (o.kind === 'roofsit') { if (H.roofSit) { H.roofSit = null; } else { H.roofSit = { x: o.x, z: o.z, y: o.y + .35 }; msg('🪑 You settle onto a stool. Move to get up.', 2.2); } } else if (o.kind === 'coffee' || o.kind === 'sars') { const g = H.guns, c2 = o.kind === 'coffee' ? 15 : 10; if (g.pts() < c2) { msg('Not enough points', 1.4); } else { g.state.spent += c2; save(); if (o.kind === 'coffee') { T.drunk = Math.max(0, T.drunk - 3); msg(T.drunk > 0 ? '☕ Black coffee… the room slows down' : '☕ Clear-headed again', 2); } else { const Z = H.zombies; if (Z) Z.state.hp = Math.min(100, Z.state.hp + 15); msg('🥤 Sarsaparilla — sweet and cold  +15 health', 1.8); } } } else if (o.kind === 'armwrestle') { H.arm && H.arm.open(); } else if (o.kind === 'telescope') { H.telescope = !H.telescope; if (H.telescope) { const st = H.stats || (H.stats = {}); st.scoped = (st.scoped || 0) + 1; H.teleSave = { fp: H.fp }; H.fp = true; P.pitch = .02; msg('🔭 Telescope — look around; walk away or USE to stop', 2.5); } else { H.fp = H.teleSave ? H.teleSave.fp : H.fp; } } else if (o.kind === 'darts') openDarts(); else if (o.kind === 'drawpoker') pk.open(); else if (o.kind === 'checkers') ck.open();
     sfx.ui && sfx.ui(); return true; };
   // show the actual gun models on the desk / in the box (each rider takes their own copy)
   T.dressGuns = models => { const s = T.towers.find(t => t.kind === 'armory'); if (!s || s.tommyMesh) return;

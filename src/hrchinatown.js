@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=223';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=223';
-import { mergeStatic } from './hrmerge.js?v=223';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=224';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=224';
+import { mergeStatic } from './hrmerge.js?v=224';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -160,7 +160,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     interior(s, kind, mid);
     // upper floor: a room with a bed, table, and a window seat
     box(s, M.wood, 3.0, F1 + .3, DP - 1.4, 2.0, .45, 1.0); box(s, M.cream, 3.0, F1 + .55, DP - 1.4, 1.9, .1, .95); box(s, M.wood, mid, F1 + .4, DP / 2, 1.2, .8, .8); box(s, M.wood, mid - .9, F1 + .25, DP / 2, .4, .5, .4); box(s, M.wood, mid + .9, F1 + .25, DP / 2, .4, .5, .4);
-    sph(s, M.paper, mid, RF - .5, DP / 2, .28, 1.2); box(s, M.wood, 5.6, F1 + 1.0, DP - .4, 2.2, 2.0, .5); // paper lantern + cabinet
+    spot(s, 3.0, F1, DP - 2.4, 'ct_bed', '🛏️ Rest a while upstairs (heal)', 1.4);     sph(s, M.paper, mid, RF - .5, DP / 2, .28, 1.2); box(s, M.wood, 5.6, F1 + 1.0, DP - .4, 2.2, 2.0, .5); // paper lantern + cabinet
     // roof dressing: a water tank or a pavilion, potted plants
     if (idx % 3 === 0) { cyl(s, M.wood, W - 2.4, RF + 1.0, DP - 2.4, 1.0, 1.6, 14); for (const k of [.4, 1.6]) cyl(s, M.black, W - 2.4, RF + .2 + k, DP - 2.4, 1.02, .06, 14); wall(s, W - 3.4, DP - 3.4, W - 1.4, DP - 3.4, RF, RF + 1.8); wall(s, W - 3.4, DP - 3.4, W - 3.4, DP - 1.4, RF, RF + 1.8); }
     else if (idx % 3 === 1) { const px = mid + 1.5, pz = DP / 2; for (const [dx, dz] of [[-1.4, -1.4], [1.4, -1.4], [-1.4, 1.4], [1.4, 1.4]]) cyl(s, M.red, px + dx, RF + 1.3, pz + dz, .09, 2.6, 8); cone(s, M.tile, px, RF + 3.25, pz, 2.6, 1.4); sph(s, M.gold, px, RF + 4.05, pz, .14); for (const [dx, dz] of [[-1.85, -1.85], [1.85, -1.85], [-1.85, 1.85], [1.85, 1.85]]) { const t = new THREE.ConeGeometry(.1, .6, 5); t.rotateX(dz < 0 ? -.9 : .9); t.translate(px + dx, RF + 2.65, pz + dz); push(M.tile, xf(s, t)); }
@@ -197,6 +197,14 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   cyl(D, M.stone, 0, .35, 0, 1.6, .7, 20); cyl(D, M.gold, 0, 1.1, 0, .9, .9, 16, .65); for (const a of [0, 2.1, 4.2]) cyl(D, M.gold, Math.cos(a) * .7, .75, Math.sin(a) * .7, .08, .6, 6); for (let k = 0; k < 3; k++) cyl(D, M.red, -.2 + k * .2, 1.85, 0, .015, .6, 4);
   for (let k = 0; k < 12; k++) wall(D, Math.cos(k / 12 * 6.283) * 1.65, Math.sin(k / 12 * 6.283) * 1.65, Math.cos((k + 1) / 12 * 6.283) * 1.65, Math.sin((k + 1) / 12 * 6.283) * 1.65, -1, 1.2);
   spot(D, 0, 0, 0, 'ct_urn', '🕯️ Burn a joss stick at the urn', 2.6);
+  // v224 night market: food stalls along the cross street (steam rises after dark)
+  const STALL = [['🍢 Skewers off the grill (10 pts)', 0xc0392b], ['🥟 Steamed dumplings (10 pts)', 0xe6dcc4], ['🍠 Roast sweet potato (10 pts)', 0x8a5a2a], ['🍵 Almond tea (10 pts)', 0x2f5d50], ['🥮 Sesame balls (10 pts)', 0xb8862e], ['🍜 Wonton soup (10 pts)', 0x9a3324]], stalls = [];
+  STALL.forEach(([lab, col], i) => { const x = (i < 3 ? -1 : 1) * (10 + (i % 3) * 7), z = 3.0, cm = fmat(col); box(D, M.wood, x, .5, z, 2.2, 1.0, 1.1); box(D, M.plank, x, 1.03, z, 2.3, .06, 1.2); for (const [dx, dz] of [[-1.05, -.5], [1.05, -.5], [-1.05, .5], [1.05, .5]]) box(D, M.wood, x + dx, 1.2, z + dz, .07, 2.4, .07);
+    const g = new THREE.BoxGeometry(2.6, .08, 1.7); g.rotateX(-.25); g.translate(x, 2.45, z - .1); push(cm, xf(D, g)); box(D, M.red, x, 2.25, z - .9, 2.6, .25, .04); sph(D, M.lamp, x - 1.05, 2.05, z - .5, .16, 1.3); sph(D, M.lamp, x + 1.05, 2.05, z - .5, .16, 1.3);
+    if (i % 2) { cyl(D, M.wood, x - .4, 1.25, z, .3, .3, 12); cyl(D, M.wood, x - .4, 1.5, z, .3, .2, 12); } else { box(D, M.dark, x - .3, 1.12, z, 1.0, .1, .5); }
+    wall(D, x - 1.1, z - .55, x + 1.1, z - .55, -1, 1.1); wall(D, x - 1.1, z + .55, x + 1.1, z + .55, -1, 1.1); wall(D, x - 1.1, z - .55, x - 1.1, z + .55, -1, 1.1); wall(D, x + 1.1, z - .55, x + 1.1, z + .55, -1, 1.1);
+    const o = spot(D, x, 0, z - 1.4, 'ct_stall', lab, 1.5, { food: lab.replace(/ \(10 pts\)/, '') }); stalls.push([CX + x, CZ + z]); });
+
 
   // ---------- merge ----------
   const root = new THREE.Group(); root.name = 'chinatown'; for (const [m, gs] of GEO) { const me = new THREE.Mesh(mergeGeometries(gs), m); me.castShadow = !mobile && m !== M.glass && m !== M.lamp; me.receiveShadow = true; me.matrixAutoUpdate = false; root.add(me); gs.forEach(g => g.dispose()); } GEO.clear(); scene.add(root);
@@ -219,6 +227,8 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (k === 'hall' || k === 'urn') { if (sfx.tone && sfx.ctx) { if (k === 'hall') { sfx.tone('sine', 110, 104, .5, 3.5); sfx.tone('triangle', 220, 208, .2, 2.5); sfx.tone('sine', 331, 320, .1, 2); } else sfx.tone('sine', 880, 870, .05, 1.2); } if (k === 'urn') msg('🕯️ A thin line of fragrant smoke curls up', 2); if (k === 'hall') { S.ctGong = (S.ctGong || 0) + 1; msg('🔔 The gong rolls down the street', 2); } if (k === 'urn' && fx && fx.smoke) for (let i = 0; i < 10; i++) fx.smoke.emit(o.x, o.y + 2, o.z, 0, .5 + Math.random() * .3, 0, .8, .8, .78, .5, 2.2, 1.6, -.01, .1); }
     else if (k === 'temple') { if (S.ctIncense === day()) msg('🕯️ The incense from this morning still burns', 2); else { S.ctIncense = day(); earn(250); heal(100); msg('🕯️ You light incense at the altar - a blessing: +250 and fully healed', 3); } }
     else if (k === 'theatre') { if (S.ctOpera === day()) msg('🎭 Tonight\'s performance is over - come back tomorrow', 2); else { S.ctOpera = day(); earn(100); msg('🎭 Gongs, cymbals and a soaring voice - the crowd roars (+100)', 3); if (sfx.tone && sfx.ctx) [523, 587, 659, 784, 659, 587, 523, 440].forEach((f, i) => setTimeout(() => { sfx.tone('triangle', f, f, .08, .3); if (i % 2 === 0) sfx.nz && sfx.nz('highpass', 5000, .7, .1, .25); }, i * 260)); } }
+    else if (k === 'bed') { heal(100); msg('🛏️ You stretch out for a while - rested and healed', 2.2); S.ctRest = (S.ctRest || 0) + 1; }
+    else if (k === 'stall') { if (pay(10)) { heal(30); msg(o.food || '🍢 Skewers off the grill', 1.8); S.ctFood = (S.ctFood || 0) + 1; } }
     else if (k === 'view') { msg('🏮 Lanterns, tiled eaves and the range beyond', 2); S.ctView = 1; }
     else msg('Fine work - but nothing you need today', 1.6);
     if (o.shopName) { const v = new Set(S.ctShops || []); v.add(o.shopName); S.ctShops = [...v]; }
@@ -259,10 +269,11 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const prevUse2 = T.onUse; T.onUse = o => { if (o && o.kind === 'ct_hall' && !DR.on && DR.gcool <= 0) { DR.gcool = 180; setTimeout(() => startDragon('🐉 The gong calls out the dragon!'), 1500); } return prevUse2 ? prevUse2(o) : false; };
 
   // ---------- per frame ----------
-  let welcome = false, nightK = -1, t = 0, roofT = 0;
+  let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0;
   function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, inside = Math.abs(me.x - CX) < E && Math.abs(me.z - CZ) < E; peopleTick(dt, me); dragonTick(dt, me); if (inside && (roofT -= dt) <= 0) { roofT = .5; for (const b of built) { if (me.y < b.y0 + RF - .3) break; const [lx, lz] = T.toL ? T.toL(b, me.x, me.z) : [0, 0]; if (lx > 0 && lx < W && lz > 0 && lz < DP && me.y > b.y0 + RF - .3) { const S = st(), v = new Set(S.ctRoofs || []); if (!v.has(b.name + b.cx.toFixed(0) + b.cz.toFixed(0))) { v.add(b.name + b.cx.toFixed(0) + b.cz.toFixed(0)); S.ctRoofs = [...v]; msg(`🏯 Rooftop ${v.size} of ${built.length}`, 1.6); } } } }
     if (inside && !welcome) { welcome = true; msg('🏮 Chinatown - 唐人街', 3); const S = st(); if (!S.ctVisit) { S.ctVisit = 1; earn(200); setTimeout(() => msg('First visit to Chinatown  +200', 2.5), 2000); } } else if (!inside && Math.hypot(me.x - CX, me.z - CZ) > 90) welcome = false;
     const n = H.night || 0; if (Math.abs(n - nightK) > .02) { nightK = n; M.lamp.emissiveIntensity = .5 + 3.2 * n; M.paper.emissiveIntensity = .15 + 2.2 * n; M.glass.emissiveIntensity = .06 + 1.2 * n; signM.emissiveIntensity = .05 + .35 * n; gateM.emissiveIntensity = .08 + .4 * n; }
+    if (n > .45 && fx && fx.smoke && Math.hypot(me.x - CX, me.z - CZ) < 70 && (steamT -= dt) <= 0) { steamT = .35; const q = stalls[(Math.random() * stalls.length) | 0]; fx.smoke.emit(q[0] + (Math.random() - .5) * .6, y0 + 1.5, q[1], 0, .6 + Math.random() * .4, 0, .92, .92, .9, .35, 1.6, 1.3, -.01, .15); }
     if (fedT > 0) { fedT -= dt; heal(dt * 1.5); } if (tonicT > 0) { tonicT -= dt; heal(dt * 3); }
     if (crackers) { crackers.t -= dt; if (crackers.t <= 0) { crackers.t = .07 + Math.random() * .08; crackers.n++; const x = crackers.x + (Math.random() - .5) * 1.2, z = crackers.z + (Math.random() - .5) * 1.2, y = (H.town ? H.town.floorAt(x, z, me.y + 1) : hAt(x, z)) + .1;
       if (sfx.nz && sfx.ctx) sfx.nz('highpass', 1800 + Math.random() * 1500, .8, .22, .05); if (fx && fx.smoke) fx.smoke.emit(x, y, z, (Math.random() - .5) * 2, 1 + Math.random(), (Math.random() - .5) * 2, .85, .8, .75, .5, .9, .7, -.02, .3); if (fx && fx.spark) fx.spark(x, y + .1, z); if (crackers.n > 40) crackers = null; } } }

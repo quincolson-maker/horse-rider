@@ -9,9 +9,9 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ } from './hrbeachwave.js?v=351';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=351';
-import { mergeStatic } from './hrmerge.js?v=351';
+import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=352';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=352';
+import { mergeStatic } from './hrmerge.js?v=352';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});
@@ -26,6 +26,7 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     const sg = new THREE.Mesh(new THREE.PlaneGeometry(3.6, .9), new THREE.MeshStandardMaterial({ map: tx })); sg.position.set(0, 3.15, 2.35); g.add(sg); const sg2 = sg.clone(); sg2.rotation.y = Math.PI; sg2.position.z = -2.35; g.add(sg2);
     g.rotation.y = -Math.PI / 2; scene.add(g); H.cullAdd && H.cullAdd(g, 300, { x: shX, z: shZ }); }
   const rent = { x: shX + 3.2, z: shZ, y: shY, kind: 'surf_rent', label: '', r: 2.4, sf: true }; T.spots.push(rent);
+  const fore = { x: shX + 3.2, z: shZ - 4, y: shY, kind: 'surf_fore', label: '📋 Read today\'s surf report', r: 1.8, sf: true }; T.spots.push(fore);
   const cont = { x: shX + 3.2, z: shZ + 4, y: shY, kind: 'surf_contest', label: '🏆 Enter the surf contest (3-minute heat · best two waves)', r: 2, sf: true }; T.spots.push(cont); let heat = null; /* v342 */
   let board = 0; try { board = +localStorage.getItem('hr_board') || 0; } catch (_) {} const COLS = [0xff5a3a, 0xffd23a, 0x3ac8ff, 0xffffff, 0x7aff6a, 0xff7ae0];
   /* v341 THE QUIVER: six boards that really ride differently - paddle (catching), turn rate, top speed, scoring */
@@ -134,7 +135,7 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     // which wave: the one you ride, else the nearest one that is peeling within view
     let k = R.ride ? R.k : null; if (k == null) { const k0 = Math.floor(t / TP); let bd = 1e9; for (let j = 0; j < 6; j++) { const kk = k0 - j, pz = peelZ(kk, t); if (pz < -240 || pz > 560) continue; const d = Math.abs(pz - me.z); if (d < bd) { bd = d; k = kk; } } }
     if (k == null) { lip.visible = false; return; } const pz = peelZ(k, t); if (pz < -240 || pz > 560) { lip.visible = false; return; }
-    const amp = .75 + .6 * ((k * .618034) - Math.floor(k * .618034)) + (k % 5 === 0 ? .55 : 0), A = amp * 3.1; lip.visible = true; lipM.uniforms.uNight.value = H.night || 0;
+    const amp = .75 + .6 * ((k * .618034) - Math.floor(k * .618034)) + (k % 5 === 0 ? .55 : 0), A = amp * 3.1 * SWELL.m; lip.visible = true; lipM.uniforms.uNight.value = H.night || 0;
     for (let j = 0; j < LZ; j++) { const z = pz - 8 + j * (24 / (LZ - 1)), rel = z - pz, grow = clamp((rel + 8) / 8, 0, 1), fall = clamp(1 - (rel - 2) / 14, 0, 1), cx = crestX(k, z, t);
       const r = A * .55 * grow, cy = A * (.95 - .45 * grow), cu = -r * .9; for (let i = 0; i < LA; i++) { const th = Math.PI / 2 - i / (LA - 1) * (Math.PI * (.35 + .7 * grow)), u = cu + Math.cos(th) * r * (i ? 1 : 0) + (i ? 0 : 0), h = cy + Math.sin(th) * r * fall * (1 - .35 * (1 - grow)) * 1, o = (j * LA + i) * 3;
         lipPos[o] = cx + (i ? u : -.2); lipPos[o + 1] = SEA + Math.max(.1, i ? h * fall + (1 - fall) * A * .2 : A * (.98 - .4 * (1 - fall))); lipPos[o + 2] = z; lipFoam[j * LA + i] = clamp((i / (LA - 1)) * 1.3 * grow + (1 - fall) * .9 + (rel > 0 ? .25 : 0), 0, 1); } }
@@ -168,7 +169,7 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
   const RIV = ['Kai', 'Luzviminda', 'Joaquin', 'Mahina', 'Rafa', 'Tala', 'Dex', 'Isla'];
   function heatEnd() { const h = heat; heat = null; const mine = (h.rides[0] || 0) + (h.rides[1] || 0), sk = Math.max(800, (best || 1500) * .9); const riv = h.riv.map(n => ({ n, sc: Math.round(sk * (.45 + Math.random() * .9)) })); const all = [{ n: 'YOU', sc: mine }, ...riv].sort((a2, b2) => b2.sc - a2.sc), place = all.findIndex(q => q.n === 'YOU') + 1, pay = [0, 2000, 900, 400, 0][place];
     if (pay) earn(pay); const s2 = S(); s2.surfHeats = (s2.surfHeats || 0) + 1; if (place === 1) s2.surfWins = (s2.surfWins || 0) + 1; msg(`🏆 HEAT OVER - ${all.map((q, i) => `${i + 1}. ${q.n} ${q.sc.toLocaleString()}`).join(' · ')}${pay ? `  +${pay}` : ''}`, 7); if (place === 1 && sfx.tone && sfx.ctx) [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => sfx.tone('triangle', f, f, .08, .3), i * 140)); }
-  const prevUse = T.onUse; T.onUse = o => { if (o === cont) { if (heat) msg(`🏆 Heat on - ${Math.ceil(heat.t)} s left`, 1.6); else if (!board) msg('🏄 Rent a board first', 1.6); else { const r3 = RIV.slice().sort(() => Math.random() - .5).slice(0, 3); heat = { t: 180, rides: [], riv: r3 }; msg(`🏆 HEAT STARTS! You vs ${r3.join(', ')} - best two waves in 3 minutes. Paddle out!`, 4); } return true; } if (o === rent) { board = (board % COLS.length) + 1; bMat.color.setHex(COLS[board - 1]); try { localStorage.setItem('hr_board', String(board)); } catch (_) {} setRentLabel(); msg(`🏄 The ${QB().n} is yours - ${['all-rounder', 'catches anything, turns slow (nose rides!)', 'fast and loose', 'tight turns, hard to paddle, big scores', 'built for the big sets', 'soft-top: easiest to catch, slow'][(board - 1) % 6]}`, 3.5); brd.scale.set(1, 1, QB().len / 1.65); const s = S(); s.surfBoard = 1; return true; } return prevUse ? prevUse(o) : false; };
+  const prevUse = T.onUse; T.onUse = o => { if (o === fore) { const m = SWELL.m, ft = Math.round(m * 4), hi = Math.round(m * 4 * 1.9), cond = m > 1.25 ? 'BIG and pumping - Big-Wave Gun day' : m > 1.0 ? 'solid, clean lines - shortboard heaven' : m > .85 ? 'fun waist-to-head high' : 'small and peeling - grab the longboard'; msg(`📋 SURF REPORT: ${ft}-${hi} ft · ${cond} · sets every minute`, 5); return true; } if (o === cont) { if (heat) msg(`🏆 Heat on - ${Math.ceil(heat.t)} s left`, 1.6); else if (!board) msg('🏄 Rent a board first', 1.6); else { const r3 = RIV.slice().sort(() => Math.random() - .5).slice(0, 3); heat = { t: 180, rides: [], riv: r3 }; msg(`🏆 HEAT STARTS! You vs ${r3.join(', ')} - best two waves in 3 minutes. Paddle out!`, 4); } return true; } if (o === rent) { board = (board % COLS.length) + 1; bMat.color.setHex(COLS[board - 1]); try { localStorage.setItem('hr_board', String(board)); } catch (_) {} setRentLabel(); msg(`🏄 The ${QB().n} is yours - ${['all-rounder', 'catches anything, turns slow (nose rides!)', 'fast and loose', 'tight turns, hard to paddle, big scores', 'built for the big sets', 'soft-top: easiest to catch, slow'][(board - 1) % 6]}`, 3.5); brd.scale.set(1, 1, QB().len / 1.65); const s = S(); s.surfBoard = 1; return true; } return prevUse ? prevUse(o) : false; };
   function update(dt, t) { curl(t); wakeTick(dt, t); setTick(t); locTick(dt, t); if (heat) { heat.t -= dt; if (heat.t <= 0) heatEnd(); } if (B.surfing) { if (H.mounted || H.dead) leave(); return; }
     const me = P.pos; if (board && !H.mounted && !H.trainRide && me.x > shoreX(me.z) + 13 && me.x < 1460 && Math.abs(me.z - ZC) < 430) enter();
     if (me.x > 1040 && Math.abs(me.z - ZC) < 500 && sfx.nz && sfx.ctx && (crashT -= dt) <= 0) { crashT = 1.6 + Math.random() * 2.5; const d = Math.max(20, Math.abs(me.x - XB)); sfx.nz('lowpass', 420 + Math.random() * 300, .7, Math.min(.12, 6 / d), 1.8 + Math.random()); } }

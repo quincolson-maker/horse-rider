@@ -23,9 +23,12 @@ export const depthAt = x => Math.max(0, (x - BEACH.SHORE) * .06);
 // ---- the surf (eta above sea level), foam 0..1, broken flag of the nearest wave ----
 const frac = v => v - Math.floor(v);
 export function surfTime(now = Date.now()) { return (now / 1000) % 3600; }
+// v352 the swell changes every day (same for everyone): small and clean some days, big sets on others
+export const swellOf = (day = Math.floor(Date.now() / 864e5)) => { const h = ((day * 9301 + 49297) % 233280) / 233280; return .72 + h * .7; };
+export const SWELL = { m: swellOf() };
 export function waveAt(x, z, t, o) {
   const { XB, XS, XSH, ZC, C, K, T, NW } = BEACH; let eta = 0, foam = 0, near = null, nd = 1e9; const k0 = Math.floor(t / T);
-  for (let j = 0; j < NW; j++) { const k = k0 - j, age = t - k * T, base = XS - C * age, amp = .75 + .6 * frac(k * .618034) + (k % 5 === 0 ? .55 : 0);
+  for (let j = 0; j < NW; j++) { const k = k0 - j, age = t - k * T, base = XS - C * age, amp = (.75 + .6 * frac(k * .618034) + (k % 5 === 0 ? .55 : 0)) * SWELL.m;
     const cx = base - (z - ZC) * K, u = x - cx; if (u < -45 || u > 70) continue;
     const s = Math.max(0, Math.min(1, (XSH - cx) / (XSH - XB)));
     if (cx > XB) { const A = amp * (1 + 2.1 * s * s), w = u < 0 ? mix(9, 2.4, s * s) : mix(15, 9, s); eta += A * Math.exp(-(u * u) / (w * w)); if (s > .85 && u > -2.5 && u < 1.2) foam = Math.max(foam, (s - .85) * 5 * (1 - Math.abs(u + .6) / 2)); if (Math.abs(u) < nd) { nd = Math.abs(u); near = { k, cx, u, A, s, broken: false, amp }; } }
@@ -37,11 +40,11 @@ export function waveAt(x, z, t, o) {
 // where the break is along z for wave k at time t (the peel point): crest x == XB
 export function peelZ(k, t) { const { XB, XS, ZC, C, K, T } = BEACH, base = XS - C * (t - k * T); return ZC + (base - XB) / K; }
 export const WAVE_GLSL = `
-uniform float uT;
+uniform float uT; uniform float uSwell;
 float fr(float v){ return v - floor(v); }
 vec2 surfWave(vec2 p){ float eta = 0.0, foam = 0.0; float k0 = floor(uT / ${BEACH.T.toFixed(1)});
   for (int j = 0; j < ${BEACH.NW}; j++) { float k = k0 - float(j); float age = uT - k * ${BEACH.T.toFixed(1)}; float base = ${BEACH.XS.toFixed(1)} - ${BEACH.C.toFixed(2)} * age;
-    float amp = .75 + .6 * fr(k * .618034) + (mod(k, 5.0) < .5 ? .55 : 0.0); float cx = base - (p.y - ${BEACH.ZC.toFixed(1)}) * ${BEACH.K.toFixed(2)}; float u = p.x - cx;
+    float amp = (.75 + .6 * fr(k * .618034) + (mod(k, 5.0) < .5 ? .55 : 0.0)) * uSwell; float cx = base - (p.y - ${BEACH.ZC.toFixed(1)}) * ${BEACH.K.toFixed(2)}; float u = p.x - cx;
     if (u < -45.0 || u > 70.0) continue; float s = clamp((${BEACH.XSH.toFixed(1)} - cx) / (${(BEACH.XSH - BEACH.XB).toFixed(1)}), 0.0, 1.0);
     if (cx > ${BEACH.XB.toFixed(1)}) { float A = amp * (1.0 + 2.1 * s * s); float w = u < 0.0 ? mix(9.0, 2.4, s * s) : mix(15.0, 9.0, s); eta += A * exp(-(u * u) / (w * w));
       if (s > .85 && u > -2.5 && u < 1.2) foam = max(foam, (s - .85) * 5.0 * (1.0 - abs(u + .6) / 2.0)); }

@@ -3,8 +3,8 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask } from './hrbeachwave.js?v=351';
-import { createSurf } from './hrsurf.js?v=351';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=352';
+import { createSurf } from './hrsurf.js?v=352';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -32,7 +32,7 @@ export function createBeach(ctx) {
 
   // ---------- the ocean: a dense surf patch + an outer ring of open sea, both on the wave shader ----------
   const sunDir = new THREE.Vector3(.4, .8, .3).normalize(); scene.traverse(o => { if (o.isDirectionalLight) sunDir.copy(o.position).normalize(); });
-  const oceanU = { uT: { value: 0 }, uSun: { value: sunDir }, uNight: { value: 0 }, uFogC: { value: new THREE.Color(0xbcd0dc) } };
+  const oceanU = { uSwell: { value: SWELL.m }, uT: { value: 0 }, uSun: { value: sunDir }, uNight: { value: 0 }, uFogC: { value: new THREE.Color(0xbcd0dc) } };
   const oceanM = new THREE.ShaderMaterial({ uniforms: oceanU, transparent: true, depthWrite: false, side: THREE.DoubleSide,
     vertexShader: WAVE_GLSL + `
       varying vec3 vW; varying vec3 vN; varying float vFoam; varying float vDepth;
@@ -177,7 +177,7 @@ export function createBeach(ctx) {
   B.deep = (x, z) => x > shoreX(z) + 16; B.root = root;
   const wv = {}; let swimMsg = false, welcome = false;
   const surf = createSurf({ ...ctx, B }); B.surf = surf;
-  B.update = dt => { const t = surfTime(); oceanU.uT.value = t; oceanU.uNight.value = H.night || 0; if (scene.fog && scene.fog.color) oceanU.uFogC.value.copy(scene.fog.color); const me = H.mounted ? H.mounted.pos : P.pos, near = me.x > 820;
+  B.update = dt => { const t = surfTime(); SWELL.m = swellOf(); oceanU.uSwell.value = SWELL.m; oceanU.uT.value = t; oceanU.uNight.value = H.night || 0; if (scene.fog && scene.fog.color) oceanU.uFogC.value.copy(scene.fog.color); const me = H.mounted ? H.mounted.pos : P.pos, near = me.x > 820;
     root.visible = near || me.x > 600; if (!root.visible) return;
     if (me.x > 1000 && Math.abs(me.z - ZC) < 450 && !welcome) { welcome = true; msg('🌴 Paradise Cove', 3); const S = H.stats || (H.stats = {}); if (!S.coveVisit) { S.coveVisit = 1; const g = H.guns; if (g) { g.state.score += 300; g.save && g.save(); } setTimeout(() => msg('First time at the sea!  +300 · rent a board at the surf shack and paddle out', 4.5), 1800); } } else if (me.x < 900) welcome = false;
     surf.update(dt, t); beachLife(dt, t, me); SEALIFE(dt, t, me); tourTick(dt, t); WF.wtex.offset.y -= dt * 1.6; WF.mist.scale.set(1 + Math.sin(t * 2) * .08, .5, 1 + Math.cos(t * 1.7) * .08); if (sfx.nz && sfx.ctx && Math.hypot(me.x - WF.x, me.z - WF.z) < 60 && Math.random() < dt * 3) sfx.nz('lowpass', 700, .6, Math.min(.06, 2 / Math.max(5, Math.hypot(me.x - WF.x, me.z - WF.z))), .6);

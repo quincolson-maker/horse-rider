@@ -3,9 +3,9 @@
 // faces in a rock heap. Swing a pick at the ore (one chunk a minute per face, carry up to 10) and sell it at the assay office.
 // It is NOT a safe zone - dynamite miners like the place after dark. Everything is merged per material and distance-culled.
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=327';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=327';
-import { mergeStatic } from './hrmerge.js?v=327';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=328';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=328';
+import { mergeStatic } from './hrmerge.js?v=328';
 
 export const MC = { x: -110, z: -30, r: 30 };
 export const mcAvoid = (x, z) => Math.hypot(x - MC.x, z - MC.z) < MC.r;
@@ -91,7 +91,7 @@ export function createMineCamp({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (o.kind === 'mc_look') { msg('🔭 The diggings below, Chinatown\'s lanterns to the south-east, the mountains all round', 2.6); S2.mcLook = 1; }
     return true; };
   // v301 stage stop: a signpost at the diggings and a second board on the saloon signpost (40 pts each way)
-  const stg = (() => { const ts = T.town; if (!ts || !T.toW) return null; const [tx, tz] = T.toW(ts, -9, -12), ty = T.floorAt(tx, tz, 1e9); const a = { x: tx - 1.6, z: tz + 1.2, y: ty, kind: 'mc_stage', label: '🐎 Take the stage to Silver Creek Diggings (40 pts)', r: 1.6, mc: true, to: [CX + 2, CZ - 16] }, b = spot(-2, 0, -14, 'mc_stage', '🐎 Take the stage to town (40 pts)', 2.2, { to: [tx + 2, tz] }); T.spots.push(a); const pst = new THREE.Group(); const p1 = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, 2.4, 6), M.wood); p1.position.y = 1.2; const bd = new THREE.Mesh(new THREE.BoxGeometry(1.4, .34, .05), M.plank); bd.position.y = 2.05; pst.add(p1, bd); pst.position.set(CX - 2, y0, CZ - 13.2); scene.add(pst); return [a, b]; })();
+  const stg = (() => { const ts = T.town; if (!ts || !T.toW) return null; const [tx, tz] = T.toW(ts, -9, -12), ty = T.floorAt(tx, tz, 1e9); const a = { x: tx - 1.6, z: tz + 1.2, y: ty, kind: 'mc_stage', label: '🐎 Take the stage to Silver Creek Diggings (40 pts)', r: 1.6, mc: true, to: [CX + 2, CZ - 16] }, b = spot(-2, 0, -14, 'mc_stage', '🐎 Take the stage to town (40 pts)', 2.2, { to: [tx + 2, tz] }); T.spots.push(a); { const ci = H.chinatown && H.chinatown.info; if (ci) { const cx2 = ci.x - 7.5 + 1.6, cz2 = ci.z - ci.size / 2 + 3.2; T.spots.push({ x: cx2, z: cz2, y: ci.y, kind: 'mc_stage', label: '🐎 Take the stage to Silver Creek Diggings (40 pts)', r: 1.6, mc: true, to: [CX + 2, CZ - 16] }); spot(1.8, 0, -14, 'mc_stage', '🐎 Take the stage to Chinatown (40 pts)', 1.6, { to: [ci.x - 3, ci.z - ci.size / 2 + 4] }); } } /* v328 direct Chinatown <-> Silver Creek */ const pst = new THREE.Group(); const p1 = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, 2.4, 6), M.wood); p1.position.y = 1.2; const bd = new THREE.Mesh(new THREE.BoxGeometry(1.4, .34, .05), M.plank); bd.position.y = 2.05; pst.add(p1, bd); pst.position.set(CX - 2, y0, CZ - 13.2); scene.add(pst); return [a, b]; })();
   // v302 two old prospectors keep the fire company (they go to their tents after midnight)
   const folk = [[-2.2, 10.6, 0x5a4a3a], [-6, 10.2, 0x3a4a5a]].slice(0, mobile ? 1 : 2).map(([x, z, coat], i) => { const D = makeFrontierCharacter({ kind: 'townsfolk', sex: 'male', quality: 'low', coat, top: 0xd8ccb0, hatC: 0x3a2a1a, skin: 0xc89470, hair: 0x6a6a6a, bandana: 0x8a2a1a, name: 'Prospector' }); scene.add(D.g); try { mergeStatic(D.g); } catch (_) {} D.g.position.set(CX + x, y0, CZ + z); D.g.rotation.y = Math.atan2(-4 - x, 9 - z); return D; });
   // v316 two photo spots at the diggings (press P): the top of the headframe and the miners' fire

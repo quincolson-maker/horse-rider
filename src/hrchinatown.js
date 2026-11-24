@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=278';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=278';
-import { mergeStatic } from './hrmerge.js?v=278';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=279';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=279';
+import { mergeStatic } from './hrmerge.js?v=279';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -453,6 +453,10 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     ERR_.sp.label = act ? (q.got.every(Boolean) ? '🌿 Hand the ginseng to the herbalist (+600)' : `🌿 Ginseng roots: ${q.got.filter(Boolean).length} / 3 (follow the 🌿 pin)`) : q && q.day === d ? '🌿 The herbalist thanks you again' : '🌿 Ask the herbalist for an errand'; }
   const prevUse6 = T.onUse; T.onUse = o => { if (ERR_ && o === ERR_.sp) { const S = st(), d = day(), q = S.ctErr; if (!q || q.day !== d) { S.ctErr = { day: d, got: [0, 0, 0], done: 0 }; msg('🌿 "Three wild ginseng roots grow in the hills today. Bring them to me?" - follow the 🌿 pins', 3.5); } else if (!q.done && q.got.every(Boolean)) { q.done = 1; earn(600); S.ctErrands = (S.ctErrands || 0) + 1; msg('🌿 "Fine roots!" The herbalist pays you +600', 3); } else if (q.done) msg('🌿 Come back tomorrow for another errand', 2); else msg(`🌿 ${q.got.filter(Boolean).length} of 3 roots so far`, 1.8); errandSetup(); return true; }
     if (ERR_ && ERR_.plants.includes(o)) { const S = st(), q = S.ctErr, i = ERR_.plants.indexOf(o); if (q && !q.got[i]) { q.got[i] = 1; msg(`🌿 Ginseng root ${q.got.filter(Boolean).length} of 3`, 2); if (sfx.nz && sfx.ctx) sfx.nz('lowpass', 600, 1, .15, .3); } errandSetup(); return true; } return prevUse6 ? prevUse6(o) : false; };
+
+  // ---------- v279 PHOTO SPOTS: snap a photo (P) at five Chinatown viewpoints for +60 each (once) ----------
+  const PHOTO = [['North gate', CX, CZ - E - 10], ['The crossing', CX, CZ], ['Koi garden', CX + 31.5, CZ + 31.5], ['Pagoda towers', CX - 6, CZ - 10], ['Opera stage', ...(() => { const th = built.find(b => b.shop[2] === 'theatre'); return th ? toW(th, W / 2, 2) : [CX, CZ]; })()]];
+  new MutationObserver(() => { if (!document.body.classList.contains('photo')) return; const S = st(), got = new Set(S.ctPhotos || []), me = H.mounted ? H.mounted.pos : P.pos; for (const [nm, x, z] of PHOTO) if (!got.has(nm) && Math.hypot(me.x - x, me.z - z) < 7) { got.add(nm); S.ctPhotos = [...got]; earn(60); setTimeout(() => msg(`📷 Photo spot: ${nm} (${got.size} of ${PHOTO.length})  +60`, 2.5), 600); } }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
   // ---------- per frame ----------
   let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0, musT = 2, musI = 3, incT = 0, swT = 0, chatT = 0, chimeT = 3, chimT = 0, errT = 0;

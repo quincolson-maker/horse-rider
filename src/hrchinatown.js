@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=243';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=243';
-import { mergeStatic } from './hrmerge.js?v=243';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=244';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=244';
+import { mergeStatic } from './hrmerge.js?v=244';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -182,6 +182,11 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     // upper floor: a room with a bed, table, and a window seat
     box(s, M.wood, 3.0, F1 + .3, DP - 1.4, 2.0, .45, 1.0); box(s, M.cream, 3.0, F1 + .55, DP - 1.4, 1.9, .1, .95); box(s, M.wood, mid, F1 + .4, DP / 2, 1.2, .8, .8); box(s, M.wood, mid - .9, F1 + .25, DP / 2, .4, .5, .4); box(s, M.wood, mid + .9, F1 + .25, DP / 2, .4, .5, .4);
     spot(s, 3.0, F1, DP - 2.4, 'ct_bed', '🛏️ Rest a while upstairs (heal)', 1.4);     sph(s, M.paper, mid, RF - .5, DP / 2, .28, 1.2); box(s, M.wood, 5.6, F1 + 1.0, DP - .4, 2.2, 2.0, .5); // paper lantern + cabinet
+    // v244 upstairs by trade: a meeting table in the hall, costume racks over the theatre, a tea room over the tea house, a study over the bookseller
+    if (kind === 'hall') { box(s, M.wood, mid - .5, F1 + .75, DP / 2, 5, .1, 1.3); for (let k = 0; k < 5; k++) for (const sz of [-1, 1]) box(s, M.red, mid - 2.5 + k * 1.2, F1 + .25, DP / 2 + sz * 1.0, .45, .5, .45); }
+    if (kind === 'theatre') for (let k = 0; k < 3; k++) { box(s, M.dark, 6 + k * 1.2, F1 + 1.6, 1.6, .05, .05, 1.2); for (let j = 0; j < 3; j++) box(s, [M.red, M.gold, M.jade][(k + j) % 3], 6 + k * 1.2, F1 + .95, 1.2 + j * .4, .5, 1.2, .08); }
+    if (kind === 'tea') for (const [x, z] of [[6, 2.2], [6, 5.4]]) { box(s, M.dark, x, F1 + .35, z, 1.2, .1, 1.2); for (const [dx, dz] of [[-.8, 0], [.8, 0]]) box(s, M.red, x + dx, F1 + .12, z + dz, .55, .24, .55); cyl(s, M.white, x, F1 + .47, z, .1, .14, 10); }
+    if (kind === 'books' || kind === 'herb') { box(s, M.wood, 6.6, F1 + 1.2, .45, 3.2, 2.4, .4); for (let k = 0; k < 18; k++) box(s, [M.red, M.green, M.cream, M.dark][k % 4], 5.2 + (k % 9) * .32, F1 + .55 + Math.floor(k / 9) * .7, .5, .22, .5, .3); box(s, M.wood, 6.6, F1 + .4, 2.2, 1.6, .8, .8); }
     INQ = null;
     // roof dressing: a water tank or a pavilion, potted plants
     if (idx % 3 === 0) { cyl(s, M.wood, W - 2.4, RF + 1.0, DP - 2.4, 1.0, 1.6, 14); for (const k of [.4, 1.6]) cyl(s, M.black, W - 2.4, RF + .2 + k, DP - 2.4, 1.02, .06, 14); wall(s, W - 3.4, DP - 3.4, W - 1.4, DP - 3.4, RF, RF + 1.8); wall(s, W - 3.4, DP - 3.4, W - 3.4, DP - 1.4, RF, RF + 1.8); }

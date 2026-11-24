@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=110';
-import { PERF } from './perfopts.js?v=110';
+import { PF } from './perf.js?v=111';
+import { PERF } from './perfopts.js?v=111';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -14,6 +14,7 @@ export const ZKINDS = {
   runner: { hp: 70, spd: 4.3, dmg: 9, cd: .9, s: .97, reach: 1.2 },
   brute: { hp: 320, spd: 1.15, dmg: 28, cd: 1.6, s: 1.28, reach: 1.5 },
   outlaw: { hp: 140, spd: 1.9, dmg: 5, cd: 1.5, s: 1, reach: 1.2, range: 34 },
+  coyote: { hp: 55, spd: 5.4, dmg: 7, cd: .8, s: 1, reach: 1.15 }, // v111: undead coyotes - fast, low, run in at night
   crawler: { hp: 60, spd: .95, dmg: 10, cd: 1.1, s: 1, reach: 1.05 }, // v87: low on the ground, hard to hit - heads pop
   bloater: { hp: 150, spd: 1.05, dmg: 0, cd: 1.5, s: 1.12, reach: 1.7, boom: 40, boomR: 4.6 }, // v87: swollen, green - bursts when it reaches you or when shot (chain reactions)
   lawman: { hp: 210, spd: 1.55, dmg: 16, cd: 1.3, s: 1.04, reach: 1.3, armor: .35 }, // v87: tin breastplate - body shots spark off (35%), aim for the head
@@ -21,7 +22,7 @@ export const ZKINDS = {
 };
 export const ZSET = { travel: 6, near: 90, capDesktop: 42, capPhone: 18, chaosDesktop: 420, chaosPhone: 180, chaosRows: 120, chaosRowR: 260, startDelay: 10, waveSecs: 75, playerHp: 100, horseHp: 160, regenDelay: 5, regen: 7, respawn: 4,
   dmg: { shotgun: 26, revolver: 50, rifle: 70, sniper: 260, tommy: 34, m4: 46, mp5: 31, gold: 650, sun: 450, dyn: 420, gatling: 40 }, head: 2.4, penMargin: 1.1 };
-const KIND_LIST = ['walker', 'runner', 'brute', 'outlaw', 'boss', 'crawler', 'bloater', 'lawman']; // v87: appended (network ids stay stable)
+const KIND_LIST = ['walker', 'runner', 'brute', 'outlaw', 'boss', 'crawler', 'bloater', 'lawman', 'coyote']; // v87: appended (network ids stay stable)
 
 export function createHrZombies(c) {
   const { scene, H, P, hAt, PEN, EDGE, sfx, fx, mobile } = c, WALK = c.WALK || EDGE;
@@ -40,7 +41,7 @@ export function createHrZombies(c) {
         const alive = Z.list.filter(o => o.alive && o.kind !== 'outlaw').map(o => [far(o), o]).sort((a, b) => b[0] - a[0]); let extra = alive.length - Z.cap;
         for (const [d, o] of alive) { if (extra <= 0) break; if (d > 60) { despawn(o); extra--; } } c.msg && c.msg('Chaos mode off', 2); } } }
   Z.cap = capOf(false);
-  const pool = { walker: [], runner: [], brute: [], outlaw: [], boss: [], crawler: [], bloater: [], lawman: [] }, tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
+  const pool = { walker: [], runner: [], brute: [], outlaw: [], boss: [], crawler: [], bloater: [], lawman: [], coyote: [] }, tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
   const rnd = Math.random;
   // pen rectangle the dead may never enter (fence + gate gap + a little margin)
   const RX = PEN.hw + ZSET.penMargin, RZ = PEN.hd + ZSET.penMargin;
@@ -103,7 +104,17 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     const add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
     add(new THREE.CylinderGeometry(.2, .17, .62, 8), cl, 0, 1.2, 0); add(new THREE.SphereGeometry(.13, 10, 8), sk, 0, 1.65, .03); for (const s of [-1, 1]) { add(new THREE.CylinderGeometry(.07, .06, .85, 6), cl, s * .1, .45, 0); const a = add(new THREE.CylinderGeometry(.05, .045, .6, 6), sk, s * .26, 1.38, .26); a.rotation.x = Math.PI / 2; }
     return { m: g, update() {}, stand: true }; }
-  function makeBody(kind) { const P0 = pool[kind].pop(); if (P0) return P0; if (kind === 'outlaw') { const O = c.outlawBody && c.outlawBody(); return O || standIn(); }
+  // v111 undead coyote: procedural quadruped (mangy fur, bare ribs, glowing eyes); legs swing with speed
+  const CY = {}; function coyoteBody() { const M = CY.fur ? CY : Object.assign(CY, { fur: new THREE.MeshStandardMaterial({ color: 0x6a5e4c, roughness: .95 }), rot: new THREE.MeshStandardMaterial({ color: 0x4a3a30, roughness: .9 }), bone: new THREE.MeshStandardMaterial({ color: 0xd8d0b8, roughness: .7 }), eye: new THREE.MeshStandardMaterial({ color: 0xff3010, emissive: 0xff2a00, emissiveIntensity: 2.2 }) });
+    const g = new THREE.Group(), add = (p, geo, m, x, y, z, rx = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.rotation.x = rx; o.castShadow = true; p.add(o); return o; };
+    add(g, new THREE.CapsuleGeometry(.17, .6, 4, 8), M.fur, 0, .62, 0, Math.PI / 2); for (let i = 0; i < 4; i++) add(g, new THREE.TorusGeometry(.15, .018, 4, 10, Math.PI), M.bone, .02, .62, -.1 + i * .09, 0).rotation.y = Math.PI / 2;
+    const head = new THREE.Group(); head.position.set(0, .78, .42); g.add(head); add(head, new THREE.ConeGeometry(.1, .34, 7), M.rot, 0, -.02, .14, Math.PI / 2); add(head, new THREE.SphereGeometry(.12, 8, 6), M.fur, 0, 0, 0);
+    for (const sx of [-1, 1]) { add(head, new THREE.ConeGeometry(.045, .14, 5), M.fur, sx * .07, .12, -.03).rotation.z = -sx * .3; add(head, new THREE.SphereGeometry(.022, 6, 4), M.eye, sx * .055, .04, .1); }
+    const tail = add(g, new THREE.ConeGeometry(.06, .4, 6), M.fur, 0, .7, -.52, -2.2); const legs = [];
+    for (const [x, z] of [[-.1, .3], [.1, .3], [-.1, -.3], [.1, -.3]]) { const p = new THREE.Group(); p.position.set(x, .55, z); g.add(p); add(p, new THREE.CylinderGeometry(.035, .028, .55, 5), x < 0 ? M.fur : M.rot, 0, -.27, 0); legs.push(p); }
+    g.userData.head = head; let ph = Math.random() * 6;
+    return { m: g, coyote: true, update(dt, v) { ph += dt * (2 + v * 2.4); const a = Math.min(.9, v * .14); legs.forEach((L, i) => { L.rotation.x = Math.sin(ph + (i < 2 ? 0 : Math.PI) + (i % 2) * .5) * a; }); tail.rotation.x = -2.2 + Math.sin(ph * .5) * .2; head.rotation.x = Math.sin(ph) * .05 * (v > 1 ? 1 : 0); } }; }
+  function makeBody(kind) { const P0 = pool[kind].pop(); if (P0) return P0; if (kind === 'coyote') return coyoteBody(); if (kind === 'outlaw') { const O = c.outlawBody && c.outlawBody(); return O || standIn(); }
     const W = c.walker && c.walker(); if (!W) return standIn(); const v = kind === 'brute' || kind === 'boss' ? 2 : zvar++ % 3;
     if (!ZS) W.m.traverse(o => { if (o.isMesh && !ZS) { o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox; ZS = 1.75 / Math.max(1e-3, b.max.y - b.min.y, b.max.z - b.min.z); } });
     W.m.traverse(o => { if (o.isMesh) { o.material = Array.isArray(o.material) ? o.material.map(m => deadMat(m, v)) : deadMat(o.material, v); o.frustumCulled = false; } }); try { dress(W, v, (Z.nextId * 7 + zvar * 3) | 0); } catch (e) { W.zAt = []; } W.zv = v; return W; }
@@ -143,7 +154,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     if (Z.role() !== 'client') for (const z of Z.list) if (z !== o && z.alive && Math.hypot(z.pos.x - P0.x, z.pos.z - P0.z) < R) damage(z, Math.round(140 * (1 - Math.hypot(z.pos.x - P0.x, z.pos.z - P0.z) / R) + 40), false, z.pos, null, 'bandit'); }
   Z.boom = boom;
   function despawn(o) { scene.remove(o.g); o.g.remove(o.B.m); if (!o.B.stand) { o.B.m.rotation.set(0, Math.PI, 0); o.B.m.position.set(0, 0, 0); o.B.m.scale.setScalar(o.K.s); pool[o.kind].push(o.B); } Z.list.splice(Z.list.indexOf(o), 1); if (Z.byId.get(o.id) === o) Z.byId.delete(o.id); }
-  const pickKind = () => { const w = Z.wave, r = rnd(), r2 = rnd(); if (w >= 2 && r2 < .12) return 'crawler'; if (w >= 3 && r2 < .22) return 'bloater'; if (w >= 4 && r2 < .32) return 'lawman'; if (w >= 3 && r < Math.min(.15, .04 * w)) return 'brute'; if (w >= 2 && r < Math.min(.5, .12 * w)) return 'runner'; return 'walker'; };
+  const pickKind = () => { const w = Z.wave, r = rnd(), r2 = rnd(); if (w >= 2 && (H.night || 0) > .5 && rnd() < .18) return 'coyote'; if (w >= 2 && r2 < .12) return 'crawler'; if (w >= 3 && r2 < .22) return 'bloater'; if (w >= 4 && r2 < .32) return 'lawman'; if (w >= 3 && r < Math.min(.15, .04 * w)) return 'brute'; if (w >= 2 && r < Math.min(.5, .12 * w)) return 'runner'; return 'walker'; };
 
   // ---- who they go for: players on foot or riding (their horse), loose horses outside the pen ----
   // v37 perf: the player list is rebuilt once per tick (not per zombie), into persistent objects keyed by id, so a target a
@@ -173,11 +184,11 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
 
   // ---- shots (from hrguns): hit tests against the dead, then damage ----
   const HEAD = new THREE.Vector3();
-  function headPos(o, out = HEAD) { const B = o.B.m.userData && o.B.m.userData.B; if (B && B.Head) { B.Head.getWorldPosition(out); out.y += .07 * o.K.s; } else out.set(o.pos.x, o.pos.y + 1.66 * o.K.s, o.pos.z); return out; }
+  function headPos(o, out = HEAD) { const hd = o.B.m.userData && o.B.m.userData.head; if (hd) { hd.getWorldPosition(out); return out; } const B = o.B.m.userData && o.B.m.userData.B; if (B && B.Head) { B.Head.getWorldPosition(out); out.y += .07 * o.K.s; } else out.set(o.pos.x, o.pos.y + 1.66 * o.K.s, o.pos.z); return out; }
   function rayHit(ro, d, maxT, rs, rc) { let best = null;
     for (const o of Z.list) { if (!o.alive) continue; if (Math.abs(o.pos.x - ro.x) > maxT + 2 || Math.abs(o.pos.z - ro.z) > maxT + 2) continue;
       const hp = headPos(o, tmp), th = rs(ro, d, hp, .15 * o.K.s); if (th > 0 && th < maxT && (!best || th < best.t)) best = { t: th, Z: o, head: true };
-      const tb = rc(ro, d, o.pos.x, o.pos.z, .3 * o.K.s, o.pos.y, o.pos.y + (o.kind === 'crawler' ? .6 : 1.5) * o.K.s); if (tb > 0 && tb < maxT && (!best || tb < best.t - .05)) best = { t: tb, Z: o, head: false }; }
+      const tb = rc(ro, d, o.pos.x, o.pos.z, .3 * o.K.s, o.pos.y, o.pos.y + (o.kind === 'crawler' ? .6 : o.kind === 'coyote' ? .85 : 1.5) * o.K.s); if (tb > 0 && tb < maxT && (!best || tb < best.t - .05)) best = { t: tb, Z: o, head: false }; }
     return best; }
   function assistPoints() { const out = []; for (const o of Z.list) if (o.alive) { out.push({ c: headPos(o, new THREE.Vector3()), z: o }); out.push({ c: new THREE.Vector3(o.pos.x, o.pos.y + 1.15 * o.K.s, o.pos.z), z: o }); } return out; }
   function damage(o, dmg, head, p, dir, by, from) { if (!o || !o.alive) return false; if (o.kind === 'outlaw' && Z.outlawCalm) { Z.outlawCalm = false; c.onOutlawProvoked && c.onOutlawProvoked(); } o.hp -= dmg; o.flinch = Math.min(1, o.flinch + (head ? .8 : .45)); if (dir) o.push = [dir.x * (dmg > 150 ? 2.5 : .8), dir.z * (dmg > 150 ? 2.5 : .8)];
@@ -195,7 +206,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
 
   // ---- per-frame ----
   const raised = [[.14, .08, 1], [.1, .06, 1]], FR = new THREE.Frustum(), PSM = new THREE.Matrix4(), SPH = new THREE.Sphere();
-  function pose(o, dt, v, close = true) { const B = o.B; if (B.outlaw) { B.update(dt, v, o); return; } if (B.stand) { o.g.rotation.x = o.alive ? .12 : 0; return; }
+  function pose(o, dt, v, close = true) { const B = o.B; if (B.outlaw) { B.update(dt, v, o); return; } if (B.coyote) { B.update(dt, o.alive ? v : 0); return; } if (B.stand) { o.g.rotation.x = o.alive ? .12 : 0; return; }
     if (!o.alive) { B.update(dt, 0); return; } const run = o.kind === 'runner';
     B.update(dt * (run ? 1 : .75), run ? Math.max(v, 2.5) : Math.min(v, 1.4)); const root = B.m, Bn = root.userData.B; if (!Bn || !c.aimBone || !close) return; // bone posing (hunch, reach) only up close: cheap on phones
     const sw = Math.sin(o.anim * (run ? 7 : 3)) * .06; // hunched, head lolling, arms reaching forward (root space: +z forward, -x right)

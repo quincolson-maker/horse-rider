@@ -1,9 +1,9 @@
 // v56 TOWN LIFE: townsfolk stroll the lanes between the buildings and the palisade, a sheriff keeps the main gate and briefs
 // you on your bounty, and a two-horse stagecoach runs a loop between town and the horse pen. All local (no net traffic), all
 // asleep when you're far away.
-import { mergeStatic } from './hrmerge.js?v=134';
+import { mergeStatic } from './hrmerge.js?v=135';
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=134';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=135';
 const FOLK = [
   { sex: 'male', coat: 0x5a4632, top: 0xd8cdb4, hatC: 0x4a3a28, skin: 0x8a5a3c, hair: 0x1a120c },
   { sex: 'female', top: 0xe8dcc6, bodice: 0x2e4a6a, skirt: 0x6a2a3a, skin: 0xf0c6a4, hair: 0x9a5a2a },

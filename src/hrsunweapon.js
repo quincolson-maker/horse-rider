@@ -4,7 +4,7 @@
 // normal host-checked zombie hits (co-op safe). Balance: 0.55 s charge, then 4.5 s before the next pulse, 90 m reach,
 // up to 450 damage that falls to half at the 3.8 m edge of the blast.
 import * as THREE from 'three';
-import { createSunPyramidWeapon } from './hrsuntemple.js?v=216';
+import { createSunPyramidWeapon } from './hrsuntemple.js?v=217';
 
 export const SUN = { dmg: 450, radius: 3.8, range: 90, cooldown: 4.5, beam: 1.3 };
 export function createSunItem(c) {

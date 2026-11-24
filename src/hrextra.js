@@ -28,6 +28,35 @@ export function createExtra({ scene, H, P, hAt, msg, sfx, mobile }) {
     return () => { const n = (H.stats && H.stats.safes) || 0, T = H.town, s = T && T.town; if (!s || n === shown) return; shown = n; if (!n) return; draw(n);
       if (!mesh) { mesh = new THREE.Mesh(new THREE.PlaneGeometry(.62, .85), new THREE.MeshStandardMaterial({ map: ct, roughness: .95 })); const [wx, wz] = T.toW(s, -11.2, -.3); mesh.position.set(wx, s.y0 + 1.75, wz); mesh.rotation.set(0, s.rot + Math.PI, .04); mesh.name = 'wanted poster'; scene.add(mesh); H.cullAdd && H.cullAdd(mesh, 90, { x: wx, z: wz }); if (n > 0) msg('📜 Your WANTED poster just went up on the saloon front', 3); } }; });
 
+  // v217 BUTTERFLIES: little fluttering pairs of wings drift over the grass around you on warm days (one instanced draw)
+  add(() => { const N = mobile ? 14 : 28, g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, -.09, 0, .05, -.08, 0, -.06, 0, 0, 0, .09, 0, .05, .08, 0, -.06], 3)); g.computeVertexNormals();
+    const m = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, vertexColors: false }), IM = new THREE.InstancedMesh(g, m, N); IM.frustumCulled = false; scene.add(IM);
+    const COL = [0xffb43a, 0xffffff, 0x6ab8ff, 0xffe45a, 0xff7a4a], c = new THREE.Color(), b = Array.from({ length: N }, (_, i) => ({ x: 0, z: 0, y: 0, a: Math.random() * 6, ph: Math.random() * 6, h: .4 + Math.random() * 1.1, life: 0 }));
+    b.forEach((o, i) => IM.setColorAt(i, c.set(COL[i % COL.length]))); const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), V = new THREE.Vector3(), S = new THREE.Vector3(1, 1, 1); let t = 0;
+    return dt => { t += dt; const ok = (H.night || 0) < .3 && !(H.wx && H.wx.rain > .3) && !inTown(); IM.visible = ok; if (!ok) return; const pp = ppos();
+      b.forEach((o, i) => { o.life -= dt; if (o.life <= 0 || Math.hypot(o.x - pp.x, o.z - pp.z) > 34) { const a = Math.random() * 6.28, r = 6 + Math.random() * 24; o.x = pp.x + Math.cos(a) * r; o.z = pp.z + Math.sin(a) * r; o.life = 10 + Math.random() * 15; }
+        o.a += (Math.sin(t * .7 + o.ph) * 1.6) * dt; o.x += Math.sin(o.a) * .9 * dt; o.z += Math.cos(o.a) * .9 * dt; const d = Math.hypot(o.x - pp.x, o.z - pp.z); if (d < 2.5) { o.x += (o.x - pp.x) / d * 3 * dt; o.z += (o.z - pp.z) / d * 3 * dt; }
+        o.y = hAt(o.x, o.z) + o.h + Math.sin(t * 2.3 + o.ph) * .25; const f = Math.sin(t * 22 + o.ph); E.set(0, o.a, 0); Q.setFromEuler(E); S.set(2 * (.35 + .65 * Math.abs(f)), 2, 2); M4.compose(V.set(o.x, o.y, o.z), Q, S); IM.setMatrixAt(i, M4); }); IM.instanceMatrix.needsUpdate = true; }; });
+
+  // v218 PRAIRIE DOGS: colonies of mounds out on the flats; the critters pop up to look around and dive when you ride close
+  add(() => { const N = mobile ? 10 : 18, IM = new THREE.InstancedMesh(new THREE.CapsuleGeometry(.09, .2, 3, 6), new THREE.MeshStandardMaterial({ color: 0xa47a4c, roughness: 1 }), N), MD = new THREE.InstancedMesh(new THREE.ConeGeometry(.35, .18, 8), new THREE.MeshStandardMaterial({ color: 0x8a6a42, roughness: 1 }), N);
+    IM.frustumCulled = MD.frustumCulled = false; scene.add(IM, MD); const d = Array.from({ length: N }, () => ({ x: 1e9, z: 0, up: 0, want: 0, tq: 0 })), M4 = new THREE.Matrix4(); let col = null, chirp = 0;
+    return dt => { const pp = ppos(); if (inTown()) { IM.visible = MD.visible = false; return; } IM.visible = MD.visible = true;
+      if (!col || Math.hypot(col[0] - pp.x, col[1] - pp.z) > 120) { const a = Math.random() * 6.28; col = [pp.x + Math.cos(a) * 60, pp.z + Math.sin(a) * 60]; d.forEach(o => { o.x = col[0] + (Math.random() - .5) * 26; o.z = col[1] + (Math.random() - .5) * 26; o.up = 0; }); }
+      d.forEach((o, i) => { const dist = Math.hypot(o.x - pp.x, o.z - pp.z), scared = dist < (H.mounted ? 14 : 7) || (H.night || 0) > .5; o.tq -= dt; if (o.tq <= 0) { o.tq = 2 + Math.random() * 5; o.want = Math.random() < .6 ? 1 : 0; } const tgt = scared ? 0 : o.want;
+        if (scared && o.up > .5 && (chirp -= dt) <= 0 && sfx.tone && sfx.ctx && dist < 25) { chirp = 1.5; sfx.tone('sine', 2400, 1800, .06, .04); } o.up += (tgt - o.up) * Math.min(1, dt * (scared ? 12 : 3)); const y = hAt(o.x, o.z);
+        M4.makeTranslation(o.x, y + .05, o.z); MD.setMatrixAt(i, M4); M4.makeTranslation(o.x, y - .2 + o.up * .38, o.z); IM.setMatrixAt(i, M4); }); IM.instanceMatrix.needsUpdate = MD.instanceMatrix.needsUpdate = true; }; });
+
+  // v219 RAINBOW: when a storm clears in daylight a rainbow arcs over the range for a minute
+  add(() => { const g = new THREE.TorusGeometry(260, 9, 4, 64, Math.PI), cols = [], pos = g.attributes.position, c = new THREE.Color(); for (let i = 0; i < pos.count; i++) { const r = Math.hypot(pos.getX(i), pos.getY(i)), k = Math.max(0, Math.min(1, (r - 251) / 18)); c.setHSL(.78 * k, .9, .6); cols.push(c.r, c.g, c.b); } g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+    const m = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false, fog: false, side: THREE.DoubleSide }), R = new THREE.Mesh(g, m); R.frustumCulled = false; R.visible = false; scene.add(R); let wasRain = 0, life = 0;
+    return dt => { const rain = H.wx ? (H.wx.rain || 0) : 0, pp = ppos(); if (rain > .5) wasRain = 1; if (wasRain && rain < .05 && (H.night || 0) < .3) { wasRain = 0; life = 70; const yw = P.yaw || 0; R.userData.fx = -Math.sin(yw); R.userData.fz = -Math.cos(yw); msg('🌈 A rainbow over the range', 2.5); } if (life > 0) { life -= dt; R.visible = true; m.opacity = Math.min(.4, life / 10 * .4, (70 - life) / 4 * .4); R.position.set(pp.x + R.userData.fx * 360, hAt(pp.x, pp.z) - 30, pp.z + R.userData.fz * 360); R.lookAt(pp.x, R.position.y, pp.z); } else R.visible = false; }; });
+
+  // v220 NIGHT CHORUS: crickets chirp in the grass after dark, and an owl hoots now and then (quiet in town and indoors)
+  add(() => { let ct = 1, ot = 20; return dt => { const n = H.night || 0; if (n < .55 || !sfx.ctx || !sfx.tone || (H.saloon && H.saloon.inside && H.saloon.inside()) || (H.wx && H.wx.rain > .3)) return; ct -= dt; ot -= dt;
+    if (ct <= 0) { ct = .6 + Math.random() * 1.6; const f = 4200 + Math.random() * 600; for (let k = 0; k < 3; k++) setTimeout(() => sfx.tone('sine', f, f * .98, .018, .03), k * 55); }
+    if (ot <= 0) { ot = 25 + Math.random() * 40; const f = 380 + Math.random() * 40; sfx.tone('sine', f, f * .92, .07, .35); setTimeout(() => sfx.tone('sine', f * .95, f * .85, .06, .6), 420); } }; });
+
   X.update = dt => { X.t += dt; for (const f of X.parts) f(dt); };
   return X;
 }

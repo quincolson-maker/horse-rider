@@ -8,7 +8,7 @@
 //    dartboard (301 against the bartender or another rider); the store sells a black windbreaker with HORSE RIDER on the back.
 // Walkable structures: floor surfaces (boxes / ramps) + height-aware wall segments, queried by horse.js (floorAt / walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=107';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=108';
 
 export const TOWN_PRICES = { jacket: 5000, drink: 20 };
 const TAU = Math.PI * 2;
@@ -47,8 +47,8 @@ export function applyDart(G, pts) { const p = G.turn, rem = G.s[p] - pts; G.log.
 function endTurn(G) { G.turn = 1 - G.turn; G.darts = 0; G.start = G.s[G.turn]; }
 export function newGame(a, b) { return { id: Math.random().toString(36).slice(2, 8), who: [a, b], s: [301, 301], turn: 0, darts: 0, start: 301, win: -1, log: [], bust: false }; }
 
-import { createPoker } from './hrpoker.js?v=107';
-import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=107';
+import { createPoker } from './hrpoker.js?v=108';
+import { createCheckers, ckNew, ckMoves, ckApply, ckAI } from './hrcheckers.js?v=108';
 export function createTown(c) {
   const { scene, hAt, H, P, mobile, msg, sfx, camera } = c, M = mats(), T = { structs: [], walls: [], spots: [], safe: [], towers: [], town: null, drunk: 0, drinks: 0, passT: 0, ui: null };
   H.town = T; H.safeRects = T.safe;
@@ -178,10 +178,43 @@ export function createTown(c) {
     { const L = x0 - BX + .4, ang = Math.atan2(.35, L), g = new THREE.PlaneGeometry(D - BZ + .3, L / Math.cos(ang)); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (D - BZ) / 2.5, uv.getY(i) * L / 2.5);
       g.rotateX(-Math.PI / 2 - ang); g.rotateY(Math.PI / 2); g.translate((BX - .2 + x0) / 2, RY + .12, (BZ + D) / 2); addGeo(s, M.shingle, g); }
     box(s, M.trim, (BX + x1 + .6) / 2, RY - .02, BZ - .12, x1 + .6 - BX, .22, .14); box(s, M.trim, BX - .12, RY - .02, (BZ + D) / 2, .14, .22, D - BZ);
-    // gable roof behind the false front (ridge front-to-back)
-    for (const sx of [-1, 1]) { const half = (x1 - x0) / 2 + .5, rise = 2.1, L = Math.hypot(half, rise), g = new THREE.PlaneGeometry(L, D + .6); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * L / 2.5, uv.getY(i) * D / 2.5);
-      g.rotateX(-Math.PI / 2); g.rotateZ(sx * Math.atan2(rise, half) * -1); g.translate(mx + sx * half / 2, top + .3 + rise / 2, D / 2); addGeo(s, M.shingle, g); }
-    box(s, M.side, mx, top + 1.2, D + .12, x1 - x0 + 1, 2.2, .1); box(s, M.trim, mx, top + 2.42, D / 2, .3, .2, D + .7);
+    // v108 ROOFTOP BAR (replaces the gable roof): a flat deck behind the false front, reached from the mezzanine side door,
+    // the west balcony and an outside stair along the back wall. Bar counter + shelf, stools, tables under canvas umbrellas,
+    // string lights, a sign, potted cacti, parapet rails (colliders on every edge).
+    floor(s, BX, x0, BZ, D + 1.2, DY); floor(s, x0, x1 + .3, BZ, -.12, DY); box(s, M.plank, (BX + x0) / 2, DY - .06, D + .6, x0 - BX, .14, 1.2); // balcony is walkable; landing behind the building
+    wall(s, BX, BZ, BX, D + 1.25, DY, DY + 1.1); wall(s, BX, BZ, x1 + .3, BZ, DY, DY + 1.1); wall(s, x1 + .3, BZ, x1 + .3, -.12, DY, DY + 1.1); wall(s, BX, D + 1.25, x0, D + 1.25, DY, DY + 1.1); rail(BX + .15, D - .1, BX + .15, D + 1.2); rail(BX + .15, D + 1.2, x0, D + 1.2);
+    postH(-2.6, DY, BX + .15, D + 1.15);
+    const RT = top + .3, SZ0 = D + .15, SZ1 = D + 1.25, SX0 = x0, SX1 = -10.6; // outside stair: from the landing (DY) at x0 up to the roof (RT) at SX1
+    floor(s, SX0, SX1, SZ0, SZ1, DY, RT, 'x'); floor(s, SX1, SX1 + 1.6, D - .2, SZ1, RT); wall(s, SX0, SZ1, SX1 + 1.6, SZ1, DY, RT + 1.1); wall(s, SX1 + 1.6, D, SX1 + 1.6, SZ1, RT, RT + 1.1);
+    { const n = 24, run = SX1 - SX0; for (let k = 0; k < n; k++) { const x = SX0 + (k + .5) * run / n, y = DY + (RT - DY) * (k + 1) / n; box(s, M.plank, x, y - .05, (SZ0 + SZ1) / 2, run / n + .04, .1, SZ1 - SZ0); }
+      for (const z of [SZ0 + .05, SZ1 - .05]) beam(s, M.trim, [SX0, DY - .15, z], [SX1, RT - .15, z], .08, .28); beam(s, M.trim, [SX0, DY + 1, SZ1], [SX1, RT + 1, SZ1], .07);
+      for (let k = 1; k < 12; k++) { const x = SX0 + k * run / 12, y = DY + (RT - DY) * k / 12; box(s, M.cream, x, y + .5, SZ1, .05, 1, .05); }
+      for (const t of [.25, .6, .95]) { const x = SX0 + t * run, y = DY + (RT - DY) * t; box(s, M.trim, x, (y - 2.6) / 2, SZ1 - .05, .18, y + 2.6, .18); }
+      box(s, M.plank, SX1 + .8, RT - .06, (D - .2 + SZ1) / 2, 1.6, .12, SZ1 - D + .2); box(s, M.trim, SX1 + 1.6, RT - 1.4, SZ1 - .1, .18, 2.8, .18); }
+    // the deck + parapet (front edge is the false front)
+    floor(s, x0 + .05, x1 - .05, .15, D + .15, RT); box(s, M.plank, mx, RT - .04, D / 2 + .1, x1 - x0, .08, D);
+    wall(s, x0, .1, x0, D, RT, RT + 1.1); wall(s, x1, .1, x1, D, RT, RT + 1.1); wall(s, x0, D, SX1, D, RT, RT + 1.1); wall(s, SX1 + 1.6, D, x1, D, RT, RT + 1.1); wall(s, x0, .15, x1, .15, RT, RT + 1.1);
+    const para = (ax, az, bx, bz) => { const L = Math.hypot(bx - ax, bz - az), along = Math.abs(bx - ax) > Math.abs(bz - az); box(s, M.side, (ax + bx) / 2, RT + .3, (az + bz) / 2, along ? L : .16, .6, along ? .16 : L); box(s, M.trim, (ax + bx) / 2, RT + .64, (az + bz) / 2, along ? L + .1 : .26, .08, along ? .26 : L + .1);
+      for (let t = .3; t < L; t += .3) box(s, M.cream, ax + (bx - ax) * t / L, RT + .86, az + (bz - az) * t / L, .045, .36, .045); box(s, M.trim, (ax + bx) / 2, RT + 1.06, (az + bz) / 2, along ? L : .08, .06, along ? .08 : L); };
+    para(x0, .2, x0, D); para(x1, .2, x1, D); para(x0, D, SX1, D); para(SX1 + 1.6, D, x1, D);
+    // the bar: counter, foot rail, back shelf with bottles, stools
+    const BX0 = -8.6, BX1 = -3.2, BZf = 8.1; box(s, M.dark, (BX0 + BX1) / 2, RT + .55, BZf + .3, BX1 - BX0, 1.1, .6); box(s, M.plank, (BX0 + BX1) / 2, RT + 1.13, BZf + .25, BX1 - BX0 + .2, .06, .8); beam(s, M.brass, [BX0, RT + .2, BZf - .08], [BX1, RT + .2, BZf - .08], .04);
+    wall(s, BX0, BZf - .05, BX1, BZf - .05, RT, RT + 1.2); wall(s, BX0, BZf - .05, BX0, BZf + .6, RT, RT + 1.2); wall(s, BX1, BZf - .05, BX1, BZf + .6, RT, RT + 1.2);
+    box(s, M.dark, (BX0 + BX1) / 2, RT + 1.2, D - .35, BX1 - BX0, 2.4, .3); for (const y of [1.25, 1.75]) box(s, M.plank, (BX0 + BX1) / 2, RT + y, D - .55, BX1 - BX0 - .2, .05, .3);
+    { const bc = [M.brass, M.glass, M.red, M.dark, M.cream]; let k = 0; for (const y of [1.25, 1.75]) for (let x = BX0 + .3; x < BX1 - .2; x += .22) { cyl(s, bc[k++ % 5], x, RT + y + .14, D - .55, .045, .26, 8); } }
+    for (let k = 0; k < 5; k++) { const x = BX0 + .6 + k * (BX1 - BX0 - 1.2) / 4; cyl(s, M.dark, x, RT + .35, BZf - .65, .05, .7, 8); cyl(s, M.red, x, RT + .74, BZf - .65, .2, .07, 14); }
+    // tables under canvas umbrellas, chairs
+    for (const [x, z] of [[-14.2, 3.2], [-13.4, 7.2], [-5.2, 3.4], [-9.6, 2.6]]) { cyl(s, M.dark, x, RT + .74, z, .5, .05); cyl(s, M.dark, x, RT + .37, z, .06, .74, 8); cyl(s, M.trim, x, RT + 1.5, z, .03, 1.5, 6);
+      { const g = new THREE.ConeGeometry(1.25, .45, 10, 1, true); g.translate(x, RT + 2.3, z); addGeo(s, M.cream, g); } wall(s, x - .3, z, x + .3, z, RT, RT + .9);
+      for (let k = 0; k < 3; k++) { const a = k / 3 * TAU + .5, cx = x + Math.cos(a) * .85, cz = z + Math.sin(a) * .85; box(s, M.dark, cx, RT + .45, cz, .42, .05, .42, -a); box(s, M.dark, cx + Math.cos(a) * .2, RT + .72, cz + Math.sin(a) * .2, .06, .55, .4, -a); } }
+    // string lights between corner poles + a mid pole (emissive bulbs; no real lights)
+    { const poles = [[x0 + .35, .5], [x1 - .35, .5], [x1 - .35, D - .35], [x0 + .35, D - .35], [mx, D / 2]]; for (const [x, z] of poles) cyl(s, M.trim, x, RT + 1.45, z, .05, 2.9, 8);
+      const H2 = RT + 2.8; for (const [a, b] of [[0, 4], [1, 4], [2, 4], [3, 4], [0, 1], [3, 0]]) { const [ax, az] = poles[a], [bx, bz] = poles[b], L = Math.hypot(bx - ax, bz - az), n = Math.max(6, Math.round(L / .6));
+        for (let i = 0; i <= n; i++) { const t = i / n, sag = Math.sin(t * Math.PI) * .45; box(s, M.lamp, ax + (bx - ax) * t, H2 - sag - .08, az + (bz - az) * t, .06, .08, .06); } } }
+    // sign + cacti in barrels
+    { const sg = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .7), new THREE.MeshStandardMaterial({ map: signTex('ROOFTOP BAR', '#5a1a12'), roughness: .8 })); sg.position.set((BX0 + BX1) / 2, RT + 2.75, D - .18); sg.rotation.y = Math.PI; (s.signs = s.signs || []).push(sg); }
+    for (const [x, z] of [[x0 + .8, D - .8], [x1 - .8, 1], [x0 + .8, 1]]) { cyl(s, M.crate, x, RT + .3, z, .3, .6, 10); cyl(s, M.dark, x, RT + .9, z, .1, .9, 8); cyl(s, M.dark, x + .14, RT + 1.0, z, .06, .3, 6); }
+    s.roofSpot = spot(s, (BX0 + BX1) / 2, RT, BZf - 1.1, 'drink', 'Order at the rooftop bar', 1.8); s.RT = RT;
     // porch life: lanterns by the door, barrels, a bench
     for (const x of [door[0] - .7, door[1] + .7]) { box(s, M.trim, x, F + 2.3, Z - .25, .08, .08, .4); box(s, M.lamp, x, F + 2.05, Z - .45, .22, .34, .22); box(s, M.trim, x, F + 2.26, Z - .45, .3, .06, .3); }
     for (const [x, z] of [[x0 + .7, -1.6], [x0 + 1.4, -1.9], [x1 - .8, -1.7]]) { cyl(s, M.crate, x, F + .5, z, .38, 1, 12); cyl(s, M.trim, x, F + .18, z, .4, .06, 12); cyl(s, M.trim, x, F + .82, z, .4, .06, 12); }
@@ -195,8 +228,10 @@ export function createTown(c) {
     floor(s, -17.2, 10.2, -2.4, 10, F); box(s, M.plank, -3.5, F - .06, 3.8, 27.4, .12, 12.8); // boardwalk + floors
     floor(s, -17.2, 10.2, -3.4, -2.4, 0, F, 'z'); box(s, M.plank, -3.5, F / 2 - .05, -2.9, 27.4, .1, 1);
     for (const [x0, x1, door, name, D, HT] of [[-17, -1, [-7.6, -5.0], 'SALOON', 10, 7.6], [1, 10, [4.7, 6.3], 'GENERAL STORE', 8, WH]]) { const mx = (x0 + x1) / 2, w = x1 - x0, sal = name === 'SALOON';
-      for (const [ax, az, bx, bz] of [[x0, D, x1, D], [x0, 0, x0, D], [x1, 0, x1, D], [x0, 0, door[0], 0], [door[1], 0, x1, 0]]) { wall(s, ax, az, bx, bz, F, F + HT); if(az===0&&bz===0){const holes=[];for(const x of [x0+1.6,x1-1.6])if(x<door[0]-.8||x>door[1]+.8)holes.push([x-.7,x+.7,F+1.1,F+2.3]);if(sal)for(const x of [-15.5,-12.5,-9.5,-3.5])holes.push([x-.6,x+.6,Y2+.95,Y2+2.05]);const cuts=[ax,bx,...holes.flatMap(h=>[Math.max(ax,h[0]),Math.min(bx,h[1])]).filter(x=>x>ax&&x<bx)].sort((a,b)=>a-b);for(let k=0;k<cuts.length-1;k++){const l=cuts[k],r=cuts[k+1];if(r-l<.001)continue;const open=holes.filter(h=>h[0]<(l+r)/2&&h[1]>(l+r)/2).sort((a,b)=>a[2]-b[2]);let y=F;for(const h of open){if(h[2]>y)box(s,M.plank,(l+r)/2,(y+h[2])/2,0,r-l,h[2]-y,.16);y=Math.max(y,h[3]);}if(y<F+HT)box(s,M.plank,(l+r)/2,(y+F+HT)/2,0,r-l,F+HT-y,.16);}}else box(s,M.plank,(ax+bx)/2,F+HT/2,(az+bz)/2,Math.abs(bx-ax)+.16,HT,Math.abs(bz-az)+.16); }
+      for (const [ax, az, bx, bz] of (sal ? [[x0, D, x1, D], [x0, 0, x0, 8.5], [x0, 9.7, x0, D], [x1, 0, x1, D], [x0, 0, door[0], 0], [door[1], 0, x1, 0]] : [[x0, D, x1, D], [x0, 0, x0, D], [x1, 0, x1, D], [x0, 0, door[0], 0], [door[1], 0, x1, 0]])) { wall(s, ax, az, bx, bz, F, F + HT); if(az===0&&bz===0){const holes=[];for(const x of [x0+1.6,x1-1.6])if(x<door[0]-.8||x>door[1]+.8)holes.push([x-.7,x+.7,F+1.1,F+2.3]);if(sal)for(const x of [-15.5,-12.5,-9.5,-3.5])holes.push([x-.6,x+.6,Y2+.95,Y2+2.05]);const cuts=[ax,bx,...holes.flatMap(h=>[Math.max(ax,h[0]),Math.min(bx,h[1])]).filter(x=>x>ax&&x<bx)].sort((a,b)=>a-b);for(let k=0;k<cuts.length-1;k++){const l=cuts[k],r=cuts[k+1];if(r-l<.001)continue;const open=holes.filter(h=>h[0]<(l+r)/2&&h[1]>(l+r)/2).sort((a,b)=>a[2]-b[2]);let y=F;for(const h of open){if(h[2]>y)box(s,M.plank,(l+r)/2,(y+h[2])/2,0,r-l,h[2]-y,.16);y=Math.max(y,h[3]);}if(y<F+HT)box(s,M.plank,(l+r)/2,(y+F+HT)/2,0,r-l,F+HT-y,.16);}}else box(s,M.plank,(ax+bx)/2,F+HT/2,(az+bz)/2,Math.abs(bx-ax)+.16,HT,Math.abs(bz-az)+.16); }
       if (sal) box(s, M.plank, (door[0] + door[1]) / 2, F + 2.9 + (HT - 2.9) / 2, 0, door[1] - door[0] + .2, HT - 2.9, .16); // wall above the door
+      if (sal) { /* v108: upstairs side door (mezzanine -> west balcony -> rooftop stair) */ wall(s, x0, 8.5, x0, 9.7, F, Y2); box(s, M.plank, x0, (F + Y2) / 2, 9.1, .16, Y2 - F, 1.2); wall(s, x0, 8.5, x0, 9.7, Y2 + 2.2, F + HT); box(s, M.plank, x0, (Y2 + 2.2 + F + HT) / 2, 9.1, .16, F + HT - Y2 - 2.2, 1.2);
+        for (const z of [8.45, 9.75]) box(s, M.cream, x0 - .1, Y2 + 1.1, z, .12, 2.2, .1); box(s, M.cream, x0 - .1, Y2 + 2.25, 9.1, .12, .12, 1.4); }
       box(s, M.roof, mx, F + HT + .15, D / 2, w + .6, .2, D + .6); if (!sal) { box(s, M.plank, mx, F + HT + 1.2, 0, w + .2, 2.4, .2); box(s, M.dark, mx, F + 2.9, -1.3, w + .2, .12, 2.6); // false front, porch roof
       for (const x of [x0 + .2, mx, x1 - .2]) box(s, M.dark, x, F + 1.4, -2.3, .14, 2.9, .14); } else saloonFacade(s, x0, x1, D, door, F, HT, Y2);
       for (const x of [x0 + 1.6, x1 - 1.6]) if (x < door[0] - .8 || x > door[1] + .8) box(s, M.glass, x, F + 1.7, -.02, 1.4, 1.2, .06);
@@ -222,7 +257,7 @@ export function createTown(c) {
     // round tables + chairs, a piano, spittoons, the bandits' table (under the upper floor), the dealer's dim corner, a small stage
     const rtable = (x, z, chairs = 4) => { cyl(s, M.dark, x, F + .74, z, .55, .05); cyl(s, M.dark, x, F + .37, z, .07, .74); cyl(s, M.dark, x, F + .02, z, .3, .04); wall(s, x - .3, z, x + .3, z, F, F + .9);
       for (let k = 0; k < chairs; k++) { const a = k / chairs * TAU + .4, cx2 = x + Math.cos(a) * .85, cz2 = z + Math.sin(a) * .85; box(s, M.dark, cx2, F + .45, cz2, .42, .05, .42, -a); box(s, M.dark, cx2 + Math.cos(a) * .2, F + .75, cz2 + Math.sin(a) * .2, .06, .6, .4, -a); for (const [u, v] of [[-.16, -.16], [.16, -.16], [-.16, .16], [.16, .16]]) box(s, M.dark, cx2 + u, F + .22, cz2 + v, .04, .44, .04); } };
-    rtable(-4.2, 1.6); rtable(-3, 7.2, 3); /* -14.2, 6.2: the 3D draw-poker table (src/hrpoker.js) */ rtable(-8.6, 8.1, 0);
+    rtable(-4.2, 1.6); /* v108: the table by the piano is gone (it choked the walkway) */ /* -14.2, 6.2: the 3D draw-poker table (src/hrpoker.js) */ rtable(-8.6, 8.1, 0);
     box(s, M.black, -1.75, F + .7, 8.6, .55, 1.4, 1.6); box(s, M.black, -1.75, F + 1.45, 8.6, .6, .1, 1.65); box(s, M.ivory, -2.07, F + .82, 8.6, .12, .04, 1.4); for (let k = 0; k < 10; k++) box(s, M.black, -2.08, F + .85, 7.98 + k * .14, .08, .03, .05);
     cyl(s, M.dark, -2.7, F + .3, 8.6, .2, .6); // piano + stool
     for (const [x, z] of [[-9.9, 4.8], [-4.1, 4.8], [-12.2, 9.5]]) { cyl(s, M.brass, x, F + .12, z, .17, .24); cyl(s, M.brass, x, F + .25, z, .12, .03); }

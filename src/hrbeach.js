@@ -3,9 +3,9 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=366';
-import { createSurf } from './hrsurf.js?v=366';
-import { mergeStatic } from './hrmerge.js?v=366';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=367';
+import { createSurf } from './hrsurf.js?v=367';
+import { mergeStatic } from './hrmerge.js?v=367';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -203,6 +203,10 @@ export function createBeach(ctx) {
   const lampM2 = new THREE.MeshStandardMaterial({ color: 0xffe0a0, emissive: 0xffb050, emissiveIntensity: .1 }); { const pts = []; hutZ.forEach((z, i) => { const x = shoreX(z) - 46 - (i % 2) * 6 + 2.6; pts.push([x, hAt(x, z) + 3.8, z]); }); for (let k = 0; k < 14; k++) { const z = ZC + 20 - 2.4 + k * .35, x = shoreX(ZC + 20) - 30 + 2.5; pts.push([x, hAt(x, ZC + 20) + 3.0 - Math.sin(k / 13 * Math.PI) * .3, z]); }
     const g = new THREE.OctahedronGeometry(.22, 0), LM = new THREE.InstancedMesh(g, lampM2, pts.length), m4 = new THREE.Matrix4(); pts.forEach(([x, y, z], i) => { m4.makeScale(i < hutZ.length ? 1.6 : .45, i < hutZ.length ? 1.6 : .45, i < hutZ.length ? .5 : .45).setPosition(x, y, z); LM.setMatrixAt(i, m4); }); LM.name = 'cove lanterns'; root.add(LM); }
 
+  // ---------- v367 a tropical squall now and then: the sky dims, rain hisses on the sea for a minute, then the sun breaks through ----------
+  let squall = 0, squallSlot = -1; const sq = dt => { const slot = Math.floor(Date.now() / 9e5), into = Date.now() / 1000 - slot * 900, me = P.pos, inC = me.x > 950 && Math.abs(me.z - ZC) < 500; const on = ((slot * 7919) % 5 === 0) && into < 75; if (on && inC && squallSlot !== slot) { squallSlot = slot; msg('🌧️ A tropical squall blows in off the sea', 2.5); } squall += ((on && inC ? 1 : 0) - squall) * Math.min(1, dt * .5);
+    if (H.wx && inC) { H.wx.coveRain = squall; } if (squall > .05 && fx && fx.smoke && Math.random() < dt * 30 * squall) fx.smoke.emit(me.x + (Math.random() - .5) * 30, SEA + .1, me.z + (Math.random() - .5) * 30, 0, .3, 0, .85, .9, .95, .25, .25, .2, -.02, .1); if (squall > .1 && sfx.nz && sfx.ctx && Math.random() < dt * 4) sfx.nz('highpass', 3500, .4, .04 * squall, .6); oceanU.uNight.value = Math.max(oceanU.uNight.value, squall * .35); };
+
   // ---------- safe zone, swimming, deep-water check ----------
   (H.safeRects || (H.safeRects = [])).push({ x: 1090, z: ZC, hw: 160, hd: 440, name: 'PARADISE COVE', label: '🛡 NO ZOMBIES · PARADISE COVE' });
   H.places && (H.places.cove = { x: 1100, z: ZC });
@@ -212,7 +216,7 @@ export function createBeach(ctx) {
   B.update = dt => { const t = surfTime(); SWELL.m = swellOf(); oceanU.uSwell.value = SWELL.m; oceanU.uT.value = t; oceanU.uNight.value = H.night || 0; if (scene.fog && scene.fog.color) oceanU.uFogC.value.copy(scene.fog.color); const me = H.mounted ? H.mounted.pos : P.pos, near = me.x > 820;
     root.visible = near || me.x > 600; if (!root.visible) return;
     if (me.x > 1000 && Math.abs(me.z - ZC) < 450 && !welcome) { welcome = true; msg('🌴 Paradise Cove', 3); const S = H.stats || (H.stats = {}); if (!S.coveVisit) { S.coveVisit = 1; const g = H.guns; if (g) { g.state.score += 300; g.save && g.save(); } setTimeout(() => msg('First time at the sea!  +300 · rent a board at the surf shack and paddle out', 4.5), 1800); } } else if (me.x < 900) welcome = false;
-    surf.update(dt, t); beachLife(dt, t, me); SEALIFE(dt, t, me); tourTick(dt, t); WF.wtex.offset.y -= dt * 1.6; WF.mist.scale.set(1 + Math.sin(t * 2) * .08, .5, 1 + Math.cos(t * 1.7) * .08); if (sfx.nz && sfx.ctx && Math.hypot(me.x - WF.x, me.z - WF.z) < 60 && Math.random() < dt * 3) sfx.nz('lowpass', 700, .6, Math.min(.06, 2 / Math.max(5, Math.hypot(me.x - WF.x, me.z - WF.z))), .6);
+    surf.update(dt, t); sq(dt); beachLife(dt, t, me); SEALIFE(dt, t, me); tourTick(dt, t); WF.wtex.offset.y -= dt * 1.6; WF.mist.scale.set(1 + Math.sin(t * 2) * .08, .5, 1 + Math.cos(t * 1.7) * .08); if (sfx.nz && sfx.ctx && Math.hypot(me.x - WF.x, me.z - WF.z) < 60 && Math.random() < dt * 3) sfx.nz('lowpass', 700, .6, Math.min(.06, 2 / Math.max(5, Math.hypot(me.x - WF.x, me.z - WF.z))), .6);
     if (!B.surfing && !H.mounted && !H.trainRide && P.pos.x > shoreX(P.pos.z) + 2) { waveAt(P.pos.x, P.pos.z, t, wv); const surface = SEA + wv.eta, floor = hAt(P.pos.x, P.pos.z); if (surface - floor > 1.05) { const fy = surface - 1.25; if (P.pos.y < fy) { P.pos.y = fy; H.vy = Math.max(0, H.vy || 0); } if (!swimMsg) { swimMsg = true; msg('🏊 Swimming - rent a board at the surf shack to surf', 2.5); } } } };
   return B;
 }

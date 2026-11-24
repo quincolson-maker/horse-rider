@@ -2,7 +2,7 @@
 // Wait for "DRAW!" then press FIRE / SPACE (or tap) faster than he does. Too early = you lose.
 // His reaction gets quicker each time you beat him (5 tiers). Win = +250 (+ tier bonus).
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=366';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=367';
 export function createDuel({ scene, H, P, T, hAt, msg, sfx, mobile }) {
   const s = T.structs.find(q => q.kind === 'town'); if (!s) return null;
   const [px, pz] = T.toW(s, -3.5, -16), post = new THREE.Mesh(new THREE.CylinderGeometry(.08, .1, 1.6, 7), new THREE.MeshStandardMaterial({ color: 0x5a3a1e })); post.position.set(px, Math.min(hAt(px, pz), s.y0 + .5) + .8, pz); scene.add(post);

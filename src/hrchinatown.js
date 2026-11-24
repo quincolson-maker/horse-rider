@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=255';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=255';
-import { mergeStatic } from './hrmerge.js?v=255';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=256';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=256';
+import { mergeStatic } from './hrmerge.js?v=256';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -284,7 +284,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (k === 'bed') { heal(100); msg('🛏️ You stretch out for a while - rested and healed', 2.2); S.ctRest = (S.ctRest || 0) + 1; }
     else if (k === 'stall') { if (pay(10)) { heal(30); msg(o.food || '🍢 Skewers off the grill', 1.8); S.ctFood = (S.ctFood || 0) + 1; } }
     else if (k === 'riddle') { riddle(); }
-    else if (k === 'bench') { heal(60); msg('🪨 You sit by the pond a while - the koi drift past', 2.2); S.ctBench = 1; }
+    else if (k === 'bench') { heal(60); const v = new Set(S.ctBenches || []); v.add(Math.round(o.x) + ',' + Math.round(o.z)); S.ctBenches = [...v]; msg(`🪨 You sit by the pond a while - the koi drift past (garden ${v.size} of 4)`, 2.2); S.ctBench = 1; }
     else if (k === 'shrine') { if (S.ctShrine === day()) msg('🕯️ Your offering still burns', 1.6); else { S.ctShrine = day(); earn(40); msg('🕯️ You leave an orange and light a candle (+40)', 2.2); } }
     else if (k === 'view') { msg('🏮 Lanterns, tiled eaves and the range beyond', 2); S.ctView = 1; }
     else if (k === 'gold') { if (S.ctJade) msg('💚 Your jade charm is warm against your chest', 2); else if (pay(2000)) { S.ctJade = 1; msg('💚 A carved jade charm - you heal slowly but steadily from now on', 3); for (const q of spots) if (q.kind === 'ct_gold') q.label = '💍 Look over the jade and gold (charm owned)'; } }

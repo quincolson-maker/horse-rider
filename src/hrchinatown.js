@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=287';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=287';
-import { mergeStatic } from './hrmerge.js?v=287';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=288';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=288';
+import { mergeStatic } from './hrmerge.js?v=288';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -294,7 +294,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (k === 'goods') { const g = H.guns; if (g && g.state && g.state.ammo && pay(120)) { for (const w of Object.keys(g.state.ammo)) { try { const mx = g.maxAmmo(w); if (mx > g.state.ammo[w]) g.state.ammo[w] = mx; } catch (_) {} } g.syncUI && g.syncUI(); g.save && g.save(); msg('📦 Every gun topped up', 2); } }
     else if (k === 'fire' && (H.night || 0) > .5 && H.fireworksNow) { if (pay(400)) { H.fireworksNow([CX, CZ]); S.ctShow = (S.ctShow || 0) + 1; S.ctFireNight = (S.ctFireNight || 0) + 1; msg('🎆 Look up!', 2); } }
     else if (k === 'fire') { if (pay(50)) { crackers = { t: 0, n: 0, x: P.pos.x + Math.sin(P.yaw || 0) * -2, z: P.pos.z + Math.cos(P.yaw || 0) * -2 }; S.ctFire = (S.ctFire || 0) + 1; if ((H.night || 0) > .5) S.ctFireNight = (S.ctFireNight || 0) + 1; msg('🧨 Stand back!', 1.5); } }
-    else if (k === 'urn' && (!S.ctWish || Date.now() - S.ctWish > 36e5) && H.guns && H.guns.state.score >= 1) { S.ctWish = Date.now(); const r = Math.random(); H.guns.state.score -= 1; if (r < .1) { earn(100); msg('🪙 You toss a coin in the urn and make a wish... it comes true! +100', 3); } else msg('🪙 You toss a coin in the urn and make a wish', 2.2); return true; }
+    else if (k === 'urn' && (!S.ctWish || Date.now() - S.ctWish > 36e5) && H.guns && H.guns.state.score >= 1) { S.ctWish = Date.now(); S.ctWishes = (S.ctWishes || 0) + 1; const r = Math.random(); H.guns.state.score -= 1; if (r < .1) { earn(100); msg('🪙 You toss a coin in the urn and make a wish... it comes true! +100', 3); } else msg('🪙 You toss a coin in the urn and make a wish', 2.2); return true; }
     else if (k === 'hall' || k === 'urn') { if (sfx.tone && sfx.ctx) { if (k === 'hall') { sfx.tone('sine', 110, 104, .5, 3.5); sfx.tone('triangle', 220, 208, .2, 2.5); sfx.tone('sine', 331, 320, .1, 2); } else sfx.tone('sine', 880, 870, .05, 1.2); } if (k === 'urn') msg('🕯️ A thin line of fragrant smoke curls up', 2); if (k === 'hall') { S.ctGong = (S.ctGong || 0) + 1; if (S.ctRed !== day()) { S.ctRed = day(); earn(88); msg('🧧 The elders hand you a red envelope for luck  +88', 3); } else msg('🔔 The gong rolls down the street', 2); } if (k === 'urn' && fx && fx.smoke) for (let i = 0; i < 10; i++) fx.smoke.emit(o.x, o.y + 2, o.z, 0, .5 + Math.random() * .3, 0, .8, .8, .78, .5, 2.2, 1.6, -.01, .1); }
     else if (k === 'temple') { if (S.ctIncense === day()) msg('🕯️ The incense from this morning still burns', 2); else { S.ctIncense = day(); earn(250); heal(100); msg('🕯️ You light incense at the altar - a blessing: +250 and fully healed', 3); } }
     else if (k === 'theatre') { if (S.ctOpera === day()) msg('🎭 Tonight\'s performance is over - come back tomorrow', 2); else { S.ctOpera = day(); S.ctOperaN = (S.ctOperaN || 0) + 1; earn(100); msg('🎭 Gongs, cymbals and a soaring voice - the crowd roars (+100)', 3); if (sfx.tone && sfx.ctx) [523, 587, 659, 784, 659, 587, 523, 440].forEach((f, i) => setTimeout(() => { sfx.tone('triangle', f, f, .08, .3); if (i % 2 === 0) sfx.nz && sfx.nz('highpass', 5000, .7, .1, .25); }, i * 260)); } }

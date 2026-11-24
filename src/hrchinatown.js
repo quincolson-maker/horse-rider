@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=270';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=270';
-import { mergeStatic } from './hrmerge.js?v=270';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=271';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=271';
+import { mergeStatic } from './hrmerge.js?v=271';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -202,7 +202,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
       for (const [a1, b1, a2, b2] of [[tx - 1.6, tz - 1.6, tx + 1.6, tz - 1.6], [tx - 1.6, tz + 1.6, tx + 1.6, tz + 1.6], [tx - 1.6, tz - 1.6, tx - 1.6, tz + 1.6], [tx + 1.6, tz - 1.6, tx + 1.6, tz + 1.6]]) wall(s, a1, b1, a2, b2, RF - .5, RF + 6); } }
     if (!s.tower) for (const [x, z] of [[W - .9, 2.4], [3.5, 2.4]]) { cyl(s, M.red, x, RF + .25, z, .28, .5, 10, .22); sph(s, M.green, x, RF + .75, z, .42, .9); }
     // shop spot (by the counter) + upstairs window
-    s.useSpot = shopSpot(s, kind, en, mid);
+    s.useSpot = shopSpot(s, kind, en, mid); if (kind === 'tea') tilesSpot(s);
   }
   function steps(s, x0, x1, z0, z1, ya, yb) { const n = Math.round((yb - ya) / .2), dz = (z1 - z0) / n, dy = (yb - ya) / n; for (let k = 0; k < n; k++) box(s, M.plank, (x0 + x1) / 2, ya + dy * (k + .5), z0 + dz * (k + .5), x1 - x0, dy, dz + .02); box(s, M.wood, (x0 + x1) / 2, (ya + yb) / 2 - .35, (z0 + z1) / 2, x1 - x0 - .1, .2, Math.hypot(z1 - z0, yb - ya)); }
   function rail(s, ax, az, bx, bz, y) { const L = Math.hypot(bx - ax, bz - az), ry = Math.atan2(bx - ax, bz - az); const g = new THREE.BoxGeometry(.06, .06, L); g.rotateY(ry); g.translate((ax + bx) / 2, y + .95, (az + bz) / 2); push(M.red, xf(s, g)); const n = Math.max(2, Math.round(L / .6)); for (let k = 0; k <= n; k++) box(s, M.red, ax + (bx - ax) * k / n, y + .48, az + (bz - az) * k / n, .05, .95, .05); }
@@ -218,6 +218,8 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (kind === 'temple') { box(s, M.red, mid, F0 + .55, DP - 1.4, 4.4, 1.1, 1.4); box(s, M.gold, mid, F0 + 1.15, DP - 1.4, 4.5, .08, 1.45); cyl(s, M.gold, mid, F0 + 1.35, DP - 1.6, .28, .32, 12); for (const sx of [-1.4, 1.4]) { cyl(s, M.red, mid + sx, F0 + 1.5, DP - 1.8, .06, .7, 6); sph(s, M.lamp, mid + sx, F0 + 2.0, DP - 1.8, .1); } box(s, M.gold, mid, F0 + 2.6, DP - .3, 4, 2, .08); for (let k = 0; k < 4; k++) sph(s, M.lamp, 1.5 + k * 2.8, F0 + 2.9, 3, .32, 1.3); }
     else if (kind === 'theatre') { box(s, M.plank, (W - 1.6 + .6) / 2, F0 + .5, DP - 2, W - 2.2, 1.0, 3.2); floor(s, .6, W - 1.6, DP - 3.6, DP - .4, F0 + 1.0); box(s, M.red, mid, F0 + 2.8, DP - .5, W - 1.2, 3.6, .08); for (const sx of [.9, W - .9]) box(s, M.red, sx, F0 + 2.4, DP - 3.5, .5, 3.0, .2); for (let r = 0; r < 3; r++) box(s, M.wood, mid, F0 + .25, 1.6 + r * 1.3, W - 3, .5, .5); }
   }
+  // v271 a tile-matching table in every tea house (memory game for game points)
+  function tilesSpot(s) { return spot(s, 6.25, F0, 4.2, 'ct_tiles', '🀄 Tile matching at the corner table (free · win pts)', 1.4); }
   function shopSpot(s, kind, en, mid) { const z = kind === 'theatre' ? 3 : /tea|noodle|hall|temple/.test(kind) ? 3.6 : 1.4, lab = { tea: '🍵 Sit for jasmine tea (20 pts · full heal)', noodle: '🍜 A bowl of noodles (30 pts · heal + well fed 2 min)', herb: '🌿 Ginseng tonic (150 pts · fast regen 3 min)', goods: '📦 Restock ammo (120 pts · fills every gun)', bakery: '🥮 Egg tarts and buns (15 pts · heal 40)', fire: (H.night || 0) > .5 ? '🎆 Fireworks show over Chinatown (400 pts) · firecrackers by day' : '🧨 Set off a string of firecrackers (50 pts)', hall: '🔔 Strike the hall gong', temple: '🕯️ Light incense (a blessing once a day)', tailor: '🧵 Have your coat mended (free, daily · +25)', gold: (H.stats && H.stats.ctJade) ? '💍 Look over the jade and gold (charm owned)' : '💍 Jade charm (2000 pts · steady healing)', books: '📚 Browse the books', theatre: '🎭 Watch the opera (once a day · +100)' }[kind];
     return spot(s, mid - 1, F0, z, 'ct_' + kind, lab, 1.9, { shopName: en }); }
 
@@ -296,6 +298,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (k === 'bench') { heal(60); H.burnT = 0; const v = new Set(S.ctBenches || []); v.add(Math.round(o.x) + ',' + Math.round(o.z)); S.ctBenches = [...v]; msg(`🪨 You sit by the pond a while - the koi drift past (garden ${v.size} of 4)`, 2.2); S.ctBench = 1; }
     else if (k === 'shrine') { if (S.ctShrine === day()) msg('🕯️ Your offering still burns', 1.6); else { S.ctShrine = day(); earn(40); msg('🕯️ You leave an orange and light a candle (+40)', 2.2); } }
     else if (k === 'chess') { msg(['♟️ Red pushes a cannon across the river - the old men nod', '♟️ "Check!" - the crowd murmurs', '♟️ A horse jumps, an elephant falls back. A long game.'][(Math.random() * 3) | 0], 2.6); if (sfx.tone && sfx.ctx) sfx.tone('square', 900, 900, .03, .04); }
+    else if (k === 'tiles') { tiles(); }
     else if (k === 'view') { msg('🏮 Lanterns, tiled eaves and the range beyond', 2); S.ctView = 1; }
     else if (k === 'gold') { if (S.ctJade) msg('💚 Your jade charm is warm against your chest', 2); else if (pay(2000)) { S.ctJade = 1; msg('💚 A carved jade charm - you heal slowly but steadily from now on', 3); for (const q of spots) if (q.kind === 'ct_gold') q.label = '💍 Look over the jade and gold (charm owned)'; } }
     else if (k === 'tailor') { if (S.ctMend === day()) msg('🧵 Your coat is already mended today', 1.8); else { S.ctMend = day(); heal(25); msg('🧵 The tailor patches your torn coat - you feel put together (+25)', 2.5); } }
@@ -420,6 +423,16 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   function opTick(dt, me) { if (!OP) return; const near = Math.hypot(me.x - OP.figs[0].g.position.x, me.z - OP.figs[0].g.position.z) < 30; for (const f of OP.figs) f.g.visible = near; if (!near) return; OP.t = Math.max(0, OP.t - dt); const on = OP.t > 0, tt = t;
     OP.figs.forEach((f, i) => { const a = on ? 1 : .15; f.g.rotation.y = f.b + Math.sin(tt * (on ? 1.3 : .4) + i * 2) * .5 * a; f.sl[0].rotation.z = -.4 - Math.max(0, Math.sin(tt * 2.2 + i)) * 1.6 * a; f.sl[1].rotation.z = .4 + Math.max(0, Math.sin(tt * 2.2 + i + 1.6)) * 1.6 * a; f.sl[0].rotation.x = Math.sin(tt * 1.7 + i) * .6 * a; f.sl[1].rotation.x = Math.cos(tt * 1.7 + i) * .6 * a; f.g.position.y = y0 + F0 + 1.0 + (on ? Math.abs(Math.sin(tt * 2.2 + i)) * .05 : 0); }); }
   const prevUse5 = T.onUse; T.onUse = o => { if (o && o.kind === 'ct_theatre' && OP) OP.t = 24; return prevUse5 ? prevUse5(o) : false; };
+
+  let tEl = null; function tiles() { const S = st(), d = day(); const set = ['竹', '梅', '蘭', '菊', '福', '春', '夏', '秋', '冬', '龍', '鳳', '中'].sort(() => Math.random() - .5).slice(0, 6), deck = [...set, ...set].sort(() => Math.random() - .5);
+    if (!tEl) { tEl = document.createElement('div'); tEl.id = 'ctTiles'; tEl.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:80;background:#173a2a;border:3px solid #d4a640;border-radius:14px;color:#f6e6c0;font:700 14px system-ui;padding:12px;text-align:center;box-shadow:0 8px 30px #000a;max-width:94vw'; document.body.appendChild(tEl); }
+    let open = [], found = 0, flips = 0, lock = false; const won = S.ctTileDay === d;
+    tEl.innerHTML = `<div style="color:#e8b23a;letter-spacing:.08em;margin-bottom:6px">🀄 TILE MATCHING · find the 6 pairs${won ? ' (practice - today\'s prize is won)' : ' in 20 flips for +200'}</div><div id="ctTG" style="display:grid;grid-template-columns:repeat(4,58px);gap:6px;justify-content:center;width:max-content;margin:0 auto"></div><div id="ctTS" style="margin-top:8px;opacity:.85">Flips: 0</div><button id="ctTX" style="margin-top:8px;padding:6px 14px;border-radius:8px;border:2px solid #d4a640;background:#7a1c14;color:#fff3d6;font:700 13px system-ui">Leave the table</button>`;
+    const G = tEl.querySelector('#ctTG'), ST = tEl.querySelector('#ctTS'); const close = () => { tEl.hidden = true; H.uiOpen = false; };
+    deck.forEach((sym, i) => { const b = document.createElement('button'); b.style.cssText = 'width:58px;min-width:0;max-width:58px;margin:0;box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;height:72px;font:900 34px "Noto Serif TC","Songti TC","PMingLiU",serif;border-radius:8px;border:2px solid #b89040;background:#f3ecd8;color:' + (/[龍中福]/.test(sym) ? '#b81818' : /[竹蘭]/.test(sym) ? '#1d6b3c' : '#1a3a6a') + ';padding:0'; b.textContent = ''; b.dataset.i = i; b.onclick = () => { if (lock || b.dataset.done || open.includes(b)) return; b.textContent = sym; b.style.background = '#fffaf0'; open.push(b); if (open.length === 2) { flips++; ST.textContent = 'Flips: ' + flips; const [a1, a2] = open; if (deck[a1.dataset.i] === deck[a2.dataset.i]) { a1.dataset.done = a2.dataset.done = 1; a1.style.background = a2.style.background = '#cfe8c0'; open = []; found++; sfx.tone && sfx.ctx && sfx.tone('triangle', 880, 880, .05, .2);
+          if (found === 6) { const prize = !won && flips <= 20 ? 200 : !won ? 50 : 0; if (!won) S.ctTileDay = d; if (prize) earn(prize); S.ctTileWins = (S.ctTileWins || 0) + 1; ST.textContent = `All pairs in ${flips} flips!` + (prize ? ` +${prize}` : ''); msg(`🀄 All six pairs in ${flips} flips` + (prize ? ` (+${prize})` : ''), 2.5); setTimeout(close, 1800); } }
+        else { lock = true; setTimeout(() => { a1.textContent = a2.textContent = ''; a1.style.background = a2.style.background = '#f3ecd8'; open = []; lock = false; }, 700); } } }; G.appendChild(b); });
+    tEl.querySelector('#ctTX').onclick = close; tEl.hidden = false; H.uiOpen = true; try { document.exitPointerLock && document.exitPointerLock(); } catch (_) {} }
 
   // ---------- per frame ----------
   let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0, musT = 2, musI = 3, incT = 0, swT = 0, chatT = 0, chimeT = 3, chimT = 0;

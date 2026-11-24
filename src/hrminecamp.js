@@ -3,9 +3,9 @@
 // faces in a rock heap. Swing a pick at the ore (one chunk a minute per face, carry up to 10) and sell it at the assay office.
 // It is NOT a safe zone - dynamite miners like the place after dark. Everything is merged per material and distance-culled.
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=323';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=323';
-import { mergeStatic } from './hrmerge.js?v=323';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=324';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=324';
+import { mergeStatic } from './hrmerge.js?v=324';
 
 export const MC = { x: -110, z: -30, r: 30 };
 export const mcAvoid = (x, z) => Math.hypot(x - MC.x, z - MC.z) < MC.r;
@@ -65,6 +65,8 @@ export function createMineCamp({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const pt = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,170,90,1)'); g.addColorStop(.5, 'rgba(255,120,50,.35)'); g.addColorStop(1, 'rgba(255,90,30,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
   const poolM = new THREE.MeshBasicMaterial({ map: pt, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }); const pools = [[-4, 9, 9], [hx, hz, 7]].map(([x, z, r]) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(r, r).rotateX(-Math.PI / 2), poolM); m.position.set(CX + x, y0 + .04, CZ + z); m.renderOrder = 2; scene.add(m); H.cullAdd && H.cullAdd(m, 200, { x: CX, z: CZ }); return m; });
   // v322 a lantern hangs at each tent door (shares the headframe lantern's glow)
+  // v324 an entrance arch on the road in: two posts and a board
+  for (const dx of [-3, 3]) box(M.wood, dx, 2.2, -19, .3, 4.4, .3); box(M.wood, 0, 4.3, -19, 6.6, .25, .3);
   // v306 a horse trough and hitching rail by the assay office
   box(M.wood, -9, .35, -11, 2.6, .6, .8); box(std({ color: 0x3a6a7a, roughness: .2 }), -9, .62, -11, 2.4, .04, .6); wall(-10.3, -11.4, -7.7, -11.4, -1, .7); wall(-10.3, -10.6, -7.7, -10.6, -1, .7);
   for (const dx of [-1.6, 1.6]) box(M.wood, -14 + dx, .55, -11, .14, 1.1, .14); box(M.wood, -14, 1.05, -11, 3.4, .1, .1);
@@ -97,6 +99,7 @@ export function createMineCamp({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   // v317 the assayer minds his scales, and a small HUD tag shows the ore in your sack
   const assayer = (() => { const D = makeFrontierCharacter({ kind: 'townsfolk', sex: 'male', quality: 'low', coat: 0x2a2a2e, top: 0xf0e8d8, hatC: 0x1a1612, skin: 0xd8a882, hair: 0x3a2a1a, bandana: 0x2a2a2a, name: 'Assayer' }); scene.add(D.g); try { mergeStatic(D.g); } catch (_) {} D.g.position.set(CX + ax, y0 + .25, CZ + az + 1.8); D.g.rotation.y = Math.PI; return D; })();
   const tag = document.createElement('div'); tag.id = 'hrOre'; tag.style.cssText = 'position:fixed;left:50%;bottom:118px;transform:translateX(-50%);font:700 13px system-ui,sans-serif;color:#d8dce8;text-shadow:0 1px 3px #000;pointer-events:none;z-index:30;display:none'; document.body.appendChild(tag);
+  { const cv = document.createElement('canvas'); cv.width = 512; cv.height = 96; const c = cv.getContext('2d'); c.fillStyle = '#5a3e24'; c.fillRect(0, 0, 512, 96); c.fillStyle = '#f0e0b0'; c.textAlign = 'center'; c.font = 'bold 46px Georgia,serif'; c.fillText('SILVER CREEK DIGGINGS', 256, 64); const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; const mm = new THREE.MeshStandardMaterial({ map: tx, roughness: .8, side: THREE.DoubleSide }); const sg = new THREE.Mesh(new THREE.PlaneGeometry(5.8, 1.0), mm); sg.position.set(CX, y0 + 3.75, CZ - 19); scene.add(sg); H.cullAdd && H.cullAdd(sg, 220, { x: CX, z: CZ }); } /* v324 */
   let welcome = false, t = 0;
   function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, d = Math.hypot(me.x - CX, me.z - CZ); if (d < 25 && !welcome) { welcome = true; msg('⛏ Silver Creek Diggings', 2.5); const S2 = st(); if (!S2.mcVisit) { S2.mcVisit = 1; earn(150); setTimeout(() => msg('First visit to the diggings  +150 · pick ore at the rock heap, sell it at the assay office', 4), 1500); } } else if (d > 60) welcome = false;
     lampM.emissiveIntensity = .2 + 3 * (H.night || 0); { const show = ore > 0 && !H.uiOpen; if (tag.style.display !== (show ? '' : 'none')) tag.style.display = show ? '' : 'none'; const tx = `⛏ ${ore}/10 ore - sell at the Silver Creek assay office`; if (show && tag.textContent !== tx) tag.textContent = tx; } assayer.g.visible = d < 60; if (d < 60) poseFrontierCharacter(assayer, dt, { speed: 0 }); poolM.opacity = Math.max(0, (H.night || 0) - .35) * (.85 + .1 * Math.sin(t * 9)); { const hm = H.mounted; if (hm && Math.hypot(hm.pos.x - (CX - 9), hm.pos.z - (CZ - 11)) < 2.8 && Math.abs(H.speed || 0) < 1) { H.stam = Math.min(100, (H.stam || 0) + 30 * dt); if (hm.hp != null) hm.hp = Math.min(100, hm.hp + 10 * dt); if (!update.dr || t - update.dr > 20) { update.dr = t; msg('🐴 Your horse drinks deep', 1.6); } } } { const vis = d < 90 && (H.night || 0) < .92; for (const D of folk) { D.g.visible = vis; if (vis) poseFrontierCharacter(D, dt, { speed: 0 }); } }

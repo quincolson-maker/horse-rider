@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=97';
-import { PERF } from './perfopts.js?v=97';
+import { PF } from './perf.js?v=99';
+import { PERF } from './perfopts.js?v=99';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -185,7 +185,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
   const zAt = (pos, fn, wet) => sfx.zAt ? sfx.zAt(pos, fn, wet) : sfx.at(pos, fn, wet); // zombie voices: their own (fadeable) bus
   function kill(o, head, by) { if (!o.alive) return; o.alive = false; o.hp = 0; o.st = 2; o.deadT = 0; o.fallDir = rnd() < .5 ? 1 : -1; if (o.kind === 'outlaw') { if (Z.role() !== 'client' && c.onOutlawDown) c.onOutlawDown(o); if (sfx.at && sfx.ctx) sfx.at(o.pos, () => sfx.tone('triangle', 220, 90, .3, .5), .3); return; } // v38
     if (o.kind === 'bloater') boom(o); // v87
-    if (by !== 'remote' && by !== 'bandit') { Z.kills++; if (head) Z.heads++; }
+    if (by !== 'remote' && by !== 'bandit') { Z.kills++; if (head) Z.heads++; const st = H.stats || (H.stats = {}); st['zk_' + o.kind] = (st['zk_' + o.kind] || 0) + 1; if (head) st['zh_' + o.kind] = (st['zh_' + o.kind] || 0) + 1; try { localStorage.setItem('hr_stats', JSON.stringify(st)); } catch (_) {} } // v98 per-kind stats
     if (sfx.at && sfx.ctx) zAt(o.pos, () => { sfx.tone('sawtooth', 120, 40, .22, .7); sfx.nz('lowpass', 300, 1, .25, .4); }, .3); }
   function onHit(o, w, head, p, dir, mul = 1) { // a local player's bullet hit this zombie
     let dmg = Math.round((ZSET.dmg[w] || 50) * (head ? ZSET.head : 1) * mul); if (o.K.armor && !head) { dmg = Math.round(dmg * o.K.armor); if (sfx.ctx) sfx.tone('square', 2600, 1800, .05, .12); if (fx && fx.debris) fx.debris(p.x, p.y, p.z, 0xfff0a0, 5, .4); } // v87 armored lawman: sparks

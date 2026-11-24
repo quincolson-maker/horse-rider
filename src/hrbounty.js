@@ -44,6 +44,13 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'lamps', title: 'Lamplighter', task: 'Collect all 8 night lanterns around town', pay: 800, p: () => ((H.stats && H.stats.lanternSets) || 0) > 0 ? 1 : 0, txt: () => (H.night || 0) > .5 ? '' : 'waits for night', to: () => H.lanternNear },
     { id: 'boom', title: 'Powder Monkey', task: 'Blow up 15 zombies with dynamite', pay: 700, p: () => Math.min(1, ((H.stats && H.stats.dynKills) || 0) / 15), txt: () => `${Math.min(15, (H.stats && H.stats.dynKills) || 0)} / 15` },
     { id: 'buddy', title: 'Saddle Pals', task: 'Ride double behind a buddy (multiplayer)', pay: 300, p: () => ((H.stats && H.stats.doubles) || 0) > 0 ? 1 : 0 },
+    { id: 'gate', title: 'Hold the Gate', task: 'Repel a night raid on a town gate (they come once a night)', pay: 2000, p: () => ((H.stats && H.stats.raids) || 0) > 0 ? 1 : 0, txt: () => H.raid && H.raid.on ? 'RAID ON — defend the gate!' : (H.night || 0) > .5 ? 'stay near town tonight' : 'waits for night' }, // v98
+    { id: 'wrangler', title: 'Wrangler', task: 'Rope 5 zombies with the lasso (store, then L / 🪢)', pay: 600, p: () => Math.min(1, ((H.stats && H.stats.lassos) || 0) / 5), txt: () => `${Math.min(5, (H.stats && H.stats.lassos) || 0)} / 5` },
+    { id: 'buckshot', title: 'Buckshot', task: 'Drop 25 zombies with the coach gun', pay: 800, p: () => Math.min(1, ((H.stats && H.stats.k_shotgun) || 0) / 25), txt: () => `${Math.min(25, (H.stats && H.stats.k_shotgun) || 0)} / 25` },
+    { id: 'tinstar', title: 'Tin Star', task: 'Headshot an armored lawman zombie (they come from wave 4)', pay: 700, p: () => ((H.stats && H.stats.zh_lawman) || 0) > 0 ? 1 : 0 },
+    { id: 'popper', title: 'Pop Goes the Bloater', task: 'Burst a bloater from a safe distance', pay: 500, p: () => ((H.stats && H.stats.zk_bloater) || 0) > 0 ? 1 : 0 },
+    { id: 'trader', title: 'Horse Trader', task: 'Trade up to a new horse breed at the General Store', pay: 600, p: () => H.breed && H.breed.breed().id !== 'mustang' ? 1 : 0 },
+    { id: 'revue', title: 'Opening Night', task: 'Put on the Full Revue in the saloon', pay: 400, p: () => ((H.stats && H.stats.revues) || 0) > 0 ? 1 : 0, to: () => H.places && H.places.town },
     { id: 'slayer', title: 'Slayer', task: 'Drop 150 zombies', pay: 3000, ...killsSince('slayer', 150) },
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];

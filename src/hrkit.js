@@ -95,11 +95,11 @@ function helmet(g, M) { const hx = 0, hy = .835, hz = .065, R = .158;
   for (const s of [-1, 1]) { B(g, M.black, .012, .11, .006, s * .118, hy - .1, hz + .01, 0, 0, -s * .1); } B(g, M.black, .07, .012, .03, hx, hy - .18, hz + .09); }
 
 export function wearKit(root, on) { if (!root || !root.userData) return false;
-  const U = root.userData; if (U.kit) { for (const m of U.kit) m.visible = !!on; hat(U, !!on); if (U.jacket) for (const m of U.jacket) m.visible = on ? false : !!U.jkOn; return true; } if (!on) return true;
+  const U = root.userData; if (U.kit) { for (const m of U.kit) m.visible = !!on; hat(U, !!on || !!U.customHat); if (U.hatG) U.hatG.visible = !on; if (U.jacket) for (const m of U.jacket) m.visible = on ? false : !!U.jkOn; return true; } if (!on) return true;
   let body = null; root.traverse(o => { if (o.isSkinnedMesh && !o.userData.kitPart && (!body || o.geometry.attributes.position.count > body.geometry.attributes.position.count)) body = o; }); if (!body || !body.geometry.attributes.normal) return false;
   const M = kitMats(), sk = body.skeleton, G = body.geometry, pos = G.attributes.position, si = G.attributes.skinIndex, sw = G.attributes.skinWeight, bi = n => sk.bones.findIndex(b => b.name === n);
   if (!G.index) { const n = pos.count, I = n > 65535 ? new Uint32Array(n) : new Uint16Array(n); for (let i = 0; i < n; i++) I[i] = i; G.setIndex(new THREE.BufferAttribute(I, 1)); } // non-indexed body: give it an index so the hat can be dropped
-  body.userData.kitIndex0 = G.index.array.slice();
+  if (!body.userData.kitIndex0) body.userData.kitIndex0 = G.index.array.slice(); // (v99: a custom hat may already have swapped the index)
   const dom = new Int16Array(pos.count); for (let v = 0; v < pos.count; v++) { let b = -1, w = 0; for (let k = 0; k < 4; k++) { const ww = sw.getComponent(v, k); if (ww > w) { w = ww; b = si.getComponent(v, k); } } dom[v] = b; }
   const S = n => new Set(n.map(bi).filter(i => i >= 0)), HANDS = S(['LeftHand', 'RightHand']), FEET = S(['LeftFoot', 'RightFoot', 'LeftToeBase', 'RightToeBase']), HEAD = S(['Head', 'head_end', 'headfront']), NECK = bi('neck');
   const parts = [], add = m => { if (m) { m.userData.kitPart = true; parts.push(m); } return m; };
@@ -119,7 +119,20 @@ export function wearKit(root, on) { if (!root || !root.userData) return false;
     const pk = RB(g, M.camo, .085, .1, .025, sd * .3, .405, -.01, .01); pk.rotation.z = sd * .53; pk.position.x += sd * .03; pk.position.y += .018;
     if (sd < 0) { const f = B(g, M.flag, .06, .038, .004, sd * .33, .425, -.01); f.rotation.set(0, -Math.PI / 2 * sd * 0, sd * .53); f.rotation.y = Math.PI / 2; f.rotation.order = 'YZX'; } else B(g, M.velcro, .055, .04, .004, sd * .33, .425, -.01, 0, Math.PI / 2, sd * .53); }));
   // 3. the straw hat comes off: drop the crown above the skull and the wide brim
-  if (G.index) { const hx = 0, hz = .07, keep = v => { const y = pos.getY(v), r = Math.hypot(pos.getX(v) - hx, pos.getZ(v) - hz); if (y > .735 && r > .165) return false; /* nothing but the hat is that high and that wide (shoulders stop at y .66) */ if (!HEAD.has(dom[v]) && dom[v] !== NECK) return true; return !(y > .905 || (y > .78 && r > .152) || (y > .655 && r > .168)); }, I0 = body.userData.kitIndex0, out = [];
+  if (G.index && !body.userData.kitIndexHat) { const hx = 0, hz = .07, keep = v => { const y = pos.getY(v), r = Math.hypot(pos.getX(v) - hx, pos.getZ(v) - hz); if (y > .735 && r > .165) return false; /* nothing but the hat is that high and that wide (shoulders stop at y .66) */ if (!HEAD.has(dom[v]) && dom[v] !== NECK) return true; return !(y > .905 || (y > .78 && r > .152) || (y > .655 && r > .168)); }, I0 = body.userData.kitIndex0, out = [];
     for (let t = 0; t < I0.length; t += 3) if (keep(I0[t]) && keep(I0[t + 1]) && keep(I0[t + 2])) out.push(I0[t], I0[t + 1], I0[t + 2]); body.userData.kitIndexHat = new (I0.constructor)(out); }
-  U.kit = parts; U.kitBody = body; hat(U, true); if (U.jacket) { U.jkOn = U.jacket.some(m => m.visible); for (const m of U.jacket) m.visible = false; } return true; }
+  U.kit = parts; U.kitBody = body; hat(U, true); if (U.hatG) U.hatG.visible = false; if (U.jacket) { U.jkOn = U.jacket.some(m => m.visible); for (const m of U.jacket) m.visible = false; } return true; }
+// v99 hats: hide the straw hat (same index trick as the kit) and wear another one on the Head bone
+export function strawHat(root, show) { if (!root || !root.userData) return false; const U = root.userData; let body = U.kitBody;
+  if (!body) { root.traverse(o => { if (o.isSkinnedMesh && !o.userData.kitPart && (!body || o.geometry.attributes.position.count > body.geometry.attributes.position.count)) body = o; }); if (!body || !body.skeleton) return false; U.kitBody = body; }
+  const G = body.geometry, pos = G.attributes.position, sk = body.skeleton;
+  if (!G.index) { const n = pos.count, I = n > 65535 ? new Uint32Array(n) : new Uint16Array(n); for (let i = 0; i < n; i++) I[i] = i; G.setIndex(new THREE.BufferAttribute(I, 1)); }
+  if (!body.userData.kitIndex0) body.userData.kitIndex0 = G.index.array.slice();
+  if (!body.userData.kitIndexHat) { const si = G.attributes.skinIndex, sw = G.attributes.skinWeight, bi = n => sk.bones.findIndex(b => b.name === n), HEAD = new Set(['Head', 'head_end', 'headfront'].map(bi).filter(i => i >= 0)), NECK = bi('neck');
+    const dom = v => { let b = -1, w = 0; for (let k = 0; k < 4; k++) { const ww = sw.getComponent(v, k); if (ww > w) { w = ww; b = si.getComponent(v, k); } } return b; };
+    const keep = v => { const y = pos.getY(v), r = Math.hypot(pos.getX(v), pos.getZ(v) - .07); if (y > .735 && r > .165) return false; const d = dom(v); if (!HEAD.has(d) && d !== NECK) return true; return !(y > .905 || (y > .78 && r > .152) || (y > .655 && r > .168)); };
+    const I0 = body.userData.kitIndex0, out = []; for (let t = 0; t < I0.length; t += 3) if (keep(I0[t]) && keep(I0[t + 1]) && keep(I0[t + 2])) out.push(I0[t], I0[t + 1], I0[t + 2]); body.userData.kitIndexHat = new (I0.constructor)(out); }
+  U.customHat = !show; const kitOn = !!(U.kit && U.kit[0] && U.kit[0].visible); hat(U, kitOn || !show); return true; }
+export function wearHat(root, build) { const U = root && root.userData; if (!U) return false; if (U.hatG) { U.hatG.removeFromParent(); U.hatG = null; } if (!build) { strawHat(root, true); return true; }
+  if (!strawHat(root, false)) return false; const sk = U.kitBody.skeleton, g = onBone(sk, 'Head', build); if (!g) return false; U.hatG = g; g.visible = !(U.kit && U.kit[0] && U.kit[0].visible); return true; }
 function hat(U, off) { const b = U.kitBody; if (!b || !b.userData.kitIndexHat) return; const want = off ? b.userData.kitIndexHat : b.userData.kitIndex0; if (b.geometry.index.array === want) return; b.geometry.setIndex(new THREE.BufferAttribute(want, 1)); }

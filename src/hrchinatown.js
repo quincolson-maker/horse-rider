@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=226';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=226';
-import { mergeStatic } from './hrmerge.js?v=226';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=227';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=227';
+import { mergeStatic } from './hrmerge.js?v=227';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -281,11 +281,12 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const prevUse2 = T.onUse; T.onUse = o => { if (o && o.kind === 'ct_hall' && !DR.on && DR.gcool <= 0) { DR.gcool = 180; setTimeout(() => startDragon('🐉 The gong calls out the dragon!'), 1500); } return prevUse2 ? prevUse2(o) : false; };
 
   // ---------- per frame ----------
-  let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0;
+  let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0, musT = 2, musI = 3;
   function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, inside = Math.abs(me.x - CX) < E && Math.abs(me.z - CZ) < E; peopleTick(dt, me); dragonTick(dt, me); if (inside && (roofT -= dt) <= 0) { roofT = .5; for (const b of built) { if (me.y < b.y0 + RF - .3) break; const [lx, lz] = T.toL ? T.toL(b, me.x, me.z) : [0, 0]; if (lx > 0 && lx < W && lz > 0 && lz < DP && me.y > b.y0 + RF - .3) { const S = st(), v = new Set(S.ctRoofs || []); if (!v.has(b.name + b.cx.toFixed(0) + b.cz.toFixed(0))) { v.add(b.name + b.cx.toFixed(0) + b.cz.toFixed(0)); S.ctRoofs = [...v]; msg(`🏯 Rooftop ${v.size} of ${built.length}`, 1.6); } } } }
     if (inside && !welcome) { welcome = true; msg('🏮 Chinatown - 唐人街', 3); const S = st(); if (!S.ctVisit) { S.ctVisit = 1; earn(200); setTimeout(() => msg('First visit to Chinatown  +200', 2.5), 2000); } } else if (!inside && Math.hypot(me.x - CX, me.z - CZ) > 90) welcome = false;
     const n = H.night || 0; if (Math.abs(n - nightK) > .02) { nightK = n; M.lamp.emissiveIntensity = .5 + 3.2 * n; M.paper.emissiveIntensity = .15 + 2.2 * n; M.glass.emissiveIntensity = .06 + 1.2 * n; signM.emissiveIntensity = .05 + .35 * n; gateM.emissiveIntensity = .08 + .4 * n; } { const nt = n > .5; if (nt !== update.nt) { update.nt = nt; for (const o of spots) if (o.kind === 'ct_fire') o.label = nt ? '🎆 Fireworks show over Chinatown (400 pts)' : '🧨 Set off a string of firecrackers (50 pts)'; } }
     if (n > .45 && fx && fx.smoke && Math.hypot(me.x - CX, me.z - CZ) < 70 && (steamT -= dt) <= 0) { steamT = .35; const q = stalls[(Math.random() * stalls.length) | 0]; fx.smoke.emit(q[0] + (Math.random() - .5) * .6, y0 + 1.5, q[1], 0, .6 + Math.random() * .4, 0, .92, .92, .9, .35, 1.6, 1.3, -.01, .15); }
+    if (inside && sfx.tone && sfx.ctx && !(DR.on) && (musT -= dt) <= 0) { const PEN = [392, 440, 523, 587, 659, 784, 880]; musT = [.45, .45, .9, .45, 1.35][(Math.random() * 5) | 0]; musI = Math.max(0, Math.min(PEN.length - 1, musI + [-2, -1, -1, 1, 1, 2, 0][(Math.random() * 7) | 0])); const f = PEN[musI]; sfx.tone('triangle', f, f * .995, .028, musT * 1.4); if (Math.random() < .25) sfx.tone('sine', f / 2, f / 2, .02, 1.2); } /* v227 a quiet pentatonic street melody */
     if (fedT > 0) { fedT -= dt; heal(dt * 1.5); } if (tonicT > 0) { tonicT -= dt; heal(dt * 3); }
     if (crackers) { crackers.t -= dt; if (crackers.t <= 0) { crackers.t = .07 + Math.random() * .08; crackers.n++; const x = crackers.x + (Math.random() - .5) * 1.2, z = crackers.z + (Math.random() - .5) * 1.2, y = (H.town ? H.town.floorAt(x, z, me.y + 1) : hAt(x, z)) + .1;
       if (sfx.nz && sfx.ctx) sfx.nz('highpass', 1800 + Math.random() * 1500, .8, .22, .05); if (fx && fx.smoke) fx.smoke.emit(x, y, z, (Math.random() - .5) * 2, 1 + Math.random(), (Math.random() - .5) * 2, .85, .8, .75, .5, .9, .7, -.02, .3); if (fx && fx.spark) fx.spark(x, y + .1, z); if (crackers.n > 40) crackers = null; } } }

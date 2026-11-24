@@ -68,6 +68,12 @@ export function createExtra({ scene, H, P, hAt, msg, sfx, mobile }) {
       if (slow >= 3 && coolT <= 0 && cur > base * .62) { cur = Math.max(base * .6, cur - .1); GX.setPR(cur); coolT = 4; slow = 0; }
       else if (fast >= 6 && coolT <= 0 && cur < base - .01) { cur = Math.min(base, cur + .1); GX.setPR(cur); coolT = 6; fast = 0; } }; });
 
+  // v227 PHOTO FILTERS: in photo mode press F to cycle Natural / Sepia / Silver / Golden hour / Moonlight / Vivid
+  add(() => { const F = [['Natural', ''], ['Sepia', 'sepia(.85) contrast(1.08) brightness(1.03)'], ['Silver', 'grayscale(1) contrast(1.25)'], ['Golden hour', 'sepia(.35) saturate(1.4) hue-rotate(-12deg) brightness(1.06)'], ['Moonlight', 'saturate(.5) hue-rotate(185deg) brightness(.85) contrast(1.1)'], ['Vivid', 'saturate(1.6) contrast(1.12)']]; let k = 0;
+    const cv = () => document.querySelector('canvas'), apply = () => { const c = cv(); if (c) c.style.filter = document.body.classList.contains('photo') ? F[k][1] : ''; document.body.dataset.pf = F[k][0]; };
+    document.body.dataset.pf = F[0][0]; addEventListener('keydown', e => { if (e.code === 'KeyF' && document.body.classList.contains('photo')) { k = (k + 1) % F.length; apply(); e.stopPropagation(); } }, true);
+    new MutationObserver(apply).observe(document.body, { attributes: true, attributeFilter: ['class'] }); return null; });
+
   X.update = dt => { X.t += dt; for (const f of X.parts) f(dt); };
   return X;
 }

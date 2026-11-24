@@ -3,7 +3,7 @@
 //  🐎 Wild mustangs: a herd roams the far range in rare coats. Walk up slowly ON FOOT and stay close until the bar fills to
 //     tame one (+500): it's yours — its coat unlocks for the Coat Kit and it joins your ranch corral.
 // Local per player (decorative wildlife doesn't need syncing).
-import { mergeStatic } from './hrmerge.js?v=213';
+import { mergeStatic } from './hrmerge.js?v=214';
 import * as THREE from 'three';
 export function createWild({ scene, H, P, hAt, msg, sfx, makeRealHorse, realAnim, mobile }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);

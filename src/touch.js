@@ -10,8 +10,8 @@ export function initTouch(input, look, act, unlockAudio) {
   const showStick = (x, y) => { stick.style.left = x + 'px'; stick.style.top = y + 'px'; stick.classList.add('active'); knob.style.transform = ''; };
   const restStick = () => { stick.classList.remove('active'); stick.style.left = '18%'; stick.style.top = '70%'; knob.style.transform = ''; };
   restStick();
-  // joystick zone: a circle around the resting stick (18% / 70%), radius ~36% of the short side (110-170 px)
-  const zone = () => ({ x: innerWidth * .18, y: innerHeight * .7, r: Math.max(110, Math.min(170, Math.min(innerWidth, innerHeight) * .36)) });
+  // joystick zone: a circle around the resting stick (18% / 70%), radius ~26% of the short side (85-125 px)
+  const zone = () => ({ x: innerWidth * .18, y: innerHeight * .7, r: Math.max(85, Math.min(125, Math.min(innerWidth, innerHeight) * .26)) }); /* v214: smaller stick zone - drag anywhere else on the screen to look */
   const inZone = (x, y) => { const z = zone(); return Math.hypot(x - z.x, y - z.y) <= z.r; };
   // one shared look arbiter for every drag surface (left dead space, right half, FIRE)
   const lk = new Map(); // pointerId -> [x, y]; Map keeps start order, the last entry steers

@@ -9,7 +9,7 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ } from './hrbeachwave.js?v=342';
+import { BEACH, shoreX, waveAt, peelZ } from './hrbeachwave.js?v=343';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});
@@ -75,8 +75,8 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     // camera: drift behind the direction of travel
     const cvx = dir[0] + (R.mode === 'ride' || R.mode === 'air' ? .95 : 0), cvz = dir[1], vy = Math.atan2(-cvx, -cvz); /* ride cam: look across the face from the shoulder */ H.camDist = R.tube ? 3.0 : R.mode === 'ride' || R.mode === 'air' ? 4.6 + Math.min(2, (R.sp || 0) * .12) : 3.6; if (R.tube) P.pitch += (-.02 - P.pitch) * Math.min(1, dt * 3); let d = vy - P.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); P.yaw += d * Math.min(1, dt * (R.mode === 'ride' ? 1.6 : .8));
     // HUD
-    hudT -= dt; const hh = heat ? `<div style="color:#7affff;font-size:13px">🏆 HEAT ${Math.floor(heat.t / 60)}:${String(Math.floor(heat.t % 60)).padStart(2, '0')} · best two: ${((heat.rides[0] || 0) + (heat.rides[1] || 0)).toLocaleString()}</div>` : ''; hud.innerHTML = hh + R.mode === 'ride' || R.mode === 'air' ? `<div style="font-size:26px">${Math.round(score).toLocaleString()} <span style="color:#ffd23a">×${combo.toFixed(1)}</span></div><div>${(R.sp || 0).toFixed(1)} m/s${R.tube ? ' · <span style="color:#7affff">BARREL ' + R.ride.tube.toFixed(1) + 's</span>' : ''}</div>${hudT > 0 ? `<div style="color:#ffd23a;font-size:20px">${hudMsg}</div>` : ''}`
-      : R.mode === 'paddle' ? `<div>${R.duck > 0 ? '🫧 duck-dive' : R.catchHint ? '🌊 <span style="color:#ffd23a">WAVE! paddle / JUMP to pop up</span>' : '🏄 paddling'}${best ? ` · best ride ${best.toLocaleString()}` : ''}</div>` : R.mode === 'wipe' ? '<div style="color:#ff8a7a;font-size:22px">WIPEOUT</div>' : '';
+    hudT -= dt; const hh = heat ? `<div style="color:#7affff;font-size:13px">🏆 HEAT ${Math.floor(heat.t / 60)}:${String(Math.floor(heat.t % 60)).padStart(2, '0')} · best two: ${((heat.rides[0] || 0) + (heat.rides[1] || 0)).toLocaleString()}</div>` : ''; hud.innerHTML = hh + (R.mode === 'ride' || R.mode === 'air' ? `<div style="font-size:26px">${Math.round(score).toLocaleString()} <span style="color:#ffd23a">×${combo.toFixed(1)}</span></div><div>${(R.sp || 0).toFixed(1)} m/s${R.tube ? ' · <span style="color:#7affff">BARREL ' + R.ride.tube.toFixed(1) + 's</span>' : ''}</div>${hudT > 0 ? `<div style="color:#ffd23a;font-size:20px">${hudMsg}</div>` : ''}`
+      : R.mode === 'paddle' ? `<div>${R.duck > 0 ? '🫧 duck-dive' : R.catchHint ? '🌊 <span style="color:#ffd23a">WAVE! paddle / JUMP to pop up</span>' : '🏄 paddling'}${best ? ` · best ride ${best.toLocaleString()}` : ''}</div>` : R.mode === 'wipe' ? '<div style="color:#ff8a7a;font-size:22px">WIPEOUT</div>' : '');
     // sound: board spray while riding
     if (R.mode === 'ride' && sfx.nz && sfx.ctx && (sprayT -= dt) <= 0) { sprayT = .12; sfx.nz('highpass', 2500 + R.sp * 100, .5, .015 + Math.min(.05, R.sp * .004) + Math.abs(R.carve || 0) * .03, .14); }
     if (R.mode === 'ride' && fx && fx.smoke && Math.abs(R.carve || 0) > .35 && R.sp > 5) { const sd = R.carve > 0 ? 1 : -1; fx.smoke.emit(x - dir[0] * .8 + dir[1] * .3 * sd, y + .2, z - dir[1] * .8 - dir[0] * .3 * sd, -dir[1] * sd * 2.5, 1.6 + R.sp * .12, dir[0] * sd * 2.5, .95, .98, 1, .7, .8, .5, -.06, .35); }

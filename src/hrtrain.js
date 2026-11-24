@@ -2,10 +2,10 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
-import { mergeStatic } from './hrmerge.js?v=337';
+import { mergeStatic } from './hrmerge.js?v=338';
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=337';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=337';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=338';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=338';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['dining', 11], ['express', 10], ['caboose', 7]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
@@ -79,6 +79,8 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
         const pl = new THREE.Mesh(new THREE.PlaneGeometry(4.2, .8), new THREE.MeshStandardMaterial({ map: tx })); pl.position.set(0, Ht + .5, -dir * .76); pl.rotation.y = dir > 0 ? 0 : Math.PI; g.add(pl);
         const face = new THREE.Shape(); face.moveTo(-14, -2); face.lineTo(14, -2); face.lineTo(14, 16); face.lineTo(-14, 16); face.closePath(); const hole = new THREE.Path(); hole.moveTo(-Wd, -.45); for (let k = 0; k <= 16; k++) { const th = k / 16 * Math.PI; hole.lineTo(-Math.cos(th) * Wd, -.45 + Math.sin(th) * Ht); } hole.lineTo(Wd, -.45); face.holes.push(hole);
         const fm = new THREE.Mesh(new THREE.ShapeGeometry(face), rock); fm.position.z = dir * .3; g.add(fm); } });
+    { const LP = []; TUN.forEach(([a, b]) => { for (let i = a + 3; i < b - 2; i += 5) { at(path.cum[i], p, t); const rx = t.z, rz = -t.x, rl = Math.hypot(rx, rz) || 1; for (const sd of [-1, 1]) LP.push([p.x + rx / rl * sd * (Wd - .25), p.y + 2.6, p.z + rz / rl * sd * (Wd - .25)]); } });
+      if (LP.length) { const lm = new THREE.InstancedMesh(new THREE.SphereGeometry(.16, 8, 6).scale(1, 1.3, 1), new THREE.MeshBasicMaterial({ color: 0xffc070 }), LP.length), m4 = new THREE.Matrix4(); LP.forEach(([x, y, z], i) => { m4.makeTranslation(x, y, z); lm.setMatrixAt(i, m4); }); lm.frustumCulled = false; lm.name = 'tunnel lamps'; scene.add(lm); } } /* v338 lamps light the way through every tunnel */
     return TUN.length; }
   function buildStations() { const T = H.town2; const p = new THREE.Vector3(), t = new THREE.Vector3(); const wood0 = new THREE.MeshStandardMaterial({ color: 0x6a4a2c, roughness: .85 }), dk = new THREE.MeshStandardMaterial({ color: 0x3a2818, roughness: .8 }), roof0 = new THREE.MeshStandardMaterial({ color: 0x7a2a1e, roughness: .7 }), lampM = new THREE.MeshStandardMaterial({ color: 0x222, emissive: 0xffd08a, emissiveIntensity: 2 });
     const bamboo = new THREE.MeshStandardMaterial({ color: 0xc8a868, roughness: .8 }), thatch = new THREE.MeshStandardMaterial({ color: 0xb08a4a, roughness: 1 });

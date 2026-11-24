@@ -5,9 +5,9 @@
 // wires it into our controller (underground floors under the mound, walls, falls), guns, host-authoritative co-op (the host
 // orders every puzzle action and replays the log to everyone) and game points. The civilization and its glyphs are fictional.
 import * as THREE from 'three';
-import { createSunTemple } from './hrsuntemple.js?v=337';
-import { pyramidEnvelope } from './hrpyramid.js?v=337';
-import { TEMPLE_CUT } from './hrworld.js?v=337';
+import { createSunTemple } from './hrsuntemple.js?v=338';
+import { pyramidEnvelope } from './hrpyramid.js?v=338';
+import { TEMPLE_CUT } from './hrworld.js?v=338';
 
 export const TEMPLE = { gold: 100000, top: 18.5, trap: { rolling_boulder: 40, dart_wall: 12, swinging_blade: 30 } };
 const IU = 27, IV0 = -77, IV1 = -4.5, DU = 16.5, AV1 = 9, MB = 30; // interior / mound half-width + depth, doorway half-width, apron front, mound blend

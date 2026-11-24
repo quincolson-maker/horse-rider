@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=337';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=337';
-import './src/hraudio.js?v=337';
-import './src/stylize.js?v=337'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=337';
-import { FX, SFX } from './src/fx.js?v=337';
-import { initTouch } from './src/touch.js?v=337';
-import { createHorseRider } from './src/horse.js?v=337';
-import { createHorseNet } from './src/horsenet.js?v=337';
+import './src/assetshim.js?v=338';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=338';
+import './src/hraudio.js?v=338';
+import './src/stylize.js?v=338'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=338';
+import { FX, SFX } from './src/fx.js?v=338';
+import { initTouch } from './src/touch.js?v=338';
+import { createHorseRider } from './src/horse.js?v=338';
+import { createHorseNet } from './src/horsenet.js?v=338';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=337';
+import { PF, initPerf } from './src/perf.js?v=338';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -56,7 +56,7 @@ function update(dt) { if (G.phase == 'menu') return; G.t += dt; horse.tick(dt); 
 // ---------------- HUD ----------------
 let hudT = 0, hurtFlash = 0;
 const CMP = (() => { let h = ''; for (let d = -360; d <= 720; d += 15) { const n = ((d % 360) + 360) % 360; const lab = { 0: 'N', 45: 'NE', 90: 'E', 135: 'SE', 180: 'S', 225: 'SW', 270: 'W', 315: 'NW' }[n]; h += `<span class="${lab ? 'c' : ''}">${lab || n}</span>`; } return h; })();
-const PINS = [['pen', 'PEN', '#ffb35a'], ['town', 'TOWN', '#ff6a5a'], ['cave', 'FALLS', '#4fd2ff'], ['temple', 'TEMPLE', '#ffe11a'], ['chinatown', '🏮 CHINATOWN', '#ff5a4a'], ['minecamp', '⛏ DIGGINGS', '#b0b8c8'], ['parcel', '📦 PARCEL', '#e8c27a'], ['herb', '🌿 GINSENG', '#7ad87a'], ['job', '★ JOB', '#ffd700'], ['ranch', '🏠 RANCH', '#c88a50'], ['buddy', '🏠 BUDDY', '#a0c070'], ['rob', '🚨 COACH', '#ff5a3a'], ['mustang', '🐎 WILD', '#d8b070'], ['train', '🚂 TRAIN', '#9ab0c8'], ['wanted', '📜 WANTED', '#e8c27a'], ['race', '🏁 GATE', '#ffd23a'], ['ghost', '👻 GHOST', '#9fd8ff'], ['lantern', '🏮', '#ffb060'], ['camp', '⛺ CAMP', '#ff9a4a'], ['raid', '🔔 RAID', '#ff3a3a'], ['chest', '💰 STRONGBOX', '#ffd34a'], ['treasure', '❌ TREASURE', '#ff4a3a']];
+const PINS = [['pen', 'PEN', '#ffb35a'], ['town', 'TOWN', '#ff6a5a'], ['cave', 'FALLS', '#4fd2ff'], ['temple', 'TEMPLE', '#ffe11a'], ['chinatown', '🏮 CHINATOWN', '#ff5a4a'], ['minecamp', '⛏ DIGGINGS', '#b0b8c8'], ['cove', '🌴 COVE', '#3ad8d0'], ['parcel', '📦 PARCEL', '#e8c27a'], ['herb', '🌿 GINSENG', '#7ad87a'], ['job', '★ JOB', '#ffd700'], ['ranch', '🏠 RANCH', '#c88a50'], ['buddy', '🏠 BUDDY', '#a0c070'], ['rob', '🚨 COACH', '#ff5a3a'], ['mustang', '🐎 WILD', '#d8b070'], ['train', '🚂 TRAIN', '#9ab0c8'], ['wanted', '📜 WANTED', '#e8c27a'], ['race', '🏁 GATE', '#ffd23a'], ['ghost', '👻 GHOST', '#9fd8ff'], ['lantern', '🏮', '#ffb060'], ['camp', '⛺ CAMP', '#ff9a4a'], ['raid', '🔔 RAID', '#ff3a3a'], ['chest', '💰 STRONGBOX', '#ffd34a'], ['treasure', '❌ TREASURE', '#ff4a3a']];
 function pins(hd) { const box = $('cpins'); if (!box || !horse.state.places) return; const H = horse.state, pl = H.places, w = (box.parentNode.clientWidth || 300) / 2 - 34;
   if (!box.dataset.on) { box.dataset.on = 1; box.innerHTML = PINS.map(([k, lab, col]) => `<i data-k="${k}" style="--c:${col}"><u></u><em>${lab}</em> <b></b></i>`).join(''); }
   const sideN = { l: 0, r: 0 }, bt = H.bountyTarget; let onPoi = null; if (bt) for (const [k] of PINS) { if (k === 'job') continue; const q = k === 'pen' ? [horse.PEN.x, horse.PEN.z] : k === 'town' ? pl.town : pl[k] ? [pl[k].x, pl[k].z] : null; if (q && Math.hypot(q[0] - bt[0], q[1] - bt[1]) < 40) onPoi = k; }

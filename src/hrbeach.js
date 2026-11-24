@@ -3,8 +3,8 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt } from './hrbeachwave.js?v=337';
-import { createSurf } from './hrsurf.js?v=337';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt } from './hrbeachwave.js?v=338';
+import { createSurf } from './hrsurf.js?v=338';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -49,7 +49,7 @@ export function createBeach(ctx) {
         vec3 sky = mix(vec3(.62, .8, .96), vec3(.06, .09, .16), uNight); col = mix(col, sky, fres * .55);
         float spec = pow(max(dot(reflect(-uSun, n), v), 0.0), 140.0) * (1.0 - uNight) * 1.6;
         float fm = vFoam * (.55 + .45 * vn(q * .7 + vec2(uT * .25, 0.0))) + smoothstep(.35, 0.0, vDepth) * (.5 + .5 * sin(q.y * .3 + uT * 1.5 + vn(q * .4) * 4.0)) * .6;
-        fm = clamp(fm, 0.0, 1.0); col = mix(col, vec3(.96, .98, 1.0), fm); col *= mix(1.0, .28, uNight); col += spec;
+        fm = clamp(fm, 0.0, 1.0); col = mix(col, vec3(.96, .98, 1.0), fm); col *= mix(1.0, .28, uNight); col += spec; col += vec3(.1, .75, .95) * fm * smoothstep(.5, .9, uNight) * (.6 + .4 * sin(uT * 3.0 + q.x * .4 + q.y * .3)); // bioluminescent surf after dark
         float a = mix(.42, .93, smoothstep(0.0, 2.5, vDepth)); a = max(a, fm); float dist = length(cameraPosition - vW); col = mix(col, uFogC, 1.0 - exp(-dist * .0007));
         gl_FragColor = vec4(col, a); }` });
   const mkGrid = (xs, zs, skip) => { const pos = [], idx = [], nx = xs.length, nz = zs.length; for (const z of zs) for (const x of xs) pos.push(x, 0, z); for (let j = 0; j < nz - 1; j++) for (let i = 0; i < nx - 1; i++) { if (skip && skip(xs[i], zs[j], xs[i + 1], zs[j + 1])) continue; const a = j * nx + i, b = a + 1, c = a + nx, d = c + 1; idx.push(a, c, b, b, c, d); } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); return g; };
@@ -140,7 +140,7 @@ export function createBeach(ctx) {
   B.deep = (x, z) => x > shoreX(z) + 16; B.root = root;
   const wv = {}; let swimMsg = false, welcome = false;
   const surf = createSurf({ ...ctx, B }); B.surf = surf;
-  B.update = dt => { const t = surfTime(); oceanU.uT.value = t; oceanU.uNight.value = H.night || 0; const me = H.mounted ? H.mounted.pos : P.pos, near = me.x > 820;
+  B.update = dt => { const t = surfTime(); oceanU.uT.value = t; oceanU.uNight.value = H.night || 0; if (scene.fog && scene.fog.color) oceanU.uFogC.value.copy(scene.fog.color); const me = H.mounted ? H.mounted.pos : P.pos, near = me.x > 820;
     root.visible = near || me.x > 600; if (!root.visible) return;
     if (me.x > 1000 && Math.abs(me.z - ZC) < 450 && !welcome) { welcome = true; msg('🌴 Paradise Cove', 3); const S = H.stats || (H.stats = {}); if (!S.coveVisit) { S.coveVisit = 1; const g = H.guns; if (g) { g.state.score += 300; g.save && g.save(); } setTimeout(() => msg('First time at the sea!  +300 · rent a board at the surf shack and paddle out', 4.5), 1800); } } else if (me.x < 900) welcome = false;
     surf.update(dt, t); beachLife(dt, t, me);

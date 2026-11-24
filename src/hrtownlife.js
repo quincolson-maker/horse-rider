@@ -1,9 +1,9 @@
 // v56 TOWN LIFE: townsfolk stroll the lanes between the buildings and the palisade, a sheriff keeps the main gate and briefs
 // you on your bounty, and a two-horse stagecoach runs a loop between town and the horse pen. All local (no net traffic), all
 // asleep when you're far away.
-import { mergeStatic } from './hrmerge.js?v=206';
+import { mergeStatic } from './hrmerge.js?v=207';
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=206';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=207';
 const FOLK = [
   { sex: 'male', coat: 0x5a4632, top: 0xd8cdb4, hatC: 0x4a3a28, skin: 0x8a5a3c, hair: 0x1a120c },
   { sex: 'female', top: 0xe8dcc6, bodice: 0x2e4a6a, skirt: 0x6a2a3a, skin: 0xf0c6a4, hair: 0x9a5a2a },
@@ -28,6 +28,8 @@ export function createTownLife({ scene, H, P, T, hAt, msg, makeRealHorse, realAn
   const shL = [CX + 5.5, CZ + 21.2], shW = toW(...shL); sh.g.position.set(shW[0], yAt(...shW), shW[1]); sh.g.rotation.y = (s.rot || 0); scene.add(sh.g);
   // v110 rooftop barkeep behind the roof bar counter (wipes the bar, watches you)
   const rk = s.RT ? makeFrontierCharacter({ kind: 'townsfolk', sex: 'male', quality: mobile ? 'low' : 'high', coat: 0x2a2a2e, top: 0xf2ead8, hatC: 0x1a1612, skin: 0xc48c62, hair: 0x2a1a10, bandana: 0x8a1a1a, name: 'Rooftop barkeep' }) : null;
+  // v207 two regulars hang out on the roof deck (one leans at the rail, one by an umbrella table)
+  const roofers = s.RT ? [[-14.6, 4.2, 0x5a2a3a, 'female'], [-11.2, 1.4, 0x2e4a3a, 'male']].map(([x, z, col, sex]) => { const D = makeFrontierCharacter({ kind: 'townsfolk', sex, quality: mobile ? 'low' : 'high', coat: col, top: 0xece2cc, bodice: col, skirt: 0x2a2a3a, hatC: 0x3a2a1a, skin: sex === 'male' ? 0x9a6a48 : 0xe8bfa0, hair: 0x2a160c }); const w = toW(x, z); D.g.position.set(w[0], s.y0 + s.RT, w[1]); D.g.rotation.y = (s.rot || 0) + (z < 2 ? Math.PI : -Math.PI / 2); scene.add(D.g); try { mergeStatic(D.g); } catch (_) {} return D; }) : [];
   if (rk) { const w = toW(-5.9, 9.05); rk.g.position.set(w[0], s.y0 + s.RT, w[1]); rk.g.rotation.y = (s.rot || 0) + Math.PI; scene.add(rk.g); try { mergeStatic(rk.g); } catch (_) {} }
   // v158 townsfolk chatter: a speech bubble when you walk up to someone
   const LINES = ['Howdy, partner!', 'Watch yourself after dark.', 'They say the falls hide outlaw gold.', 'Rooftop bar has the best view in the territory.', 'Lock the gate when the bell rings!', 'Fine horse you got there.', 'Greta pours a mean whiskey.', 'Train to Eagle Pass leaves soon.', 'I heard coyotes howlin\' last night…', 'Don\'t crack the store safe — the sheriff\'s got deputies.', 'Arm wrestle Big Earl? Ha!', 'Mind the screamers, they bring the whole horde.'];
@@ -55,6 +57,7 @@ export function createTownLife({ scene, H, P, T, hAt, msg, makeRealHorse, realAn
   function update(dt) { const near = Math.hypot(P.pos.x - ctr[0], P.pos.z - ctr[1]) < 170;
     for (const f of folk) { f.D.g.visible = near; if (!near) { if (f.D.bub) f.D.bub.sp.visible = false; continue; } chatter(f.D, dt); if (f.wait > 0) { f.wait -= dt; poseFrontierCharacter(f.D, dt, { speed: 0 }); continue; } if (Math.random() < dt * .04) { f.wait = 2 + Math.random() * 5; if (Math.random() < .3) f.dir *= -1; }
       f.d += f.dir * f.sp * dt; const [lx, lz] = at(f.d), [nx, nz] = at(f.d + f.dir * .5), [x, z] = toW(lx, lz), [x2, z2] = toW(nx, nz); f.D.g.position.set(x, yAt(x, z), z); f.D.g.rotation.y = Math.atan2(x2 - x, z2 - z); poseFrontierCharacter(f.D, dt, { speed: f.sp }); }
+    for (const D of roofers) { D.g.visible = near; if (near) poseFrontierCharacter(D, dt, { speed: 0 }); }
     if (rk) { const up = near && P.pos.y > s.y0 + s.RT - 3; rk.g.visible = near; if (near) { poseFrontierCharacter(rk, dt, { speed: 0 }); if (up && rk.head) rk.head.rotation.y = Math.max(-.9, Math.min(.9, Math.atan2(P.pos.x - rk.g.position.x, P.pos.z - rk.g.position.z) - rk.g.rotation.y)); if (rk.arms && rk.arms[1]) rk.arms[1][0].rotation.z = Math.sin(H.t * 2.2 || 0) * .25 - .3; } }
     sh.g.visible = near; if (near) { poseFrontierCharacter(sh, dt, { speed: 0 }); const d = Math.hypot(P.pos.x - sh.g.position.x, P.pos.z - sh.g.position.z); briefT = Math.max(0, briefT - dt);
       if (d < 7) { sh.head.rotation.y = Math.max(-.8, Math.min(.8, Math.atan2(P.pos.x - sh.g.position.x, P.pos.z - sh.g.position.z) - sh.g.rotation.y)); }

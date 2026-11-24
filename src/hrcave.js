@@ -3,12 +3,13 @@
 // by Quin (src/hrbanditcave.js, credited in CREDITS.md). This file places it in our world — a flattened notch in a hillside,
 // picked the same way on every machine — and wires it into our controller (walls + floors), guns (rock stops bullets),
 // host-authoritative co-op (the host runs the outlaws and the vault) and game points. Points are game points only.
-import { CAVE_CUT } from './hrworld.js?v=139';
+import { mergeStatic } from './hrmerge.js?v=140';
+import { CAVE_CUT } from './hrworld.js?v=140';
 import * as THREE from 'three';
-import { createHideout } from './hrhideout.js?v=139';
-import { createFalls, baseZ } from './hrfalls.js?v=139';
-import { makeFrontierCharacter } from './hrcharacters.js?v=139';
-import { poseDoll } from './hrsaloon.js?v=139';
+import { createHideout } from './hrhideout.js?v=140';
+import { createFalls, baseZ } from './hrfalls.js?v=140';
+import { makeFrontierCharacter } from './hrcharacters.js?v=140';
+import { poseDoll } from './hrsaloon.js?v=140';
 
 export const CAVE = { chest: 2500, dance: 50, slotBet: 10, outlaw: 60, outlawHead: 75 };
 const FU = 40, FV0 = -59, FV1 = 8, BL = 16, BS = 5; // footprint in the cave's own frame (u across, v out of the mouth); terrain blend: 16 m apron in front, 5 m to the sides and back (the hill meets the rock)
@@ -81,7 +82,7 @@ export function createCave(c) {
   const A = new THREE.Vector3(), Dd = new THREE.Vector3();
   out.los = (ax, ay, az, bx, by, bz) => { A.set(ax, ay, az); Dd.set(bx - ax, by - ay, bz - az); const L = Dd.length(); if (L < .1) return true; Dd.divideScalar(L); const t = out.rayHit(A, Dd, L - .3); return !(t > 0); };
   // ---- the people of the hideout: three dancers on the stage (adult, fully costumed), the outlaws (zombie-system 'outlaw' kind) ----
-  const dancers = cave.dancerSpots.map((p, i) => { const D = makeFrontierCharacter({ kind: 'dancer', ...CAVE_DANCERS[i], quality: 'low' }); D.g.position.copy(p); D.g.rotation.y = S.rot - Math.PI / 2; D.baseYaw = S.rot - Math.PI / 2; D.t = i * 1.3; D.cheer = 0; scene.add(D.g); return D; });
+  const dancers = cave.dancerSpots.map((p, i) => { const D = makeFrontierCharacter({ kind: 'dancer', ...CAVE_DANCERS[i], quality: 'low' }); try { mergeStatic(D.g); } catch (_) {} D.g.position.copy(p); D.g.rotation.y = S.rot - Math.PI / 2; D.baseYaw = S.rot - Math.PI / 2; D.t = i * 1.3; D.cheer = 0; scene.add(D.g); return D; });
   let look = 0; out.outlawBody = () => { const D = makeFrontierCharacter({ kind: 'bandit', ...OUTLAW_LOOKS[look++ % 4], quality: 'low' }); D.g.traverse(m => { if (m.isMesh) m.castShadow = !mobile; });
     return { m: D.g, D, outlaw: true, update(dt, v, o) { poseDoll(D, dt, !o || !o.alive ? 'idle' : o.st === 1 ? 'aim' : v > .3 ? 'walk' : 'idle', v); } }; };
   out.spawnY = (x, z) => { let y = S.y0; for (const s of cave.spawnPoints) if (Math.hypot(s.position.x - x, s.position.z - z) < 2) y = s.position.y; return y; };

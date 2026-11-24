@@ -5,60 +5,60 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { createVault } from './hrvault.js?v=139';
-import { createGear } from './hrgear.js?v=139';
-import { createArm } from './hrarm.js?v=139';
-import { createAmbient } from './hrambient.js?v=139';
-import { createCuller, mergeStatic as mergeStaticTree } from './hrmerge.js?v=139';
-import { createStats } from './hrstats.js?v=139';
-import { createBarding } from './hrbarding.js?v=139';
-import { createCamp } from './hrcamp.js?v=139';
-import { createHats } from './hrhats.js?v=139';
-import { createBreeds } from './hrbreed.js?v=139';
-import { createLasso } from './hrlasso.js?v=139';
-import { createRaid } from './hrraid.js?v=139';
-import { createCamo } from './hrcamo.js?v=139';
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=139';
-import { PERF } from './perfopts.js?v=139';
-import { PF } from './perf.js?v=139';
+import { createVault } from './hrvault.js?v=140';
+import { createGear } from './hrgear.js?v=140';
+import { createArm } from './hrarm.js?v=140';
+import { createAmbient } from './hrambient.js?v=140';
+import { createCuller, mergeStatic as mergeStaticTree } from './hrmerge.js?v=140';
+import { createStats } from './hrstats.js?v=140';
+import { createBarding } from './hrbarding.js?v=140';
+import { createCamp } from './hrcamp.js?v=140';
+import { createHats } from './hrhats.js?v=140';
+import { createBreeds } from './hrbreed.js?v=140';
+import { createLasso } from './hrlasso.js?v=140';
+import { createRaid } from './hrraid.js?v=140';
+import { createCamo } from './hrcamo.js?v=140';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=140';
+import { PERF } from './perfopts.js?v=140';
+import { PF } from './perf.js?v=140';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=139';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=139';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=139';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=139';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=139';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=139';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=139';
-import { createGuns } from './hrguns.js?v=139';
-import { createHrZombies } from './hrzombies.js?v=139';
-import { createFlora } from './hrflora.js?v=139';
-import { createBounty } from './hrbounty.js?v=139';
-import { createNuggets } from './hrnuggets.js?v=139';
-import { createStable } from './hrstable.js?v=139';
-import { createLeaderboard } from './hrlb.js?v=139';
-import { createNight } from './hrnight.js?v=139';
-import { createRace } from './hrrace.js?v=139';
-import { buildPalisade } from './hrpalisade.js?v=139';
-import { createWeather } from './hrweather.js?v=139';
-import { createMusic } from './hrmusic.js?v=139';
-import { createTownLife } from './hrtownlife.js?v=139';
-import { createRanch } from './hrranch.js?v=139';
-import { createEvents } from './hrevents.js?v=139';
-import { createWild } from './hrwild.js?v=139';
-import { createTrain } from './hrtrain.js?v=139';
-import { createFishing } from './hrfish.js?v=139';
-import { createTown, wearJacket, townNight } from './hrtown.js?v=139';
-import { wearKit } from './hrkit.js?v=139';
-import { createMap } from './hrmap.js?v=139';
-import { createPuppets } from './hrpuppet.js?v=139';
-import { createSaloon } from './hrsaloon.js?v=139';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=139';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=139';
-import { createDynamite } from './hrdynamite.js?v=139';
-import { createSunItem } from './hrsunweapon.js?v=139';
-import { createBuild } from './hrbuild.js?v=139';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=139';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=139';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=140';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=140';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=140';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=140';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=140';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=140';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=140';
+import { createGuns } from './hrguns.js?v=140';
+import { createHrZombies } from './hrzombies.js?v=140';
+import { createFlora } from './hrflora.js?v=140';
+import { createBounty } from './hrbounty.js?v=140';
+import { createNuggets } from './hrnuggets.js?v=140';
+import { createStable } from './hrstable.js?v=140';
+import { createLeaderboard } from './hrlb.js?v=140';
+import { createNight } from './hrnight.js?v=140';
+import { createRace } from './hrrace.js?v=140';
+import { buildPalisade } from './hrpalisade.js?v=140';
+import { createWeather } from './hrweather.js?v=140';
+import { createMusic } from './hrmusic.js?v=140';
+import { createTownLife } from './hrtownlife.js?v=140';
+import { createRanch } from './hrranch.js?v=140';
+import { createEvents } from './hrevents.js?v=140';
+import { createWild } from './hrwild.js?v=140';
+import { createTrain } from './hrtrain.js?v=140';
+import { createFishing } from './hrfish.js?v=140';
+import { createTown, wearJacket, townNight } from './hrtown.js?v=140';
+import { wearKit } from './hrkit.js?v=140';
+import { createMap } from './hrmap.js?v=140';
+import { createPuppets } from './hrpuppet.js?v=140';
+import { createSaloon } from './hrsaloon.js?v=140';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=140';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=140';
+import { createDynamite } from './hrdynamite.js?v=140';
+import { createSunItem } from './hrsunweapon.js?v=140';
+import { createBuild } from './hrbuild.js?v=140';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=140';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=140';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -574,7 +574,7 @@ export function createHorseRider(ctx) {
     { const hx = cx + hw - 2.6, hz = cz - hd + 1.7; for (const [dx, dz, ry] of [[-.9, 0, .2], [.9, .2, -.15]]) { const b = makeBale(false); b.position.set(hx + dx, y0 + .62, hz + dz); b.rotation.y = ry; g.add(b); } }
     { const hx = cx - hw + 2.4, hz = cz + hd - 2.2; for (const [dx, dy, dz] of [[0, 0, 0], [1.05, 0, 0], [.5, .45, 0]]) { const b = makeBale(true); b.position.set(hx + dx, y0 + .23 + dy, hz + dz); g.add(b); } H.obst.push([hx + .5, hz, 1.2]); }
     H.obst.push([cx - hw + 2.2, cz - hd + 1.5, 1.2], [cx + hw - 2.6, cz - hd + 1.7, 1.8]);
-    mergeStatic(g);
+    mergeStatic(g); try { mergeStaticTree(g); } catch (_) {} // v140: second pass folds the nested props (bales, trough) too
   }
   let BALE = null;
   function makeBale(square) {

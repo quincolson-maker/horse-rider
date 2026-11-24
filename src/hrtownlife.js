@@ -1,9 +1,9 @@
 // v56 TOWN LIFE: townsfolk stroll the lanes between the buildings and the palisade, a sheriff keeps the main gate and briefs
 // you on your bounty, and a two-horse stagecoach runs a loop between town and the horse pen. All local (no net traffic), all
 // asleep when you're far away.
-import { mergeStatic } from './hrmerge.js?v=139';
+import { mergeStatic } from './hrmerge.js?v=140';
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=139';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=140';
 const FOLK = [
   { sex: 'male', coat: 0x5a4632, top: 0xd8cdb4, hatC: 0x4a3a28, skin: 0x8a5a3c, hair: 0x1a120c },
   { sex: 'female', top: 0xe8dcc6, bodice: 0x2e4a6a, skirt: 0x6a2a3a, skin: 0xf0c6a4, hair: 0x9a5a2a },
@@ -37,7 +37,7 @@ export function createTownLife({ scene, H, P, T, hAt, msg, makeRealHorse, realAn
   bx(1.3, .45, 1, dark, 0, 2.78, -.3); const wheels = [];
   for (const [x, z, r] of [[-.95, -.9, .62], [.95, -.9, .62], [-.95, 1.1, .5], [.95, 1.1, .5]]) { const w = new THREE.Mesh(new THREE.TorusGeometry(r, .06, 6, 18), dark); w.rotation.y = Math.PI / 2; w.position.set(x, r, z); coach.add(w); wheels.push([w, r]);
     for (let k = 0; k < 6; k++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(.04, r * 2, .04), trim); sp.rotation.x = k / 6 * Math.PI; w.add(sp); sp.rotation.order = 'YXZ'; sp.rotation.set(0, Math.PI / 2, k / 6 * Math.PI); } }
-  const pole = bx(.1, .1, 3.2, dark, 0, .9, 3.4); scene.add(coach);
+  const pole = bx(.1, .1, 3.2, dark, 0, .9, 3.4); pole.userData.keep = true; scene.add(coach); try { mergeStatic(coach); } catch (_) {} // v140
   const team = []; const hitch = () => { if (team.length || !H.A || !makeRealHorse) return; for (const sx of [-.7, .7]) { const g = makeRealHorse(H.A, sx < 0 ? 1 : 3); scene.add(g); team.push([g, sx]); } }; // horse models load after us: hitch up when they arrive
   // leave by whichever gateway faces the pen, loop round the pen, come back the same side (never through town)
   const gatesOut = [toW(CX, CZ + 33), toW(CX, CZ - 33), toW(CX + 39, CZ), toW(CX - 39, CZ)]; let gateOut = gatesOut[0], gd = 1e9; for (const g of gatesOut) { const d = Math.hypot(g[0] - PEN.x, g[1] - PEN.z); if (d < gd) { gd = d; gateOut = g; } }

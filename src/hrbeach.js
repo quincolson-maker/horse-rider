@@ -3,9 +3,9 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=359';
-import { createSurf } from './hrsurf.js?v=359';
-import { mergeStatic } from './hrmerge.js?v=359';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=360';
+import { createSurf } from './hrsurf.js?v=360';
+import { mergeStatic } from './hrmerge.js?v=360';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -48,7 +48,7 @@ export function createBeach(ctx) {
         vec3 shallow = vec3(.16, .78, .74), mid = vec3(.03, .5, .62), deep = vec3(.01, .2, .4); vec3 col = mix(shallow, mid, smoothstep(.3, 3.0, vDepth)); col = mix(col, deep, smoothstep(3.0, 16.0, vDepth));
         float face = smoothstep(.15, .8, -n.x) * smoothstep(.3, 2.5, vW.y - ${SEA.toFixed(1)}); col = mix(col, vec3(.1, .62, .6), face * .5); col += vec3(.05, .28, .22) * face * smoothstep(1.5, 4.0, vW.y - ${SEA.toFixed(1)}); // the face darkens to deep green-blue with light glowing through its thin top
         float dif = max(dot(n, normalize(uSun)), 0.0); col *= .62 + .5 * dif;
-        vec3 sky = mix(vec3(.62, .8, .96), vec3(.06, .09, .16), uNight); col = mix(col, sky, fres * .55);
+        vec3 sky = mix(vec3(.62, .8, .96), vec3(.06, .09, .16), uNight); float dusk = smoothstep(.15, .45, uNight) * (1.0 - smoothstep(.55, .8, uNight)); sky = mix(sky, vec3(1.0, .5, .3), dusk * .8); col = mix(col, sky, fres * .55); col += vec3(1.0, .45, .2) * dusk * pow(max(dot(reflect(-normalize(vec3(-1.0, .15, .1)), n), v), 0.0), 18.0) * .9; // v360 a golden sunset path on the sea
         float spec = pow(max(dot(reflect(-uSun, n), v), 0.0), 140.0) * (1.0 - uNight) * 1.6;
         float fm = vFoam * (.55 + .45 * vn(q * .7 + vec2(uT * .25, 0.0))) + smoothstep(.35, 0.0, vDepth) * (.5 + .5 * sin(q.y * .3 + uT * 1.5 + vn(q * .4) * 4.0)) * .6;
         fm = clamp(fm, 0.0, 1.0); col = mix(col, vec3(.96, .98, 1.0), fm); col *= mix(1.0, .28, uNight); col += spec; col += vec3(.1, .75, .95) * fm * smoothstep(.5, .9, uNight) * (.6 + .4 * sin(uT * 3.0 + q.x * .4 + q.y * .3)); // bioluminescent surf after dark
@@ -155,6 +155,7 @@ export function createBeach(ctx) {
     else if (o.kind === 'bch_castle') { msg('🏰 Four towers, a moat, a shell flag. Someone worked hard on this.', 2.4); }
     else if (o.kind === 'bch_jeep') { msg('🚐 A jeepney: chrome horse on the hood, every inch painted. The driver says he\'ll take you to town "later".', 3); }
     else if (o.kind === 'bch_snorkel') { const x = REEF.rx, z = REEF.rz; P.pos.set(x, SEA - 1.2, z); H.camDist = 2.2; P.pitch = -.7; msg('🤿 Mask on, face down: corals in every colour, little fish darting through. (Swim back to the sand when you\'re done.)', 4.5); S.snorkel = (S.snorkel || 0) + 1; setTimeout(() => { H.camDist = 0; }, 9000); }
+    else if (o.kind === 'bch_rope') { msg('🪢 You grab the rope, run, swing out over the lagoon - and let go! SPLASH!', 3); H.vy = 7; P.pos.x -= 4; if (sfx.nz && sfx.ctx) setTimeout(() => sfx.nz('lowpass', 500, .7, .25, .8), 900); if (fx && fx.smoke) setTimeout(() => { for (let k = 0; k < 14; k++) fx.smoke.emit(P.pos.x, P.pos.y, P.pos.z, (Math.random() - .5) * 3, 2 + Math.random() * 2, (Math.random() - .5) * 3, .9, .97, 1, .6, .9, .7, -.06, .3); }, 900); S.ropes = (S.ropes || 0) + 1; }
     else if (o.kind === 'bch_fire') { heal(60); msg((H.night || 0) > .45 ? '🔥 Sparks fly up into a sky full of stars' : '🔥 The bonfire\'s laid ready for tonight', 2.4); }
     return true; };
 
@@ -166,6 +167,7 @@ export function createBeach(ctx) {
     const fallM = new THREE.MeshBasicMaterial({ map: wtex, color: 0xd8f4ff, transparent: true, opacity: .85, depthWrite: false, side: THREE.DoubleSide }); const fall = new THREE.Mesh(new THREE.PlaneGeometry(5, top - base, 1, 8), fallM); fall.rotation.y = Math.PI / 2; fall.position.set(x - .9, (top + base) / 2, z); g.add(fall);
     const pool = new THREE.Mesh(new THREE.CircleGeometry(9, 28), new THREE.MeshStandardMaterial({ color: 0x1a8a7a, roughness: .15, metalness: .2, transparent: true, opacity: .85 })); pool.rotation.x = -Math.PI / 2; pool.position.set(x + 6, base + .25, z); g.add(pool);
     const mist = new THREE.Mesh(new THREE.SphereGeometry(3, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .18, depthWrite: false })); mist.position.set(x + 1, base + 1.2, z); mist.scale.y = .5; g.add(mist);
+    { const tr2 = new THREE.Mesh(new THREE.CylinderGeometry(.3, .4, 12, 8), new THREE.MeshStandardMaterial({ color: 0x6a5038 })); tr2.position.set(x + 15, base + 6, z - 6); tr2.rotation.z = .35; g.add(tr2); const rope = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 6, 4), new THREE.MeshStandardMaterial({ color: 0xc8b080 })); rope.position.set(x + 11.5, base + 7.5, z - 6); g.add(rope); g.userData.rope = rope; const sp2 = { x: x + 15, y: base, z: z - 3, kind: 'bch_rope', label: '🪢 Rope swing into the lagoon', r: 2.4, bch: true }; T.spots.push(sp2); }
     root.add(g); const sp = { x: x + 8, y: base, z: z + 6, kind: 'bch_falls', label: '💧 Stand under the waterfall (heal + cool off)', r: 4, bch: true }; T.spots.push(sp); return { wtex, x, z, base, mist }; })();
 
   // ---------- v344 sea life: a pod of dolphins arcing offshore, sea turtles paddling the shallows, darting schools of reef fish ----------

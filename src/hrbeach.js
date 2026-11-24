@@ -3,8 +3,8 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask } from './hrbeachwave.js?v=344';
-import { createSurf } from './hrsurf.js?v=344';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask } from './hrbeachwave.js?v=345';
+import { createSurf } from './hrsurf.js?v=345';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -114,7 +114,7 @@ export function createBeach(ctx) {
   const boats = []; for (let i = 0; i < 5; i++) { const g = new THREE.Group(), hullM = std({ color: [0xf0ece0, 0x3ab0e0, 0xe8c83a, 0xe85a3a, 0x7ad87a][i] }), trim = std({ color: [0x2a6ac8, 0xf0ece0, 0x2a2a2a, 0xf0ece0, 0x2a6ac8][i] });
     const hull = new THREE.Mesh(new THREE.CapsuleGeometry(.45, 6.5, 4, 10), hullM); hull.rotation.x = Math.PI / 2; hull.scale.set(1, 1, .7); g.add(hull); const tr = new THREE.Mesh(new THREE.BoxGeometry(.95, .12, 7), trim); tr.position.y = .3; g.add(tr);
     for (const sx of [-2.6, 2.6]) { const fl = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, 5.6, 6), BM.bamboo); fl.rotation.x = Math.PI / 2; fl.position.set(sx, -.15, 0); g.add(fl); for (const z of [-1.6, 1.6]) { const arm = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, 5.3, 5), BM.bamboo); arm.rotation.z = Math.PI / 2; arm.position.set(0, .35, z); g.add(arm); } }
-    const roofB = new THREE.Mesh(new THREE.BoxGeometry(1.4, .06, 2.4), std({ color: 0xc8382a })); roofB.position.set(0, 1.6, -.6); g.add(roofB); for (const [dx, dz] of [[-.6, -1.7], [.6, -1.7], [-.6, .5], [.6, .5]]) { const pp = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 1.3, 4), BM.bamboo); pp.position.set(dx, .95, dz); g.add(pp); }
+    const roofB = new THREE.Mesh(new THREE.BoxGeometry(1.4, .06, 2.4), std({ color: 0xc8382a })); roofB.position.set(0, 1.6, -.6); roofB.name = 'roof'; g.add(roofB); for (const [dx, dz] of [[-.6, -1.7], [.6, -1.7], [-.6, .5], [.6, .5]]) { const pp = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 1.3, 4), BM.bamboo); pp.position.set(dx, .95, dz); g.add(pp); }
     const z = ZC - 200 + i * 95 + (i % 2) * 20, x = shoreX(z) + 7 + (i % 3) * 4; g.position.set(x, SEA, z); g.rotation.y = .3 + i * .4; g.name = 'bangka'; root.add(g); boats.push(g); }
   // merge statics
   for (const [m, gs] of GEO) { let n = 0; for (const g of gs) { for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal') g.deleteAttribute(k); if (!g.attributes.normal) g.computeVertexNormals(); n += g.attributes.position.count; } const P2 = new Float32Array(n * 3), N2 = new Float32Array(n * 3); let o = 0; for (const g of gs) { P2.set(g.attributes.position.array, o * 3); N2.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; g.dispose(); }
@@ -133,6 +133,7 @@ export function createBeach(ctx) {
     else if (o.kind === 'bch_lounge') { heal(50); msg('🏖️ Warm sand, cold drink, waves on the reef', 2.2); }
     else if (o.kind === 'bch_hammock') { heal(100); msg('🌴 You swing in the hammock until the sun moves', 2.6); S.hammock = 1; }
     else if (o.kind === 'bch_falls') { heal(100); H.burnT = 0; msg('💧 Cold water thunders over your shoulders - fully refreshed', 2.6); S.falls = 1; }
+    else if (o.kind === 'bch_tour') { if (!TOUR.on) tourStart(); }
     else if (o.kind === 'bch_fire') { heal(60); msg((H.night || 0) > .45 ? '🔥 Sparks fly up into a sky full of stars' : '🔥 The bonfire\'s laid ready for tonight', 2.4); }
     return true; };
 
@@ -159,6 +160,17 @@ export function createBeach(ctx) {
       for (let i = 0; i < NT; i++) { const a = t * .03 + i * 1.6, z = ZC - 150 + i * 90 + Math.sin(a) * 25, x = shoreX(z) + 22 + Math.cos(a * 1.3) * 10, surf = (t * .2 + i) % 7 < 1; e.set(0, a + Math.PI / 2, Math.sin(t * 2 + i) * .1); q.setFromEuler(e); m4.compose(v.set(x, SEA - (surf ? .05 : .9), z), q, one); TUR.setMatrixAt(i, m4); } TUR.instanceMatrix.needsUpdate = true;
       for (let i = 0; i < NF; i++) { const sc2 = (i / (NF / 4)) | 0, ccz = ZC - 60 + sc2 * 70, ccx = shoreX(ccz) + 30 + sc2 * 4, a = t * (.6 + sc2 * .1) + i * .37, r = 2 + (i % 7) * .4; const x = ccx + Math.cos(a) * r, z = ccz + Math.sin(a) * r * 1.5; e.set(0, -a, 0); q.setFromEuler(e); m4.compose(v.set(x, SEA - .7 - (i % 3) * .2, z), q, one); FIS.setMatrixAt(i, m4); } FIS.instanceMatrix.needsUpdate = true; }; })();
 
+  // ---------- v345 ISLAND HOPPING: a bamboo pier at the south of the beach; a bangka takes you on a loop round the karst towers ----------
+  const TOUR = (() => { const pz = ZC - 175, px0 = shoreX(pz) - 2, px1 = px0 + 30, py = SEA + 1.2; const pierG = new THREE.Group(); pierG.name = 'pier'; root.add(pierG); const push = (m, g) => { const me = new THREE.Mesh(g, m); me.receiveShadow = true; pierG.add(me); }; for (let x = px0; x < px1; x += 1.2) { const g = new THREE.BoxGeometry(1.1, .1, 2.4); g.translate(x + .6, py, pz); push(BM.bamboo, g); }
+    for (let x = px0 + 2; x <= px1; x += 4) for (const sz of [-1.1, 1.1]) { const g = new THREE.CylinderGeometry(.1, .1, 4, 6); g.translate(x, py - 1.8, pz + sz); push(BM.wood, g); }
+    SH.floors.push({ x0: px0 - 1080, x1: px1 - 1080, z0: pz - 1.2 - ZC, z1: pz + 1.2 - ZC, ya: py + .05, yb: py + .05, axis: 'x' });
+    const boat = boats[0]; const path = new THREE.CatmullRomCurve3([[px1 + 3, pz], [1380, -200], [1600, -330], [1720, -200], [1650, -40], [1500, 140], [1560, 250], [1460, 400], [1330, 420], [1280, 200], [px1 + 3, pz + 1]].map(([x, z]) => new THREE.Vector3(x, 0, z)), true, 'centripetal');
+    const sp = { x: px1 - 1, y: py, z: pz, kind: 'bch_tour', label: '⛵ Island-hopping tour on the bangka (50 pts · ~2 min)', r: 2.5, bch: true }; T.spots.push(sp); return { boat, path, len: path.getLength(), sp, on: false, u: 0, home: boat.position.clone(), homeRy: boat.rotation.y }; })();
+  function tourTick(dt, t) { if (!TOUR.on) return; TOUR.u = (performance.now() - TOUR.t0) / 1000 * 7 / TOUR.len; const b = TOUR.boat; if (TOUR.u >= 1) { TOUR.on = false; H.trainRide = null; H.trainUse = null; b.position.copy(TOUR.home); b.rotation.y = TOUR.homeRy; { const rf = b.getObjectByName('roof'); if (rf) rf.visible = true; } H.camDist = 0; P.pos.set(TOUR.sp.x, TOUR.sp.y + .1, TOUR.sp.z); msg('⛵ Back at the pier - salamat po!', 2.5); const S = H.stats || (H.stats = {}); S.tours = (S.tours || 0) + 1; return; }
+    const p = TOUR.path.getPointAt(TOUR.u), tn = TOUR.path.getTangentAt(TOUR.u); waveAt(p.x, p.z, t, wv); b.position.set(p.x, SEA + wv.eta + .05, p.z); b.rotation.y = Math.atan2(tn.x, tn.z); b.rotation.z = Math.sin(t * 1.3) * .06; P.pos.set(p.x - tn.z * .2, b.position.y + .55, p.z + tn.x * .2); H.vy = 0; if (H.fv) H.fv.set(0, 0); { const av = H.meAv; if (av && av.body) { av.body.visible = !H.fp; av.body.position.set(P.pos.x, P.pos.y - .35, P.pos.z); av.body.rotation.set(0, b.rotation.y + Math.PI, 0); if (av.W) av.W.update(dt || .016, 0); } }
+    if (sfx.nz && sfx.ctx && Math.random() < dt * 6) sfx.nz('lowpass', 160, 1, .025, .2); }
+  B.tour = TOUR; const tourStart = () => { const g = H.guns; if (!g || g.state.score < 50) { msg('You need 50 pts', 1.5); return; } if (H.mounted) { msg('⛵ Leave your horse on the beach first', 2); return; } g.state.score -= 50; g.save && g.save(); TOUR.on = true; TOUR.u = 0; TOUR.t0 = performance.now(); { const rf = TOUR.boat.getObjectByName('roof'); if (rf) rf.visible = false; } H.camDist = 5.5; H.trainRide = () => tourTick(0, surfTime()); H.trainUse = () => { msg('⛵ Enjoy the ride - the boatman brings you back to the pier', 2); return true; }; msg('⛵ The boatman pushes off - out past the karst towers we go!', 3); };
+
   // ---------- safe zone, swimming, deep-water check ----------
   (H.safeRects || (H.safeRects = [])).push({ x: 1090, z: ZC, hw: 160, hd: 440, name: 'PARADISE COVE', label: '🛡 NO ZOMBIES · PARADISE COVE' });
   H.places && (H.places.cove = { x: 1100, z: ZC });
@@ -168,7 +180,7 @@ export function createBeach(ctx) {
   B.update = dt => { const t = surfTime(); oceanU.uT.value = t; oceanU.uNight.value = H.night || 0; if (scene.fog && scene.fog.color) oceanU.uFogC.value.copy(scene.fog.color); const me = H.mounted ? H.mounted.pos : P.pos, near = me.x > 820;
     root.visible = near || me.x > 600; if (!root.visible) return;
     if (me.x > 1000 && Math.abs(me.z - ZC) < 450 && !welcome) { welcome = true; msg('🌴 Paradise Cove', 3); const S = H.stats || (H.stats = {}); if (!S.coveVisit) { S.coveVisit = 1; const g = H.guns; if (g) { g.state.score += 300; g.save && g.save(); } setTimeout(() => msg('First time at the sea!  +300 · rent a board at the surf shack and paddle out', 4.5), 1800); } } else if (me.x < 900) welcome = false;
-    surf.update(dt, t); beachLife(dt, t, me); SEALIFE(dt, t, me); WF.wtex.offset.y -= dt * 1.6; WF.mist.scale.set(1 + Math.sin(t * 2) * .08, .5, 1 + Math.cos(t * 1.7) * .08); if (sfx.nz && sfx.ctx && Math.hypot(me.x - WF.x, me.z - WF.z) < 60 && Math.random() < dt * 3) sfx.nz('lowpass', 700, .6, Math.min(.06, 2 / Math.max(5, Math.hypot(me.x - WF.x, me.z - WF.z))), .6);
+    surf.update(dt, t); beachLife(dt, t, me); SEALIFE(dt, t, me); tourTick(dt, t); WF.wtex.offset.y -= dt * 1.6; WF.mist.scale.set(1 + Math.sin(t * 2) * .08, .5, 1 + Math.cos(t * 1.7) * .08); if (sfx.nz && sfx.ctx && Math.hypot(me.x - WF.x, me.z - WF.z) < 60 && Math.random() < dt * 3) sfx.nz('lowpass', 700, .6, Math.min(.06, 2 / Math.max(5, Math.hypot(me.x - WF.x, me.z - WF.z))), .6);
     if (!B.surfing && !H.mounted && !H.trainRide && P.pos.x > shoreX(P.pos.z) + 2) { waveAt(P.pos.x, P.pos.z, t, wv); const surface = SEA + wv.eta, floor = hAt(P.pos.x, P.pos.z); if (surface - floor > 1.05) { const fy = surface - 1.25; if (P.pos.y < fy) { P.pos.y = fy; H.vy = Math.max(0, H.vy || 0); } if (!swimMsg) { swimMsg = true; msg('🏊 Swimming - rent a board at the surf shack to surf', 2.5); } } } };
   return B;
 }

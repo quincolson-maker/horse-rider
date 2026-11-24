@@ -2,7 +2,7 @@
 // After dark, will-o'-the-wisps drift between the graves. USE the big cross to pay your respects (+100 once a day).
 // Everything is merged per material, so it costs one draw per material.
 import * as THREE from 'three';
-import { mergeStatic } from './hrmerge.js?v=179';
+import { mergeStatic } from './hrmerge.js?v=180';
 export function createCemetery({ scene, H, P, T, hAt, msg }) {
   const s = T.structs.find(q => q.kind === 'town'); if (!s) return null;
   const [cx, cz] = T.toW(s, -50, 6), g = new THREE.Group(); g.position.set(cx, hAt(cx, cz), cz); g.rotation.y = s.rot || 0; scene.add(g);
@@ -27,6 +27,9 @@ export function createCemetery({ scene, H, P, T, hAt, msg }) {
   const spot = { x: sx, z: sz, y: hAt(sx, sz), kind: 'respects', label: 'Pay your respects', r: 1.8 }; T.spots.push(spot); if (T.TL) T.TL.respects = 'PAY<small>RESPECTS</small>';
   const prev = T.onUse; T.onUse = o => { if (o !== spot) return prev ? prev(o) : false; const day = new Date().toDateString(), st = H.stats || (H.stats = {}); if (st.respectDay === day) { msg('🕯️ You stand a while in the quiet.', 2); return true; } st.respectDay = day; st.respects = (st.respects || 0) + 1; if (H.guns) { H.guns.state.score += 100; H.guns.save && H.guns.save(); } msg('🕯️ You tip your hat to the departed.  +100', 2.5); return true; };
   H.bootHill = [cx, cz];
-  return { update(dt) { const n = H.night || 0, near = Math.hypot(P.pos.x - cx, P.pos.z - cz) < 150; wm.opacity = near ? Math.max(0, n - .5) * 1.4 : 0; if (wm.opacity <= 0) return; const t = performance.now() / 1000;
+  // v180 midnight: the graves open - six of the dead claw their way up when you're close after dark (once a night)
+  let risen = -1; function rise() { const Z = H.zombies; if (!Z || !Z.spawnKind || Z.state.on === false || (Z.state.role && Z.state.role() === 'client')) return; const cyc = Math.floor(Date.now() / 1200000); if (risen === cyc) return; risen = cyc;
+    for (let i = 0; i < 6; i++) { const v = new THREE.Vector3(-6 + (i % 3) * 3.6, 0, -5 + Math.floor(i / 3) * 3.2 + .9).applyAxisAngle(new THREE.Vector3(0, 1, 0), g.rotation.y); try { const o = Z.spawnKind(i % 2 ? 'crawler' : 'walker', [cx + v.x, cz + v.z]); if (o) o.pos.y = hAt(cx + v.x, cz + v.z) - .8; } catch (_) {} } msg('⚰️ The graves on Boot Hill are opening!', 3); }
+  return { update(dt) { const n = H.night || 0, dd = Math.hypot(P.pos.x - cx, P.pos.z - cz), near = dd < 150; if (n > .85 && dd < 70) rise(); wm.opacity = near ? Math.max(0, n - .5) * 1.4 : 0; if (wm.opacity <= 0) return; const t = performance.now() / 1000;
     wisps.forEach((q, i) => { q.w.position.set(Math.sin(t * .3 + q.ph) * 6, y(0, 0) + 1 + Math.sin(t * 1.1 + q.ph) * .5, Math.cos(t * .23 + q.ph * 1.3) * 6); q.w.scale.setScalar(1 + Math.sin(t * 4 + i) * .2); }); } };
 }

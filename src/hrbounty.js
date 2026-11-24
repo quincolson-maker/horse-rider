@@ -2,7 +2,7 @@
 // with a rank that climbs from Greenhorn to Legend. Purely local (each rider has their own board), saved in localStorage.
 // Hooks are read-only peeks at the other systems, so nothing else has to know the board exists.
 const KEY = 'hr_bounty';
-const RANKS = [[0, 'Greenhorn'], [2, 'Drifter'], [4, 'Gunslinger'], [6, 'Deputy'], [8, 'Marshal'], [10, 'Sheriff'], [14, 'Marshal of the Frontier'], [18, 'Living Legend'], [21, 'Legend of the West']];
+const RANKS = [[0, 'Greenhorn'], [2, 'Drifter'], [4, 'Gunslinger'], [6, 'Deputy'], [8, 'Marshal'], [10, 'Sheriff'], [14, 'Marshal of the Frontier'], [18, 'Living Legend'], [21, 'Legend of the West'], [28, 'Frontier Icon'], [36, 'Myth of the West'], [46, 'Eternal Legend']]; // v198 more ranks for the bigger board
 export function createBounty({ H, P, T, msg, sfx, PEN }) {
   let S = { i: 0, base: {}, prog: {}, done: [] }; try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && Number.isInteger(v.i)) S = Object.assign(S, v); } catch (_) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (_) {} };

@@ -1,5 +1,6 @@
 // ---------------- v76 saloon upgrade: a real bar mirror, a worn plank floor + rugs, wainscoting, warm flickering
 // chandelier light, brass-capped bar stools, and a playable player piano (ragtime, synthesized) ----------------
+import { mergeStatic } from './hrmerge.js?v=100';
 import * as THREE from 'three';
 
 // ---- planar mirror (the bar's back mirror): a reflected camera renders into a texture projected onto the glass ----
@@ -78,4 +79,5 @@ export function createSaloonPlus({ scene, H, P, T, mobile, msg, sfx }) { const s
       PIANO.beat++; PIANO.next += BEAT; } }
   function update(dt, near) { const t = (H.t || 0); for (const [L, base, ph] of lights) L.intensity = near ? base * (.9 + Math.sin(t * 7.3 + ph) * .04 + Math.sin(t * 13.1 + ph * 2) * .03 + (Math.random() < .02 ? -.08 : 0)) : 0;
     if (mirror) { const d = Math.hypot(P.pos.x - s.cx, P.pos.z - s.cz); mirror.userData.live = near && d < 22; } pianoTick(); }
+  try { mergeStatic(root); } catch (e) { console.warn('plus merge', e); } // v100
   return { update, stop, piano: PIANO, spot, mirror }; }

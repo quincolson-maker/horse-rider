@@ -1,8 +1,9 @@
 // v56 TOWN LIFE: townsfolk stroll the lanes between the buildings and the palisade, a sheriff keeps the main gate and briefs
 // you on your bounty, and a two-horse stagecoach runs a loop between town and the horse pen. All local (no net traffic), all
 // asleep when you're far away.
+import { mergeStatic } from './hrmerge.js?v=100';
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=99';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=100';
 const FOLK = [
   { sex: 'male', coat: 0x5a4632, top: 0xd8cdb4, hatC: 0x4a3a28, skin: 0x8a5a3c, hair: 0x1a120c },
   { sex: 'female', top: 0xe8dcc6, bodice: 0x2e4a6a, skirt: 0x6a2a3a, skin: 0xf0c6a4, hair: 0x9a5a2a },
@@ -19,7 +20,7 @@ export function createTownLife({ scene, H, P, T, hAt, msg, makeRealHorse, realAn
     C(CX + hx - r, CZ + hz - r, 0); C(CX - hx + r, CZ + hz - r, Math.PI / 2); C(CX - hx + r, CZ - hz + r, Math.PI); C(CX + hx - r, CZ - hz + r, Math.PI * 1.5); }
   const segL = ring.map((p, i) => Math.hypot(ring[(i + 1) % ring.length][0] - p[0], ring[(i + 1) % ring.length][1] - p[1])), loop = segL.reduce((a, b) => a + b, 0);
   const at = d => { d = ((d % loop) + loop) % loop; for (let i = 0; i < ring.length; i++) { if (d <= segL[i]) { const a = ring[i], b = ring[(i + 1) % ring.length], k = d / segL[i]; return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k]; } d -= segL[i]; } return ring[0]; };
-  const folk = FOLK.slice(0, mobile ? 4 : 6).map((o, i) => { const D = makeFrontierCharacter({ kind: 'townsfolk', quality: mobile ? 'low' : 'high', ...o }); scene.add(D.g);
+  const folk = FOLK.slice(0, mobile ? 4 : 6).map((o, i) => { const D = makeFrontierCharacter({ kind: 'townsfolk', quality: mobile ? 'low' : 'high', ...o }); scene.add(D.g); try { mergeStatic(D.g); } catch (_) {}
     return { D, d: loop * i / FOLK.length + Math.random() * 6, dir: i % 2 ? 1 : -1, sp: 1.1 + Math.random() * .4, wait: 0 }; });
   // sheriff at the main gate, with a gold star
   const sh = makeFrontierCharacter({ kind: 'sheriff', sex: 'male', quality: mobile ? 'low' : 'high', /* v81: was full detail (111k verts) on phones */ coat: 0x3a2c20, top: 0xe6dcc6, hatC: 0x2a1e14, skin: 0x7a4c30, hair: 0x120c08, bandana: 0x2a2a2a, name: 'Sheriff' });

@@ -4,8 +4,9 @@
 // → showdown, best hand takes the pot. Cash out whenever you like and your chips go back into your points.
 // Networking: the host (or a solo player) runs the table. Clients send actions ({t:'pk'}) and the host sends each
 // seated rider their own view ({t:'pks'}) via H.zSendTo, so nobody's hole cards ever reach another player's machine.
+import { mergeStatic } from './hrmerge.js?v=100';
 import * as THREE from 'three';
-import { makeFrontierCharacter } from './hrcharacters.js?v=99';
+import { makeFrontierCharacter } from './hrcharacters.js?v=100';
 const RANKS = '23456789TJQKA', SUITS = '♠♥♦♣', ANTE = 10, BET = 25, BUYIN = 200, MAXS = 6;
 const BOTS = [{ n: 'DOC', loose: .35, bluff: .08 }, { n: 'SLIM', loose: .6, bluff: .16 }, { n: 'ROSA', loose: .45, bluff: .1 }];
 const rk = c => c % 13, st = c => (c / 13) | 0;
@@ -120,7 +121,7 @@ export function createPoker(c) { const { H, msg } = c, K = { el: null, V: null, 
     const tex = atlas(), cm = new THREE.MeshLambertMaterial({ map: tex, side: THREE.DoubleSide, emissive: 0x5a5a5a, emissiveMap: tex }); D3.cards = [];
     for (let i = 0; i < MAXS * 5; i++) { const g = new THREE.PlaneGeometry(.13, .19); faceUV(g, 52); const m = new THREE.Mesh(g, cm); m.visible = false; m.userData.face = 52; root.add(m); D3.cards.push(m); }
     D3.chips = new THREE.InstancedMesh(new THREE.CylinderGeometry(.03, .03, .011, 14), new THREE.MeshStandardMaterial({ roughness: .5 }), 160); D3.chips.count = 0; D3.chips.frustumCulled = false; root.add(D3.chips);
-    D3.dolls = BOTS.map((b, k) => { const Dl = makeFrontierCharacter({ kind: 'bandit', skin: [0xd0a180, 0x8a5a3c, 0xb58462][k], hair: [0x6b6b6b, 0x2a1a10, 0x3a2414][k], top: [0xd8c8a0, 0xa83a2a, 0x5a6a8a][k], coat: [0x3d3328, 0x2a2a2a, 0x6a4a30][k], quality: c.mobile ? 'low' : 'high' });
+    D3.dolls = BOTS.map((b, k) => { const Dl = makeFrontierCharacter({ kind: 'bandit', skin: [0xd0a180, 0x8a5a3c, 0xb58462][k], hair: [0x6b6b6b, 0x2a1a10, 0x3a2414][k], top: [0xd8c8a0, 0xa83a2a, 0x5a6a8a][k], coat: [0x3d3328, 0x2a2a2a, 0x6a4a30][k], quality: c.mobile ? 'low' : 'high' }); try { mergeStatic(Dl.g); } catch (_) {}
       Dl.hips.position.y = .55; for (const l of Dl.legs) { l[0].rotation.x = -1.5; l[1].rotation.x = 1.5; } for (const ar of Dl.arms) { ar[0].rotation.x = -.9; ar[1].rotation.x = -.7; } Dl.g.visible = false; root.add(Dl.g); return Dl; });
     D3.labels = []; for (let i = 0; i < MAXS; i++) { const cv = document.createElement('canvas'); cv.width = 256; cv.height = 72; const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, fog: false })); sp.scale.set(.62, .175, 1); sp.visible = false; sp.renderOrder = 5; root.add(sp); D3.labels.push({ sp, cv, t, txt: '' }); }

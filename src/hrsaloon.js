@@ -2,14 +2,15 @@
 // their table (hire one for 100: follows you on foot or on its own horse, shoots zombies, can die), bar fistfights (bump a
 // bandit or a random brawl), the dealer in the dark corner (snow = fast, green = slow), three slot machines upstairs (seated
 // first-person view, 10/50/100 bets, jackpot 6000), swinging batwing doors, warm lamps, light shafts and dust.
+import { mergeStatic } from './hrmerge.js?v=100';
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=99';
-import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=99';
-import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=99';
-import {createCasino} from './hrcasino.js?v=99';
-import {createSaloonDecor} from './hrsaloondecor.js?v=99';
-import { createSaloonPlus } from './hrsaloonplus.js?v=99';
-import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=99';
+import { PERF } from './perfopts.js?v=100';
+import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=100';
+import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=100';
+import {createCasino} from './hrcasino.js?v=100';
+import {createSaloonDecor} from './hrsaloondecor.js?v=100';
+import { createSaloonPlus } from './hrsaloonplus.js?v=100';
+import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=100';
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
 // ---------------- slots: pure math (tests use it) ----------------
 export const SLOT = { NAMES: ['cactus', 'cherry', 'horseshoe', 'bell', 'buffalo'], W: [10, 9, 7, 4, 2], THREE: [0, 5, 10, 25, 60], TWO_CHERRY: 3, ONE_CHERRY: 1, BETS: [10, 50, 100] };
@@ -101,6 +102,7 @@ export function createSaloon(c) {
   const greta = makeDoll({ kind: 'barmaid', top: 0xe6d8bd, bust: 0xe6d8bd, sleeve: 0xe9dcc3, bodice: 0x2f5e2c, skirt: 0x8a1e22, hair: 0xd6a94e, skin: 0xeebf9d, legs: 0x3b2c26, shoe: 0x2c1a10, name: 'Greta' }); greta.route = [[-4.2,3.1],[-3,4.8],[-6,4.2],[-8.6,4.5],[-9.2,3.8],[-6,3.4]]; greta.ri = 0; greta.wait = 2; place(greta, -6, F, 4.2, 0); S.greta = greta;
   const dealer = makeDoll({ kind: 'dealer', top: 0x1c1a1c, hair: 0x111111, skin: 0xb88a6a, legs: 0x1c1a1c }); place(dealer, -16.45, F, 8.2, Math.PI / 2); dealer.mode = 'lean'; S.dealer = dealer;
   const staticNPCs=[...S.seated,...S.drifters,...S.dancers,greta,dealer];
+  try { let sv = 0; for (const D of staticNPCs) sv += mergeStatic(D.g); for (const o of scene.children) if (/saloon upgrade|architectural detail|cabinet/i.test(o.name || '')) sv += mergeStatic(o); S.mergedSaved = sv; } catch (e) { console.warn('saloon merge', e); } // v100: fewer draw calls
   // v37 perf: saloon NPCs are culled when off screen (fixed bounding sphere around the body: they move as whole groups),
   // switch to a low-detail body (same skeleton, a third of the triangles) beyond 13 m, and cast sun shadows only while you
   // are inside (out in the street they stand under the roof's shadow anyway). Phones already build the low body.

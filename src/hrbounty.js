@@ -67,6 +67,9 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'boothill', title: 'Boot Hill', task: 'Pay your respects at the big cross in the cemetery west of town', pay: 300, p: () => ((H.stats && H.stats.respects) || 0) > 0 ? 1 : 0, to: () => H.bootHill || null }, // v176
     { id: 'highnoon', title: 'High Noon', task: 'Win a duel at the post in the town square', pay: 500, p: () => ((H.stats && H.stats.duels) || 0) > 0 ? 1 : 0, to: () => H.places && H.places.town }, // v187
     { id: 'allaboard', title: 'All Aboard', task: 'Visit all six stations of the Mountain Line', pay: 800, p: () => Math.min(1, ((H.stats && H.stats.stVis) || []).length / 6), txt: () => `${((H.stats && H.stats.stVis) || []).length} / 6` },
+    { id: 'miners', title: 'Fire in the Hole', task: 'Put down 5 dynamite miners (wave 3+) — keep your distance', pay: 900, p: () => Math.min(1, ((H.stats && H.stats.zk_miner) || 0) / 5), txt: () => `${Math.min(5, ((H.stats && H.stats.zk_miner) || 0))} / 5` }, /* v219 */
+    { id: 'undertaker', title: 'Bury the Undertaker', task: 'Put down The Undertaker (every 9th wave)', pay: 2500, p: () => ((H.stats && H.stats.undertaker) || 0) > 0 ? 1 : 0 },
+    { id: 'devil', title: 'Ride the Whirlwind', task: 'Get caught in a dust devil out on the range', pay: 300, p: () => ((H.stats && H.stats.devils) || 0) > 0 ? 1 : 0 },
     { id: 'slayer', title: 'Slayer', task: 'Drop 150 zombies', pay: 3000, ...killsSince('slayer', 150) },
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];

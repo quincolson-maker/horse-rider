@@ -2,9 +2,10 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
-import { mergeStatic } from './hrmerge.js?v=217';
+import { mergeStatic } from './hrmerge.js?v=218';
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=217';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=218';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=218';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['express', 10]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
@@ -116,7 +117,10 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
       else { ws = wheelsFor(g, len); const body = kind === 'express' ? M.green : M.red; B(g, 2.6, 2.4, len, body, 0, 2.3, 0); B(g, 2.9, .22, len + .4, M.black, 0, 3.6, 0); B(g, 2.7, .2, len, M.gold, 0, 1.2, 0);
         if (kind === 'express') { B(g, 2.64, .14, len, M.gold, 0, 3.3, 0); const cv = document.createElement('canvas'); cv.width = 256; cv.height = 48; const c2 = cv.getContext('2d'); c2.fillStyle = '#2a4a34'; c2.fillRect(0, 0, 256, 48); c2.fillStyle = '#e8c060'; c2.font = '900 34px Georgia, serif'; c2.textAlign = 'center'; c2.fillText('EXPRESS', 128, 36); const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace;
           for (const sx of [-1.31, 1.31]) { const pl = new THREE.Mesh(new THREE.PlaneGeometry(4.5, .85), new THREE.MeshStandardMaterial({ map: tx })); pl.position.set(sx, 2.4, 0); pl.rotation.y = sx > 0 ? Math.PI / 2 : -Math.PI / 2; g.add(pl); } }
-        else for (let k = -3; k <= 3; k++) for (const sx of [-1.31, 1.31]) B(g, .02, .7, .9, M.glass, sx, 2.6, k * 1.4); }
+        else { for (let k = -3; k <= 3; k++) for (const sx of [-1.31, 1.31]) B(g, .02, .7, .9, M.glass, sx, 2.6, k * 1.4);
+          /* v219 passengers: dark silhouettes against the lamp-lit windows (hats on some), one merged mesh */ const pg = []; for (let k = -3; k <= 3; k++) for (const sx of [-1.322, 1.322]) { if (Math.random() < .35) continue; const o = (Math.random() - .5) * .35, q = (a, b, c, x, y, z) => { const bg = new THREE.BoxGeometry(a, b, c); bg.translate(sx, y, k * 1.4 + o + z); pg.push(bg); };
+            q(.01, .2, .44, 0, 2.36, 0); q(.01, .18, .15, 0, 2.58, 0); if (Math.random() < .5) { q(.01, .04, .3, 0, 2.68, 0); q(.01, .1, .17, 0, 2.73, 0); } else if (Math.random() < .5) q(.01, .1, .22, 0, 2.62, -.03); }
+          if (pg.length) { const pm = new THREE.Mesh(mergeGeometries(pg), M.sil || (M.sil = new THREE.MeshBasicMaterial({ color: 0x1a120c }))); g.add(pm); pg.forEach(x => x.dispose()); } } }
       cars.push({ g, kind, len, ws }); } }
   // smoke + whistle
   const puffT = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(90,90,96,.85)'); gr.addColorStop(1, 'rgba(90,90,96,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();

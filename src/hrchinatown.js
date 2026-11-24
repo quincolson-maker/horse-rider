@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=237';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=237';
-import { mergeStatic } from './hrmerge.js?v=237';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=238';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=238';
+import { mergeStatic } from './hrmerge.js?v=238';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -288,19 +288,19 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
 
   // ---------- v222 the dragon dance: a long red-and-gold dragon on poles snakes down the avenue to drums and cymbals
   // (every ~8 minutes while you're near, and whenever someone strikes the association hall gong - 3 min cooldown) ----------
-  const DR = (() => { const g = new THREE.Group(); g.name = 'dragon'; g.visible = false; scene.add(g); const NS = 12, segs = [];
+  const DR = (() => { const g = new THREE.Group(); g.name = 'dragon'; g.visible = false; scene.add(g); const NS = 12;
     const red = new THREE.MeshStandardMaterial({ color: 0xc81e1e, roughness: .5, emissive: 0x400000 }), gold = new THREE.MeshStandardMaterial({ color: 0xe8b23a, metalness: .5, roughness: .35, emissive: 0x302000 }), pole = new THREE.MeshStandardMaterial({ color: 0x3a2a1a });
     const head = new THREE.Group(); { const hb = new THREE.Mesh(new THREE.BoxGeometry(.9, .7, 1.2), red); head.add(hb); const jaw = new THREE.Mesh(new THREE.BoxGeometry(.8, .18, .9), gold); jaw.position.set(0, -.42, .3); head.add(jaw); for (const sx of [-.3, .3]) { const e = new THREE.Mesh(new THREE.SphereGeometry(.13, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff })); e.position.set(sx, .2, .58); head.add(e); const hn = new THREE.Mesh(new THREE.ConeGeometry(.08, .7, 6), gold); hn.position.set(sx, .55, -.3); hn.rotation.x = -.7; head.add(hn); const wh = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, 1.1, 4), gold); wh.position.set(sx * 1.6, -.1, .6); wh.rotation.z = sx > 0 ? 1.2 : -1.2; head.add(wh); } const mane = new THREE.Mesh(new THREE.ConeGeometry(.5, .6, 8), gold); mane.position.set(0, .3, -.6); mane.rotation.x = -1.4; head.add(mane); } g.add(head);
-    for (let i = 0; i < NS; i++) { const sg = new THREE.Group(), body = new THREE.Mesh(new THREE.SphereGeometry(.42, 12, 8), i % 2 ? gold : red); body.scale.set(1, .9, 1.5); sg.add(body); const fin = new THREE.Mesh(new THREE.ConeGeometry(.15, .45, 4), gold); fin.position.y = .45; sg.add(fin); const pl = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 2.2, 5), pole); pl.position.y = -1.3; sg.add(pl); g.add(sg); segs.push(sg); }
+    /* v238: body, fins and poles are three instanced meshes (was 36 separate meshes) */ const segs = Array.from({ length: NS }, () => new THREE.Object3D()); const IB = new THREE.InstancedMesh(new THREE.SphereGeometry(.42, 12, 8).scale(1, .9, 1.5), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .5, emissive: 0x200000 }), NS), IF = new THREE.InstancedMesh(new THREE.ConeGeometry(.15, .45, 4).translate(0, .45, 0), gold, NS), IP = new THREE.InstancedMesh(new THREE.CylinderGeometry(.03, .03, 2.2, 5).translate(0, -1.3, 0), pole, NS); { const c = new THREE.Color(); for (let i = 0; i < NS; i++) IB.setColorAt(i, c.set(i % 2 ? 0xe8b23a : 0xc81e1e)); } for (const m of [IB, IF, IP]) { m.frustumCulled = false; g.add(m); }
     const hp = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 2.2, 5), pole); hp.position.y = -1.4; head.add(hp);
     // dancers under the poles: simple dark-trousered legs pairs
-    const legM = new THREE.MeshStandardMaterial({ color: 0x1a1a22 }), legs = []; for (let i = 0; i <= NS; i += 2) { const lg = new THREE.Mesh(new THREE.BoxGeometry(.35, .9, .25), legM); g.add(lg); legs.push([lg, i]); }
-    return { g, head, segs, legs, NS, on: false, t: 0, cool: 90 + Math.random() * 120, gcool: 0 }; })();
+    const NL = Math.floor(NS / 2) + 1, IL = new THREE.InstancedMesh(new THREE.BoxGeometry(.35, .9, .25), new THREE.MeshStandardMaterial({ color: 0x1a1a22 }), NL); IL.frustumCulled = false; g.add(IL); const legs = Array.from({ length: NL }, (_, k) => [new THREE.Object3D(), k * 2]);
+    return { g, head, segs, legs, IB, IF, IP, IL, NS, on: false, t: 0, cool: 90 + Math.random() * 120, gcool: 0 }; })();
   const startDragon = why => { if (DR.on) return; DR.on = true; DR.t = 0; DR.g.visible = true; msg(why || '🐉 The dragon dance comes down the avenue!', 3); const S = st(); S.ctDragon = (S.ctDragon || 0) + 1; };
   function dragonTick(dt, me) { const near = Math.hypot(me.x - CX, me.z - CZ) < 120; if (DR.gcool > 0) DR.gcool -= dt; if (!DR.on) { DR.cool -= dt; if (DR.cool <= 0 && near) { DR.cool = 480; startDragon(); } return; }
     DR.t += dt; const sp = 2.2, z0 = -E + 2 + DR.t * sp, path = d => { const z = z0 - d; return [Math.sin(z * .35 + DR.t * .8) * 2.2, z]; };
     const place = (o, d, bob) => { const [x, z] = path(d), [x2, z2] = path(d + .6); o.position.set(CX + x, y0 + 2.2 + Math.sin(DR.t * 4 - d * .9) * .45 * bob, CZ + z); o.rotation.y = Math.atan2(x - x2, z - z2); };
-    place(DR.head, 0, 1); DR.segs.forEach((sg, i) => place(sg, (i + 1) * .95, 1)); for (const [lg, i] of DR.legs) { const [x, z] = path(i * .95); lg.position.set(CX + x + Math.sin(DR.t * 9 + i) * .1, y0 + .45, CZ + z); }
+    place(DR.head, 0, 1); DR.segs.forEach((sg, i) => { place(sg, (i + 1) * .95, 1); sg.updateMatrix(); DR.IB.setMatrixAt(i, sg.matrix); DR.IF.setMatrixAt(i, sg.matrix); DR.IP.setMatrixAt(i, sg.matrix); }); DR.legs.forEach(([lg, i], k) => { const [x, z] = path(i * .95); lg.position.set(CX + x + Math.sin(DR.t * 9 + i) * .1, y0 + .45, CZ + z); lg.updateMatrix(); DR.IL.setMatrixAt(k, lg.matrix); }); for (const m of [DR.IB, DR.IF, DR.IP, DR.IL]) m.instanceMatrix.needsUpdate = true;
     if (sfx.tone && sfx.ctx && near) { DR.beat = (DR.beat || 0) - dt; if (DR.beat <= 0) { DR.beat = .42; DR.b = (DR.b || 0) + 1; sfx.tone('sine', 95, 60, .35, .18); if (DR.b % 4 === 3) sfx.nz && sfx.nz('highpass', 4500, .6, .14, .35); if (DR.b % 8 === 7) sfx.tone('sine', 140, 132, .15, 1.2); } }
     { const hx = DR.head.position.x, hz = DR.head.position.z; DR.tot = (DR.tot || 0) + dt; if (Math.hypot(me.x - hx, me.z - hz) < 14) DR.fol = (DR.fol || 0) + dt; }
     if (z0 - DR.NS * .95 > E + 6) { DR.on = false; DR.g.visible = false; if (DR.tot > 10 && DR.fol / DR.tot > .7) { earn(120); msg('🐉 You followed the dragon all the way - good fortune +120', 3); } DR.tot = DR.fol = 0; } }

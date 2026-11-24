@@ -13,7 +13,7 @@ export function createMap({ H, P, hAt, PEN }) { let el = null, cv = null, base =
     if (H.ranch && H.ranch.pos) o.push({ id: 'ranch', name: 'Your ranch', x: H.ranch.pos.x ?? H.ranch.pos[0], z: H.ranch.pos.z ?? H.ranch.pos[1], ic: '🏠', always: true });
     (H.trainStations || []).forEach((s, i) => s.plat && o.push({ id: 'st' + i, name: s.name, x: s.plat.x, z: s.plat.z, ic: '🚉' }));
     return o.filter(q => isFinite(q.x) && isFinite(q.z)); }
-  function tick() { const ps = places(); let ch = false; for (const q of ps) if (!disc.has(q.id) && (q.x - P.pos.x) ** 2 + (q.z - P.pos.z) ** 2 < 140 * 140) { disc.add(q.id); ch = true; if (q.id !== 'pen' && q.id !== 'town' && H.msg) H.msg('🗺️ Discovered: ' + q.name + ' (M for the map)', 2.5); } if (ch) saveDisc();
+  function tick() { const ps = places(); let ch = false; for (const q of ps) if (!disc.has(q.id) && (q.x - P.pos.x) ** 2 + (q.z - P.pos.z) ** 2 < 140 * 140) { disc.add(q.id); ch = true; if (q.id !== 'pen' && q.id !== 'town' && H.guns) { H.guns.state.score += 75; H.guns.save && H.guns.save(); } /* v145 explorer pay */ if (q.id !== 'pen' && q.id !== 'town' && H.msg) H.msg('🗺️ Discovered: ' + q.name + '  +75 (M for the map)', 2.5); } if (ch) saveDisc();
     if (open && (tUp -= 1 / 60) <= 0) { tUp = .25; draw(); } }
   function makeBase(S) { const c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), N = 200, W = R(), img = x.createImageData(N, N), hs = new Float32Array(N * N); let mn = 1e9, mx = -1e9;
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const h = hAt(-W + (i + .5) / N * 2 * W, -W + (j + .5) / N * 2 * W); hs[j * N + i] = h; mn = Math.min(mn, h); mx = Math.max(mx, h); }

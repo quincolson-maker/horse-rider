@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=264';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=264';
-import { mergeStatic } from './hrmerge.js?v=264';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=265';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=265';
+import { mergeStatic } from './hrmerge.js?v=265';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -189,6 +189,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     if (kind === 'books' || kind === 'herb') { box(s, M.wood, 8.5, F1 + 1.2, DP - .45, 3.0, 2.4, .4); for (let k = 0; k < 18; k++) box(s, [M.red, M.green, M.cream, M.dark][k % 4], 7.2 + (k % 9) * .3, F1 + .55 + Math.floor(k / 9) * .7, DP - .5, .2, .5, .3); box(s, M.wood, 8.5, F1 + .4, DP - 1.8, 1.6, .8, .8); }
     INQ = null;
     // roof dressing: a water tank or a pavilion, potted plants
+    if (idx % 4 === 2 && !s.tower) { for (const pz of [DP - 1.2, DP - 2.6]) { box(s, M.wood, 4.5, RF + .2, pz, 3.2, .4, .8); for (let k = 0; k < 6; k++) cone(s, k % 2 ? M.jade : M.green, 3.2 + k * .52, RF + .55, pz, .16, .35, 6, 0); } } /* v265 rooftop vegetable planters */
     if (idx % 3 === 0) { cyl(s, M.wood, W - 2.4, RF + 1.0, DP - 2.4, 1.0, 1.6, 14); for (const k of [.4, 1.6]) cyl(s, M.black, W - 2.4, RF + .2 + k, DP - 2.4, 1.02, .06, 14); wall(s, W - 3.4, DP - 3.4, W - 1.4, DP - 3.4, RF, RF + 1.8); wall(s, W - 3.4, DP - 3.4, W - 3.4, DP - 1.4, RF, RF + 1.8); }
     else if (idx % 3 === 1) { const px = mid + 1.5, pz = DP / 2; for (const [dx, dz] of [[-1.4, -1.4], [1.4, -1.4], [-1.4, 1.4], [1.4, 1.4]]) cyl(s, M.red, px + dx, RF + 1.3, pz + dz, .09, 2.6, 8); cone(s, M.tile, px, RF + 3.25, pz, 2.6, 1.4); sph(s, M.gold, px, RF + 4.05, pz, .14); for (const [dx, dz] of [[-1.85, -1.85], [1.85, -1.85], [-1.85, 1.85], [1.85, 1.85]]) { const t = new THREE.ConeGeometry(.1, .6, 5); t.rotateX(dz < 0 ? -.9 : .9); t.translate(px + dx, RF + 2.65, pz + dz); push(M.tile, xf(s, t)); }
       box(s, M.wood, px, RF + .25, pz + .9, 2.0, .1, .5); box(s, M.wood, px, RF + .12, pz + .9, .1, .24, .4); spot(s, px, RF, pz, 'ct_view', '🏮 Take in the view from the pavilion', 2); }
@@ -246,6 +247,10 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const ax = sx * 17.5, az = sz * 30.3; box(D, M.red, ax, .45, az, .6, .9, .4); box(D, M.gold, ax, .92, az, .66, .05, .46); box(D, M.tile, ax, 1.35, az, .8, .08, .6); for (const dx of [-.27, .27]) box(D, M.red, ax + dx, 1.1, az - .15, .04, .4, .04); cyl(D, M.cream, ax, 1.0, az, .03, .12, 6); sph(D, M.lamp, ax, 1.08, az, .035); spot(D, ax, 0, az - .9 * sz, 'ct_shrine', '🕯️ Leave an offering at the shrine', 1.3); }
   for (const [cx2, cz2] of [[-9, -E + 6], [11, E - 5.6]]) { box(D, M.wood, cx2, .75, cz2, 1.8, .12, 1.0); box(D, M.wood, cx2, .95, cz2 - .5, 1.8, .4, .05); box(D, M.wood, cx2, .95, cz2 + .5, 1.8, .4, .05); for (const sz2 of [-.55, .55]) { const w2 = new THREE.CylinderGeometry(.35, .35, .06, 14); w2.rotateX(Math.PI / 2); w2.translate(cx2, .35, cz2 + sz2); push(M.wood, xf(D, w2)); } cyl(D, M.wood, cx2 - 1.3, .7, cz2, .03, 1.1, 5);
     for (let k = 0; k < 9; k++) sph(D, [M.lamp, M.gold, M.jade][k % 3], cx2 - .6 + (k % 3) * .55, .92, cz2 - .25 + Math.floor(k / 3) * .25, .11); wall(D, cx2 - .9, cz2 - .55, cx2 + .9, cz2 - .55, -1, 1.1); wall(D, cx2 - .9, cz2 + .55, cx2 + .9, cz2 + .55, -1, 1.1); spot(D, cx2, 0, cz2 - 1.2, 'ct_stall', '🍑 Fresh fruit from the cart (10 pts)', 1.4, { food: '🍑 Sweet peaches and lychees' }); }
+  // v265 street name plates at the crossing (bilingual)
+  { const plate = (txt, cn) => tex(256, 64, (c, w, h) => { c.fillStyle = '#1d3a2c'; c.fillRect(0, 0, w, h); c.strokeStyle = '#e8c060'; c.lineWidth = 4; c.strokeRect(4, 4, w - 8, h - 8); c.fillStyle = '#f6e6c0'; c.textAlign = 'center'; c.font = 'bold 26px Georgia,serif'; c.fillText(txt, w / 2 - 30, 42); c.font = '900 30px "Noto Serif TC","Songti TC",serif'; c.fillText(cn, w - 44, 44); }, false);
+    const mA = new THREE.MeshStandardMaterial({ map: plate('DUPONT ST', '都板'), roughness: .6 }), mB = new THREE.MeshStandardMaterial({ map: plate('JACKSON ST', '積臣'), roughness: .6 });
+    for (const [x, z] of [[-4.4, -4.4], [4.4, 4.4]]) { const g = new THREE.Group(); g.position.set(CX + x, y0, CZ + z); const pole = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, 3.2, 6), M.black); pole.position.y = 1.6; g.add(pole); const a1 = new THREE.Mesh(new THREE.PlaneGeometry(1.2, .3), mA); a1.position.set(0, 3.0, 0); a1.rotation.y = Math.PI / 2; const a2 = a1.clone(); a2.rotation.y = -Math.PI / 2; a2.position.x = -.01; const b1 = new THREE.Mesh(new THREE.PlaneGeometry(1.2, .3), mB); b1.position.set(0, 2.65, 0); const b2 = b1.clone(); b2.rotation.y = Math.PI; b2.position.z = -.01; g.add(a1, a2, b1, b2); scene.add(g); H.cullAdd && H.cullAdd(g, 80, { x: CX + x, z: CZ + z }); wall(D, x - .1, z, x + .1, z, -1, 3); } }
   // v229 lantern riddles: a frame of paper lanterns by the crossing, each with a riddle on its tassel
   { const rx = -7.5, rz = -7.5; for (const dx of [-1.2, 1.2]) cyl(D, M.red, rx + dx, 1.4, rz, .06, 2.8, 8); box(D, M.red, rx, 2.8, rz, 2.8, .12, .12); for (let k = 0; k < 4; k++) { sph(D, M.lamp, rx - 1.0 + k * .66, 2.35, rz, .22, 1.3); box(D, M.gold, rx - 1.0 + k * .66, 1.95, rz, .03, .3, .03); box(D, M.paper, rx - 1.0 + k * .66, 1.72, rz, .12, .2, .01); }
     spot(D, rx, 0, rz - .9, 'ct_riddle', '🏮 Lantern riddles (guess right for points)', 2); }

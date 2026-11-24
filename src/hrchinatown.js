@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=308';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=308';
-import { mergeStatic } from './hrmerge.js?v=308';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=309';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=309';
+import { mergeStatic } from './hrmerge.js?v=309';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -497,7 +497,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   // ---------- v308 SKY LANTERNS: on the shared clock (every 5 minutes after dark) a few dozen paper lanterns rise from the crossing and drift off on the wind ----------
   const SKN = mobile ? 18 : 36, SKY = new THREE.InstancedMesh(new THREE.CylinderGeometry(.22, .16, .42, 8), new THREE.MeshStandardMaterial({ color: 0xffd8a0, emissive: 0xff9a40, emissiveIntensity: 2.2, roughness: .8 }), SKN); SKY.frustumCulled = false; SKY.visible = false; SKY.name = 'sky lanterns'; scene.add(SKY);
   const sky = Array.from({ length: SKN }, (_, i) => ({ x: (Math.random() - .5) * 8, z: (Math.random() - .5) * 8, d: Math.random() * 6, vy: .9 + Math.random() * .6, ph: Math.random() * 6 })); let skyOn = -1;
-  function skyTick(dt, me) { const n = H.night || 0, slot = Math.floor(Date.now() / 300000), into = Date.now() / 1000 - slot * 300; if (n > .7 && into < 80 && Math.hypot(me.x - CX, me.z - CZ) < 250) { if (skyOn !== slot) { skyOn = slot; if (Math.hypot(me.x - CX, me.z - CZ) < 80) msg('🏮 Sky lanterns rise over Chinatown', 2.5); } } else { SKY.visible = false; return; }
+  function skyTick(dt, me) { const n = H.night || 0, slot = Math.floor(Date.now() / 300000), into = Date.now() / 1000 - slot * 300; if (n > .7 && into < 80 && Math.hypot(me.x - CX, me.z - CZ) < 250) { if (skyOn !== slot) { skyOn = slot; if (Math.hypot(me.x - CX, me.z - CZ) < 80) { msg('🏮 Sky lanterns rise over Chinatown', 2.5); const S = st(); S.ctSky = (S.ctSky || 0) + 1; } } } else { SKY.visible = false; return; }
     SKY.visible = true; const m4 = SKY.userData.m || (SKY.userData.m = new THREE.Matrix4()); sky.forEach((l, i) => { const tt = Math.max(0, into - l.d), h = tt * l.vy, wx = tt * .8 + Math.sin(tt * .3 + l.ph) * 2, wz = tt * .35 + Math.cos(tt * .25 + l.ph) * 2; m4.makeTranslation(CX + l.x + wx, y0 + .8 + h, CZ + l.z + wz); if (tt <= 0) m4.makeScale(0, 0, 0); SKY.setMatrixAt(i, m4); }); SKY.instanceMatrix.needsUpdate = true; SKY.material.emissiveIntensity = 1.8 + .4 * Math.sin(t * 8); }
 
   // ---------- per frame ----------

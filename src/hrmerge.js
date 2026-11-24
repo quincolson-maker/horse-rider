@@ -3,7 +3,7 @@
 // Meshes are left alone if they have children, a name, userData.keep, a multi-material, skinning / instancing,
 // or a custom onBeforeRender (mirrors).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=119';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=120';
 const NOOP = THREE.Object3D.prototype.onBeforeRender;
 const sig = g => Object.keys(g.attributes).sort().join(',') + (g.morphAttributes && Object.keys(g.morphAttributes).length ? '+m' : '');
 export function mergeStatic(root, { minGroup = 2 } = {}) { if (!root) return 0; let saved = 0; const parents = [];
@@ -21,5 +21,5 @@ export function mergeStatic(root, { minGroup = 2 } = {}) { if (!root) return 0; 
 
 // v109 distance culling for detail groups: hidden beyond maxD (checked a few at a time, so it costs nothing per frame)
 export function createCuller(P) { const L = []; let i = 0;
-  return { add(g, maxD) { if (g) L.push({ g, d2: maxD * maxD, c: null }); }, tick() { if (!L.length) return; for (let k = 0; k < 6; k++) { const e = L[i++ % L.length]; if (!e.c) { e.c = e.g.getWorldPosition(e.g.position.clone()); }
+  return { add(g, maxD, c) { if (g) L.push({ g, d2: maxD * maxD, c: c || null }); }, remove(g) { const i = L.findIndex(e => e.g === g); if (i >= 0) L.splice(i, 1); }, tick() { if (!L.length) return; for (let k = 0; k < 6; k++) { const e = L[i++ % L.length]; if (!e.c) { e.c = e.g.getWorldPosition(e.g.position.clone()); }
       const dx = e.c.x - P.pos.x, dz = e.c.z - P.pos.z, on = dx * dx + dz * dz < e.d2; if (e.g.visible !== on && !e.g.userData.cullLock) e.g.visible = on; } }, list: L }; }

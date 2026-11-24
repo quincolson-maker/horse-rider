@@ -14,7 +14,7 @@ export function createRanch({ scene, H, P, T, hAt, msg, sfx, makeRealHorse, real
       const sc = hi - lo + d * .004; if (sc < bs) { bs = sc; best = { x: +x.toFixed(1), z: +z.toFixed(1), rot: +Math.atan2(town[0] - x, town[1] - z).toFixed(3) }; } if (bs < 1.2) break; }
     return best; }
   const others = new Map(); let mine = null;
-  function homestead(site, owner, isMine) { const G = new THREE.Group(); scene.add(G); const walls = [], spots = [], safe = []; const hs = { site, G, walls, spots, safe, horses: [], smoke: null, owner, mine: isMine };
+  function homestead(site, owner, isMine) { const G = new THREE.Group(); scene.add(G); const walls = [], spots = [], safe = []; const hs = { site, G, walls, spots, safe, horses: [], smoke: null, owner, mine: isMine }; if (H.cullAdd) H.cullAdd(G, 420, { x: site.x, z: site.z }); // v120 hidden when far
     const { x, z, rot } = site, c = Math.cos(rot), s = Math.sin(rot), W = (u, v) => [x + u * c + v * s, z - u * s + v * c], y0 = hAt(x, z);
     G.position.set(x, y0, z); G.rotation.y = rot; const log = new THREE.MeshStandardMaterial({ color: 0x8a5a34, roughness: .9 }), logD = new THREE.MeshStandardMaterial({ color: 0x5a3a20, roughness: .9 }), roof = new THREE.MeshStandardMaterial({ color: 0x4a3a30, roughness: .85 }), stone = new THREE.MeshStandardMaterial({ color: 0x8a8278, roughness: .95 });
     const add = (geo, m, px, py, pz, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(geo, m); o.position.set(px, py, pz); o.rotation.set(rx, ry, rz); o.castShadow = o.receiveShadow = true; G.add(o); return o; };
@@ -59,7 +59,7 @@ export function createRanch({ scene, H, P, T, hAt, msg, sfx, makeRealHorse, real
     let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [u, v] of [[-14, -13], [16, -13], [16, 16], [-14, 16]]) { const [a, b] = W(u, v); x0 = Math.min(x0, a); x1 = Math.max(x1, a); z0 = Math.min(z0, b); z1 = Math.max(z1, b); }
     const sr = { x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: (x1 - x0) / 2, hd: (z1 - z0) / 2, name: isMine ? 'YOUR RANCH' : (owner || 'A rider') + "'s ranch", label: '🛡 NO ZOMBIES · ' + (isMine ? 'YOUR RANCH' : (owner || 'A RIDER').toUpperCase() + "'S RANCH") }; (H.safeRects || (H.safeRects = [])).push(sr); safe.push(sr);
     hs.W = W; hs.corral = [CU, CV]; if (isMine) H.ranchPos = [x, z];
-    hs.puffs = makePuffs(); hs.dispose = () => { G.removeFromParent(); hs.puffs.removeFromParent(); for (const h of hs.horses) h.g.removeFromParent(); const rm = (arr, xs) => { for (const q of xs) { const i = arr.indexOf(q); if (i >= 0) arr.splice(i, 1); } }; rm(T.walls, walls); rm(T.spots, spots); rm(H.safeRects || [], safe); };
+    hs.puffs = makePuffs(); hs.dispose = () => { G.removeFromParent(); H.cullRemove && H.cullRemove(G); hs.puffs.removeFromParent(); for (const h of hs.horses) h.g.removeFromParent(); const rm = (arr, xs) => { for (const q of xs) { const i = arr.indexOf(q); if (i >= 0) arr.splice(i, 1); } }; rm(T.walls, walls); rm(T.spots, spots); rm(H.safeRects || [], safe); };
     return hs; }
   function build() { if (mine || !site) return; mine = homestead(site, H.callsign ? H.callsign() : 'Rider', true); }
   // smoke puffs

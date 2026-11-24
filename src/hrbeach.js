@@ -3,8 +3,8 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=352';
-import { createSurf } from './hrsurf.js?v=352';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=353';
+import { createSurf } from './hrsurf.js?v=353';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -116,13 +116,19 @@ export function createBeach(ctx) {
     for (const sx of [-2.6, 2.6]) { const fl = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, 5.6, 6), BM.bamboo); fl.rotation.x = Math.PI / 2; fl.position.set(sx, -.15, 0); g.add(fl); for (const z of [-1.6, 1.6]) { const arm = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, 5.3, 5), BM.bamboo); arm.rotation.z = Math.PI / 2; arm.position.set(0, .35, z); g.add(arm); } }
     const roofB = new THREE.Mesh(new THREE.BoxGeometry(1.4, .06, 2.4), std({ color: 0xc8382a })); roofB.position.set(0, 1.6, -.6); roofB.name = 'roof'; g.add(roofB); for (const [dx, dz] of [[-.6, -1.7], [.6, -1.7], [-.6, .5], [.6, .5]]) { const pp = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 1.3, 4), BM.bamboo); pp.position.set(dx, .95, dz); g.add(pp); }
     const z = ZC - 200 + i * 95 + (i % 2) * 20, x = shoreX(z) + 7 + (i % 3) * 4; g.position.set(x, SEA, z); g.rotation.y = .3 + i * .4; g.name = 'bangka'; root.add(g); boats.push(g); }
+  // v353 lifeguard tower (flag shows the day's surf), a volleyball net, a sandcastle
+  const LGz = ZC + 60, LGx = shoreX(LGz) - 12, LGy = hAt(LGx, LGz); for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) cy(BM.white, LGx + dx, LGy + 1.6, LGz + dz, .08, 3.2, 6); bx(BM.white, LGx, LGy + 3.2, LGz, 2.6, .12, 2.6); bx(BM.red, LGx, LGy + 4.1, LGz, 2.2, 1.6, 2.2); bx(BM.white, LGx, LGy + 5.0, LGz, 2.8, .14, 2.8); cy(BM.white, LGx - 1.2, LGy + 5.9, LGz - 1.2, .03, 1.8, 5);
+  for (let k = 0; k < 8; k++) bx(BM.white, LGx + 1.4 + k * .3, LGy + 3.2 - (k + .5) * .4, LGz, .3, .05, .9);
+  { const vz = ZC - 20, vx = shoreX(vz) - 22, vy = hAt(vx, vz); for (const dz of [-4.5, 4.5]) cy(BM.white, vx, vy + 1.2, vz + dz, .05, 2.4, 6); const ng = new THREE.PlaneGeometry(9, .9, 1, 1); ng.rotateY(Math.PI / 2); ng.translate(vx, vy + 2.0, vz); push(BM.cloth, ng); const bl = new THREE.SphereGeometry(.12, 8, 6); bl.translate(vx + 2, vy + .12, vz + 1.5); push(BM.white, bl); spot(vx + 3, vy, vz, 'bch_volley', '🏐 Knock the volleyball over the net', 2); }
+  { const cz = ZC + 95, cx = shoreX(cz) - 7, cyy = hAt(cx, cz), sand = std({ color: 0xd8c08a }); for (const [dx, dz, r, h] of [[0, 0, .9, .9], [-.9, -.9, .3, 1.3], [.9, -.9, .3, 1.3], [-.9, .9, .3, 1.3], [.9, .9, .3, 1.3], [0, 0, .45, 1.6]]) cy(sand, cx + dx, cyy + h / 2, cz + dz, r, h, 8, r * .85); cn(sand, cx, cyy + 1.85, cz, .35, .5, 8, 0); spot(cx + 1.6, cyy, cz, 'bch_castle', '🏰 Admire the sandcastle', 1.4); }
   // merge statics
   for (const [m, gs] of GEO) { let n = 0; for (const g of gs) { for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal') g.deleteAttribute(k); if (!g.attributes.normal) g.computeVertexNormals(); n += g.attributes.position.count; } const P2 = new Float32Array(n * 3), N2 = new Float32Array(n * 3); let o = 0; for (const g of gs) { P2.set(g.attributes.position.array, o * 3); N2.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; g.dispose(); }
     const G2 = new THREE.BufferGeometry(); G2.setAttribute('position', new THREE.BufferAttribute(P2, 3)); G2.setAttribute('normal', new THREE.BufferAttribute(N2, 3)); const me = new THREE.Mesh(G2, m); me.castShadow = !mobile; me.receiveShadow = true; me.name = 'cove props'; root.add(me); } GEO.clear();
   // gulls
   const NG = mobile ? 8 : 16, GG = new THREE.InstancedMesh((() => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, .2, -.7, .12, -.05, 0, 0, -.15, 0, 0, .2, 0, 0, -.15, .7, .12, -.05], 3)); g.computeVertexNormals(); return g; })(), new THREE.MeshBasicMaterial({ color: 0xf4f4f0, side: THREE.DoubleSide }), NG); GG.frustumCulled = false; root.add(GG);
   const gulls = Array.from({ length: NG }, (_, i) => ({ a: i / NG * 6.28, r: 20 + (i % 5) * 9, h: 14 + (i % 4) * 5, sp: .2 + (i % 3) * .07, cx: 1180 + (i % 3) * 30, cz: ZC - 100 + (i % 4) * 70 }));
-  const beachLife = (dt, t, me) => { const n = H.night || 0; flame.visible = n > .45; if (flame.visible) { flame.scale.set(1 + Math.sin(t * 11) * .1, 1 + Math.sin(t * 17) * .2, 1 + Math.cos(t * 13) * .1); if (fx && fx.smoke && Math.random() < dt * 4) fx.smoke.emit(fireX, fireY + 1.6, fireZ, 0, .9, 0, .5, .45, .4, .4, 2, 1.4, -.01, .05); }
+  const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.1, .7), new THREE.MeshStandardMaterial({ color: 0xffd23a, side: THREE.DoubleSide })); flag.position.set(LGx - 1.2 + .55, LGy + 6.5, LGz - 1.2); root.add(flag);
+  const beachLife = (dt, t, me) => { const sw = SWELL.m; flag.material.color.setHex(sw > 1.25 ? 0xe83a2a : sw > .95 ? 0xffd23a : 0x3ac85a); flag.rotation.y = Math.sin(t * 3) * .25; const n = H.night || 0; flame.visible = n > .45; if (flame.visible) { flame.scale.set(1 + Math.sin(t * 11) * .1, 1 + Math.sin(t * 17) * .2, 1 + Math.cos(t * 13) * .1); if (fx && fx.smoke && Math.random() < dt * 4) fx.smoke.emit(fireX, fireY + 1.6, fireZ, 0, .9, 0, .5, .45, .4, .4, 2, 1.4, -.01, .05); }
     boats.forEach((b, i) => { waveAt(b.position.x, b.position.z, t, wv); b.position.y = SEA + wv.eta + .05; b.rotation.z = Math.sin(t * 1.1 + i) * .05; b.rotation.x = Math.sin(t * .8 + i * 2) * .04; });
     const m4 = GG.userData.m || (GG.userData.m = new THREE.Matrix4()), q = GG.userData.q || (GG.userData.q = new THREE.Quaternion()), e = GG.userData.e || (GG.userData.e = new THREE.Euler()), v = GG.userData.v || (GG.userData.v = new THREE.Vector3()), s3 = GG.userData.s || (GG.userData.s = new THREE.Vector3(1, 1, 1));
     gulls.forEach((g, i) => { g.a += g.sp * dt; const x = g.cx + Math.cos(g.a) * g.r, z = g.cz + Math.sin(g.a) * g.r, y = SEA + g.h + Math.sin(t * .7 + i) * 2, fl = Math.sin(t * 7 + i) * .5; e.set(0, -g.a, .3 + fl * .2); q.setFromEuler(e); s3.set(1, 1 + fl * .3, 1); m4.compose(v.set(x, y, z), q, s3); GG.setMatrixAt(i, m4); }); GG.instanceMatrix.needsUpdate = true;
@@ -134,6 +140,8 @@ export function createBeach(ctx) {
     else if (o.kind === 'bch_hammock') { heal(100); msg('🌴 You swing in the hammock until the sun moves', 2.6); S.hammock = 1; }
     else if (o.kind === 'bch_falls') { heal(100); H.burnT = 0; msg('💧 Cold water thunders over your shoulders - fully refreshed', 2.6); S.falls = 1; }
     else if (o.kind === 'bch_tour') { if (!TOUR.on) tourStart(); }
+    else if (o.kind === 'bch_volley') { S.volley = (S.volley || 0) + 1; msg(['🏐 Bump, set... SPIKE! Point to you', '🏐 Into the net. The gulls laugh.', '🏐 A long rally - the crowd at the bar cheers'][(Math.random() * 3) | 0], 2.2); if (sfx.tone && sfx.ctx) sfx.tone('square', 300, 200, .05, .08); }
+    else if (o.kind === 'bch_castle') { msg('🏰 Four towers, a moat, a shell flag. Someone worked hard on this.', 2.4); }
     else if (o.kind === 'bch_fire') { heal(60); msg((H.night || 0) > .45 ? '🔥 Sparks fly up into a sky full of stars' : '🔥 The bonfire\'s laid ready for tonight', 2.4); }
     return true; };
 

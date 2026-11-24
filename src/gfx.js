@@ -1,14 +1,14 @@
 // Graphics core: quality presets, procedural PBR texture atlas, sky/lighting, post-processing.
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=339';
-import { EffectComposer } from '../addons/postprocessing/EffectComposer.js?v=339';
-import { RenderPass } from '../addons/postprocessing/RenderPass.js?v=339';
-import { UnrealBloomPass } from '../addons/postprocessing/UnrealBloomPass.js?v=339';
-import { GTAOPass } from '../addons/postprocessing/GTAOPass.js?v=339';
-import { OutputPass } from '../addons/postprocessing/OutputPass.js?v=339';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=339';
-import { FXAAShader } from '../addons/shaders/FXAAShader.js?v=339';
-import { STYLE_ON } from './stylize.js?v=339';
+import { PERF } from './perfopts.js?v=340';
+import { EffectComposer } from '../addons/postprocessing/EffectComposer.js?v=340';
+import { RenderPass } from '../addons/postprocessing/RenderPass.js?v=340';
+import { UnrealBloomPass } from '../addons/postprocessing/UnrealBloomPass.js?v=340';
+import { GTAOPass } from '../addons/postprocessing/GTAOPass.js?v=340';
+import { OutputPass } from '../addons/postprocessing/OutputPass.js?v=340';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=340';
+import { FXAAShader } from '../addons/shaders/FXAAShader.js?v=340';
+import { STYLE_ON } from './stylize.js?v=340';
 
 // ---------------- Quality ----------------
 export const PRESETS = {

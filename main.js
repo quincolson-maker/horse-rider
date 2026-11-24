@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=202';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=202';
-import './src/hraudio.js?v=202';
-import './src/stylize.js?v=202'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=202';
-import { FX, SFX } from './src/fx.js?v=202';
-import { initTouch } from './src/touch.js?v=202';
-import { createHorseRider } from './src/horse.js?v=202';
-import { createHorseNet } from './src/horsenet.js?v=202';
+import './src/assetshim.js?v=203';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=203';
+import './src/hraudio.js?v=203';
+import './src/stylize.js?v=203'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=203';
+import { FX, SFX } from './src/fx.js?v=203';
+import { initTouch } from './src/touch.js?v=203';
+import { createHorseRider } from './src/horse.js?v=203';
+import { createHorseNet } from './src/horsenet.js?v=203';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=202';
+import { PF, initPerf } from './src/perf.js?v=203';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -122,7 +122,6 @@ function setupSettingsX() { const st = (k, v) => { try { localStorage.setItem(k,
   const syncV = () => { const v = +gt('hr_vol', 50); vr.value = v; $('volVal').textContent = v + '%'; sfx.vol = v / 100; if (sfx.master) sfx.master.gain.value = sfx.vol; }; vr.oninput = () => { st('hr_vol', vr.value); syncV(); }; syncV();
   { const pl = $('perfList'); if (pl) for (const [k, label] of PERF_ITEMS) { const b = document.createElement('button'); b.className = 'tog'; b.setAttribute('aria-pressed', PERF[k]); b.textContent = label + ': ' + (PERF[k] ? 'ON' : 'OFF'); b.onclick = () => { setPerf(k, !PERF[k]); location.reload(); }; pl.appendChild(b); } } // v42u
   { const gb = $('grassBtn'); if (gb && !$('fpsBtn')) { const b = document.createElement('button'); b.id = 'fpsBtn'; b.className = gb.className; const on = () => { try { return localStorage.getItem('hr_fps') === '1'; } catch (_) { return false; } }; const lab = () => { b.textContent = '📊 Show FPS: ' + (on() ? 'ON' : 'OFF'); window.__fpsOn = on(); }; lab(); b.onclick = () => { try { localStorage.setItem('hr_fps', on() ? '0' : '1'); } catch (_) {} lab(); }; gb.insertAdjacentElement('afterend', b); } } /* v202 */
-  if (!window.__fpsLoop) { window.__fpsLoop = 1; let n = 0, t0 = performance.now(), el = null; try { window.__fpsOn = localStorage.getItem('hr_fps') === '1'; } catch (_) {} const f = () => { n++; const t = performance.now(); if (t - t0 > 1000) { if (window.__fpsOn) { if (!el) { el = document.createElement('div'); el.style.cssText = 'position:fixed;left:6px;bottom:52px;z-index:80;font:700 11px monospace;color:#9f9;background:#0008;padding:2px 5px;border-radius:4px;pointer-events:none'; document.body.appendChild(el); } const R = GX.renderer.info.render; el.textContent = `${Math.round(n * 1000 / (t - t0))} fps · ${R.calls} draws`; el.style.display = 'block'; } else if (el) el.style.display = 'none'; n = 0; t0 = t; } requestAnimationFrame(f); }; requestAnimationFrame(f); }
   { const gb = $('grassBtn'); if (gb && !$('vibBtn') && 'vibrate' in navigator) { const b = document.createElement('button'); b.id = 'vibBtn'; b.className = gb.className; const on = () => { try { return localStorage.getItem('hr_vib') !== '0'; } catch (_) { return true; } }; const lab = () => { b.textContent = '📳 Vibration: ' + (on() ? 'ON' : 'OFF'); }; lab(); b.onclick = () => { try { localStorage.setItem('hr_vib', on() ? '0' : '1'); } catch (_) {} horse.state.noVibe = !on(); lab(); }; gb.insertAdjacentElement('afterend', b); } } /* v184 */
   { const gb = $('grassBtn'); if (gb && !$('bigBtn')) { const b = document.createElement('button'); b.id = 'bigBtn'; b.className = gb.className; const on = () => { try { return localStorage.getItem('hr_bigui') === '1'; } catch (_) { return false; } }; const lab = () => { b.textContent = '🔠 Large text: ' + (on() ? 'ON' : 'OFF'); document.body.classList.toggle('bigui', on()); }; lab(); b.onclick = () => { try { localStorage.setItem('hr_bigui', on() ? '0' : '1'); } catch (_) {} lab(); }; gb.insertAdjacentElement('afterend', b); } } /* v183 */
   { const gb = $('grassBtn'); if (gb && !$('rmBtn')) { const b = document.createElement('button'); b.id = 'rmBtn'; b.className = gb.className; const on = () => { try { return localStorage.getItem('hr_calm') === '1'; } catch (_) { return false; } }; const lab = () => { b.textContent = '🧘 Reduce motion: ' + (on() ? 'ON' : 'OFF'); b.setAttribute('aria-pressed', on()); }; lab(); b.onclick = () => { try { localStorage.setItem('hr_calm', on() ? '0' : '1'); } catch (_) {} window.__hrCalm = !on() ? false : true; window.__hrCalm = on(); lab(); }; gb.insertAdjacentElement('afterend', b); } } /* v174 */
@@ -159,6 +158,7 @@ window.__sim = secs => { for (let i = 0; i < secs * 20; i++) update(.05); };
 if (Q.get('dev') === '1') { window.__horse = horse; window.__hnet = hnet; window.__sfx = sfx; window.__coop = { act, syncCamera, keys, input }; }
 { const LM = THREE.DefaultLoadingManager; let mx = 0; LM.onProgress = (u, l, t) => { const b = document.querySelector('#fnLoad i'), s = document.querySelector('#fnLoad span'); const k = Math.max(mx, l / Math.max(1, t)); mx = k; if (b) b.style.width = Math.round(k * 100) + '%'; if (s) s.textContent = 'Loading the frontier… ' + Math.round(k * 100) + '%'; };
   LM.onLoad = () => { const b = document.querySelector('#fnLoad i'), s = document.querySelector('#fnLoad span'); if (b) b.style.width = '100%'; if (s) s.textContent = 'Ready to ride'; }; } // v118 splash progress bar
+if (!window.__fpsLoop) { window.__fpsLoop = 1; let n = 0, t0 = performance.now(), el = null; try { window.__fpsOn = localStorage.getItem('hr_fps') === '1'; } catch (_) {} const f = () => { n++; const t = performance.now(); if (t - t0 > 1000) { if (window.__fpsOn) { if (!el) { el = document.createElement('div'); el.style.cssText = 'position:fixed;left:6px;bottom:52px;z-index:80;font:700 11px monospace;color:#9f9;background:#0008;padding:2px 5px;border-radius:4px;pointer-events:none'; document.body.appendChild(el); } const R = GX.renderer.info.render; el.textContent = `${Math.round(n * 1000 / (t - t0))} fps · ${R.calls} draws`; el.style.display = 'block'; } else if (el) el.style.display = 'none'; n = 0; t0 = t; } requestAnimationFrame(f); }; requestAnimationFrame(f); }
 window.__cam = camera; window.__GX = GX; window.__THREE = THREE; window.__G = G; window.__P = P; window.__Q = QNAME; window.__sfx = sfx;
 // ---------------- Loop with adaptive resolution ----------------
 const NORENDER = Q.has('norender'); const TSCALE = +(Q.get('ts') || 1); let last = performance.now(), fAcc = 0, fN = 0, lowT = 0, hiT = 0, pr = renderer.getPixelRatio(); const PR_MAX = Math.min(devicePixelRatio || 1, /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) ? Math.max(pr, 1.5) : Math.max(pr, 2));

@@ -3,8 +3,8 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=191';
-import { buildM4, buildMP5, detailize } from './hrmodern.js?v=191'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=192';
+import { buildM4, buildMP5, detailize } from './hrmodern.js?v=192'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -568,7 +568,7 @@ export function createGuns(c) {
   const SHORT = { revolver: '🔫 Six-shooter', rifle: '🔫 Lever rifle', sniper: '🔭 Buffalo', tommy: '🔫 Tommy', gold: '🔭 Golden', gatling: '⚙️ Gatling', m4: '🔫 M4', mp5: '🔫 MP5', shotgun: '💥 Coach gun' };
   const wheel = (() => { let el = null, items = [], sel = -1, isOpen = false, acc = [0, 0];
     const build = () => { if (!el) { el = document.createElement('div'); el.id = 'hrWheel'; document.body.appendChild(el); const st = document.createElement('style'); st.textContent = '#hrWheel{position:fixed;left:50%;top:50%;width:min(76vmin,420px);height:min(76vmin,420px);transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(20,14,8,.25) 22%,rgba(20,14,8,.78) 23%,rgba(20,14,8,.78) 70%,rgba(20,14,8,0) 71%);z-index:60;pointer-events:none;display:none}#hrWheel.on{display:block}#hrWheel b{position:absolute;transform:translate(-50%,-50%);font:800 12px system-ui,sans-serif;color:#f3e2c0;text-shadow:0 1px 2px #000;padding:6px 8px;border-radius:10px;white-space:nowrap;border:1.5px solid transparent}#hrWheel b.cur{border-color:#e0b06066}#hrWheel b.sel{background:#d9a656;color:#2a1d12;text-shadow:none;transform:translate(-50%,-50%) scale(1.15)}#hrWheel i{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:900 13px system-ui;color:#ffd27a;font-style:normal;text-align:center}'; document.head.appendChild(st); }
-      const D = H.dyn; items = owned().map(w => ({ w, t: SHORT[w] || WNAME[w] })); if (D && D.state.count > 0) items.push({ w: 'dyn', t: '🧨 Dynamite ×' + D.state.count }); items.push({ w: null, t: '✋ Holster' });
+      const D = H.dyn; items = owned().map(w => ({ w, t: (SHORT[w] || WNAME[w]) + (tier(w) ? ' ' + ['', '🥉', '🥈', '🥇'][tier(w)] : '') + (w === state.weapon ? '' : ` · ${state.ammo[w]}`) })); if (D && D.state.count > 0) items.push({ w: 'dyn', t: '🧨 Dynamite ×' + D.state.count }); items.push({ w: null, t: '✋ Holster' });
       el.innerHTML = items.map((it, i) => { const a = i / items.length * Math.PI * 2 - Math.PI / 2, r = 36; return `<b data-i="${i}" class="${(it.w === state.weapon || (it.w === 'dyn' && D && D.equipped())) ? 'cur' : ''}" style="left:${50 + Math.cos(a) * r}%;top:${50 + Math.sin(a) * r}%">${it.t}</b>`; }).join('') + '<i>WEAPONS</i>'; };
     const mark = i => { if (i === sel || !el) return; sel = i; el.querySelectorAll('b').forEach((b, k) => b.classList.toggle('sel', k === sel)); const it = items[sel]; el.querySelector('i').textContent = it ? it.t.replace(/^\S+\s/, '') : 'WEAPONS'; };
     const pick = (dx, dy) => { if (Math.hypot(dx, dy) < 18) return; let a = Math.atan2(dy, dx) + Math.PI / 2; if (a < 0) a += Math.PI * 2; mark(Math.round(a / (Math.PI * 2) * items.length) % items.length); };

@@ -76,6 +76,7 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'ctriddle', title: 'Riddles by Lantern Light', task: 'Solve 3 lantern riddles in Chinatown', pay: 500, p: () => Math.min(1, ((H.stats && H.stats.ctRiddles) || 0) / 3), txt: () => `${Math.min(3, ((H.stats && H.stats.ctRiddles) || 0))} / 3` }, /* v241 */
     { id: 'ctstage', title: 'Stage Passenger', task: 'Ride the stage line between town and Chinatown', pay: 200, p: () => ((H.stats && H.stats.ctStage) || 0) > 0 ? 1 : 0 },
     { id: 'ctrun', title: 'Over the Tiles', task: 'Finish the Chinatown rooftop run', pay: 700, p: () => ((H.stats && H.stats.ctRuns) || 0) > 0 ? 1 : 0 },
+    { id: 'ctparcel', title: 'Special Delivery', task: 'Carry a parcel from the saloon signpost to Chinatown\'s goods store in time', pay: 300, p: () => ((H.stats && H.stats.ctParcels) || 0) > 0 ? 1 : 0 }, /* v254 */
     { id: 'slayer', title: 'Slayer', task: 'Drop 150 zombies', pay: 3000, ...killsSince('slayer', 150) },
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];

@@ -39,6 +39,7 @@ export function createStats({ H, msg }) {
     const d = daily(); return `<button class="sx" data-x="1">✕</button><h3>📓 RIDER'S JOURNAL</h3>
       <div class="c"><h4>📅 Today's challenge</h4><div class="r" style="grid-column:1/-1"><span>${esc(d.c.t)} · +${d.c.pay}</span><b>${d.done ? '✅ DONE' : d.have + ' / ' + d.c.n}</b></div></div>
       <div class="c"><h4>The record</h4>${row('Points', n(g && g.score - (g.spent || 0)))}${row('Points earned (all time)', n(g && g.score))}${row('Zombies dropped', n(g && g.kills))}${row('Accuracy', g && g.shots ? Math.round(100 * g.hits / g.shots) + '%' : '—')}${row('Bounty jobs', B ? `${B.done.length}${rank ? ' · ' + esc(rank) : ''}` : '—')}${row('Distance ridden (bounty log)', B && B.prog && B.prog.ride ? n(Math.round(B.prog.ride)) + ' m' : '—')}</div>
+      <div class="c"><h4>🎒 Saddlebag</h4>${row('🍎 Apples', n(H.gear && H.gear.state.apples))}${row('🍖 Venison', n(H.camp && H.camp.state && H.camp.state.meat))}${row('🧨 Dynamite', n(H.dyn && H.dyn.state && H.dyn.state.count))}${row('🐎 Breed', H.breed ? esc(H.breed.label()) : '—')}</div>
       <div class="c"><h4>🏅 Medals ${medals.length} / ${MEDALS.length}</h4>${MEDALS.map(([id, nm, d]) => `<div class="r" style="opacity:${medals.includes(id) ? 1 : .45}"><span>${nm}</span><b style="font-weight:600">${medals.includes(id) ? '✓' : esc(d)}</b></div>`).join('')}</div>
       <div class="c"><h4>The dead, by kind</h4>${kinds || '<i>Nothing yet — go hunting</i>'}</div>
       <div class="c"><h4>Kills by weapon</h4>${guns || '<i>Nothing yet</i>'}</div>

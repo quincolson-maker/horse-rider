@@ -10,5 +10,5 @@ n = 0
 for f in files:
     s = f.read_text(); t = pat.sub(lambda m: f"{m.group(1)}{m.group(2)}?v={ver}{m.group(3)}", s)
     if t != s: f.write_text(t); n += 1
-h = root / 'index.html'; s = h.read_text(); t = re.sub(r'src="\./main\.js(?:\?v=[^"]*)?"', f'src="./main.js?v={ver}"', s); h.write_text(t)
+h = root / 'index.html'; s = h.read_text(); t = re.sub(r'src="\./main\.js(?:\?v=[^"]*)?"', f'src="./main.js?v={ver}"', s); t = re.sub(r"var V='[^']*'", f"var V='{ver}'", t); h.write_text(t)
 print(f"stamped {n} modules + index.html with v={ver}")

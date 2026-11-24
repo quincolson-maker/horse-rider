@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=326';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=326';
-import { mergeStatic } from './hrmerge.js?v=326';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=327';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=327';
+import { mergeStatic } from './hrmerge.js?v=327';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -222,7 +222,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   }
   // v271 a tile-matching table in every tea house (memory game for game points)
   function tilesSpot(s) { return spot(s, 6.25, F0, 4.2, 'ct_tiles', '🀄 Tile matching at the corner table (free · win pts)', 1.4); }
-  function shopSpot(s, kind, en, mid) { const z = kind === 'theatre' ? 3 : /tea|noodle|hall|temple/.test(kind) ? 3.6 : 1.4, lab = { tea: '🍵 Sit for jasmine tea (20 pts · full heal)', noodle: '🍜 A bowl of noodles (30 pts · heal + well fed 2 min)', herb: '🌿 Ginseng tonic (150 pts · fast regen 3 min)', goods: '📦 Restock ammo (120 pts · fills every gun)', bakery: '🥮 Egg tarts and buns (15 pts · heal 40)', fire: (H.night || 0) > .5 ? '🎆 Fireworks show over Chinatown (400 pts) · firecrackers by day' : '🧨 Set off a string of firecrackers (50 pts)', hall: '🔔 Strike the hall gong', temple: '🕯️ Light incense (a blessing once a day)', tailor: '🧵 Have your coat mended (free, daily · +25)', gold: (H.stats && H.stats.ctJade) ? '💍 Look over the jade and gold (charm owned)' : '💍 Jade charm (2000 pts · steady healing)', books: '📚 Browse the books', theatre: '🎭 Watch the opera (once a day · +100)' }[kind];
+  function shopSpot(s, kind, en, mid) { const z = kind === 'theatre' ? 3 : /tea|noodle|hall|temple/.test(kind) ? 3.6 : 1.4, lab = { tea: '🍵 Sit for jasmine tea (20 pts · full heal)', noodle: en === 'RESTAURANT' ? '🍽️ A ten-course banquet (200 pts · full heal + well fed 5 min)' : '🍜 A bowl of noodles (30 pts · heal + well fed 2 min)', herb: en === 'DOCTOR' ? '🩺 See the doctor (free once a day · full heal)' : '🌿 Ginseng tonic (150 pts · fast regen 3 min)', goods: en === 'RICE MERCHANT' ? '🌾 Oats for your horse (50 pts · ride in to feed it)' : '📦 Restock ammo (120 pts · fills every gun)', bakery: '🥮 Egg tarts and buns (15 pts · heal 40)', fire: (H.night || 0) > .5 ? '🎆 Fireworks show over Chinatown (400 pts) · firecrackers by day' : '🧨 Set off a string of firecrackers (50 pts)', hall: '🔔 Strike the hall gong', temple: '🕯️ Light incense (a blessing once a day)', tailor: '🧵 Have your coat mended (free, daily · +25)', gold: (H.stats && H.stats.ctJade) ? '💍 Look over the jade and gold (charm owned)' : '💍 Jade charm (2000 pts · steady healing)', books: '📚 Browse the books', theatre: '🎭 Watch the opera (once a day · +100)' }[kind];
     return spot(s, mid - 1, F0, z, 'ct_' + kind, lab, 1.9, { shopName: en }); }
 
   // ---------- lantern strings over the streets (one instanced mesh) ----------
@@ -292,6 +292,9 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const heal = n => { const Z = H.zombies; if (Z && Z.state) Z.state.hp = Math.min(100, (Z.state.hp || 0) + n); };
   let fedT = 0, tonicT = 0, crackers = null;
   const prevUse = T.onUse; T.onUse = o => { if (!o || !o.ct) return prevUse ? prevUse(o) : false; const k = o.kind.slice(3), S = st(); if (/^(gold|tailor|books)$/.test(k) && (H.night || 0) > .85) { msg('🔒 Shuttered for the night - open again at dawn', 2); return true; }
+    if (o.shopName === 'RESTAURANT' && k === 'noodle') { if (pay(200)) { heal(100); fedT = 300; H.burnT = 0; msg('🍽️ A ten-course banquet - fully healed and well fed for 5 minutes', 3); S.ctFood = (S.ctFood || 0) + 1; S.ctBanquet = (S.ctBanquet || 0) + 1; } return true; }
+    if (o.shopName === 'DOCTOR' && k === 'herb') { if (S.ctDoc === day()) msg('🩺 "Rest now - come back tomorrow"', 2); else { S.ctDoc = day(); heal(100); H.burnT = 0; msg('🩺 The doctor checks your pulse and dresses your cuts - good as new', 3); } return true; }
+    if (o.shopName === 'RICE MERCHANT' && k === 'goods') { const hm = H.mounted || (H.horses && H.horses.find(h => h.mine)); if (pay(50)) { if (H.mounted) { H.stam = 100; if (H.mounted.hp != null) H.mounted.hp = 100; } msg(H.mounted ? '🌾 A sack of oats - your horse eats and is fresh again' : '🌾 A sack of oats for your horse (ride in to feed it on the spot next time)', 2.6); S.ctOats = (S.ctOats || 0) + 1; } return true; }
     if (k === 'tea') { if (pay(20)) { heal(100); H.burnT = 0; msg('🍵 Jasmine tea, a quiet table - you feel whole again', 2.5); S.ctTea = (S.ctTea || 0) + 1; } }
     else if (k === 'noodle') { if (pay(30)) { heal(60); fedT = 120; msg('🍜 Hot noodles - well fed for 2 minutes (double regen)', 2.5); S.ctFood = (S.ctFood || 0) + 1; } }
     else if (k === 'bakery') { if (pay(15)) { heal(40); msg('🥮 Warm egg tarts and a pork bun', 2); S.ctFood = (S.ctFood || 0) + 1; } }

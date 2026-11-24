@@ -3,8 +3,8 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=108';
-import { buildM4, buildMP5, detailize } from './hrmodern.js?v=108'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=109';
+import { buildM4, buildMP5, detailize } from './hrmodern.js?v=109'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -263,7 +263,7 @@ export function buildGold() { const m = buildSharps(), gold = new THREE.MeshPhys
 // ---------------- shooting range: bottles on a rail, tin cans on a stump, bullseye boards ----------------
 function lathe(pts, seg = 16) { return new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0], p[1])), seg); }
 function buildRange(scene, hAt, R, obst) {
-  const M = mats(), T = [], grp = new THREE.Group(); grp.name = 'ShootingRange'; scene.add(grp);
+  const M = mats(), T = [], grp = new THREE.Group(); grp.name = 'ShootingRange'; scene.add(grp); setTimeout(() => { const HH = window.__hrH; HH && HH.cullAdd && HH.cullAdd(grp, 260); }, 0); /* v109 */
   const post = (x, z, h, r = .07) => { const m = mesh(new THREE.CylinderGeometry(r * .9, r, h, 8), M.wood, x, hAt(x, z) + h / 2 - .05, z); m.receiveShadow = true; grp.add(m); obst.push([x, z, r + .15, h]); return m; };
   // bottle rail 12 m out
   const bx = R.x - 12, bz = R.z, y0 = hAt(bx, bz); post(bx, bz - 1.6, 1.15); post(bx, bz + 1.6, 1.15);

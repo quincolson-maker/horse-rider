@@ -2,8 +2,9 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
+import { mergeStatic } from './hrmerge.js?v=109';
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=108';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=109';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['express', 10]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
@@ -79,7 +80,7 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
       const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; const sg = new THREE.Mesh(new THREE.BoxGeometry(.1, .7, 3.7), [dk, dk, dk, dk, new THREE.MeshStandardMaterial({ map: tx }), new THREE.MeshStandardMaterial({ map: tx })]); sg.position.set(1.2, deckY + 2.5, 0); sg.rotation.y = Math.PI / 2; g.add(sg);
       for (const z of [-10, 10]) { const pole = new THREE.Mesh(new THREE.CylinderGeometry(.06, .08, 2.8, 8), dk); pole.position.set(-.9, deckY + 1.4, z); g.add(pole); const lp = new THREE.Mesh(new THREE.BoxGeometry(.32, .4, .32), lampM); lp.position.set(-.9, deckY + 2.9, z); g.add(lp); }
       const bench = new THREE.Mesh(new THREE.BoxGeometry(.5, .45, 3), wood); bench.position.set(1, deckY + .32, -2.5); g.add(bench); const bb = new THREE.Mesh(new THREE.BoxGeometry(.1, .5, 3), wood); bb.position.set(1.25, deckY + .7, -2.5); g.add(bb);
-      g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+      g.traverse(o => { if (o.isMesh) o.castShadow = true; }); try { mergeStatic(g); } catch (_) {} H.cullAdd && H.cullAdd(g, 380); // v109: one draw per material + hidden when far
       st.plat = c.clone(); st.side = side; st.deckY = c.y + deckY; st.spot = { x: c.x, y: gy, z: c.z, kind: 'train', label: '🚂 ' + st.name + ' station', r: 4.5, st: k }; if (T && T.spots) T.spots.push(st.spot); });
     if (T) { const prev = T.onUse; T.onUse = o => (o && o.kind === 'train') ? (platformUse(o.st), true) : (prev ? prev(o) : false); } }
   // ---------- v77 riding as a passenger ----------

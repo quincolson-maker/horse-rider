@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=256';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=256';
-import { mergeStatic } from './hrmerge.js?v=256';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=257';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=257';
+import { mergeStatic } from './hrmerge.js?v=257';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -373,7 +373,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
 
   // ---------- per frame ----------
   let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0, musT = 2, musI = 3, incT = 0, swT = 0;
-  function update(dt) { t += dt; if (parcel) { parcel.t -= dt; if (parcel.t <= 0) { parcel = null; msg('📦 Too late - the parcel goes back', 2.5); } else if (parcel.last - parcel.t >= 30) { parcel.last = parcel.t; msg(`📦 Parcel: ${Math.ceil(parcel.t)} s left`, 1.5); } } const me = H.mounted ? H.mounted.pos : P.pos, inside = Math.abs(me.x - CX) < E && Math.abs(me.z - CZ) < E; peopleTick(dt, me); dragonTick(dt, me); runTick(dt, me); if (inside && (roofT -= dt) <= 0) { roofT = .5; for (const b of built) { if (me.y < b.y0 + RF - .3) break; const [lx, lz] = T.toL ? T.toL(b, me.x, me.z) : [0, 0]; if (lx > 0 && lx < W && lz > 0 && lz < DP && me.y > b.y0 + RF - .3) { const S = st(), v = new Set(S.ctRoofs || []); if (!v.has(b.name + b.cx.toFixed(0) + b.cz.toFixed(0))) { v.add(b.name + b.cx.toFixed(0) + b.cz.toFixed(0)); S.ctRoofs = [...v]; msg(`🏯 Rooftop ${v.size} of ${built.length}`, 1.6); } } } }
+  function update(dt) { t += dt; { const g = parcel && spots.find(q => q.kind === 'ct_goods'); H.parcelPos = g ? [g.x, g.z] : null; } if (parcel) { parcel.t -= dt; if (parcel.t <= 0) { parcel = null; msg('📦 Too late - the parcel goes back', 2.5); } else if (parcel.last - parcel.t >= 30) { parcel.last = parcel.t; msg(`📦 Parcel: ${Math.ceil(parcel.t)} s left`, 1.5); } } const me = H.mounted ? H.mounted.pos : P.pos, inside = Math.abs(me.x - CX) < E && Math.abs(me.z - CZ) < E; peopleTick(dt, me); dragonTick(dt, me); runTick(dt, me); if (inside && (roofT -= dt) <= 0) { roofT = .5; for (const b of built) { if (me.y < b.y0 + RF - .3) break; const [lx, lz] = T.toL ? T.toL(b, me.x, me.z) : [0, 0]; if (lx > 0 && lx < W && lz > 0 && lz < DP && me.y > b.y0 + RF - .3) { const S = st(), v = new Set(S.ctRoofs || []); if (!v.has(b.name + b.cx.toFixed(0) + b.cz.toFixed(0))) { v.add(b.name + b.cx.toFixed(0) + b.cz.toFixed(0)); S.ctRoofs = [...v]; msg(`🏯 Rooftop ${v.size} of ${built.length}`, 1.6); } } } }
     if (inside && !welcome) { welcome = true; msg('🏮 Chinatown - 唐人街', 3); const S = st(); if (!S.ctVisit) { S.ctVisit = 1; earn(200); setTimeout(() => msg('First visit to Chinatown  +200', 2.5), 2000); } } else if (!inside && Math.hypot(me.x - CX, me.z - CZ) > 90) welcome = false;
     if (nightK > .6 && (H.night || 0) <= .6 && Math.hypot(me.x - CX, me.z - CZ) < 200 && sfx.tone && sfx.ctx) { [0, 2.6, 5.2].forEach(d => setTimeout(() => { sfx.tone('sine', 82, 80, .35, 4); sfx.tone('sine', 164, 160, .12, 3); }, d * 1000)); msg('🔔 The temple bell greets the dawn over Chinatown', 2.5); } /* v234 */
     const n = H.night || 0; if (Math.abs(n - nightK) > .02) { nightK = n; M.lamp.emissiveIntensity = .5 + 3.2 * n; M.paper.emissiveIntensity = .15 + 2.2 * n; M.glass.emissiveIntensity = .06 + 1.2 * n; M.glass2.emissiveIntensity = .04 + .12 * n; signM.emissiveIntensity = .05 + .35 * n; gateM.emissiveIntensity = .08 + .4 * n; } { const nt = n > .5; if (nt !== update.nt) { update.nt = nt; for (const o of spots) if (o.kind === 'ct_fire') o.label = nt ? '🎆 Fireworks show over Chinatown (400 pts)' : '🧨 Set off a string of firecrackers (50 pts)'; } }

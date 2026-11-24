@@ -2,10 +2,10 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
-import { mergeStatic } from './hrmerge.js?v=346';
+import { mergeStatic } from './hrmerge.js?v=347';
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=346';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=346';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=347';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=347';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['dining', 11], ['express', 10], ['caboose', 7]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
@@ -94,8 +94,14 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
       const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; const sg = new THREE.Mesh(new THREE.BoxGeometry(.1, .7, 3.7), [dk, dk, dk, dk, new THREE.MeshStandardMaterial({ map: tx }), new THREE.MeshStandardMaterial({ map: tx })]); sg.position.set(1.2, deckY + 2.5, 0); sg.rotation.y = Math.PI / 2; g.add(sg);
       for (const z of [-10, 10]) { const pole = new THREE.Mesh(new THREE.CylinderGeometry(.06, .08, 2.8, 8), dk); pole.position.set(-.9, deckY + 1.4, z); g.add(pole); const lp = new THREE.Mesh(new THREE.BoxGeometry(.32, .4, .32), lampM); lp.position.set(-.9, deckY + 2.9, z); g.add(lp); }
       const bench = new THREE.Mesh(new THREE.BoxGeometry(.5, .45, 3), wood); bench.position.set(1, deckY + .32, -2.5); g.add(bench); const bb = new THREE.Mesh(new THREE.BoxGeometry(.1, .5, 3), wood); bb.position.set(1.25, deckY + .7, -2.5); g.add(bb);
+      if (/Summit|Dry Gulch|Eagle/.test(st.name)) { /* v347 a water tower beside the line: tank on a timber trestle, hoops and a swinging spout */ const tw = new THREE.Group(); tw.position.set(4.2, gy - c.y, 6); g.add(tw); const tk = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.1, 3.2, 16), wood); tk.position.y = 7.2; tw.add(tk); const cap = new THREE.Mesh(new THREE.ConeGeometry(2.35, 1.4, 16), roof); cap.position.y = 9.5; tw.add(cap);
+        for (const hy of [6.1, 7.2, 8.3]) { const hp = new THREE.Mesh(new THREE.TorusGeometry(2.13, .05, 4, 24), dk); hp.rotation.x = Math.PI / 2; hp.position.y = hy; tw.add(hp); } for (const [lx, lz] of [[-1.5, -1.5], [1.5, -1.5], [-1.5, 1.5], [1.5, 1.5]]) { const lg = new THREE.Mesh(new THREE.BoxGeometry(.3, 5.6, .3), dk); lg.position.set(lx, 2.8, lz); lg.rotation.z = lx * -.04; lg.rotation.x = lz * .04; tw.add(lg); }
+        for (const by of [1.8, 3.8]) for (const r2 of [0, Math.PI / 2]) { const br = new THREE.Mesh(new THREE.BoxGeometry(3.6, .12, .12), dk); br.position.y = by; br.rotation.y = r2; br.position.x = r2 ? 0 : 0; br.position.z = r2 ? 0 : 1.5; tw.add(br); }
+        const spout = new THREE.Mesh(new THREE.CylinderGeometry(.18, .22, 3, 8), dk); spout.rotation.z = Math.PI / 2 - .3; spout.position.set(-3.6, 6.0, 0); spout.scale.y = 1.5; tw.add(spout); }
       g.traverse(o => { if (o.isMesh) o.castShadow = true; }); try { mergeStatic(g); } catch (_) {} H.cullAdd && H.cullAdd(g, 380); // v109: one draw per material + hidden when far
       st.plat = c.clone(); st.side = side; st.deckY = c.y + deckY; st.spot = { x: c.x, y: gy, z: c.z, kind: 'train', label: '🚂 ' + st.name + ' station', r: 4.5, st: k }; if (T && T.spots) T.spots.push(st.spot); { const cp = c.clone().addScaledVector(t, 11); st.cab = { x: cp.x, y: gy, z: cp.z, kind: 'train_cab', label: '', r: 3, st: k }; if (T && T.spots) T.spots.push(st.cab); } });
+    /* v347 travellers wait on every platform; they climb aboard when the train comes in */ const LOOKS = [[0x3a3a4a, 0xe8e0cc, 'male'], [0x6a2a3a, 0xf0e8d8, 'female'], [0x2e4a3a, 0xe0d6c0, 'male'], [0x5a4a2a, 0xece4d0, 'female'], [0x2a3a5a, 0xf0e8d8, 'male']]; let li = 0;
+    STATIONS.forEach(st => { st.folk = []; for (let k = 0; k < (mobile ? 1 : 2); k++) { const [coat, top, sex] = LOOKS[li++ % LOOKS.length]; const D = makeFrontierCharacter({ kind: 'townsfolk', sex, quality: 'low', coat, top, bodice: coat, hatC: 0x2a221a, skin: [0xd8a882, 0xc89470, 0xa87452][li % 3], hair: 0x2a1a10, bandana: coat, name: 'Traveller' }); scene.add(D.g); try { mergeStatic(D.g); } catch (_) {} const off = (k ? 4 : -6) + Math.random(); const pp = st.plat.clone().add(new THREE.Vector3(0, 0, 0)); at(st.s, p, t); pp.addScaledVector(t, off); D.g.position.set(pp.x, st.deckY + .1, pp.z); D.g.rotation.y = Math.atan2(-st.side.x, -st.side.z); st.folk.push(D); } });
     if (T) { const prev = T.onUse; T.onUse = o => (o && o.kind === 'train') ? (platformUse(o.st), true) : (o && o.kind === 'train_cab') ? (sched(Date.now()).at === o.st ? (boardP(true), true) : (platformUse(o.st), true)) : (prev ? prev(o) : false); } }
   // ---------- v77 riding as a passenger ----------
   let pass = null, lastAt = -2;
@@ -185,6 +191,7 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
     sT -= dt; if (sT <= 0 && dl < 400) { sT = .12; tmp.set(0, 5.2, 3.1).applyQuaternion(loco.g.quaternion).add(loco.g.position); sp.set([tmp.x, tmp.y, tmp.z], si * 3); sAge[si] = 0; si = (si + 1) % SN; }
     for (let i = 0; i < SN; i++) { sAge[i] += dt; sp[i * 3 + 1] += dt * 2.2; } sg.attributes.position.needsUpdate = true; smoke.material.size = 4.5;
     wT -= dt; if (wT <= 0) { wT = 25 + Math.random() * 20; if (dl < 260 && VNOW > 1) whistle(); }
+    { const at0 = SS.at; for (const [k, st] of STATIONS.entries()) { if (!st.folk) continue; const near = Math.hypot(P.pos.x - st.plat.x, P.pos.z - st.plat.z) < 140; const board = at0 === k && SS.left < DWELL - 4; for (const D of st.folk) { const v = near && !board; if (D.g.visible !== v) D.g.visible = v; if (v) poseFrontierCharacter(D, dt, { speed: 0 }); } } }
     passTick(); rideSounds(dt, VNOW, s - 30); heistTick(dt); }
   return { update, get stations() { return STATIONS; }, get tunnels() { return TUN.length; }, sched: () => sched(Date.now()), boardP, get passenger() { return !!pass; }, get guards() { return guards; }, get heist() { return heist; }, get cars() { return cars; }, get length() { return L; }, board: () => cars.length && board(cars.find(c => c.kind === 'express')) };
 }

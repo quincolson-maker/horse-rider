@@ -3,7 +3,7 @@
 // faces in a rock heap. Swing a pick at the ore (one chunk a minute per face, carry up to 10) and sell it at the assay office.
 // It is NOT a safe zone - dynamite miners like the place after dark. Everything is merged per material and distance-culled.
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=300';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=301';
 
 export const MC = { x: -110, z: -30, r: 30 };
 export const mcAvoid = (x, z) => Math.hypot(x - MC.x, z - MC.z) < MC.r;
@@ -72,8 +72,11 @@ export function createMineCamp({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     if (o.kind === 'mc_ore') { const now = performance.now() / 1000; if (ore >= 10) msg('⛏ Your sack is full - sell at the assay office', 2); else if (now < faceT[o.i]) msg(`⛏ This face is worked out for now (${Math.ceil(faceT[o.i] - now)} s)`, 1.6); else { faceT[o.i] = now + 60; ore++; saveOre(); label(); S2.mcOre = (S2.mcOre || 0) + 1; msg(`⛏ Clang! A chunk of silver ore (${ore}/10)`, 1.8); if (sfx.tone && sfx.ctx) { sfx.tone('square', 1800, 1500, .06, .08); setTimeout(() => sfx.tone('square', 1600, 1300, .05, .08), 180); } if (fx && fx.smoke) for (let k = 0; k < 5; k++) fx.smoke.emit(o.x, o.y + .6, o.z, (Math.random() - .5), .6, (Math.random() - .5), .6, .58, .55, .4, .7, .5, -.02, .3); } }
     else if (o.kind === 'mc_assay') { if (!ore) msg('⚖️ "Bring me ore from the heap and I\'ll weigh it fair."', 2.2); else { const n = ore; ore = 0; saveOre(); earn(n * ORE_PAY); S2.mcSold = (S2.mcSold || 0) + n; msg(`⚖️ The assayer weighs ${n} chunk${n === 1 ? '' : 's'} - +${n * ORE_PAY}`, 2.6); label(); } }
     else if (o.kind === 'mc_fire') { const Z = H.zombies; if (Z && Z.state) Z.state.hp = Math.min(100, (Z.state.hp || 0) + 35); H.burnT = 0; msg('🔥 Coffee on the coals and a seat by the fire', 2); }
+    else if (o.kind === 'mc_stage') { const g = H.guns; if (!g || g.state.score < 40) msg('You need 40 pts', 1.6); else { g.state.score -= 40; g.save && g.save(); const [x, z] = o.to, y = T.floorAt(x, z, 1e9) + .05; if (H.mounted) { H.mounted.pos.set(x, y, z); H.speed = 0; } else P.pos.set(x, y, z); H.vy = 0; msg('🐎 The stage rattles off... and you\'re there', 2.2); S2.ctStage = (S2.ctStage || 0) + 1; } }
     else if (o.kind === 'mc_look') { msg('🔭 The diggings below, Chinatown\'s lanterns to the south-east, the mountains all round', 2.6); S2.mcLook = 1; }
     return true; };
+  // v301 stage stop: a signpost at the diggings and a second board on the saloon signpost (40 pts each way)
+  const stg = (() => { const ts = T.town; if (!ts || !T.toW) return null; const [tx, tz] = T.toW(ts, -9, -12), ty = T.floorAt(tx, tz, 1e9); const a = { x: tx - 1.6, z: tz + 1.2, y: ty, kind: 'mc_stage', label: '🐎 Take the stage to Silver Creek Diggings (40 pts)', r: 1.6, mc: true, to: [CX + 2, CZ - 16] }, b = spot(-2, 0, -14, 'mc_stage', '🐎 Take the stage to town (40 pts)', 2.2, { to: [tx + 2, tz] }); T.spots.push(a); const pst = new THREE.Group(); const p1 = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, 2.4, 6), M.wood); p1.position.y = 1.2; const bd = new THREE.Mesh(new THREE.BoxGeometry(1.4, .34, .05), M.plank); bd.position.y = 2.05; pst.add(p1, bd); pst.position.set(CX - 2, y0, CZ - 13.2); scene.add(pst); return [a, b]; })();
   let welcome = false, t = 0;
   function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, d = Math.hypot(me.x - CX, me.z - CZ); if (d < 25 && !welcome) { welcome = true; msg('⛏ Silver Creek Diggings', 2.5); const S2 = st(); if (!S2.mcVisit) { S2.mcVisit = 1; earn(150); setTimeout(() => msg('First visit to the diggings  +150 · pick ore at the rock heap, sell it at the assay office', 4), 1500); } } else if (d > 60) welcome = false;
     lampM.emissiveIntensity = .2 + 3 * (H.night || 0);

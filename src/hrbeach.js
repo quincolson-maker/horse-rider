@@ -3,8 +3,8 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=355';
-import { createSurf } from './hrsurf.js?v=355';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=356';
+import { createSurf } from './hrsurf.js?v=356';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -121,6 +121,14 @@ export function createBeach(ctx) {
   for (let k = 0; k < 8; k++) bx(BM.white, LGx + 1.4 + k * .3, LGy + 3.2 - (k + .5) * .4, LGz, .3, .05, .9);
   { const vz = ZC - 20, vx = shoreX(vz) - 22, vy = hAt(vx, vz); for (const dz of [-4.5, 4.5]) cy(BM.white, vx, vy + 1.2, vz + dz, .05, 2.4, 6); const ng = new THREE.PlaneGeometry(9, .9, 1, 1); ng.rotateY(Math.PI / 2); ng.translate(vx, vy + 2.0, vz); push(BM.cloth, ng); const bl = new THREE.SphereGeometry(.12, 8, 6); bl.translate(vx + 2, vy + .12, vz + 1.5); push(BM.white, bl); spot(vx + 3, vy, vz, 'bch_volley', '🏐 Knock the volleyball over the net', 2); }
   { const cz = ZC + 95, cx = shoreX(cz) - 7, cyy = hAt(cx, cz), sand = std({ color: 0xd8c08a }); for (const [dx, dz, r, h] of [[0, 0, .9, .9], [-.9, -.9, .3, 1.3], [.9, -.9, .3, 1.3], [-.9, .9, .3, 1.3], [.9, .9, .3, 1.3], [0, 0, .45, 1.6]]) cy(sand, cx + dx, cyy + h / 2, cz + dz, r, h, 8, r * .85); cn(sand, cx, cyy + 1.85, cz, .35, .5, 8, 0); spot(cx + 1.6, cyy, cz, 'bch_castle', '🏰 Admire the sandcastle', 1.4); }
+  // v356 a jeepney parked behind the beach bar: long chrome-trimmed body painted in bright stripes, open back, a little silver horse on the hood
+  const JP = (() => { const z = ZC - 5, x = shoreX(z) - 44, y = hAt(x, z), paint = [std({ color: 0xe83a2a }), std({ color: 0xf0c83a }), std({ color: 0x2a8ac8 }), std({ color: 0x3ac85a })], chrome = std({ color: 0xd8d8e0, metalness: .9, roughness: .25 }), dark = std({ color: 0x1a1a1e });
+    bx(chrome, x, y + 1.0, z, 2.1, .9, 6.4); for (let k = 0; k < 4; k++) bx(paint[k], x, y + 1.1 + k * .18 - .25, z, 2.14, .14, 6.44); bx(paint[0], x, y + 2.25, z - .4, 2.2, .1, 5.4); for (const sx of [-1, 1]) for (const zz of [-2.6, -.8, 1.0]) cy(chrome, x + sx * 1.0, y + 1.75, z + zz, .04, 1.1, 5);
+    bx(chrome, x, y + .95, z + 3.4, 1.9, .8, .6); bx(dark, x, y + .95, z + 3.71, 1.6, .5, .02); for (const sx of [-.7, .7]) { const g = new THREE.CylinderGeometry(.16, .16, .05, 10); g.rotateX(Math.PI / 2); g.translate(x + sx, y + 1.0, z + 3.72); push(std({ color: 0xfff0c0, emissive: 0x403010 }), g); }
+    for (const sx of [-1.05, 1.05]) for (const zz of [-2.2, 2.4]) cy(dark, x + sx, y + .42, z + zz, .42, .3, 12, .42, 0, Math.PI / 2); bx(chrome, x, y + 1.55, z + 3.0, .1, .35, .5); cn(chrome, x, y + 1.85, z + 3.0, .12, .3, 4); bx(dark, x, y + 1.6, z + 2.4, 1.9, .7, .05);
+    spot(x + 1.6, y, z, 'bch_jeep', '🚐 Admire the jeepney', 1.6); })();
+  // hibiscus and bougainvillea bushes along the back of the beach
+  { const fl = [std({ color: 0xff3a6a, emissive: 0x200008 }), std({ color: 0xff8a2a, emissive: 0x201000 }), std({ color: 0xd84aff, emissive: 0x180020 })], lf = std({ color: 0x2a6a2a }); for (let i = 0; i < 40; i++) { const z = ZC - 220 + i * 11 + Math.sin(i) * 4, x = shoreX(z) - 38 - (i % 4) * 3, y = hAt(x, z); if (nearFalls(x, z) || terraceMask(x, z) > .05) continue; const g = new THREE.IcosahedronGeometry(.9, 0); g.translate(x, y + .7, z); push(lf, g); for (let k = 0; k < 4; k++) { const f = new THREE.IcosahedronGeometry(.22, 0); f.translate(x + Math.cos(k * 1.7 + i) * .7, y + .9 + (k % 2) * .3, z + Math.sin(k * 1.7 + i) * .7); push(fl[(i + k) % 3], f); } } }
   // merge statics
   for (const [m, gs] of GEO) { let n = 0; for (const g of gs) { for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal') g.deleteAttribute(k); if (!g.attributes.normal) g.computeVertexNormals(); n += g.attributes.position.count; } const P2 = new Float32Array(n * 3), N2 = new Float32Array(n * 3); let o = 0; for (const g of gs) { P2.set(g.attributes.position.array, o * 3); N2.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; g.dispose(); }
     const G2 = new THREE.BufferGeometry(); G2.setAttribute('position', new THREE.BufferAttribute(P2, 3)); G2.setAttribute('normal', new THREE.BufferAttribute(N2, 3)); const me = new THREE.Mesh(G2, m); me.castShadow = !mobile; me.receiveShadow = true; me.name = 'cove props'; root.add(me); } GEO.clear();
@@ -143,6 +151,7 @@ export function createBeach(ctx) {
     else if (o.kind === 'bch_tour') { if (!TOUR.on) tourStart(); }
     else if (o.kind === 'bch_volley') { S.volley = (S.volley || 0) + 1; msg(['🏐 Bump, set... SPIKE! Point to you', '🏐 Into the net. The gulls laugh.', '🏐 A long rally - the crowd at the bar cheers'][(Math.random() * 3) | 0], 2.2); if (sfx.tone && sfx.ctx) sfx.tone('square', 300, 200, .05, .08); }
     else if (o.kind === 'bch_castle') { msg('🏰 Four towers, a moat, a shell flag. Someone worked hard on this.', 2.4); }
+    else if (o.kind === 'bch_jeep') { msg('🚐 A jeepney: chrome horse on the hood, every inch painted. The driver says he\'ll take you to town "later".', 3); }
     else if (o.kind === 'bch_fire') { heal(60); msg((H.night || 0) > .45 ? '🔥 Sparks fly up into a sky full of stars' : '🔥 The bonfire\'s laid ready for tonight', 2.4); }
     return true; };
 

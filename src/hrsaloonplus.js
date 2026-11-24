@@ -1,6 +1,6 @@
 // ---------------- v76 saloon upgrade: a real bar mirror, a worn plank floor + rugs, wainscoting, warm flickering
 // chandelier light, brass-capped bar stools, and a playable player piano (ragtime, synthesized) ----------------
-import { mergeStatic } from './hrmerge.js?v=258';
+import { mergeStatic } from './hrmerge.js?v=259';
 import * as THREE from 'three';
 
 // ---- planar mirror (the bar's back mirror): a reflected camera renders into a texture projected onto the glass ----

@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=138';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=138';
-import './src/hraudio.js?v=138';
-import './src/stylize.js?v=138'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=138';
-import { FX, SFX } from './src/fx.js?v=138';
-import { initTouch } from './src/touch.js?v=138';
-import { createHorseRider } from './src/horse.js?v=138';
-import { createHorseNet } from './src/horsenet.js?v=138';
+import './src/assetshim.js?v=139';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=139';
+import './src/hraudio.js?v=139';
+import './src/stylize.js?v=139'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=139';
+import { FX, SFX } from './src/fx.js?v=139';
+import { initTouch } from './src/touch.js?v=139';
+import { createHorseRider } from './src/horse.js?v=139';
+import { createHorseNet } from './src/horsenet.js?v=139';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=138';
+import { PF, initPerf } from './src/perf.js?v=139';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -154,7 +154,7 @@ window.__sim = secs => { for (let i = 0; i < secs * 20; i++) update(.05); };
 if (Q.get('dev') === '1') { window.__horse = horse; window.__hnet = hnet; window.__sfx = sfx; window.__coop = { act, syncCamera, keys, input }; }
 { const LM = THREE.DefaultLoadingManager; let mx = 0; LM.onProgress = (u, l, t) => { const b = document.querySelector('#fnLoad i'), s = document.querySelector('#fnLoad span'); const k = Math.max(mx, l / Math.max(1, t)); mx = k; if (b) b.style.width = Math.round(k * 100) + '%'; if (s) s.textContent = 'Loading the frontier… ' + Math.round(k * 100) + '%'; };
   LM.onLoad = () => { const b = document.querySelector('#fnLoad i'), s = document.querySelector('#fnLoad span'); if (b) b.style.width = '100%'; if (s) s.textContent = 'Ready to ride'; }; } // v118 splash progress bar
-window.__cam = camera; window.__GX = GX; window.__G = G; window.__P = P; window.__Q = QNAME; window.__sfx = sfx;
+window.__cam = camera; window.__GX = GX; window.__THREE = THREE; window.__G = G; window.__P = P; window.__Q = QNAME; window.__sfx = sfx;
 // ---------------- Loop with adaptive resolution ----------------
 const NORENDER = Q.has('norender'); const TSCALE = +(Q.get('ts') || 1); let last = performance.now(), fAcc = 0, fN = 0, lowT = 0, hiT = 0, pr = renderer.getPixelRatio(); const PR_MAX = Math.min(devicePixelRatio || 1, /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) ? Math.max(pr, 1.5) : Math.max(pr, 2));
 function loop(t) { requestAnimationFrame(loop); window.__frames = (window.__frames || 0) + 1; if (window.__frames === 2) window.__booted = true; const rawMs = t - last, rdt = Math.max(0, Math.min(.1, rawMs / 1000)); last = t; const c0 = PF.on ? performance.now() : 0; if (PF.on) PF.frameStart(); const dt = Math.min(.05, rdt);

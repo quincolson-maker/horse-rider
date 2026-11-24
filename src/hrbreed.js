@@ -17,7 +17,12 @@ export function createBreeds({ H, msg, sfx }) {
   function onMount(h) { const b = cur(); if (h.baseS == null) h.baseS = h.g.scale.x; h.g.scale.setScalar(h.baseS * b.s); }
   function onDismount(h) { if (h && h.baseS != null) h.g.scale.setScalar(h.baseS); }
   const hit = new WeakMap();
-  function tick(dt) { const h = H.mounted; if (!h || cur().id !== 'clyde' || (H.speed || 0) < 6) return; const Z = H.zombies; if (!Z) return; const fx = -Math.sin(h.yaw), fz = -Math.cos(h.yaw), now = performance.now();
+  // v139 name tag above your horse when you're on foot nearby
+  let tag = null, tagName = ''; function tagTick() { const h = H.lastHorse, P0 = window.__P; const show = !!(name && h && !H.mounted && P0 && Math.hypot(h.pos.x - P0.pos.x, h.pos.z - P0.pos.z) < 18);
+    if (show && (!tag || tagName !== name)) { const THREE = window.__THREE; if (!THREE) return; if (tag) tag.removeFromParent(); const c = document.createElement('canvas'); c.width = 256; c.height = 64; const x = c.getContext('2d'); x.fillStyle = 'rgba(20,14,8,.7)'; x.beginPath(); x.roundRect ? x.roundRect(4, 8, 248, 48, 20) : x.rect(4, 8, 248, 48); x.fill(); x.fillStyle = '#ffd27a'; x.font = '800 30px system-ui'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('🐴 ' + name, 128, 33);
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); tag.scale.set(1.6, .4, 1); tag.renderOrder = 9; tagName = name; }
+    if (!tag) return; if (show) { if (tag.parent !== h.g.parent) h.g.parent && h.g.parent.add(tag); tag.position.set(h.pos.x, h.pos.y + 2.55, h.pos.z); tag.visible = true; } else tag.visible = false; }
+  function tick(dt) { tagTick(); const h = H.mounted; if (!h || cur().id !== 'clyde' || (H.speed || 0) < 6) return; const Z = H.zombies; if (!Z) return; const fx = -Math.sin(h.yaw), fz = -Math.cos(h.yaw), now = performance.now();
     for (const o of Z.list) { if (!o.alive || o.kind === 'boss' || o.kind === 'outlaw') continue; const dx = o.pos.x - h.pos.x, dz = o.pos.z - h.pos.z, d = Math.hypot(dx, dz); if (d > 2.3 || (dx * fx + dz * fz) < 0) continue; if (now - (hit.get(o) || 0) < 900) continue; hit.set(o, now);
       o.push = [dx / d * 6 + fx * 4, dz / d * 6 + fz * 4]; o.flinch = 1; Z.onHit && Z.onHit(o, 'trample', false, o.pos.clone(), null, 70 / 50); tone('square', 110, 50, .12, .3); H.vib && H.vib(25); } }
 

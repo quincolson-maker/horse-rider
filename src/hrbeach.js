@@ -3,8 +3,8 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt } from './hrbeachwave.js?v=335';
-import { createSurf } from './hrsurf.js?v=335';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt } from './hrbeachwave.js?v=336';
+import { createSurf } from './hrsurf.js?v=336';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -80,6 +80,60 @@ export function createBeach(ctx) {
     g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals(); const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .95 })); m.position.set(x, SEA, z); m.castShadow = !mobile; m.name = 'karst'; root.add(m); };
   for (const [x, z, R, Hh] of [[1420, -120, 32, 95], [1560, 60, 46, 140], [1500, 330, 28, 80], [1700, 470, 60, 170], [1880, 160, 70, 210], [1640, -260, 40, 120], [1350, 480, 18, 55], [2100, -40, 80, 240]]) karst(x, z, R, Hh);
 
+  // ---------- v336 beach life: bangka outriggers, nipa huts on stilts, a beach bar, umbrellas + loungers, a hammock, a bonfire, gulls ----------
+  const GEO = new Map(), push = (m, g) => (GEO.get(m) || GEO.set(m, []).get(m)).push(g.index ? g.toNonIndexed() : g); const std = o => new THREE.MeshStandardMaterial(Object.assign({ roughness: .85 }, o));
+  const BM = { bamboo: std({ color: 0xc8a868 }), thatch: std({ color: 0xa88a50, roughness: 1 }), wood: std({ color: 0x7a5a3a }), white: std({ color: 0xf0ece0 }), red: std({ color: 0xc8382a }), blue: std({ color: 0x2a8ac8 }), yellow: std({ color: 0xf0c83a }), cloth: std({ color: 0xe8e0c8, side: THREE.DoubleSide }), stone: std({ color: 0x6a6460 }) };
+  const bx = (m, x, y, z, w, h, d, ry = 0) => { const g = new THREE.BoxGeometry(w, h, d); if (ry) g.rotateY(ry); g.translate(x, y, z); push(m, g); }, cy = (m, x, y, z, r, h, n = 8, r2 = r, rx = 0, rz = 0) => { const g = new THREE.CylinderGeometry(r2, r, h, n); if (rx) g.rotateX(rx); if (rz) g.rotateZ(rz); g.translate(x, y, z); push(m, g); }, cn = (m, x, y, z, r, h, n = 4, ry = 0) => { const g = new THREE.ConeGeometry(r, h, n); g.rotateY(ry); g.translate(x, y, z); push(m, g); };
+  const spots = [], spot = (x, y, z, kind, label, r = 1.8) => { const o = { x, y, z, kind, label, r, bch: true }; T.spots.push(o); spots.push(o); return o; };
+  // nipa huts on stilts behind the sand, with a ladder and a walkable floor + porch (registered as a structure)
+  const SH = { cx: 1080, cz: ZC, rot: 0, y0: 0, c: 1, s: 0, floors: [], R: 600, geo: new Map(), kind: 'cove' }; T.structs.push(SH); const wall = (ax, az, bx2, bz, ya, yb) => T.walls.push([ax, az, bx2, bz, ya, yb]);
+  const hutZ = [ZC - 150, ZC - 95, ZC + 125, ZC + 185, ZC + 240]; hutZ.forEach((z, i) => { const x = shoreX(z) - 46 - (i % 2) * 6, gy = hAt(x, z), fy = gy + 1.8, W = 4.4, D = 4;
+    for (const [dx, dz] of [[-W / 2, -D / 2], [W / 2, -D / 2], [-W / 2, D / 2], [W / 2, D / 2]]) cy(BM.bamboo, x + dx, gy + .9, z + dz, .12, 1.9, 6);
+    bx(BM.bamboo, x, fy - .06, z, W + .4, .12, D + .4); bx(BM.bamboo, x + W / 2 + .9, fy - .06, z, 1.8, .1, D); // porch on the sea side
+    SH.floors.push({ x0: x - W / 2 - .2 - 1080, x1: x + W / 2 + 1.8 - 1080, z0: z - D / 2 - .2 - ZC, z1: z + D / 2 + .2 - ZC, ya: fy, yb: fy, axis: 'x' });
+    for (const [a1, b1, a2, b2] of [[x - W / 2, z - D / 2, x + W / 2, z - D / 2], [x - W / 2, z + D / 2, x + W / 2, z + D / 2], [x - W / 2, z - D / 2, x - W / 2, z + D / 2]]) { bx(BM.thatch, (a1 + a2) / 2, fy + 1.2, (b1 + b2) / 2, Math.abs(a2 - a1) + .1, 2.4, Math.abs(b2 - b1) + .1); wall(a1, b1, a2, b2, fy - .3, fy + 2.4); }
+    bx(BM.thatch, x + W / 2, fy + 1.9, z - 1.2, .1, 1.0, 1.6); bx(BM.thatch, x + W / 2, fy + 1.9, z + 1.2, .1, 1.0, 1.6); wall(x + W / 2, z - D / 2, x + W / 2, z - .6, fy - .3, fy + 2.4); wall(x + W / 2, z + .6, x + W / 2, z + D / 2, fy - .3, fy + 2.4);
+    cn(BM.thatch, x, fy + 3.5, z, W * .95, 2.4, 4, Math.PI / 4); // tall pyramid thatch roof
+    // ladder from the sand to the porch (a ramp)
+    const lx0 = x + W / 2 + 1.8, lx1 = lx0 + 2.6; SH.floors.push({ x0: lx0 - 1080, x1: lx1 - 1080, z0: z - .6 - ZC, z1: z + .6 - ZC, ya: fy, yb: hAt(lx1, z) + .05, axis: 'x' }); for (let k = 0; k < 7; k++) bx(BM.bamboo, lx0 + (k + .5) * 2.6 / 7, fy - (k + .5) * (fy - hAt(lx1, z)) / 7, z, .12, .06, 1.1); for (const sz of [-.6, .6]) { const g = new THREE.CylinderGeometry(.05, .05, Math.hypot(2.6, fy - gy), 5); g.rotateZ(Math.atan2(2.6, fy - gy)); g.translate((lx0 + lx1) / 2, (fy + gy) / 2, z + sz); push(BM.bamboo, g); }
+    spot(x, fy, z, 'bch_hut', '🛖 Rest in the nipa hut (heal)', 1.8); });
+  // beach bar: a bamboo counter under thatch with stools; buko (coconut) juice
+  { const z = ZC + 20, x = shoreX(z) - 30, y = hAt(x, z); for (const [dx, dz] of [[-2.5, -2.5], [2.5, -2.5], [-2.5, 2.5], [2.5, 2.5]]) cy(BM.bamboo, x + dx, y + 1.5, z + dz, .12, 3, 6); cn(BM.thatch, x, y + 3.9, z, 4.6, 2, 4, Math.PI / 4); bx(BM.bamboo, x + 1.6, y + .55, z, .6, 1.1, 4.6); bx(BM.wood, x + 1.6, y + 1.12, z, .8, .08, 4.8);
+    for (let k = 0; k < 4; k++) { cy(BM.wood, x + 2.6, y + .4, z - 1.8 + k * 1.2, .2, .08, 10); cy(BM.bamboo, x + 2.6, y + .2, z - 1.8 + k * 1.2, .04, .4, 5); } for (let k = 0; k < 5; k++) { const g = new THREE.SphereGeometry(.16, 8, 6); g.translate(x + 1.5, y + 1.3, z - 1.6 + k * .8); push(std({ color: 0x5a7a2a }), g); }
+    wall(x + 1.3, z - 2.3, x + 1.3, z + 2.3, y - 1, y + 1.2); wall(x + 1.9, z - 2.3, x + 1.9, z + 2.3, y - 1, y + 1.2); spot(x + 3, y, z, 'bch_buko', '🥥 Buko juice from the beach bar (10 pts · heal)', 2.2); }
+  // umbrellas + loungers on the sand
+  const UC = [BM.red, BM.blue, BM.yellow, BM.white]; for (let i = 0; i < 8; i++) { const z = ZC - 120 + i * 34, x = shoreX(z) - 16 - (i % 3) * 3, y = hAt(x, z); cy(BM.white, x, y + 1.25, z, .04, 2.5, 6); cn(UC[i % 4], x, y + 2.55, z, 1.7, .55, 10); bx(BM.white, x + 1.2, y + .25, z + .3, .7, .1, 1.9); bx(BM.white, x + 1.2, y + .5, z - .55, .7, .5, .12, 0); if (i % 2 === 0) spot(x + 1.2, y, z + .3, 'bch_lounge', '🏖️ Lie in the sun a while (heal)', 1.4); }
+  // hammock between two palms near the bar
+  { const z = ZC - 40, x = shoreX(z) - 26, y = hAt(x, z); for (const dz of [-2.2, 2.2]) cy(BM.wood, x, y + 1.2, z + dz, .14, 2.4, 6); const g = new THREE.PlaneGeometry(1.1, 4.0, 1, 8), p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, -Math.cos(p.getY(i) / 4 * Math.PI) * .6); g.rotateX(-Math.PI / 2); g.translate(x, y + 1.6, z); push(BM.cloth, g); spot(x, y, z, 'bch_hammock', '🌴 Swing in the hammock (rest + heal)', 1.6); }
+  // bonfire circle down the beach
+  const fireX = shoreX(ZC - 70) - 22, fireZ = ZC - 70, fireY = hAt(fireX, fireZ); for (let k = 0; k < 9; k++) { const a = k / 9 * 6.283; cy(BM.stone, fireX + Math.cos(a) * 1, fireY + .12, fireZ + Math.sin(a) * 1, .22, .25, 6); } for (let k = 0; k < 4; k++) cy(BM.wood, fireX, fireY + .3, fireZ, .08, 1.6, 5, .08, 0, Math.PI / 2 * (k % 2 ? 1 : .6) + k);
+  for (let k = 0; k < 5; k++) { const a = k / 5 * 6.283 + .3; cy(BM.wood, fireX + Math.cos(a) * 3.2, fireY + .22, fireZ + Math.sin(a) * 3.2, .25, 1.6, 8, .25, 0, Math.PI / 2); }
+  const flame = new THREE.Mesh(new THREE.ConeGeometry(.55, 1.4, 8), new THREE.MeshBasicMaterial({ color: 0xffa040, transparent: true, opacity: .9 })); flame.position.set(fireX, fireY + .8, fireZ); flame.visible = false; root.add(flame); spot(fireX, fireY, fireZ + 2.4, 'bch_fire', '🔥 Sit by the bonfire', 2);
+  // bangka outrigger boats moored in the shallows (bob with the swell)
+  const boats = []; for (let i = 0; i < 5; i++) { const g = new THREE.Group(), hullM = std({ color: [0xf0ece0, 0x3ab0e0, 0xe8c83a, 0xe85a3a, 0x7ad87a][i] }), trim = std({ color: [0x2a6ac8, 0xf0ece0, 0x2a2a2a, 0xf0ece0, 0x2a6ac8][i] });
+    const hull = new THREE.Mesh(new THREE.CapsuleGeometry(.45, 6.5, 4, 10), hullM); hull.rotation.x = Math.PI / 2; hull.scale.set(1, 1, .7); g.add(hull); const tr = new THREE.Mesh(new THREE.BoxGeometry(.95, .12, 7), trim); tr.position.y = .3; g.add(tr);
+    for (const sx of [-2.6, 2.6]) { const fl = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, 5.6, 6), BM.bamboo); fl.rotation.x = Math.PI / 2; fl.position.set(sx, -.15, 0); g.add(fl); for (const z of [-1.6, 1.6]) { const arm = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, 5.3, 5), BM.bamboo); arm.rotation.z = Math.PI / 2; arm.position.set(0, .35, z); g.add(arm); } }
+    const roofB = new THREE.Mesh(new THREE.BoxGeometry(1.4, .06, 2.4), std({ color: 0xc8382a })); roofB.position.set(0, 1.6, -.6); g.add(roofB); for (const [dx, dz] of [[-.6, -1.7], [.6, -1.7], [-.6, .5], [.6, .5]]) { const pp = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 1.3, 4), BM.bamboo); pp.position.set(dx, .95, dz); g.add(pp); }
+    const z = ZC - 200 + i * 95 + (i % 2) * 20, x = shoreX(z) + 7 + (i % 3) * 4; g.position.set(x, SEA, z); g.rotation.y = .3 + i * .4; g.name = 'bangka'; root.add(g); boats.push(g); }
+  // merge statics
+  for (const [m, gs] of GEO) { let n = 0; for (const g of gs) { for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal') g.deleteAttribute(k); if (!g.attributes.normal) g.computeVertexNormals(); n += g.attributes.position.count; } const P2 = new Float32Array(n * 3), N2 = new Float32Array(n * 3); let o = 0; for (const g of gs) { P2.set(g.attributes.position.array, o * 3); N2.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; g.dispose(); }
+    const G2 = new THREE.BufferGeometry(); G2.setAttribute('position', new THREE.BufferAttribute(P2, 3)); G2.setAttribute('normal', new THREE.BufferAttribute(N2, 3)); const me = new THREE.Mesh(G2, m); me.castShadow = !mobile; me.receiveShadow = true; me.name = 'cove props'; root.add(me); } GEO.clear();
+  // gulls
+  const NG = mobile ? 8 : 16, GG = new THREE.InstancedMesh((() => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, .2, -.7, .12, -.05, 0, 0, -.15, 0, 0, .2, 0, 0, -.15, .7, .12, -.05], 3)); g.computeVertexNormals(); return g; })(), new THREE.MeshBasicMaterial({ color: 0xf4f4f0, side: THREE.DoubleSide }), NG); GG.frustumCulled = false; root.add(GG);
+  const gulls = Array.from({ length: NG }, (_, i) => ({ a: i / NG * 6.28, r: 20 + (i % 5) * 9, h: 14 + (i % 4) * 5, sp: .2 + (i % 3) * .07, cx: 1180 + (i % 3) * 30, cz: ZC - 100 + (i % 4) * 70 }));
+  const beachLife = (dt, t, me) => { const n = H.night || 0; flame.visible = n > .45; if (flame.visible) { flame.scale.set(1 + Math.sin(t * 11) * .1, 1 + Math.sin(t * 17) * .2, 1 + Math.cos(t * 13) * .1); if (fx && fx.smoke && Math.random() < dt * 4) fx.smoke.emit(fireX, fireY + 1.6, fireZ, 0, .9, 0, .5, .45, .4, .4, 2, 1.4, -.01, .05); }
+    boats.forEach((b, i) => { waveAt(b.position.x, b.position.z, t, wv); b.position.y = SEA + wv.eta + .05; b.rotation.z = Math.sin(t * 1.1 + i) * .05; b.rotation.x = Math.sin(t * .8 + i * 2) * .04; });
+    const m4 = GG.userData.m || (GG.userData.m = new THREE.Matrix4()), q = GG.userData.q || (GG.userData.q = new THREE.Quaternion()), e = GG.userData.e || (GG.userData.e = new THREE.Euler()), v = GG.userData.v || (GG.userData.v = new THREE.Vector3()), s3 = GG.userData.s || (GG.userData.s = new THREE.Vector3(1, 1, 1));
+    gulls.forEach((g, i) => { g.a += g.sp * dt; const x = g.cx + Math.cos(g.a) * g.r, z = g.cz + Math.sin(g.a) * g.r, y = SEA + g.h + Math.sin(t * .7 + i) * 2, fl = Math.sin(t * 7 + i) * .5; e.set(0, -g.a, .3 + fl * .2); q.setFromEuler(e); s3.set(1, 1 + fl * .3, 1); m4.compose(v.set(x, y, z), q, s3); GG.setMatrixAt(i, m4); }); GG.instanceMatrix.needsUpdate = true;
+    if (me.x > 1000 && sfx.tone && sfx.ctx && Math.random() < dt * .12) { const f = 1800 + Math.random() * 400; sfx.tone('sine', f, f * .7, .02, .25); setTimeout(() => sfx.tone('sine', f * .9, f * .6, .018, .2), 260); } };
+  const prevUse = T.onUse; T.onUse = o => { if (!o || !o.bch) return prevUse ? prevUse(o) : false; const Z = H.zombies, heal = n => { if (Z && Z.state) Z.state.hp = Math.min(100, (Z.state.hp || 0) + n); }, S = H.stats || (H.stats = {}), g = H.guns;
+    if (o.kind === 'bch_buko') { if (!g || g.state.score < 10) msg('You need 10 pts', 1.5); else { g.state.score -= 10; g.save && g.save(); heal(60); H.burnT = 0; msg('🥥 Ice-cold buko juice straight from the coconut', 2.4); S.buko = (S.buko || 0) + 1; } }
+    else if (o.kind === 'bch_hut') { heal(100); msg('🛖 You doze in the shade of the nipa hut, the surf rolling below', 2.6); }
+    else if (o.kind === 'bch_lounge') { heal(50); msg('🏖️ Warm sand, cold drink, waves on the reef', 2.2); }
+    else if (o.kind === 'bch_hammock') { heal(100); msg('🌴 You swing in the hammock until the sun moves', 2.6); S.hammock = 1; }
+    else if (o.kind === 'bch_fire') { heal(60); msg((H.night || 0) > .45 ? '🔥 Sparks fly up into a sky full of stars' : '🔥 The bonfire\'s laid ready for tonight', 2.4); }
+    return true; };
+
   // ---------- safe zone, swimming, deep-water check ----------
   (H.safeRects || (H.safeRects = [])).push({ x: 1090, z: ZC, hw: 160, hd: 440, name: 'PARADISE COVE', label: '🛡 NO ZOMBIES · PARADISE COVE' });
   H.places && (H.places.cove = { x: 1100, z: ZC });
@@ -89,7 +143,7 @@ export function createBeach(ctx) {
   B.update = dt => { const t = surfTime(); oceanU.uT.value = t; oceanU.uNight.value = H.night || 0; const me = H.mounted ? H.mounted.pos : P.pos, near = me.x > 820;
     root.visible = near || me.x > 600; if (!root.visible) return;
     if (me.x > 1000 && Math.abs(me.z - ZC) < 450 && !welcome) { welcome = true; msg('🌴 Paradise Cove', 3); const S = H.stats || (H.stats = {}); if (!S.coveVisit) { S.coveVisit = 1; const g = H.guns; if (g) { g.state.score += 300; g.save && g.save(); } setTimeout(() => msg('First time at the sea!  +300 · rent a board at the surf shack and paddle out', 4.5), 1800); } } else if (me.x < 900) welcome = false;
-    surf.update(dt, t);
+    surf.update(dt, t); beachLife(dt, t, me);
     if (!B.surfing && !H.mounted && !H.trainRide && P.pos.x > shoreX(P.pos.z) + 2) { waveAt(P.pos.x, P.pos.z, t, wv); const surface = SEA + wv.eta, floor = hAt(P.pos.x, P.pos.z); if (surface - floor > 1.05) { const fy = surface - 1.25; if (P.pos.y < fy) { P.pos.y = fy; H.vy = Math.max(0, H.vy || 0); } if (!swimMsg) { swimMsg = true; msg('🏊 Swimming - rent a board at the surf shack to surf', 2.5); } } } };
   return B;
 }

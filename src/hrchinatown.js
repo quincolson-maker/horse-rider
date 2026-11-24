@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=227';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=227';
-import { mergeStatic } from './hrmerge.js?v=227';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=228';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=228';
+import { mergeStatic } from './hrmerge.js?v=228';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -167,6 +167,10 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     box(s, M.tile, tx1 / 2 + .1, RF + 2.3, zs1 - 1.2, tx1 + .5, .12, 3.0); for (const pz of [zs1 - 2.6, zs1 + .2]) box(s, M.wood, tx1 + .05, RF + 1.15, pz, .1, 2.3, .1);
     // parapets on the other three roof edges
     wall(s, 0, 0, W, 0, RF, RF + 1);
+    // v228 dressing: paper lanterns inside the shop (glow at night), flower pots along the balcony, painted banners on open side walls
+    for (const lz of [2.4, 6.4]) { box(s, M.black, mid - 1.5, F1 - .25, lz, .02, .5, .02); sph(s, M.paper, mid - 1.5, F1 - .75, lz, .3, 1.25); box(s, M.red, mid - 1.5, F1 - .43, lz, .22, .05, .22); }
+    for (let k = 0; k < 4; k++) { const px = 1.6 + k * (W - 3.2) / 3; if (Math.abs(px - mid) < 1) continue; cyl(s, M.red, px, F1 + .17, -bd + .35, .17, .3, 8, .13); sph(s, k % 2 ? M.jade : M.green, px, F1 + .43, -bd + .35, .22, .8); sph(s, M.lamp, px + .08, F1 + .55, -bd + .3, .05); }
+    for (const [k, x, ry] of [['x0', -.02, -Math.PI / 2], ['xW', W + .02, Math.PI / 2]]) { if (s.open[k]) continue; plane(s, signM, x, F0 + 3.6, DP * .45, 1.4, 4.4, ry, u0, v0, u1, v1); box(s, M.gold, x, F0 + 5.85, DP * .45, .04, .08, 1.5); box(s, M.gold, x, F0 + 1.35, DP * .45, .04, .08, 1.5); }
     // ---- interior fittings by kind ----
     interior(s, kind, mid);
     // upper floor: a room with a bed, table, and a window seat

@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=233';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=233';
-import { mergeStatic } from './hrmerge.js?v=233';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=234';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=234';
+import { mergeStatic } from './hrmerge.js?v=234';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -291,7 +291,8 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     const place = (o, d, bob) => { const [x, z] = path(d), [x2, z2] = path(d + .6); o.position.set(CX + x, y0 + 2.2 + Math.sin(DR.t * 4 - d * .9) * .45 * bob, CZ + z); o.rotation.y = Math.atan2(x - x2, z - z2); };
     place(DR.head, 0, 1); DR.segs.forEach((sg, i) => place(sg, (i + 1) * .95, 1)); for (const [lg, i] of DR.legs) { const [x, z] = path(i * .95); lg.position.set(CX + x + Math.sin(DR.t * 9 + i) * .1, y0 + .45, CZ + z); }
     if (sfx.tone && sfx.ctx && near) { DR.beat = (DR.beat || 0) - dt; if (DR.beat <= 0) { DR.beat = .42; DR.b = (DR.b || 0) + 1; sfx.tone('sine', 95, 60, .35, .18); if (DR.b % 4 === 3) sfx.nz && sfx.nz('highpass', 4500, .6, .14, .35); if (DR.b % 8 === 7) sfx.tone('sine', 140, 132, .15, 1.2); } }
-    if (z0 - DR.NS * .95 > E + 6) { DR.on = false; DR.g.visible = false; } }
+    { const hx = DR.head.position.x, hz = DR.head.position.z; DR.tot = (DR.tot || 0) + dt; if (Math.hypot(me.x - hx, me.z - hz) < 14) DR.fol = (DR.fol || 0) + dt; }
+    if (z0 - DR.NS * .95 > E + 6) { DR.on = false; DR.g.visible = false; if (DR.tot > 10 && DR.fol / DR.tot > .7) { earn(120); msg('🐉 You followed the dragon all the way - good fortune +120', 3); } DR.tot = DR.fol = 0; } }
   const prevUse2 = T.onUse; T.onUse = o => { if (o && o.kind === 'ct_hall' && !DR.on && DR.gcool <= 0) { DR.gcool = 180; setTimeout(() => startDragon('🐉 The gong calls out the dragon!'), 1500); } return prevUse2 ? prevUse2(o) : false; };
 
   const RID = [['What has keys but can\'t open a lock?', 'A piano', 'A jailer', 'A map'], ['What gets wetter the more it dries?', 'A towel', 'A river', 'A sponge cake'], ['What has a face and two hands but no arms or legs?', 'A clock', 'A scarecrow', 'A playing card'],
@@ -321,6 +322,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0, musT = 2, musI = 3;
   function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, inside = Math.abs(me.x - CX) < E && Math.abs(me.z - CZ) < E; peopleTick(dt, me); dragonTick(dt, me); runTick(dt, me); if (inside && (roofT -= dt) <= 0) { roofT = .5; for (const b of built) { if (me.y < b.y0 + RF - .3) break; const [lx, lz] = T.toL ? T.toL(b, me.x, me.z) : [0, 0]; if (lx > 0 && lx < W && lz > 0 && lz < DP && me.y > b.y0 + RF - .3) { const S = st(), v = new Set(S.ctRoofs || []); if (!v.has(b.name + b.cx.toFixed(0) + b.cz.toFixed(0))) { v.add(b.name + b.cx.toFixed(0) + b.cz.toFixed(0)); S.ctRoofs = [...v]; msg(`🏯 Rooftop ${v.size} of ${built.length}`, 1.6); } } } }
     if (inside && !welcome) { welcome = true; msg('🏮 Chinatown - 唐人街', 3); const S = st(); if (!S.ctVisit) { S.ctVisit = 1; earn(200); setTimeout(() => msg('First visit to Chinatown  +200', 2.5), 2000); } } else if (!inside && Math.hypot(me.x - CX, me.z - CZ) > 90) welcome = false;
+    if (nightK > .6 && (H.night || 0) <= .6 && Math.hypot(me.x - CX, me.z - CZ) < 200 && sfx.tone && sfx.ctx) { [0, 2.6, 5.2].forEach(d => setTimeout(() => { sfx.tone('sine', 82, 80, .35, 4); sfx.tone('sine', 164, 160, .12, 3); }, d * 1000)); msg('🔔 The temple bell greets the dawn over Chinatown', 2.5); } /* v234 */
     const n = H.night || 0; if (Math.abs(n - nightK) > .02) { nightK = n; M.lamp.emissiveIntensity = .5 + 3.2 * n; M.paper.emissiveIntensity = .15 + 2.2 * n; M.glass.emissiveIntensity = .06 + 1.2 * n; signM.emissiveIntensity = .05 + .35 * n; gateM.emissiveIntensity = .08 + .4 * n; } { const nt = n > .5; if (nt !== update.nt) { update.nt = nt; for (const o of spots) if (o.kind === 'ct_fire') o.label = nt ? '🎆 Fireworks show over Chinatown (400 pts)' : '🧨 Set off a string of firecrackers (50 pts)'; } }
     if (n > .45 && fx && fx.smoke && Math.hypot(me.x - CX, me.z - CZ) < 70 && (steamT -= dt) <= 0) { steamT = .35; const q = stalls[(Math.random() * stalls.length) | 0]; fx.smoke.emit(q[0] + (Math.random() - .5) * .6, y0 + 1.5, q[1], 0, .6 + Math.random() * .4, 0, .92, .92, .9, .35, 1.6, 1.3, -.01, .15); }
     if (inside && sfx.tone && sfx.ctx && !(DR.on) && (musT -= dt) <= 0) { const PEN = [392, 440, 523, 587, 659, 784, 880]; musT = [.45, .45, .9, .45, 1.35][(Math.random() * 5) | 0]; musI = Math.max(0, Math.min(PEN.length - 1, musI + [-2, -1, -1, 1, 1, 2, 0][(Math.random() * 7) | 0])); const f = PEN[musI]; sfx.tone('triangle', f, f * .995, .028, musT * 1.4); if (Math.random() < .25) sfx.tone('sine', f / 2, f / 2, .02, 1.2); } /* v227 a quiet pentatonic street melody */

@@ -13,7 +13,7 @@
 // multiple of 90 degrees), floors are box tops (stairs are 0.3 m steps), walls are rings of small boxes.
 // API matches the old createBanditCave (src/hrbanditcave.js) so src/hrcave.js drives the fight, key, vault and loot.
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=199';
+import { PERF } from './perfopts.js?v=200';
 
 const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 function hash(x, y) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }

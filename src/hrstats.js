@@ -52,5 +52,10 @@ export function createStats({ H, msg }) {
   function close() { if (!el) return; el.classList.remove('on'); if (H.statsOpen) { H.statsOpen = false; H.uiOpen = false; } }
   const toggle = () => (el && el.classList.contains('on') ? close() : open());
   addEventListener('keydown', e => { if (e.target && /input|textarea/i.test(e.target.tagName)) return; if (e.code === 'KeyJ' && !e.repeat && H.on) toggle(); else if (e.code === 'Escape' && H.statsOpen) close(); });
-  return { open, close, toggle, tick, daily };
+  // v200 WHAT'S NEW: shown once after a big update (and from the journal)
+  const NEWS = ['🍸 Rooftop bar on the saloon — upstairs side door, outside stair, telescope, stools', '🧟 New dead: coyotes, screamers, torch-bearers, and THE PREACHER boss', '🔔 Night raids on the town gates (they grow with your rank)', '🪢 Lasso (T) · 🐎 breeds, names & bond · ⛺ camp (N) · 🍖 cooking', '🔐 Crack the store safe at night · 🤠 duels at high noon · 💪 arm wrestling', '❌ Treasure maps · 🥘 gold panning · ✝ Boot Hill at midnight', '📓 Journal (J): medals, daily challenge, stats · 🛒 store tabs', '⚡ Faster loading + smoother saloon and town'];
+  function news() { ui0(); el.innerHTML = `<button class="sx" data-x="1">✕</button><h3>🤠 WHAT'S NEW ON THE FRONTIER</h3>${NEWS.map(t => `<div class="r" style="justify-content:flex-start;padding:5px 0">${t}</div>`).join('')}<div style="margin-top:10px;opacity:.7;font-size:12px">J opens your journal any time.</div>`; el.classList.add('on'); H.uiOpen = true; H.statsOpen = true; if (document.pointerLockElement) document.exitPointerLock(); }
+  function ui0() { if (!el) { open(); close(); } }
+  setTimeout(() => { try { if (localStorage.getItem('hr_news') !== '200' && H.on) { localStorage.setItem('hr_news', '200'); news(); } } catch (_) {} }, 15000);
+  return { open, close, toggle, tick, daily, news };
 }

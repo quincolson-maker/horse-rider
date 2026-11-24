@@ -3,9 +3,9 @@
 // faces in a rock heap. Swing a pick at the ore (one chunk a minute per face, carry up to 10) and sell it at the assay office.
 // It is NOT a safe zone - dynamite miners like the place after dark. Everything is merged per material and distance-culled.
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=303';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=303';
-import { mergeStatic } from './hrmerge.js?v=303';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=304';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=304';
+import { mergeStatic } from './hrmerge.js?v=304';
 
 export const MC = { x: -110, z: -30, r: 30 };
 export const mcAvoid = (x, z) => Math.hypot(x - MC.x, z - MC.z) < MC.r;
@@ -56,6 +56,7 @@ export function createMineCamp({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   for (let k = 0; k < 12; k++) wall(rx + Math.cos(k / 12 * 6.28) * 3.2, rz + Math.sin(k / 12 * 6.28) * 3.2, rx + Math.cos((k + 1) / 12 * 6.28) * 3.2, rz + Math.sin((k + 1) / 12 * 6.28) * 3.2, -1, 2.6);
   const faces = [0, 2.1, 4.2].map((a, i) => { const fx2 = rx + Math.cos(a + .6) * 3.3, fz2 = rz + Math.sin(a + .6) * 3.3; for (let q = 0; q < 5; q++) { const g = new THREE.OctahedronGeometry(.18 + (q % 2) * .08, 0); g.translate(CX + fx2 + Math.cos(q * 1.7) * .4, y0 + .5 + (q % 3) * .25, CZ + fz2 + Math.sin(q * 1.7) * .4); push(M.ore, g); }
     return spot(rx + Math.cos(a + .6) * 4.3, 0, rz + Math.sin(a + .6) * 4.3, 'mc_ore', '⛏ Swing a pick at the ore', 1.6, { i }); });
+  spot(rx, 0, rz - 4.6, 'mc_blast', '🧨 Blast the rock heap (1 dynamite → 4 ore)', 1.5);
   for (const sx of [-.45, .45]) box(M.iron, 12 + sx, .06, 4, .08, .08, 12); for (let k = 0; k < 12; k++) box(M.dark, 12, .03, -1.5 + k, 1.3, .06, .2);
   const cart = new THREE.Group(); { const b = new THREE.Mesh(new THREE.BoxGeometry(1.0, .6, 1.4), M.iron); b.position.y = .55; cart.add(b); for (const [wx, wz] of [[-.5, -.45], [.5, -.45], [-.5, .45], [.5, .45]]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(.18, .18, .08, 10), M.dark); w.rotation.z = Math.PI / 2; w.position.set(wx, .2, wz); cart.add(w); } const load = new THREE.Mesh(new THREE.DodecahedronGeometry(.45, 0), M.ore); load.position.y = .9; load.scale.y = .6; cart.add(load); } cart.position.set(CX + 12, y0, CZ + 4); scene.add(cart);
 
@@ -75,6 +76,7 @@ export function createMineCamp({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (o.kind === 'mc_assay') { if (!ore) msg('⚖️ "Bring me ore from the heap and I\'ll weigh it fair."', 2.2); else { const n = ore; ore = 0; saveOre(); earn(n * ORE_PAY); S2.mcSold = (S2.mcSold || 0) + n; msg(`⚖️ The assayer weighs ${n} chunk${n === 1 ? '' : 's'} - +${n * ORE_PAY}`, 2.6); label(); } }
     else if (o.kind === 'mc_fire') { const Z = H.zombies; if (Z && Z.state) Z.state.hp = Math.min(100, (Z.state.hp || 0) + 35); H.burnT = 0; msg('🔥 Coffee on the coals and a seat by the fire', 2); }
     else if (o.kind === 'mc_stage') { const g = H.guns; if (!g || g.state.score < 40) msg('You need 40 pts', 1.6); else { g.state.score -= 40; g.save && g.save(); const [x, z] = o.to, y = T.floorAt(x, z, 1e9) + .05; if (H.mounted) { H.mounted.pos.set(x, y, z); H.speed = 0; } else P.pos.set(x, y, z); H.vy = 0; msg('🐎 The stage rattles off... and you\'re there', 2.2); S2.ctStage = (S2.ctStage || 0) + 1; } }
+    else if (o.kind === 'mc_blast') { const D = H.dyn; if (!D || !D.state || !(D.state.count > 0)) msg('🧨 You need a stick of dynamite (the store sells them; miners drop them)', 2.4); else if (ore >= 10) msg('⛏ Your sack is full - sell first', 1.8); else { D.state.count--; try { localStorage.setItem('hr_dyn', String(D.state.count)); } catch (_) {} msg('🧨 Fuse lit - stand back!', 1.6); setTimeout(() => { ore = Math.min(10, ore + 4); saveOre(); label(); S2.mcBlast = (S2.mcBlast || 0) + 1; msg(`💥 BOOM! Ore everywhere (${ore}/10)`, 2.2); H.shake = Math.max(H.shake || 0, .8); if (sfx.nz && sfx.ctx) { sfx.nz('lowpass', 180, 1, .5, 1.2); sfx.nz('bandpass', 900, .7, .3, .5); } if (fx && fx.smoke) for (let k = 0; k < 24; k++) fx.smoke.emit(CX + rx + (Math.random() - .5) * 3, y0 + 1 + Math.random() * 2, CZ + rz + (Math.random() - .5) * 3, (Math.random() - .5) * 4, 2 + Math.random() * 3, (Math.random() - .5) * 4, .5, .45, .4, .8, 2.4, 2, -.03, .4); }, 2200); } }
     else if (o.kind === 'mc_look') { msg('🔭 The diggings below, Chinatown\'s lanterns to the south-east, the mountains all round', 2.6); S2.mcLook = 1; }
     return true; };
   // v301 stage stop: a signpost at the diggings and a second board on the saloon signpost (40 pts each way)

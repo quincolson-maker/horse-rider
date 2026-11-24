@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=303';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=303';
-import { mergeStatic } from './hrmerge.js?v=303';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=304';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=304';
+import { mergeStatic } from './hrmerge.js?v=304';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;

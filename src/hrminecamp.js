@@ -3,9 +3,9 @@
 // faces in a rock heap. Swing a pick at the ore (one chunk a minute per face, carry up to 10) and sell it at the assay office.
 // It is NOT a safe zone - dynamite miners like the place after dark. Everything is merged per material and distance-culled.
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=306';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=306';
-import { mergeStatic } from './hrmerge.js?v=306';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=307';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=307';
+import { mergeStatic } from './hrmerge.js?v=307';
 
 export const MC = { x: -110, z: -30, r: 30 };
 export const mcAvoid = (x, z) => Math.hypot(x - MC.x, z - MC.z) < MC.r;
@@ -60,6 +60,9 @@ export function createMineCamp({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   for (const sx of [-.45, .45]) box(M.iron, 12 + sx, .06, 4, .08, .08, 12); for (let k = 0; k < 12; k++) box(M.dark, 12, .03, -1.5 + k, 1.3, .06, .2);
   const cart = new THREE.Group(); { const b = new THREE.Mesh(new THREE.BoxGeometry(1.0, .6, 1.4), M.iron); b.position.y = .55; cart.add(b); for (const [wx, wz] of [[-.5, -.45], [.5, -.45], [-.5, .45], [.5, .45]]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(.18, .18, .08, 10), M.dark); w.rotation.z = Math.PI / 2; w.position.set(wx, .2, wz); cart.add(w); } const load = new THREE.Mesh(new THREE.DodecahedronGeometry(.45, 0), M.ore); load.position.y = .9; load.scale.y = .6; cart.add(load); } cart.position.set(CX + 12, y0, CZ + 4); scene.add(cart);
 
+  // v307 warm glow pools around the fire and under the headframe lantern after dark
+  const pt = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,170,90,1)'); g.addColorStop(.5, 'rgba(255,120,50,.35)'); g.addColorStop(1, 'rgba(255,90,30,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
+  const poolM = new THREE.MeshBasicMaterial({ map: pt, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }); const pools = [[-4, 9, 9], [hx, hz, 7]].map(([x, z, r]) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(r, r).rotateX(-Math.PI / 2), poolM); m.position.set(CX + x, y0 + .04, CZ + z); m.renderOrder = 2; scene.add(m); H.cullAdd && H.cullAdd(m, 200, { x: CX, z: CZ }); return m; });
   // v306 a horse trough and hitching rail by the assay office
   box(M.wood, -9, .35, -11, 2.6, .6, .8); box(std({ color: 0x3a6a7a, roughness: .2 }), -9, .62, -11, 2.4, .04, .6); wall(-10.3, -11.4, -7.7, -11.4, -1, .7); wall(-10.3, -10.6, -7.7, -10.6, -1, .7);
   for (const dx of [-1.6, 1.6]) box(M.wood, -14 + dx, .55, -11, .14, 1.1, .14); box(M.wood, -14, 1.05, -11, 3.4, .1, .1);
@@ -88,7 +91,7 @@ export function createMineCamp({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const folk = [[-2.2, 10.6, 0x5a4a3a], [-6, 10.2, 0x3a4a5a]].slice(0, mobile ? 1 : 2).map(([x, z, coat], i) => { const D = makeFrontierCharacter({ kind: 'townsfolk', sex: 'male', quality: 'low', coat, top: 0xd8ccb0, hatC: 0x3a2a1a, skin: 0xc89470, hair: 0x6a6a6a, bandana: 0x8a2a1a, name: 'Prospector' }); scene.add(D.g); try { mergeStatic(D.g); } catch (_) {} D.g.position.set(CX + x, y0, CZ + z); D.g.rotation.y = Math.atan2(-4 - x, 9 - z); return D; });
   let welcome = false, t = 0;
   function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, d = Math.hypot(me.x - CX, me.z - CZ); if (d < 25 && !welcome) { welcome = true; msg('⛏ Silver Creek Diggings', 2.5); const S2 = st(); if (!S2.mcVisit) { S2.mcVisit = 1; earn(150); setTimeout(() => msg('First visit to the diggings  +150 · pick ore at the rock heap, sell it at the assay office', 4), 1500); } } else if (d > 60) welcome = false;
-    lampM.emissiveIntensity = .2 + 3 * (H.night || 0); { const hm = H.mounted; if (hm && Math.hypot(hm.pos.x - (CX - 9), hm.pos.z - (CZ - 11)) < 2.8 && Math.abs(H.speed || 0) < 1) { H.stam = Math.min(100, (H.stam || 0) + 30 * dt); if (hm.hp != null) hm.hp = Math.min(100, hm.hp + 10 * dt); if (!update.dr || t - update.dr > 20) { update.dr = t; msg('🐴 Your horse drinks deep', 1.6); } } } { const vis = d < 90 && (H.night || 0) < .92; for (const D of folk) { D.g.visible = vis; if (vis) poseFrontierCharacter(D, dt, { speed: 0 }); } }
+    lampM.emissiveIntensity = .2 + 3 * (H.night || 0); poolM.opacity = Math.max(0, (H.night || 0) - .35) * (.85 + .1 * Math.sin(t * 9)); { const hm = H.mounted; if (hm && Math.hypot(hm.pos.x - (CX - 9), hm.pos.z - (CZ - 11)) < 2.8 && Math.abs(H.speed || 0) < 1) { H.stam = Math.min(100, (H.stam || 0) + 30 * dt); if (hm.hp != null) hm.hp = Math.min(100, hm.hp + 10 * dt); if (!update.dr || t - update.dr > 20) { update.dr = t; msg('🐴 Your horse drinks deep', 1.6); } } } { const vis = d < 90 && (H.night || 0) < .92; for (const D of folk) { D.g.visible = vis; if (vis) poseFrontierCharacter(D, dt, { speed: 0 }); } }
     if (d < 150) { fireM.scale.set(1 + Math.sin(t * 9) * .08, 1 + Math.sin(t * 13) * .15, 1 + Math.cos(t * 11) * .08); if (fx && fx.smoke && (update.sm = (update.sm || 0) - dt) <= 0) { update.sm = .3; fx.smoke.emit(CX - 4 + (Math.random() - .5) * .3, y0 + .9, CZ + 9, 0, .8, 0, .5, .48, .46, .4, 2, 1.4, -.01, .05); } } }
   return { update, info: { x: CX, z: CZ, y: y0 }, ore: () => ore };
 }

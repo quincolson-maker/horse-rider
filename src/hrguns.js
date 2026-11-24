@@ -3,8 +3,8 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=130';
-import { buildM4, buildMP5, detailize } from './hrmodern.js?v=130'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=131';
+import { buildM4, buildMP5, detailize } from './hrmodern.js?v=131'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -234,8 +234,9 @@ export function buildCoach() {
   for (const z of [.006, -.012]) g.add(mesh(ext(prof([[.004, -.022], [.008, -.022], [.002, -.04], [-.006, -.046], [-.004, -.036]]), .005, .0005), M.blued)).position.z = z;
   g.add(mesh(ext(prof([[.03, -.022], [-.045, -.022], [-.05, -.034], [-.03, -.05], [.02, -.05], [.03, -.034]], [[[.022, -.026], [-.04, -.026], [-.04, -.042], [.02, -.042]]]), .008, .001), M.blued)).position.x = -.004; // trigger guard
   const lever = new THREE.Group(); g.add(lever); // (no lever: placeholder for the shared animation path)
+  const brl = new THREE.Group(); brl.position.set(0, .012, -.098); g.add(brl); g.updateMatrixWorld(true); for (const o of [...g.children]) if (o.isMesh && o.position.z < -.1) brl.attach(o); // v131: barrels + forend hinge open to reload
   g.traverse(o => { if (o.isMesh) o.castShadow = true; });
-  return { group: g, muzzle: new THREE.Vector3(0, BY, -.582), lever, hammer: hamG, kind: 'shotgun' };
+  return { group: g, muzzle: new THREE.Vector3(0, BY, -.582), lever, hammer: hamG, brl, kind: 'shotgun' };
 }
 
 export function buildGatling() {
@@ -532,6 +533,7 @@ export function createGuns(c) {
     if (k < 1) { q1.setFromAxisAngle(v1.set(0, 1, 0), F[4] * (1 - k)); g.quaternion.multiply(q1); q1.setFromAxisAngle(v1.set(1, 0, 0), .04 * (1 - k)); g.quaternion.multiply(q1); } g.visible = true;
     if (w === 'revolver' && dual() && model !== leftRev) { const L = leftRev.group, kk = Math.min(k, .6); L.position.set(-hx * (1 - kk) - .09 * kk + sway, F[1] * (1 - kk) + (A[1] - .01) * kk + bob, F[2] * (1 - kk) + A[2] * kk).applyMatrix4(camera.matrixWorld); L.quaternion.copy(camera.quaternion); q1.setFromAxisAngle(v1.set(0, 1, 0), -F[4] * (1 - kk)); L.quaternion.multiply(q1); L.scale.setScalar(sc); L.visible = true; } }
   function animParts(m, rec, cock, lever) { if (m.kind === 'revolver') { m.hammer.rotation.x = cock ? -.55 : 0; m.cylinder.rotation.z = (state.shots % 6) * Math.PI / 3 * -1; m.group.rotateX(rec * .35); }
+    else if (m.kind === 'shotgun') { const want = state.reloading && state.weapon === 'shotgun' ? .62 : 0; m.brl.rotation.x += (want - m.brl.rotation.x) * .3; m.hammer.rotation.x = rec > .3 ? 0 : -.45; m.group.rotateX(rec * .28); m.group.translateZ(rec * .07); }
     else if (m.kind === 'gatling') { m.group.rotateX(rec * .025); m.group.translateZ(rec * .012); }
     else if (m.kind === 'm4' || m.kind === 'mp5') { m.bolt.position.z += (m.boltZ - m.bolt.position.z) * .35; m.group.rotateX(rec * .045); m.group.translateZ(rec * .02); }
     else if (m.kind === 'tommy') { if (m.bolt) m.bolt.position.z += (-.02 - m.bolt.position.z) * .35; m.group.rotateX(rec * .06); m.group.translateZ(rec * .015); }

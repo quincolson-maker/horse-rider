@@ -89,6 +89,9 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'surf1', title: 'Learn to Surf', task: 'Catch and ride a wave at Paradise Cove', pay: 500, p: () => ((H.stats && H.stats.surfRides) || 0) > 0 ? 1 : 0 },
     { id: 'surfbarrel', title: 'Get Barreled', task: 'Ride 1 second inside the barrel of a wave', pay: 1000, p: () => ((H.stats && H.stats.surfTube) || 0) >= 1 ? 1 : 0 },
     { id: 'surf5', title: 'Five Good Waves', task: 'Ride 5 waves at Paradise Cove', pay: 800, p: () => Math.min(1, ((H.stats && H.stats.surfRides) || 0) / 5), txt: () => `${Math.min(5, ((H.stats && H.stats.surfRides) || 0))} / 5` },
+    { id: 'cab', title: 'Footplate Pass', task: 'Ride up on the locomotive (boarding spot at the head of a platform)', pay: 400, p: () => ((H.stats && H.stats.cabRides) || 0) > 0 ? 1 : 0 }, /* v349 */
+    { id: 'tour', title: 'Island Hopping', task: 'Take the bangka tour from the Paradise Cove pier', pay: 300, p: () => ((H.stats && H.stats.tours) || 0) > 0 ? 1 : 0 },
+    { id: 'surfheat', title: 'Paddle Battle', task: 'Surf a contest heat at Paradise Cove', pay: 500, p: () => ((H.stats && H.stats.surfHeats) || 0) > 0 ? 1 : 0 },
     { id: 'slayer', title: 'Slayer', task: 'Drop 150 zombies', pay: 3000, ...killsSince('slayer', 150) },
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];

@@ -59,8 +59,8 @@ export function createRaid({ scene, H, P, hAt, msg, sfx, mobile, fx }) {
     const wd = new THREE.MeshStandardMaterial({ color: 0x5a3a1e, roughness: .8 }), mt = new THREE.MeshStandardMaterial({ color: 0xd8b04a, metalness: .9, roughness: .3, emissive: 0x4a3000, emissiveIntensity: .6 });
     const b = new THREE.Mesh(new THREE.BoxGeometry(.9, .5, .55), wd); b.position.y = .25; box.add(b); const lid = new THREE.Mesh(new THREE.CylinderGeometry(.275, .275, .9, 12, 1, false, 0, Math.PI), wd); lid.rotation.z = Math.PI / 2; lid.position.y = .5; box.add(lid);
     for (const xx of [-.3, .3]) { const s2 = new THREE.Mesh(new THREE.BoxGeometry(.06, .82, .58), mt); s2.position.set(xx, .4, 0); box.add(s2); }
-    const sp = { x, z, y, kind: 'raidchest', label: 'Open the town\'s strongbox', r: 1.8 }; T.spots.push(sp); if (T.TL) T.TL.raidchest = 'OPEN<small>STRONGBOX</small>';
-    const prev = T.onUse; T.onUse = o => { if (o !== sp || sp.used) return prev ? prev(o) : false; sp.used = true; const pts = 300 + ((Math.random() * 7) | 0) * 100; award(pts, 'raid'); if (H.gear) { H.gear.state.apples = Math.min(10, (H.gear.state.apples || 0) + 2); try { localStorage.setItem('hr_gear', JSON.stringify(H.gear.state)); } catch (_) {} }
+    H.chestPos = [x, z]; const sp = { x, z, y, kind: 'raidchest', label: 'Open the town\'s strongbox', r: 1.8 }; T.spots.push(sp); if (T.TL) T.TL.raidchest = 'OPEN<small>STRONGBOX</small>';
+    const prev = T.onUse; T.onUse = o => { if (o !== sp || sp.used) return prev ? prev(o) : false; sp.used = true; H.chestPos = null; const pts = 300 + ((Math.random() * 7) | 0) * 100; award(pts, 'raid'); if (H.gear) { H.gear.state.apples = Math.min(10, (H.gear.state.apples || 0) + 2); try { localStorage.setItem('hr_gear', JSON.stringify(H.gear.state)); } catch (_) {} }
       msg(`💰 The town's strongbox: +${pts} and 2 apples for your horse`, 3); tone('triangle', 523, 1046, .4, .25); const i = T.spots.indexOf(sp); if (i >= 0) T.spots.splice(i, 1); box.removeFromParent(); return true; }; }
   const fxSplinter = () => { if (fx && fx.debris) fx.debris(bar.position.x, bar.position.y + 1.2, bar.position.z, 0x7a5636, 30, 1.4); };
 

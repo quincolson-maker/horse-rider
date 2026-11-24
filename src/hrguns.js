@@ -3,8 +3,8 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=94';
-import { buildM4, buildMP5, detailize } from './hrmodern.js?v=94'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=96';
+import { buildM4, buildMP5, detailize } from './hrmodern.js?v=96'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -384,7 +384,7 @@ export function createGuns(c) {
   function holster() { if (!state.weapon) return; state.weapon = null; state.aiming = false; state.reloading = false; input.ads = false; click(1800, .1); syncUI(); }
   const ORDER = ['revolver', 'rifle', 'sniper', 'tommy', 'gold', 'gatling', 'm4', 'mp5', 'shotgun'], owned = () => ORDER.filter(w => state.owned[w]);
   function cycle() { const o = owned(), D = H.dyn; if (D && D.equipped()) { D.equip(false); syncUI(); return; } if (!state.weapon) draw(o[0]); else { const i = o.indexOf(state.weapon); if (i < 0 || i === o.length - 1) { holster(); if (D && D.state.count > 0) D.equip(true); syncUI(); } else draw(o[i + 1]); } } // v42: ... -> last gun -> 🧨 dynamite (when you have sticks) -> holstered // phone: holstered -> six-shooter -> rifle -> buffalo -> (tommy, golden buffalo once owned) -> holstered
-  function reload() { const w = state.weapon; if (!w || state.reloading || state.cycling || state.ammo[w] >= maxAmmo(w)) return false; state.reloading = true; if (w === 'tommy') tommyWav('reload'); clock.reload = (H.reloadMul || 1) * (w === 'rifle' ? S.reloadRifle : w === 'sniper' ? S.reloadSniper : w === 'm4' ? S.reloadM4 : w === 'mp5' ? S.reloadMp5 : w === 'shotgun' ? S.reloadShotgun : w === 'tommy' ? S.reloadTommy : w === 'gatling' ? S.reloadGatling : w === 'gold' ? S.reloadGold : S.reloadRevolver) * S.tierReload[tier(w)]; state.rlLen = clock.reload; state.rlStep = 0; click(1500, .1); return true; }
+  function reload() { const w = state.weapon; if (!w || state.reloading || state.cycling || state.ammo[w] >= maxAmmo(w)) return false; state.reloading = true; if (w === 'tommy') tommyWav('reload'); clock.reload = (H.reloadMul || 1) * (w === 'rifle' ? S.reloadRifle : w === 'sniper' ? S.reloadSniper : w === 'm4' ? S.reloadM4 : w === 'mp5' ? S.reloadMp5 : w === 'shotgun' ? S.reloadShotgun : w === 'tommy' ? S.reloadTommy : w === 'gatling' ? S.reloadGatling : w === 'gold' ? S.reloadGold : S.reloadRevolver) * S.tierReload[tier(w)]; state.rlTot = clock.reload; state.rlLen = clock.reload; state.rlStep = 0; click(1500, .1); return true; }
 
   // ChatGPT's horseback arc clamp (kept): a direction behind the horse is turned back to the limit; returns whether it was clamped
   function clampHorse(dir) { const h = H.mounted; if (!h) return false; const fx_ = -Math.sin(h.yaw), fz = -Math.cos(h.yaw), hx = dir.x, hz = dir.z, l = Math.hypot(hx, hz); if (l < 1e-4) return false;
@@ -556,7 +556,7 @@ export function createGuns(c) {
   addEventListener('keydown', onKey); addEventListener('keyup', onKeyUp); c.renderer.domElement.addEventListener('mousedown', onDown); addEventListener('mouseup', onUp); const resetInput = () => { fireHeld = aimHeld = reloadHeld = false; firePend = false; lastFire = false; }; addEventListener('blur', resetInput); (window.__inputResets = window.__inputResets || []).push(resetInput); // v36: no queued shot fires after an app switch
 
   // ---- HUD + phone buttons ----
-  const $ = id => document.getElementById(id); let hudEl = null, crossEl = null, scopeEl = null;
+  const $ = id => document.getElementById(id); let hudEl = null, crossEl = null, scopeEl = null, rlEl = null;
   function syncUI() { document.body.classList.toggle('hr-gun', !!state.weapon); const b = $('tGun'), Dq = H.dyn && H.dyn.equipped(); document.body.classList.toggle('hr-dyn', !!Dq); const oo = owned(), lastG = state.weapon && oo.indexOf(state.weapon) === oo.length - 1 && H.dyn && H.dyn.state.count > 0; if (b && lastG) { b.innerHTML = '🧨<small>DYNAMITE</small>'; return; } if (b) b.innerHTML = Dq ? '🔫<small>HOLSTER</small>' : !state.weapon ? '🔫<small>DRAW</small>' : state.weapon === 'revolver' ? '🔫<small>RIFLE</small>' : state.weapon === 'rifle' ? '🔭<small>BUFFALO</small>' : (() => { const o = owned(), n = o[o.indexOf(state.weapon) + 1]; return n === 'tommy' ? '🔫<small>TOMMY</small>' : n === 'gold' ? '🔭<small>GOLD</small>' : n === 'gatling' ? '🔫<small>GATLING</small>' : '🔫<small>HOLSTER</small>'; })(); if (!state.weapon) input.ads = false; }
   if (mobile && $('tGun')) { const b = $('tGun'); b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); cycle(); }); }
   if (mobile && $('tFire')) $('tFire').addEventListener('pointerdown', () => { if (H.on && state.weapon) firePend = true; }); // a quick tap between two frames still fires
@@ -569,9 +569,12 @@ export function createGuns(c) {
     if (so) { scopeEl.querySelector('.br b').style.width = (state.breath * 100).toFixed(0) + '%'; scopeEl.classList.toggle('steady', state.steady); scopeEl.classList.toggle('winded', state.winded);
       scopeEl.querySelector('.tip').textContent = ''; const pe = scopeEl.querySelector('.pts'), pt = `${pts()} pts · ${state.kills || 0} ☠`; if (pe.textContent !== pt) pe.textContent = pt; } // no writing in the scope (Quin); the breath bar colour shows steady / winded
     if (w) { const n = state.ammo[w], mx = maxAmmo(w); let pips = ''; if (mx <= 12) for (let i = 0; i < mx; i++) pips += `<b class="${i < n ? 'f' : ''}"></b>`;
-      hudEl.innerHTML = `<span class="w">${WNAME[w]}${tier(w) ? ' ' + ['', '🥉', '🥈', '🥇'][tier(w)] : ''}</span>${mx > 12 ? `<span class="cnt">${n} / ${mx}</span>` : `<span class="pips ${w === 'revolver' ? 'revolver' : 'rifle'}">${pips}</span>`}${state.reloading ? '<span class="rl">reloading…</span>' : n === 0 ? `<span class="rl">${mobile || w === 'sniper' ? 'reloading…' : 'R to reload'}</span>` : ''}<span class="sc">🎯 ${state.hits} · ${pts()} pts</span>${toast > 0 ? `<em>${toastTxt}</em>` : ''}`;
+      hudEl.innerHTML = `<span class="w">${WNAME[w]}${tier(w) ? ' ' + ['', '🥉', '🥈', '🥇'][tier(w)] : ''}</span>${mx > 12 ? `<span class="cnt">${n} / ${mx}</span>` : `<span class="pips ${w === 'revolver' ? 'revolver' : 'rifle'}">${pips}</span>`}${state.reloading ? '' : n === 0 ? `<span class="rl">${mobile || w === 'sniper' ? 'reloading…' : 'R to reload'}</span>` : ''}<span class="sc">🎯 ${state.hits} · ${pts()} pts</span>${toast > 0 ? `<em>${toastTxt}</em>` : ''}`;
       }
     else if (toast > 0) hudEl.innerHTML = `<em>${toastTxt}</em>`;
+    // v96: reload progress as a ring around the crosshair (the text used to collide with prompts)
+    if (!rlEl) { rlEl = document.createElement('div'); rlEl.id = 'hrRl'; document.body.appendChild(rlEl); }
+    const rOn = !!(w && state.reloading && state.rlTot); rlEl.style.display = rOn ? 'block' : 'none'; if (rOn) rlEl.style.setProperty('--p', Math.max(0, Math.min(1, 1 - clock.reload / state.rlTot)).toFixed(3));
   }
 
   function cross() { if (!crossEl || crossEl.hidden) return; const sp = spreadDeg(false) * D2R, px = innerHeight / (2 * Math.tan(camera.fov * D2R / 2)), sw = swayVec(); camera.getWorldDirection(v1); const rt = v2.crossVectors(v1, UP).normalize();
@@ -652,9 +655,10 @@ export function createGuns(c) {
   const fin = (a, n) => Array.isArray(a) && a.length === n && a.every(v => typeof v === 'number' && isFinite(v) && Math.abs(v) < 6000);
   function remoteShot(id, msg) { if (!msg || !fin(msg.o, 3) || !fin(msg.e, 3) || !WBY[msg.w]) return; const R = remote.get(id) || {}; const now = performance.now(); if (R.t && now - R.t < 90) return; R.t = now; remote.set(id, R);
     const o = new THREE.Vector3(...msg.o), e = new THREE.Vector3(...msg.e); if (o.distanceTo(camera.position) > 600) return; const d = e.clone().sub(o).normalize(); effects(WBY[msg.w], o, d, e, true, undefined, msg.sp === 1); state.remoteShots = (state.remoteShots || 0) + 1; }
-  function netState() { return { ...(state.weapon === 'tommy' && tsup() ? { sp: 1 } : {}), g: WCODE[state.weapon] || 0, k: state.kills || 0, pt: state.score, bd: H.bounty ? H.bounty.state.done.length : 0, a: state.aiming ? 1 : 0, ap: +P.pitch.toFixed(2) }; }
+  function netState() { return { ...(state.weapon === 'tommy' && tsup() ? { sp: 1 } : {}), ...(H.camo && H.camo.idx() >= 0 ? { cm: H.camo.idx() } : {}), g: WCODE[state.weapon] || 0, k: state.kills || 0, pt: state.score, bd: H.bounty ? H.bounty.state.done.length : 0, a: state.aiming ? 1 : 0, ap: +P.pitch.toFixed(2) }; }
   function poseRemote(av, s, root, mounted) { // av: remote avatar; s: last net state
     if (!av.guns) { av.guns = {}; for (const k of ORDER) av.guns[k] = { ...models[k], group: models[k].group.clone() }; for (const m of Object.values(av.guns)) { m.group.visible = false; scene.add(m.group); } }
+    if (s && H.camo && (s.cm ?? -1) !== av.cm) { av.cm = s.cm ?? -1; for (const m of Object.values(av.guns)) H.camo.paintIdx(m.group, av.cm); } // v95 their camo
     const w = s && WBY[s.g] || null; for (const [k, m] of Object.entries(av.guns)) if (k !== w) m.group.visible = false; if (!w || !root || !root.visible) { if (w) av.guns[w].group.visible = false; return; }
     const yaw = typeof s.yw === 'number' ? s.yw : 0, pt = typeof s.ap === 'number' ? Math.max(-1.2, Math.min(1.2, s.ap)) : 0, dir = new THREE.Vector3(-Math.sin(yaw) * Math.cos(pt), Math.sin(pt), -Math.cos(yaw) * Math.cos(pt));
     if (w === 'tommy') { const g = av.guns.tommy.group, on = s.sp === 1; if (g.userData.sp !== on) { g.userData.sp = on; const sup = g.getObjectByName('Tommy suppressor'), cp = g.getObjectByName('compensator'); if (sup) sup.visible = on; if (cp) cp.visible = !on; } } // their suppressor shows (display only)

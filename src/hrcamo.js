@@ -31,7 +31,7 @@ const skip = m => !m || !m.isMeshStandardMaterial || m.transparent || (m.emissiv
 export function createCamo({ guns, msg }) {
   const LS = 'hr_camo'; let st = (() => { try { return JSON.parse(localStorage.getItem(LS) || '{}') || {}; } catch (_) { return {}; } })();
   st.owned = st.owned || []; const save = () => { try { localStorage.setItem(LS, JSON.stringify(st)); } catch (_) {} };
-  const texes = {}, cache = new Map(); // `${origUuid}|${camoId}` -> painted material
+  const texes = {}, cache = new Map(), rev = new Map(), origOf = new WeakMap(); // painted material -> factory material; mesh -> factory material (WeakMap, not userData: userData is JSON-copied by clone()) // `${origUuid}|${camoId}` -> painted material
   function painted(orig, c) { const key = orig.uuid + '|' + c.id; let m = cache.get(key); if (m) return m;
     m = orig.clone(); const tex = texes[c.id] || (texes[c.id] = camoTex(c)); const prev = orig.onBeforeCompile;
     m.map = null; m.color = new THREE.Color(1, 1, 1); if (m.clearcoat !== undefined) m.clearcoat = c.metal ? .5 : .15;
@@ -43,10 +43,10 @@ export function createCamo({ guns, msg }) {
         '  vec3 cc = texture2D(uCamo, p.zy).rgb * bw.x + texture2D(uCamo, p.xz).rgb * bw.y + texture2D(uCamo, p.xy).rgb * bw.z;\n' +
         '  diffuseColor.rgb = pow(cc, vec3(2.2)); }'); };
     m.customProgramCacheKey = () => 'camo-' + c.id + (prev ? '-' + (orig.customProgramCacheKey ? orig.customProgramCacheKey() : 'p') : '');
-    cache.set(key, m); return m; }
-  function paint(group, c) { group.traverse(o => { if (!o.isMesh) return; const ud = o.userData;
-      if (ud.camoOrig === undefined) { if (Array.isArray(o.material) || skip(o.material)) { ud.camoOrig = null; return; } ud.camoOrig = o.material; }
-      if (!ud.camoOrig) return; o.material = c ? painted(ud.camoOrig, c) : ud.camoOrig; }); }
+    cache.set(key, m); rev.set(m, orig); return m; }
+  function paint(group, c) { group.traverse(o => { if (!o.isMesh) return; let orig = origOf.get(o);
+      if (orig === undefined) { const m0 = rev.get(o.material) || o.material; orig = Array.isArray(m0) || skip(m0) ? null : m0; origOf.set(o, orig); }
+      if (!orig) return; o.material = c ? painted(orig, c) : orig; }); }
   const cur = () => CAMOS.find(c => c.id === st.on && st.owned.includes(c.id)) || null;
   function apply() { const c = cur(); for (const m of Object.values(guns.models || {})) if (m && m.group) paint(m.group, c); }
   apply(); setInterval(() => { const w = guns.state.weapon, m = w && guns.models[w]; if (m && cur()) paint(m.group, cur()); }, 1500); // late-loaded parts
@@ -55,5 +55,6 @@ export function createCamo({ guns, msg }) {
       get owned() { return st.owned.includes(c.id); }, get equipped() { return st.on === c.id; }, maxed: false, get label() { return st.owned.includes(c.id) ? (st.on === c.id ? 'REMOVE' : 'EQUIP') : ''; } },
     buy() { if (guns.pts() < c.price) { msg('Not enough points', 1.5); return; } guns.state.spent = (guns.state.spent || 0) + c.price; guns.save(); st.owned.push(c.id); st.on = c.id; save(); apply(); msg(`${c.name} camo on — every gun you own is painted`, 3); },
     toggle() { st.on = st.on === c.id ? null : c.id; save(); apply(); msg(st.on ? c.name + ' camo on' : 'Camo off — factory finish', 1.4); } }));
-  return { items, apply, list: CAMOS, state: st };
+  const idx = () => { const c = cur(); return c ? CAMOS.indexOf(c) : -1; };
+  return { items, apply, list: CAMOS, state: st, idx, paintIdx: (group, i) => paint(group, CAMOS[i] || null) };
 }

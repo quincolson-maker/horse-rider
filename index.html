@@ -268,10 +268,16 @@ body.ui-open #touch .tb{display:none!important}/* v85: only the buttons step asi
 #musSeg button[aria-pressed="true"]{background:#c9a050!important;color:#1a1208!important;font-weight:800}#musSeg{flex-wrap:wrap}
 #hrShop h3{position:sticky;top:-14px;margin:-14px -16px 0;padding:12px 16px 4px;background:rgb(22,19,14);z-index:2}#hrShop .pt{position:sticky;top:16px;margin:0 -16px 6px;padding:2px 16px 6px;background:rgb(22,19,14);z-index:2;border-bottom:1px solid #5a4626}
 @media (max-height:520px){#hrShop{max-height:96vh;padding:10px 12px;font-size:13px}#hrShop h3{top:-10px;margin:-10px -12px 0;padding:9px 12px 3px}#hrShop .pt{top:12px;margin:0 -12px 4px;padding:2px 12px 5px}#hrShop .row{margin:3px 0}#hrShop button{padding:6px 10px}}
+
+/* v96 HUD lanes on phones: ammo block one row just above the ⋯ button; prompts in their own lane above it, one line */
+#hrRl{position:fixed;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;pointer-events:none;z-index:27;display:none;background:conic-gradient(#ffd27a calc(var(--p,0)*360deg),rgba(0,0,0,.35) 0);-webkit-mask:radial-gradient(circle,transparent 17px,#000 18px);mask:radial-gradient(circle,transparent 17px,#000 18px);filter:drop-shadow(0 0 2px #000)}
+body.touch #hrGun{bottom:calc(max(6px,env(safe-area-inset-bottom)) + 38px);flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;max-width:62vw}
+body.touch #hrGun .sc{display:none}
+body.touch #hrPrompt,body.touch #hrPrompt.riding{top:auto;bottom:calc(max(6px,env(safe-area-inset-bottom)) + 70px);white-space:nowrap;max-width:62vw;overflow:hidden;text-overflow:ellipsis;font-size:.82em;opacity:.95}
 </style>
 </head><body>
 <div id="fnSplash"><div class="logo">Horse<br>Rider</div><div class="tag">Wild Frontier · Season 1</div><button class="play" id="fnPlay">Play</button>
-<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v94 · updated Nov 23</div></div>
+<div class="hint" id="fnHint">WASD ride · Shift gallop · E mount · F guns · mouse aim</div><div class="ver">v96 · updated Nov 23</div></div>
 <script>(function(){var q=new URLSearchParams(location.search);var real=q.get('style')==='real';if(!real)document.body.classList.add('sty');var sp=document.getElementById('fnSplash');
 if(real||q.has('dev')||q.has('auto')||q.get('splash')==='0'){sp.remove();return;}
 if(matchMedia('(pointer: coarse)').matches)document.getElementById('fnHint').textContent='Left side: move & steer · right side: look · tap RIDE near a horse';
@@ -337,5 +343,5 @@ document.getElementById('fnPlay').addEventListener('click',go);addEventListener(
 </script>
 <script src="./vendor/peerjs.min.js"></script>
 <script type="importmap">{"imports":{"three":"./three.module.js"}}</script>
-<script type="module" src="./main.js?v=94" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
+<script type="module" src="./main.js?v=96" onload="window.__bootCheck && window.__bootCheck()" onerror="window.__bootFail && window.__bootFail('app', 'main.js failed to load')"></script>
 </body></html>

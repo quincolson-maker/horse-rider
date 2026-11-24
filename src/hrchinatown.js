@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=275';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=275';
-import { mergeStatic } from './hrmerge.js?v=275';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=276';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=276';
+import { mergeStatic } from './hrmerge.js?v=276';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -258,6 +258,9 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   // v267 welcome banners slung across the avenue inside the trail gates
   { const bt = tex(512, 96, (c, w, h) => { c.fillStyle = '#b81818'; c.fillRect(0, 0, w, h); c.fillStyle = '#e8c060'; c.fillRect(0, 6, w, 4); c.fillRect(0, h - 10, w, 4); c.textAlign = 'center'; c.font = '900 56px "Noto Serif TC","Songti TC",serif'; c.fillText('歡 迎', 140, 68); c.font = 'bold 44px Georgia,serif'; c.fillText('WELCOME', 360, 66); }, false), bmat = new THREE.MeshStandardMaterial({ map: bt, side: THREE.DoubleSide, roughness: .8, emissive: 0xffffff, emissiveMap: bt, emissiveIntensity: .05 });
     for (const sz of [-1, 1]) { const g = new THREE.PlaneGeometry(7.6, 1.2, 8, 1), p2 = g.attributes.position; for (let i = 0; i < p2.count; i++) p2.setY(i, p2.getY(i) - Math.cos(p2.getX(i) / 3.8 * Math.PI / 2) * .25); const m = new THREE.Mesh(g, bmat); m.position.set(CX, y0 + 5.6, CZ + sz * 30.6); m.rotation.y = sz < 0 ? Math.PI : 0; scene.add(m); H.cullAdd && H.cullAdd(m, 160, { x: CX, z: CZ + sz * 30.6 }); for (const sx of [-3.9, 3.9]) cyl(D, M.red, sx, 3.0, sz * 30.6, .07, 6.0, 8); } }
+  // v276 notice board at the crossing: read it for today's times (dragon, lion, opera) and what's on
+  box(D, M.wood, 5.9, 1.3, -6.9, 1.6, 1.1, .08); box(D, M.red, 5.9, 1.9, -6.9, 1.8, .12, .14); for (const dx of [-.75, .75]) box(D, M.wood, 5.9 + dx, .9, -6.9, .08, 1.8, .08); for (let k = 0; k < 5; k++) box(D, M.paper, 5.4 + (k % 3) * .45, 1.45 - Math.floor(k / 3) * .4, -6.95, .36, .3, .01);
+  spot(D, 5.9, 0, -7.9, 'ct_board', '📜 Read the notice board (today\'s times)', 1.5);
   // v229 lantern riddles: a frame of paper lanterns by the crossing, each with a riddle on its tassel
   { const rx = -7.5, rz = -7.5; for (const dx of [-1.2, 1.2]) cyl(D, M.red, rx + dx, 1.4, rz, .06, 2.8, 8); box(D, M.red, rx, 2.8, rz, 2.8, .12, .12); for (let k = 0; k < 4; k++) { sph(D, M.lamp, rx - 1.0 + k * .66, 2.35, rz, .22, 1.3); box(D, M.gold, rx - 1.0 + k * .66, 1.95, rz, .03, .3, .03); box(D, M.paper, rx - 1.0 + k * .66, 1.72, rz, .12, .2, .01); }
     spot(D, rx, 0, rz - .9, 'ct_riddle', '🏮 Lantern riddles (guess right for points)', 2); }
@@ -302,6 +305,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (k === 'chess') { msg(['♟️ Red pushes a cannon across the river - the old men nod', '♟️ "Check!" - the crowd murmurs', '♟️ A horse jumps, an elephant falls back. A long game.'][(Math.random() * 3) | 0], 2.6); if (sfx.tone && sfx.ctx) sfx.tone('square', 900, 900, .03, .04); }
     else if (k === 'tiles') { tiles(); }
     else if (k === 'lionrub') { if (S.ctRub === day()) msg('🦁 The lion\'s head is already polished bright today', 1.8); else { S.ctRub = day(); earn(30); msg('🦁 You rub the stone lion\'s head - luck is with you (+30)', 2.2); } }
+    else if (k === 'board') { const now = Date.now() / 1000, dn = 360 - (now % 360), ln = 360 - ((now - 180) % 360 + 360) % 360, m = x => x < 60 ? Math.ceil(x) + ' s' : Math.ceil(x / 60) + ' min'; const q = S.ctErr, er = q && q.day === day() ? (q.done ? 'done today' : `${q.got.filter(Boolean).length}/3 roots`) : 'ask the herbalist'; msg(`📜 Dragon dance in ${m(dn)} · Lion dance in ${m(ln)} · Opera: ${S.ctOpera === day() ? 'seen today' : 'tonight'} · Riddles: ${5 - (S.ctRidDay === day() ? S.ctRidN || 0 : 0)} left · Errand: ${er}`, 6); }
     else if (k === 'view') { msg('🏮 Lanterns, tiled eaves and the range beyond', 2); S.ctView = 1; }
     else if (k === 'gold') { if (S.ctJade) msg('💚 Your jade charm is warm against your chest', 2); else if (pay(2000)) { S.ctJade = 1; msg('💚 A carved jade charm - you heal slowly but steadily from now on', 3); for (const q of spots) if (q.kind === 'ct_gold') q.label = '💍 Look over the jade and gold (charm owned)'; } }
     else if (k === 'tailor') { if (S.ctMend === day()) msg('🧵 Your coat is already mended today', 1.8); else { S.ctMend = day(); heal(25); msg('🧵 The tailor patches your torn coat - you feel put together (+25)', 2.5); } }

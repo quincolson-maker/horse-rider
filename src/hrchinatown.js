@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=236';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=236';
-import { mergeStatic } from './hrmerge.js?v=236';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=237';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=237';
+import { mergeStatic } from './hrmerge.js?v=237';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -218,6 +218,15 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   // v230 horse troughs + hitching rails inside the north and south gates (ride up, stop: your horse drinks)
   const troughs = []; for (const sz of [-1, 1]) { const tz = sz * (E - 4.5); box(D, M.wood, 8, .35, tz, 2.6, .6, .8); box(D, fmat(0x3a6a7a), 8, .62, tz, 2.4, .04, .6); for (const dx of [-1.2, 1.2]) box(D, M.wood, 8 + dx, .2, tz, .12, .4, .9); wall(D, 6.7, tz - .4, 9.3, tz - .4, -1, .7); wall(D, 6.7, tz + .4, 9.3, tz + .4, -1, .7); troughs.push([CX + 8, CZ + tz]);
     for (const dx of [-1.6, 1.6]) box(D, M.wood, -8 + dx, .55, tz, .14, 1.1, .14); box(D, M.wood, -8, 1.05, tz, 3.4, .1, .1); }
+  // v237 corner gardens: a moon-gate wall, a pine, a stone bench (sit to heal) and a koi pond in each corner of the ring lane
+  const koi = []; for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const gx = sx * 33.2, gz = sz * 33.2;
+    // moon gate: a wall segment with a round opening facing the lane
+    const ring = new THREE.TorusGeometry(1.25, .22, 8, 24); ring.translate(0, 1.6, 0); ring.rotateY(sx * sz > 0 ? Math.PI / 4 : -Math.PI / 4); ring.translate(gx - sx * 1.6, 0, gz - sz * 1.6); push(M.cream, xf(D, ring)); box(D, M.tile, gx - sx * 1.6, 3.05, gz - sz * 1.6, 3.4, .18, .5, sx * sz > 0 ? Math.PI / 4 : -Math.PI / 4);
+    cyl(D, M.dark, gx + sx * .6, 1.0, gz - sz * .9, .12, 2.0, 6); cone(D, fmat(0x2e5a34), gx + sx * .6, 2.3, gz - sz * .9, .9, .7, 7, 0); cone(D, fmat(0x2e5a34), gx + sx * .9, 1.8, gz - sz * .6, .7, .5, 7, 0);
+    box(D, M.stone, gx - sx * .3, .25, gz + sz * 1.2, 1.6, .5, .5); spot(D, gx - sx * .3, 0, gz + sz * 1.2, 'ct_bench', '🪨 Sit by the koi pond (heal)', 1.4);
+    cyl(D, M.stone, gx + sx * .8, .12, gz + sz * .6, 1.1, .24, 18); cyl(D, fmat(0x2a5a6a), gx + sx * .8, .235, gz + sz * .6, 1.0, .04, 18); koi.push([CX + gx + sx * .8, CZ + gz + sz * .6]);
+    for (let k = 0; k < 10; k++) wall(D, gx + sx * .8 + Math.cos(k / 10 * 6.283) * 1.1, gz + sz * .6 + Math.sin(k / 10 * 6.283) * 1.1, gx + sx * .8 + Math.cos((k + 1) / 10 * 6.283) * 1.1, gz + sz * .6 + Math.sin((k + 1) / 10 * 6.283) * 1.1, -1, .3); }
+  const KF = new THREE.InstancedMesh(new THREE.ConeGeometry(.06, .26, 5).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xff7a2a, roughness: .5 }), koi.length * 3); KF.name = 'koi'; scene.add(KF); { const c = new THREE.Color(); for (let i = 0; i < koi.length * 3; i++) KF.setColorAt(i, c.set([0xff7a2a, 0xffffff, 0xffb040][i % 3])); }
   // v229 lantern riddles: a frame of paper lanterns by the crossing, each with a riddle on its tassel
   { const rx = -7.5, rz = -7.5; for (const dx of [-1.2, 1.2]) cyl(D, M.red, rx + dx, 1.4, rz, .06, 2.8, 8); box(D, M.red, rx, 2.8, rz, 2.8, .12, .12); for (let k = 0; k < 4; k++) { sph(D, M.lamp, rx - 1.0 + k * .66, 2.35, rz, .22, 1.3); box(D, M.gold, rx - 1.0 + k * .66, 1.95, rz, .03, .3, .03); box(D, M.paper, rx - 1.0 + k * .66, 1.72, rz, .12, .2, .01); }
     spot(D, rx, 0, rz - .9, 'ct_riddle', '🏮 Lantern riddles (guess right for points)', 2); }
@@ -256,6 +265,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (k === 'bed') { heal(100); msg('🛏️ You stretch out for a while - rested and healed', 2.2); S.ctRest = (S.ctRest || 0) + 1; }
     else if (k === 'stall') { if (pay(10)) { heal(30); msg(o.food || '🍢 Skewers off the grill', 1.8); S.ctFood = (S.ctFood || 0) + 1; } }
     else if (k === 'riddle') { riddle(); }
+    else if (k === 'bench') { heal(60); msg('🪨 You sit by the pond a while - the koi drift past', 2.2); S.ctBench = 1; }
     else if (k === 'view') { msg('🏮 Lanterns, tiled eaves and the range beyond', 2); S.ctView = 1; }
     else msg('Fine work - but nothing you need today', 1.6);
     if (o.shopName) { const v = new Set(S.ctShops || []); v.add(o.shopName); S.ctShops = [...v]; }
@@ -335,6 +345,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     if (n > .45 && fx && fx.smoke && Math.hypot(me.x - CX, me.z - CZ) < 70 && (steamT -= dt) <= 0) { steamT = .35; const q = stalls[(Math.random() * stalls.length) | 0]; fx.smoke.emit(q[0] + (Math.random() - .5) * .6, y0 + 1.5, q[1], 0, .6 + Math.random() * .4, 0, .92, .92, .9, .35, 1.6, 1.3, -.01, .15); }
     if (inside && sfx.tone && sfx.ctx && !(DR.on) && (musT -= dt) <= 0) { const PEN = [392, 440, 523, 587, 659, 784, 880]; musT = [.45, .45, .9, .45, 1.35][(Math.random() * 5) | 0]; musI = Math.max(0, Math.min(PEN.length - 1, musI + [-2, -1, -1, 1, 1, 2, 0][(Math.random() * 7) | 0])); const f = PEN[musI]; sfx.tone('triangle', f, f * .995, .028, musT * 1.4); if (Math.random() < .25) sfx.tone('sine', f / 2, f / 2, .02, 1.2); } /* v227 a quiet pentatonic street melody */
     { const hm = H.mounted; if (hm) for (const q of troughs) if (Math.hypot(hm.pos.x - q[0], hm.pos.z - q[1]) < 2.8 && Math.abs(H.speed || 0) < 1) { H.stam = Math.min(100, (H.stam || 0) + 30 * dt); if (hm.hp != null) hm.hp = Math.min(100, hm.hp + 10 * dt); if (!hm.ctDrink || t - hm.ctDrink > 20) { hm.ctDrink = t; msg('🐴 Your horse drinks deep', 1.6); } } }
+    if (Math.hypot(me.x - CX, me.z - CZ) < 80) { const m4 = KF.userData.m || (KF.userData.m = new THREE.Matrix4()), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1); koi.forEach((p, j) => { for (let k = 0; k < 3; k++) { const a = t * (.4 + k * .13) * (k % 2 ? -1 : 1) + k * 2.1 + j, r = .35 + k * .18; e.set(0, a + (k % 2 ? 0 : Math.PI), 0); q.setFromEuler(e); m4.compose(v.set(p[0] + Math.cos(a) * r, y0 + .262, p[1] + Math.sin(a) * r), q, one); KF.setMatrixAt(j * 3 + k, m4); } }); KF.instanceMatrix.needsUpdate = true; }
     if (fedT > 0) { fedT -= dt; heal(dt * 1.5); } if (tonicT > 0) { tonicT -= dt; heal(dt * 3); }
     if (crackers) { crackers.t -= dt; if (crackers.t <= 0) { crackers.t = .07 + Math.random() * .08; crackers.n++; const x = crackers.x + (Math.random() - .5) * 1.2, z = crackers.z + (Math.random() - .5) * 1.2, y = (H.town ? H.town.floorAt(x, z, me.y + 1) : hAt(x, z)) + .1;
       if (sfx.nz && sfx.ctx) sfx.nz('highpass', 1800 + Math.random() * 1500, .8, .22, .05); if (fx && fx.smoke) fx.smoke.emit(x, y, z, (Math.random() - .5) * 2, 1 + Math.random(), (Math.random() - .5) * 2, .85, .8, .75, .5, .9, .7, -.02, .3); if (fx && fx.spark) fx.spark(x, y + .1, z); if (crackers.n > 40) crackers = null; } } }

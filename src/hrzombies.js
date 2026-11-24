@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=88';
-import { PERF } from './perfopts.js?v=88';
+import { PF } from './perf.js?v=89';
+import { PERF } from './perfopts.js?v=89';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -220,11 +220,12 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
   function stepHost(o, dt) {
     if (o.kind === 'outlaw') return stepOutlaw(o, dt);
     if (o.hold) { o.sp = 0; o.st = 0; return; } // dev / tests: stand still
+    o.raidGo = null; if (o.raid && Z.raidHook) { const r = Z.raidHook(o, dt); if (r === 1) return; o.raidGo = r || null; } // v89 night raid: march on the gate
     const T = o.tgt = (o.retT = (o.retT || 0) - dt) <= 0 || !o.tgt || (o.tgt.kind === 'player' && o.tgt.p.gone) ? chooseTarget(o) : o.tgt; if (o.retT <= 0) o.retT = .5;
-    let tx = T ? (T.kind === 'horse' ? T.h.pos.x : T.p.x) : PEN.x, tz = T ? (T.kind === 'horse' ? T.h.pos.z : T.p.z) : PEN.z;
-    const dist = Math.hypot(tx - o.pos.x, tz - o.pos.z), reach = o.K.reach + (T && (T.kind === 'horse' || T.p.horse) ? .8 : 0), safe = T && (T.kind === 'horse' ? inPenSafe(tx, tz) : inPenSafe(T.p.x, T.p.z) || ((T.p.y ?? o.pos.y) - o.pos.y > 2.6));
+    let tx = T ? (T.kind === 'horse' ? T.h.pos.x : T.p.x) : PEN.x, tz = T ? (T.kind === 'horse' ? T.h.pos.z : T.p.z) : PEN.z; if (o.raidGo) { tx = o.raidGo[0]; tz = o.raidGo[1]; }
+    const dist = Math.hypot(tx - o.pos.x, tz - o.pos.z), reach = o.K.reach + (T && (T.kind === 'horse' || T.p.horse) ? .8 : 0), safe = !o.raidGo && T && (T.kind === 'horse' ? inPenSafe(tx, tz) : inPenSafe(T.p.x, T.p.z) || ((T.p.y ?? o.pos.y) - o.pos.y > 2.6));
     o.cd -= dt;
-    if (T && dist < reach && !safe) { o.st = 1; o.sp = 0; const want = Math.atan2(-(tx - o.pos.x), -(tz - o.pos.z)); o.yaw += Math.atan2(Math.sin(want - o.yaw), Math.cos(want - o.yaw)) * Math.min(1, dt * 8);
+    if (T && dist < reach && !safe && !o.raidGo) { o.st = 1; o.sp = 0; const want = Math.atan2(-(tx - o.pos.x), -(tz - o.pos.z)); o.yaw += Math.atan2(Math.sin(want - o.yaw), Math.cos(want - o.yaw)) * Math.min(1, dt * 8);
       if (o.kind === 'bloater') { if (Z.role() !== 'client') { o.hp = 0; kill(o, false, 'bandit'); } return; } // v87: it bursts on you
       if (o.cd <= 0) { o.cd = o.K.cd; const d = o.K.dmg;
         if (T.kind === 'horse') hurtHorse(T.h, d); else if (T.p.me) hurtMe(T.p.horse ? d * .4 : d, T.p.horse ? d : 0); else c.sendTo && c.sendTo(T.p.id, { t: 'zd', d: T.p.horse ? Math.round(d * .4) : d, hz: T.p.horse ? d : 0 }); } return; }
@@ -242,7 +243,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     o.pos.x += mx; o.pos.z += mz;
     for (const [ox, oz, or] of (H.obstNear ? H.obstNear(o.pos.x, o.pos.z) : H.obst)) { const ddx = o.pos.x - ox, ddz = o.pos.z - oz; if (Math.abs(ddx) > or + .4 || Math.abs(ddz) > or + .4) continue; const dd = Math.hypot(ddx, ddz), rr = or + .35; if (dd < rr && dd > 1e-4) { o.pos.x = ox + ddx / dd * rr; o.pos.z = oz + ddz / dd * rr; } }
     if (H.build && H.build.pieces.length && H.build.zHit(o.pos.x, o.pos.z, .35)) { o.pos.x -= mx; o.pos.z -= mz; } // v35: cabin walls stop them
-    pushOutOfPen(o.pos); if (H.town2 && H.town2.towers) for (const t of H.town2.towers) if (H.town2.inFoot(t, o.pos.x, o.pos.z, 0)) { o.pos.x -= mx * 1.5; o.pos.z -= mz * 1.5; } // lookouts are solid for them
+    if (!o.raidGo) pushOutOfPen(o.pos); if (H.town2 && H.town2.towers) for (const t of H.town2.towers) if (H.town2.inFoot(t, o.pos.x, o.pos.z, 0)) { o.pos.x -= mx * 1.5; o.pos.z -= mz * 1.5; } // lookouts are solid for them
     o.pos.x = Math.max(-WALK, Math.min(WALK, o.pos.x)); o.pos.z = Math.max(-WALK, Math.min(WALK, o.pos.z));
     // v34 stuck watchdog: no progress toward the target for 8 s (while not at a safe-zone edge), or far from every player -> come back near them
     let nd = 1e9; for (const p of players()) { const d = Math.hypot(p.x - o.pos.x, p.z - o.pos.z); if (d < nd) nd = d; }

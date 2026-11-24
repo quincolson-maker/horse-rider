@@ -1,8 +1,8 @@
 // Host-authoritative poker and private blackjack, sharing the saloon sv/svr route.
 // Table chips are free, isolated practice chips; they never award game points.
 import * as THREE from 'three';
-import {HoldemTable,BlackjackGame,cardText} from './hrcasinogames.js?v=88';
-import {makeFrontierCharacter} from './hrcharacters.js?v=88';
+import {HoldemTable,BlackjackGame,cardText} from './hrcasinogames.js?v=89';
+import {makeFrontierCharacter} from './hrcharacters.js?v=89';
 export function createCasino({scene,H,P,T,camera,mobile,msg,beforeOpen=()=>{}}){
  const s=T.town,F=s.F,table=new HoldemTable(),blackjack=new Map(),modes=new Map(),sequences=new Map(),me=()=>String(H.me||'P1'),auth=()=>!H.netRole||H.netRole()!=='client';
  const root=new THREE.Group();root.position.set(s.cx,s.y0,s.cz);root.rotation.y=s.rot;root.name='Frontier casino tables';scene.add(root);

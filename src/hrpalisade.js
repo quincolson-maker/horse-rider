@@ -44,5 +44,6 @@ export function buildPalisade({ scene, T, H, hAt }) {
     for (const z of [-.24, .24]) { const sg = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 1), signM); sg.position.set(0, 5.2, z); if (z < 0) sg.rotation.y = Math.PI; g.add(sg); } }
   // the safe zone (no zombies) grows to the fence line
   const zone = T.safe.find(r => r.town); if (zone) { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [lx, lz] of per) { const [x, z] = T.toW(s, lx, lz); x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } zone.x = (x0 + x1) / 2; zone.z = (z0 + z1) / 2; zone.hw = (x1 - x0) / 2 + 1; zone.hd = (z1 - z0) / 2 + 1; } // world-aligned box that contains the whole (rotated) fence
-  return { lamps: lampM, stakes: pts.length };
+  const gateList = [[CX, CZ + HZ, 0, 1, 'South'], [CX, CZ - HZ, 0, -1, 'North'], [CX + HX, CZ, 1, 0, 'East'], [CX - HX, CZ, -1, 0, 'West']].map(([gx, gz, nx, nz, nm]) => { const [x, z] = T.toW(s, gx, gz), [ox, oz] = T.toW(s, gx + nx, gz + nz), ang = (s.rot || 0) + (nx ? Math.PI / 2 : 0); return { x, z, nx: ox - x, nz: oz - z, ang, y: Math.min(hAt(x, z), s.y0 + .5), name: nm, half: GATE }; }); // v89 raid gates (outward normals)
+  return { lamps: lampM, stakes: pts.length, gates: gateList };
 }

@@ -5,50 +5,51 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { createLasso } from './hrlasso.js?v=90';
-import { createRaid } from './hrraid.js?v=90';
-import { createCamo } from './hrcamo.js?v=90';
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=90';
-import { PERF } from './perfopts.js?v=90';
-import { PF } from './perf.js?v=90';
+import { createBreeds } from './hrbreed.js?v=91';
+import { createLasso } from './hrlasso.js?v=91';
+import { createRaid } from './hrraid.js?v=91';
+import { createCamo } from './hrcamo.js?v=91';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=91';
+import { PERF } from './perfopts.js?v=91';
+import { PF } from './perf.js?v=91';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=90';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=90';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=90';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=90';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=90';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=90';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=90';
-import { createGuns } from './hrguns.js?v=90';
-import { createHrZombies } from './hrzombies.js?v=90';
-import { createFlora } from './hrflora.js?v=90';
-import { createBounty } from './hrbounty.js?v=90';
-import { createNuggets } from './hrnuggets.js?v=90';
-import { createStable } from './hrstable.js?v=90';
-import { createLeaderboard } from './hrlb.js?v=90';
-import { createNight } from './hrnight.js?v=90';
-import { createRace } from './hrrace.js?v=90';
-import { buildPalisade } from './hrpalisade.js?v=90';
-import { createWeather } from './hrweather.js?v=90';
-import { createMusic } from './hrmusic.js?v=90';
-import { createTownLife } from './hrtownlife.js?v=90';
-import { createRanch } from './hrranch.js?v=90';
-import { createEvents } from './hrevents.js?v=90';
-import { createWild } from './hrwild.js?v=90';
-import { createTrain } from './hrtrain.js?v=90';
-import { createFishing } from './hrfish.js?v=90';
-import { createTown, wearJacket, townNight } from './hrtown.js?v=90';
-import { wearKit } from './hrkit.js?v=90';
-import { createMap } from './hrmap.js?v=90';
-import { createPuppets } from './hrpuppet.js?v=90';
-import { createSaloon } from './hrsaloon.js?v=90';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=90';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=90';
-import { createDynamite } from './hrdynamite.js?v=90';
-import { createSunItem } from './hrsunweapon.js?v=90';
-import { createBuild } from './hrbuild.js?v=90';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=90';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=90';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=91';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=91';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=91';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=91';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=91';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=91';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=91';
+import { createGuns } from './hrguns.js?v=91';
+import { createHrZombies } from './hrzombies.js?v=91';
+import { createFlora } from './hrflora.js?v=91';
+import { createBounty } from './hrbounty.js?v=91';
+import { createNuggets } from './hrnuggets.js?v=91';
+import { createStable } from './hrstable.js?v=91';
+import { createLeaderboard } from './hrlb.js?v=91';
+import { createNight } from './hrnight.js?v=91';
+import { createRace } from './hrrace.js?v=91';
+import { buildPalisade } from './hrpalisade.js?v=91';
+import { createWeather } from './hrweather.js?v=91';
+import { createMusic } from './hrmusic.js?v=91';
+import { createTownLife } from './hrtownlife.js?v=91';
+import { createRanch } from './hrranch.js?v=91';
+import { createEvents } from './hrevents.js?v=91';
+import { createWild } from './hrwild.js?v=91';
+import { createTrain } from './hrtrain.js?v=91';
+import { createFishing } from './hrfish.js?v=91';
+import { createTown, wearJacket, townNight } from './hrtown.js?v=91';
+import { wearKit } from './hrkit.js?v=91';
+import { createMap } from './hrmap.js?v=91';
+import { createPuppets } from './hrpuppet.js?v=91';
+import { createSaloon } from './hrsaloon.js?v=91';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=91';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=91';
+import { createDynamite } from './hrdynamite.js?v=91';
+import { createSunItem } from './hrsunweapon.js?v=91';
+import { createBuild } from './hrbuild.js?v=91';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=91';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=91';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -674,7 +675,7 @@ export function createHorseRider(ctx) {
     if (Math.abs(h.pos.x - PEN.x) < PEN.hw && Math.abs(h.pos.z - PEN.z) < PEN.hd) { const yw = Math.atan2(-(PEN.x - h.pos.x), -(PEN.z + PEN.hd + 4 - h.pos.z)); h.yaw = yw; h.g.rotation.y = yw; P.yaw = yw; } // v83: in the pen you mount facing the open gate (phones stalled against the fence)
     if (H.vib) H.vib(20); // v85
     try { if (!localStorage.getItem('hr_rode')) localStorage.setItem('hr_rode', '1'); } catch (_) {} if (H.guide) H.guide.done = true;
-    H.mounted = h; H.lastHorse = h; H.cd = COOLDOWN; applyCoat(h, H.myCoat()); H.speed = 0; H.yawRate = 0; H.roll = 0; H.wantOff = false; H.dismT = 0; H.mountT = real() && h.g.userData.kind === 'real' ? MOUNT_T : 0;
+    H.mounted = h; H.lastHorse = h; H.cd = COOLDOWN; applyCoat(h, H.myCoat()); H.breed && H.breed.onMount(h); H.speed = 0; H.yawRate = 0; H.roll = 0; H.wantOff = false; H.dismT = 0; H.mountT = real() && h.g.userData.kind === 'real' ? MOUNT_T : 0;
     h.speed = 0; h.tgt = null; h.graze = false; P.yaw = h.yaw; P.pitch = -.15; H.lookT = 9; H.swLast = P.swX || 0; H.recenter = false; attachRider(h); if (H.mountT) mountPose(h, 0);
     H.mounts++; sfx.ui && sfx.ui(); msg(mobile ? 'Riding! Push the stick to go · all the way to gallop' : 'Riding! W go · tap Shift to speed up a gait · hold Shift to gallop · C slow down · E get off', 3); return true;
   }
@@ -700,7 +701,7 @@ export function createHorseRider(ctx) {
     const tries = [[-rx * 1.5 * sd, -rz * 1.5 * sd], [rx * 1.5 * sd, rz * 1.5 * sd], [-fx * 2.4, -fz * 2.4], [fx * 2.4, fz * 2.4], [-rx * 2.6, -rz * 2.6], [rx * 2.6, rz * 2.6]];
     let spot = null; for (const [ox, oz] of tries) { const x = h.pos.x + ox, z = h.pos.z + oz; if (!blocked(x, z, .35, h)) { spot = [x, z]; break; } }
     if (!spot) spot = [h.pos.x - rx * 1.5, h.pos.z - rz * 1.5];
-    P.pos.set(spot[0], hAt(spot[0], spot[1]), spot[1]); H.vy = 0; H.mounted = null; H.cd = COOLDOWN; H.wantOff = false; H.dismT = 0; H.mountT = 0; H.speed = 0; H.roll = 0;
+    P.pos.set(spot[0], hAt(spot[0], spot[1]), spot[1]); H.vy = 0; H.breed && H.breed.onDismount(H.mounted); H.mounted = null; H.cd = COOLDOWN; H.wantOff = false; H.dismT = 0; H.mountT = 0; H.speed = 0; H.roll = 0;
     h.speed = 0; h.wait = 4 + rnd() * 4; h.inPen = inPen(h.pos.x, h.pos.z, .5); h.graze = true; h.g.rotation.z = 0;
     if (H.follow) h.net = { x: h.pos.x, z: h.pos.z, yaw: h.yaw, sp: 0, gr: 1 };
     detachRider(h); H.bodyYaw = Math.atan2(h.pos.x - P.pos.x, h.pos.z - P.pos.z) + Math.PI; H.fv.set(0, 0); P.yaw = h.yaw; P.pitch = -.1; sfx.ui && sfx.ui(); msg('Dismounted', 1.2); return true;
@@ -787,6 +788,7 @@ export function createHorseRider(ctx) {
         toggle() { if (!has()) return kit.buy(); const n = (H.myCoat() + 1) % COATS.length; try { localStorage.setItem('hr_coat', String(n)); } catch (_) {} if (H.mounted) applyCoat(H.mounted, n); msg('🎨 Coat: ' + COATS[n].n, 1.4); } };
       if (town2 && town2.registerStoreItem) town2.registerStoreItem(kit); } catch (e) { console.warn('coat kit', e); }
     try { H.stable = createStable({ H, msg, sfx }); if (town2 && town2.registerStoreItem) for (const it of H.stable.items) town2.registerStoreItem(it); } catch (e) { console.warn('stable', e); } // v44 horse upgrades
+    try { H.breed = createBreeds({ H, msg, sfx }); if (town2 && town2.registerStoreItem) for (const it of H.breed.items) town2.registerStoreItem(it); } catch (e) { console.warn('breeds', e); } // v91
     if (town2 && town2.registerStoreItem) try { town2.registerStoreItem(H.dyn.storeItem); } catch (e) { console.warn('dyn store', e); }
     H.sun = createSunItem({ scene, H, P, camera, sfx, msg, mobile, fx: ctx.fx, role: () => H.netRole ? H.netRole() : 'solo', send: m => H.zSend && H.zSend(m) }); // v39 the Sun Pyramid
     if (town2 && town2.registerStoreItem && guns.models.tommy.setSuppressor) try { // v36: Tommy suppressor (900 pts, saved with the guns; needs the Tommy)
@@ -849,9 +851,9 @@ export function createHorseRider(ctx) {
       target *= H.horseMul || 1; // v35: snow / green / the crash
     } else brake = true;
     // stamina: galloping drains it; a winded horse drops to a canter until it recovers
-    if (target > 12.5 && H.speed > 11) { H.stam = Math.max(0, H.stam - dt * (target > 16 ? 7.5 : 4) * (H.stable ? H.stable.drain() : 1)); if (H.stam <= 0) { H.winded = 5; msg('Your horse is winded — ease off', 1.6); } }
+    if (target > 12.5 && H.speed > 11) { H.stam = Math.max(0, H.stam - dt * (target > 16 ? 7.5 : 4) * (H.stable ? H.stable.drain() : 1) * (H.breed ? H.breed.drain() : 1)); if (H.stam <= 0) { H.winded = 5; msg('Your horse is winded — ease off', 1.6); } }
     else H.stam = Math.min(100, H.stam + dt * (H.speed < 9.5 ? 12 : 4));
-    if (target > 0 && H.stable) target *= H.stable.spd(); // v44 Thoroughbred
+    if (target > 0 && H.stable) target *= H.stable.spd(); if (target > 0 && H.breed) target *= H.breed.spd(); // v91 breed // v44 Thoroughbred
     if (H.winded > 0) { H.winded -= dt; target = Math.min(target, GAIT_SP[3]); if (H.cruise > 3) H.cruise = 3; }
     // slopes: the steeper the climb the slower (trails stay a canter), picking its way down steep ground; galloping uphill tires it faster
     { const fx0 = -Math.sin(h.yaw), fz0 = -Math.cos(h.yaw), dir = H.speed < -.1 ? -1 : 1, gF = (hAt(h.pos.x + fx0 * 2.5 * dir, h.pos.z + fz0 * 2.5 * dir) - hAt(h.pos.x, h.pos.z)) / 2.5; H.grade = gF;
@@ -936,7 +938,7 @@ export function createHorseRider(ctx) {
     if (!H.warm && H.t > 2.5 && H.models !== 'loading') prewarm();
     if (sfx.amb) { const C = H.cave, e = C && C.cave ? C.cave.entrance : null, fire = C && C.fireAt ? C.fireAt() : null, river = C && C.riverAt ? C.riverAt() : null, inSal = !!(H.saloon && H.saloon.inside && H.saloon.inside());
       sfx.amb(dt, { outdoors: true, day: 1, saloon: inSal, cave: H.caveDark || 0, falls: e ? Math.hypot(P.pos.x - e.x, P.pos.y - e.y, P.pos.z - e.z) : null, fire: fire ? P.pos.distanceTo(fire) : null, river: river ? P.pos.distanceTo(river) : null }); }
-    if (H.fallT > 0) H.fallT -= dt; PF.s('town'); if (town2) town2.tick(dt); if (H.nuggets) H.nuggets.update(dt); if (H.nightEv) H.nightEv.update(dt); if (H.race) H.race.update(dt); if (H.weather) H.weather.update(dt); if (H.music) H.music.update(dt); if (H.townLife) H.townLife.update(dt); if (H.ranch) H.ranch.update(dt); if (H.events) H.events.update(dt); if (H.wild) H.wild.update(dt); if (H.train) H.train.update(dt); if (H.fish) H.fish.update(dt); if (!H.puppets) H.puppets = createPuppets(H, mobile); H.puppets.tick(dt, camera); if (!H.map) { H.msg = H.msg || msg; H.map = createMap({ H, P, hAt, PEN }); } H.map.tick(); if (!H.raid && H.zombies && H.palisade) { try { H.raid = createRaid({ scene, H, P, hAt, msg, sfx, mobile, fx: ctx.fx }); } catch (e) { console.warn('raid', e); H.raid = { tick() {} }; } } if (H.raid) H.raid.tick(dt); if (!H.lasso && H.guns && town2) { try { H.lasso = createLasso({ scene, H, P, camera, hAt, msg, sfx, mobile }); town2.registerStoreItem && town2.registerStoreItem(H.lasso.item); } catch (e) { console.warn('lasso', e); H.lasso = { tick() {} }; } } H.lasso && H.lasso.tick(dt); /* v86 world map */ { /* v85 new-player guide: a pulsing gold ring + arrow over the nearest horse until the first ride */ let G = H.guide; if (!G) { let rode = false; try { rode = !!localStorage.getItem('hr_rode'); } catch (_) {} G = H.guide = { done: rode };
+    if (H.fallT > 0) H.fallT -= dt; PF.s('town'); if (town2) town2.tick(dt); if (H.nuggets) H.nuggets.update(dt); if (H.nightEv) H.nightEv.update(dt); if (H.race) H.race.update(dt); if (H.weather) H.weather.update(dt); if (H.music) H.music.update(dt); if (H.townLife) H.townLife.update(dt); if (H.ranch) H.ranch.update(dt); if (H.events) H.events.update(dt); if (H.wild) H.wild.update(dt); if (H.train) H.train.update(dt); if (H.fish) H.fish.update(dt); if (!H.puppets) H.puppets = createPuppets(H, mobile); H.puppets.tick(dt, camera); if (!H.map) { H.msg = H.msg || msg; H.map = createMap({ H, P, hAt, PEN }); } H.map.tick(); if (!H.raid && H.zombies && H.palisade) { try { H.raid = createRaid({ scene, H, P, hAt, msg, sfx, mobile, fx: ctx.fx }); } catch (e) { console.warn('raid', e); H.raid = { tick() {} }; } } if (H.raid) H.raid.tick(dt); if (!H.lasso && H.guns && town2) { try { H.lasso = createLasso({ scene, H, P, camera, hAt, msg, sfx, mobile }); town2.registerStoreItem && town2.registerStoreItem(H.lasso.item); } catch (e) { console.warn('lasso', e); H.lasso = { tick() {} }; } } H.lasso && H.lasso.tick(dt); H.breed && H.breed.tick(dt); /* v86 world map */ { /* v85 new-player guide: a pulsing gold ring + arrow over the nearest horse until the first ride */ let G = H.guide; if (!G) { let rode = false; try { rode = !!localStorage.getItem('hr_rode'); } catch (_) {} G = H.guide = { done: rode };
         if (!rode) { const ring = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.85, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffd23a, transparent: true, opacity: .8, depthWrite: false, fog: false })), arr = new THREE.Mesh(new THREE.ConeGeometry(.35, .7, 4).rotateX(Math.PI), new THREE.MeshBasicMaterial({ color: 0xffd23a, fog: false })); scene.add(ring, arr); G.ring = ring; G.arr = arr; } }
       if (G.ring) { const show = !G.done && !H.mounted && H.horses && H.horses.length; let best = null, bd = 1e9; if (show) for (const hh of H.horses) { const d = (hh.pos.x - P.pos.x) ** 2 + (hh.pos.z - P.pos.z) ** 2; if (d < bd) { bd = d; best = hh; } }
         G.ring.visible = G.arr.visible = !!best; if (best) { const t = performance.now() / 1000; G.ring.position.set(best.pos.x, best.pos.y + .06, best.pos.z); G.ring.scale.setScalar(1 + Math.sin(t * 4) * .08); G.ring.material.opacity = .55 + Math.sin(t * 4) * .25; G.arr.position.set(best.pos.x, best.pos.y + 3.1 + Math.sin(t * 3) * .2, best.pos.z); G.arr.rotation.y = t * 2; }
@@ -1045,7 +1047,7 @@ export function createHorseRider(ctx) {
     const d = Math.round(Math.hypot(P.pos.x - PEN.x, P.pos.z - PEN.z)), hz = H.mounted;
     $('mode').textContent = '🐎 HORSE RIDER'; $('timer').textContent = hz ? Math.round(Math.abs(H.speed) * 3.6) + ' km/h' : ''; $('stars').textContent = H.online || '';
     const alt = Math.round(P.pos.y - BASE - (hz ? 1.1 : 0)), altS = alt > 25 ? ' · ⛰ ' + alt + ' m' : '';
-    $('sub').textContent = hz ? H.gait + altS + (hz.coat ? ' · ' + hz.coat : '') + (H.winded > 0 ? ' · winded' : '') + (mobile ? ' · push the stick further to speed up' : ' · W ride · tap Shift faster · hold Shift gallop · C slower · A/D steer')
+    $('sub').textContent = hz ? H.gait + altS + (H.breed ? ' · ' + H.breed.label() : hz.coat ? ' · ' + hz.coat : '') + (H.winded > 0 ? ' · winded' : '') + (mobile ? ' · push the stick further to speed up' : ' · W ride · tap Shift faster · hold Shift gallop · C slower · A/D steer')
       : H.spot ? town2.label(H.spot) : H.models === 'loading' && d < 40 ? 'Horses arriving…' : d > 16 ? `Horse pen ${d} m away${altS}` : inPen(P.pos.x, P.pos.z) ? 'In the pen — walk up to a horse' : 'At the horse pen';
     if (!stamEl) { stamEl = document.createElement('div'); stamEl.id = 'hrStam'; stamEl.innerHTML = '<i></i>'; document.body.appendChild(stamEl); }
     const show = !!hz && (H.stam < 99 || Math.abs(H.speed) > 12); stamEl.style.opacity = show ? 1 : 0; stamEl.firstChild.style.width = H.stam.toFixed(0) + '%'; stamEl.classList.toggle('low', H.stam < 25 || H.winded > 0);

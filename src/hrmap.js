@@ -36,7 +36,7 @@ export function createMap({ H, P, hAt, PEN }) { let el = null, cv = null, base =
     for (const q of places()) { const known = q.always || disc.has(q.id); if (known) pin(q.x, q.z, q.ic, q.name); else { const [u, v] = toMap(q.x, q.z, S); x.globalAlpha = .55; x.fillStyle = '#5a3a1a'; x.font = '900 ' + f(20); x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('?', u, v); x.globalAlpha = 1; } }
     if (H.train && H.train.cars && H.train.cars[0]) { const g = H.train.cars[0].g.position; pin(g.x, g.z, '🚂'); }
     if (H.wantedPos) pin(H.wantedPos[0], H.wantedPos[1], '📜', 'Wanted');
-    const hz = H.mounted || H.lastHorse; if (hz && hz.pos && !H.mounted) pin(hz.pos.x, hz.pos.z, '🐴', 'Your horse');
+    const hz = H.mounted || H.lastHorse; if (hz && hz.pos && !H.mounted) pin(hz.pos.x, hz.pos.z, '🐴', H.breed && H.breed.name ? H.breed.name : 'Your horse');
     try { for (const r of (H.netRemotes ? H.netRemotes() : [])) { const s = r.s || r; if (isFinite(s.x)) pin(s.x, s.z, '🧑', r.name || r.id); } } catch (_) {}
     { const [u, v] = toMap(P.pos.x, P.pos.z, S); x.save(); x.translate(u, v); x.rotate(-P.yaw); x.fillStyle = '#c0392b'; x.strokeStyle = '#fff'; x.lineWidth = 2.5 * k; x.beginPath(); x.moveTo(0, -14 * k); x.lineTo(9 * k, 10 * k); x.lineTo(0, 5 * k); x.lineTo(-9 * k, 10 * k); x.closePath(); x.fill(); x.stroke(); x.restore(); }
     x.font = '700 ' + f(13); x.fillStyle = '#3a2614'; x.textAlign = 'left'; x.fillText('N ▲', 12 * k, 22 * k); }

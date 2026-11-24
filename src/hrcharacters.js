@@ -1,8 +1,8 @@
 // Frontier people: one vertex-colored SkinnedMesh per character, no external assets.
 // Detailed procedural art, not a scanned/photoreal human. Adult characters only.
 import * as THREE from 'three';
-import { PENDING } from './hrpuppet.js?v=96';
-import { upgradeFemale } from './hrfemale.js?v=96';
+import { PENDING } from './hrpuppet.js?v=97';
+import { upgradeFemale } from './hrfemale.js?v=97';
 export const PLAYER_VARIANTS = Object.freeze([
  {id:'george',name:'George Reed',tex:'assets/horses/rider_george',kind:'player',sex:'male',skin:0x4e2e20,hair:0x120d0b,hairStyle:'fade',beard:true,nose:1.35,lips:1.55,top:0xd5c7ac,bottom:0x343e43,coat:0x393024,hatC:0x32271e,bandana:0x934532,curls:true},
  {id:'cole',name:'Cole Mercer',kind:'player',sex:'male',skin:0xd5a080,hair:0x533a27,top:0xd8c6a2,bottom:0x343e43,coat:0x65503b,hatC:0x564431,bandana:0x934532},
@@ -108,7 +108,7 @@ export function makeFrontierCharacter(o={}) {
    const ap=shell(.19,.35,.5,-.62,1.24,high?20:10);add(ap,hips,0xe8dfca,0,-.29,0,1,1,1,0,0,0,3);
    for(const side of [-1,1])ball(chest,top,side*.185,.205,0,.055,.05,.055,3);
    const bd=new THREE.LatheGeometry(torsoShell(1.06,.065,.335),high?28:14,-1.35,2.7);add(bd,spine,vest,0,0,0,1,1,.75,0,0,0,3);}
-  else{for(let j=0;j<5;j++){tube(spine,0xd3ae6b,[[-.07,.11+j*.045,.13],[.07,.15+j*.045,.14]],.0025,7);}for(let i=0;i<7;i++)ball(head,o.feather??0xb0495d,(i-3)*.018,.28+i*.013,-.02,.012,.095,.008,3);}
+  else{for(let j=0;j<5;j++){tube(spine,0xd3ae6b,[[-.07,.11+j*.045,.13],[.07,.15+j*.045,.14]],.0025,7);}for(let i=0;i<5;i++)add(ell(.009,.055,.006),head,o.feather??0xb0495d,.075+i*.006,.235+i*.006,-.035+i*.004,1,1,1,0,0,-.35-i*.17,3);/* v97: small side plume by the bun (was a 7-feather crest that read as a mohawk) */}
  }
  if(o.kind==='player'||o.kind==='bandit'||o.kind==='dealer'){
   const hat=o.hatC??0x30241b;add(new THREE.CylinderGeometry(.235,.235,.025,high?40:20),head,hat,0,.268,0,1,1,.85,0,0,0,2);add(new THREE.CylinderGeometry(.10,.127,.14,high?24:14),head,hat,0,.34,0,1,1,1,0,0,0,2);add(new THREE.CylinderGeometry(.13,.13,.025,20),head,0x9c7546,0,.285,0,1,1,1,0,0,0,2);

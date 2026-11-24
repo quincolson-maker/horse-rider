@@ -5,7 +5,7 @@
 // Networking: the host (or a solo player) runs the table. Clients send actions ({t:'pk'}) and the host sends each
 // seated rider their own view ({t:'pks'}) via H.zSendTo, so nobody's hole cards ever reach another player's machine.
 import * as THREE from 'three';
-import { makeFrontierCharacter } from './hrcharacters.js?v=96';
+import { makeFrontierCharacter } from './hrcharacters.js?v=97';
 const RANKS = '23456789TJQKA', SUITS = '♠♥♦♣', ANTE = 10, BET = 25, BUYIN = 200, MAXS = 6;
 const BOTS = [{ n: 'DOC', loose: .35, bluff: .08 }, { n: 'SLIM', loose: .6, bluff: .16 }, { n: 'ROSA', loose: .45, bluff: .1 }];
 const rk = c => c % 13, st = c => (c / 13) | 0;
@@ -197,6 +197,6 @@ export function createPoker(c) { const { H, msg } = c, K = { el: null, V: null, 
     if (D3.built) { const near = Math.hypot(c.P.pos.x - D3.s.cx, c.P.pos.z - D3.s.cz) < 70; D3.root.visible = near;
       if (near) D3.dolls.forEach((d, i) => { if (d.g.visible && d.head) d.head.rotation.y = Math.sin(K.t * .5 + i * 2) * .25; }); }
     if (K.saved && D3.built) { const s = D3.s, V = K.V, i = V ? V.seats.findIndex(x => x.n === me()) : -1, a = seatAng(i >= 0 ? i : 0), [lx, lz] = loc(i >= 0 ? SEATR - .02 : SEATR + .5, a), [wx, wz] = c.toW(s, lx, lz), [tx, tz] = c.toW(s, TC.x, TC.z);
-      c.P.pos.set(wx, s.y0 + s.F, wz); H.fv && H.fv.set(0, 0); c.P.yaw = Math.atan2(-(tx - wx), -(tz - wz)); c.P.pitch = -.5; }
+      c.P.pos.set(wx, s.y0 + s.F, wz); H.fv && H.fv.set(0, 0); c.P.yaw = Math.atan2(-(tx - wx), -(tz - wz)); c.P.pitch = -.24; } // v97: look across the felt at the table centre (was -.5: stared at the rail / pedestal)
     if (K.V && K.el && !K.el.hidden && K.V.t > 0 && (K.t % 1) < dt) { K.V.t = Math.max(0, K.V.t - 1); ui(); } }
   Object.assign(K, { open: () => (open(), ui()), join, close, netIn, netState, tick, isOpen: () => !!(K.el && !K.el.hidden), table: () => K.T, view: () => K.V, pick, D3 }); return K; }

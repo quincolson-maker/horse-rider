@@ -3,13 +3,13 @@
 // bandit or a random brawl), the dealer in the dark corner (snow = fast, green = slow), three slot machines upstairs (seated
 // first-person view, 10/50/100 bets, jackpot 6000), swinging batwing doors, warm lamps, light shafts and dust.
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=96';
-import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=96';
-import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=96';
-import {createCasino} from './hrcasino.js?v=96';
-import {createSaloonDecor} from './hrsaloondecor.js?v=96';
-import { createSaloonPlus } from './hrsaloonplus.js?v=96';
-import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=96';
+import { PERF } from './perfopts.js?v=97';
+import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=97';
+import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=97';
+import {createCasino} from './hrcasino.js?v=97';
+import {createSaloonDecor} from './hrsaloondecor.js?v=97';
+import { createSaloonPlus } from './hrsaloonplus.js?v=97';
+import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=97';
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
 // ---------------- slots: pure math (tests use it) ----------------
 export const SLOT = { NAMES: ['cactus', 'cherry', 'horseshoe', 'bell', 'buffalo'], W: [10, 9, 7, 4, 2], THREE: [0, 5, 10, 25, 60], TWO_CHERRY: 3, ONE_CHERRY: 1, BETS: [10, 50, 100] };
@@ -18,7 +18,7 @@ export function slotSpin(rnd = Math.random) { return [slotPick(rnd), slotPick(rn
 export function slotMult(r) { const [a, b, c] = r; if (a === b && b === c) return SLOT.THREE[a]; const ch = r.filter(x => x === 1).length; return ch === 2 ? SLOT.TWO_CHERRY : a === 1 ? SLOT.ONE_CHERRY : 0; }
 export function slotPay(r, bet) { return slotMult(r) * bet; }
 export function slotRTP() { const T = SLOT.W.reduce((a, b) => a + b, 0), n = SLOT.W.length; let e = 0; for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) for (let c = 0; c < n; c++) e += SLOT.W[a] * SLOT.W[b] * SLOT.W[c] / T ** 3 * slotMult([a, b, c]); return e; }
-export const REEL_PHASE = .65; // which part of the reel texture faces the window
+export const REEL_PHASE = .1; // v97: u = 0 of the cylinder faces the window (+z), symbol k is centred at u = .1 + .2k
 export const PRICES = { revue: 300, bandit: 100, dance: 100, snow: 150, green: 50, maxBandits: 5, banditKill: 5, fightWin: 50 };
 // ---------------- symbol art (canvas) ----------------
 function drawSym(x, k, cx, cy, s, theme=0) { x.save(); x.translate(cx, cy); x.scale(s / 100, s / 100); x.lineCap = 'round'; x.lineJoin = 'round';
@@ -193,7 +193,7 @@ export function createSaloon(c) {
     else M.spin.res = themedSpin(Math.random,M.theme); return true; }
   S.spin = spin; S.setBet = b => { if (SLOT.BETS.includes(b)) S.bet = b; render(); };
   function slotTick(dt) { for (const M of S.slots) { if (M.lever.rotation.x > 0) M.lever.rotation.x = Math.max(0, M.lever.rotation.x - dt * 2.5); const sp = M.spin; if (!sp) { M.light.material.color.setHex(M.winT > 0 ? ((M.winT * 8 | 0) % 2 ? 0xffffff : 0xff3030) : 0xffd76a); M.winT = Math.max(0, (M.winT || 0) - dt); continue; } sp.t += dt;
-      M.reels.forEach((r, k) => { const done = sp.res && sp.t > sp.stop[k]; if (!done) { r.userData.off = (r.userData.off + dt * (3 + k)) % 1; if (Math.random() < dt * 14) M.show = [0, 1, 2].map(() => (Math.random() * 5) | 0); } else r.userData.off = ((REEL_PHASE - sp.res[k] * .2) % 1 + 1) % 1; r.material.map.offset.x = r.userData.off; });
+      M.reels.forEach((r, k) => { const done = sp.res && sp.t > sp.stop[k]; if (!done) { r.userData.off = (r.userData.off + dt * (3 + k)) % 1; if (Math.random() < dt * 14) M.show = [0, 1, 2].map(() => (Math.random() * 5) | 0); } else r.userData.off = (REEL_PHASE + sp.res[k] * .2) % 1; r.material.map.offset.x = r.userData.off; });
       if (Math.random() < dt * 12) ring((M.theme===1?420:M.theme===2?1100:700)+Math.random()*180,650,.03,.035,M.theme===1?'sine':'triangle');
       if (sp.res && sp.t > sp.stop[2] + .15) { const r = sp.res, win = themedMultiplier(r,M.theme)*M.bet; M.res = r; M.spin = null; M.show = r;
         if (win > 0) { earn(win); const m = themedMultiplier(r,M.theme); M.winLine = r[0] === r[1] && r[1] === r[2] ? [1, 1, 1] : r.map(x => x === 1 ? 1 : 0); M.msg = (m >= 60 ? '🦬 JACKPOT! ' : 'WIN ') + '+' + win; M.winT = m >= 60 ? 6 : 1.8;

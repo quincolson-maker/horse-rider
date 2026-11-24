@@ -24,7 +24,7 @@ export function createRaid({ scene, H, P, hAt, msg, sfx, mobile, fx }) {
   // ---- HUD ----
   let el = null; const hud = () => { if (!el) { el = document.createElement('div'); el.id = 'hrRaid'; el.style.cssText = 'position:fixed;left:12px;top:58px;max-width:180px;z-index:30;pointer-events:none;font:800 12px system-ui,sans-serif;color:#ffe3b0;text-shadow:0 1px 3px #000;text-align:left;display:none'; el.innerHTML = '<div class="t"></div><div style="width:180px;height:8px;margin:3px 0 0;background:#0008;border:1px solid #ffd27a66;border-radius:5px;overflow:hidden"><i style="display:block;height:100%;background:linear-gradient(90deg,#c8642a,#f0b040);width:100%"></i></div>'; document.body.appendChild(el); } return el; };
 
-  function start(gate) { const z = Z(); if (!z) return; R.on = true; R.gate = gate; R.max = R.hp = 100; R.kills = 0; R.raiders = []; R.waves = 0; R.doneCyc = cyc(); try { localStorage.setItem('hr_raid', String(R.doneCyc)); } catch (_) {}
+  function start(gate) { const z = Z(); if (!z) return; R.on = true; R.gate = gate; R.max = R.hp = 100; R.armor = (() => { try { return localStorage.getItem('hr_gate') === '1'; } catch (_) { return false; } })(); R.kills = 0; R.raiders = []; R.waves = 0; R.doneCyc = cyc(); try { localStorage.setItem('hr_raid', String(R.doneCyc)); } catch (_) {}
     buildBar(gate.half); bar.position.set(gate.x, gate.y, gate.z); bar.rotation.y = gate.ang; bar.visible = true; R.shake = 0;
     const n = mobile ? 10 : 16, w = z.state.wave || 1; R.total = n + 1;
     for (let b = 0; b < 3; b++) R.spawnQ.push({ t: b * 9, n: b === 2 ? n - 2 * Math.floor(n / 3) : Math.floor(n / 3), boss: b === 2 });
@@ -45,7 +45,7 @@ export function createRaid({ scene, H, P, hAt, msg, sfx, mobile, fx }) {
       if (o.kind === 'bloater') { o.hp = 0; Z().damage(o, 9999, false, o.pos, null, 'bandit'); hitGate(8); }
       else hitGate(o.kind === 'brute' ? 2.5 : o.kind === 'lawman' ? .8 : .45); }
     return 1; }
-  function hitGate(d) { if (!R.on) return; R.hp = Math.max(0, R.hp - d); R.shake = .25; if (sfx && sfx.at && sfx.ctx) sfx.at(bar.position, () => { sfx.nz('lowpass', 380, 1, .12, .7); tone('square', 90, 60, .08, .25); }, .5);
+  function hitGate(d) { if (!R.on) return; R.hp = Math.max(0, R.hp - d * (R.armor ? .6 : 1)); R.shake = .25; if (sfx && sfx.at && sfx.ctx) sfx.at(bar.position, () => { sfx.nz('lowpass', 380, 1, .12, .7); tone('square', 90, 60, .08, .25); }, .5);
     if (R.hp <= 0) end(false); }
   function end(win, quiet) { if (!R.on) return; R.on = false; R.spawnQ.length = 0;
     for (const o of R.raiders) o.raid = null;
@@ -77,6 +77,8 @@ export function createRaid({ scene, H, P, hAt, msg, sfx, mobile, fx }) {
     const e = hud(); e.style.display = H.uiOpen ? 'none' : 'block'; const left = R.raiders.length + R.spawnQ.reduce((a, q) => a + q.n + (q.boss ? 1 : 0), 0);
     const t = `🌙 NIGHT RAID · ${gateName(R.gate).toUpperCase()} GATE ${Math.round(R.hp)}% · ${left} left`; if (e.firstChild.textContent !== t) { e.firstChild.textContent = t; e.querySelector('i').style.width = R.hp + '%'; } }
   if (H.zombies) H.zombies.state.raidHook = hook;
+  R.item = { state: { id: 'gatearmor', name: '🛡️ Iron-banded barricades · raid gates take 40% less damage', price: 1200, get owned() { try { return localStorage.getItem('hr_gate') === '1'; } catch (_) { return false; } }, maxed: false, get label() { return this.owned ? 'OWNED' : ''; } },
+    buy() { const g = H.guns; if (!g || g.pts() < 1200) { msg('Not enough points', 1.5); return; } g.state.spent = (g.state.spent || 0) + 1200; g.save && g.save(); try { localStorage.setItem('hr_gate', '1'); } catch (_) {} R.armor = true; msg('🛡️ The town blacksmith bands every gate barricade with iron', 3); }, toggle() { msg('Already fitted to every gate', 1.4); } }; // v148
   R.tick = tick; R.start = g => start(g || H.palisade.gates[0]); R.end = end; R.hook = hook;
   return R;
 }

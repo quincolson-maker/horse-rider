@@ -8,7 +8,7 @@
 //     hollow boardwalk, sharp rock/cave)
 //   - ambience: wind bed, birdsong by day, the waterfall's roar near Bandit Falls, and inside the hideout: dripping
 //     water, the campfire's crackle and the underground river
-import { SFX } from './fx.js?v=334';
+import { SFX } from './fx.js?v=335';
 
 const P = SFX.prototype, baseInit = P.init;
 const rand = (a, b) => a + Math.random() * (b - a);

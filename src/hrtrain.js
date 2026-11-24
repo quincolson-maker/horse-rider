@@ -2,10 +2,10 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
-import { mergeStatic } from './hrmerge.js?v=334';
+import { mergeStatic } from './hrmerge.js?v=335';
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=334';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=334';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=335';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=335';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['dining', 11], ['express', 10], ['caboose', 7]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
@@ -93,21 +93,24 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
       for (const z of [-10, 10]) { const pole = new THREE.Mesh(new THREE.CylinderGeometry(.06, .08, 2.8, 8), dk); pole.position.set(-.9, deckY + 1.4, z); g.add(pole); const lp = new THREE.Mesh(new THREE.BoxGeometry(.32, .4, .32), lampM); lp.position.set(-.9, deckY + 2.9, z); g.add(lp); }
       const bench = new THREE.Mesh(new THREE.BoxGeometry(.5, .45, 3), wood); bench.position.set(1, deckY + .32, -2.5); g.add(bench); const bb = new THREE.Mesh(new THREE.BoxGeometry(.1, .5, 3), wood); bb.position.set(1.25, deckY + .7, -2.5); g.add(bb);
       g.traverse(o => { if (o.isMesh) o.castShadow = true; }); try { mergeStatic(g); } catch (_) {} H.cullAdd && H.cullAdd(g, 380); // v109: one draw per material + hidden when far
-      st.plat = c.clone(); st.side = side; st.deckY = c.y + deckY; st.spot = { x: c.x, y: gy, z: c.z, kind: 'train', label: '🚂 ' + st.name + ' station', r: 4.5, st: k }; if (T && T.spots) T.spots.push(st.spot); });
-    if (T) { const prev = T.onUse; T.onUse = o => (o && o.kind === 'train') ? (platformUse(o.st), true) : (prev ? prev(o) : false); } }
+      st.plat = c.clone(); st.side = side; st.deckY = c.y + deckY; st.spot = { x: c.x, y: gy, z: c.z, kind: 'train', label: '🚂 ' + st.name + ' station', r: 4.5, st: k }; if (T && T.spots) T.spots.push(st.spot); { const cp = c.clone().addScaledVector(t, 11); st.cab = { x: cp.x, y: gy, z: cp.z, kind: 'train_cab', label: '', r: 3, st: k }; if (T && T.spots) T.spots.push(st.cab); } });
+    if (T) { const prev = T.onUse; T.onUse = o => (o && o.kind === 'train') ? (platformUse(o.st), true) : (o && o.kind === 'train_cab') ? (sched(Date.now()).at === o.st ? (boardP(true), true) : (platformUse(o.st), true)) : (prev ? prev(o) : false); } }
   // ---------- v77 riding as a passenger ----------
   let pass = null, lastAt = -2;
   function untilAt(k) { const now = Date.now() / 1000, t = ((now % PERIOD) + PERIOD) % PERIOD; const g = SCH.find(q => (q.k + 1) % STATIONS.length === k); if (!g) return 0; let arr = g.t0 + g.Tm; let dt = arr - t; if (dt < -DWELL) dt += PERIOD; return Math.max(0, dt); }
   function platformUse(k) { const S0 = sched(Date.now()); if (S0.at === k) { boardP(); return; } const w = Math.round(untilAt(k)); msg(`🚂 Next train at ${STATIONS[k].name} in ${w >= 60 ? Math.floor(w / 60) + ' min ' + (w % 60) + ' s' : w + ' s'}`, 2.5); }
-  function boardP() { if (heist || pass) return; if (H.dismountNow) H.dismountNow(); const car = cars.find(c => c.kind === 'open'); pass = { car, off: (Math.random() - .5) * 5, side: Math.random() < .5 ? -.95 : .95 }; H.trainRide = rideP; H.trainUse = useP; H.onTrain = true;
+  function boardP(cab) { if (heist || pass) return; if (H.dismountNow) H.dismountNow(); const car = cab ? cars[0] : cars.find(c => c.kind === 'open'); pass = cab ? { car, off: -1.2, side: 1.55, inside: true, cab: true, fp0: H.fp }  : { car, off: (Math.random() - .5) * 5, side: Math.random() < .5 ? -.95 : .95 }; if (cab) { H.fp = true; { const fw = new THREE.Vector3(0, 0, 1).applyQuaternion(cars[0].g.quaternion); P.yaw = Math.atan2(-fw.x, -fw.z); P.pitch = -.05; } setTimeout(() => msg('🚂 You climb into the cab beside the engineer - Z blows the whistle', 3.5), 1200); const S1 = H.stats || (H.stats = {}); S1.cabRides = (S1.cabRides || 0) + 1; } H.trainRide = rideP; H.trainUse = useP; H.onTrain = true;
     const S0 = sched(Date.now()); msg(`🚂 All aboard! Next stop: ${STATIONS[(S0.at + 1) % STATIONS.length].name}.  USE at a station to get off · JUMP to leap off`, 4); whistle(); }
-  function rideP(dt) { const c = pass.car; tmp.set(pass.side, pass.inside ? 1.25 : 1.47, pass.off).applyQuaternion(c.g.quaternion).add(c.g.position); P.pos.copy(tmp); if (pass.inside) { const Z = H.zombies; if (Z && Z.state) Z.state.hp = Math.min(100, (Z.state.hp || 0) + 4 * dt); } if (input && input.jump) leaveP(null, true); if (H.dead) leaveP(); }
-  function useP() { const S0 = sched(Date.now()); if (S0.at >= 0) { leaveP(STATIONS[S0.at]); return true; } const din = cars.find(c => c.kind === 'dining'); if (pass.car !== din && din) { pass.car = din; pass.side = .55; pass.off = (Math.random() - .5) * 6; pass.inside = true; msg('🍽️ You take a table in the dining car - coffee, pie and the view (you heal while you sit). USE again for the open car', 3.5); } else { pass.car = cars.find(c => c.kind === 'open'); pass.side = .95; pass.inside = false; msg('🚃 Back out to the open car', 2); } return true; }
-  function leaveP(st, jump) { H.trainRide = null; H.trainUse = null; H.onTrain = false; const c = pass && pass.car; pass = null;
+  addEventListener('keydown', e => { if (pass && e.code === 'KeyZ' && pass.cab) { whistle(); e.stopPropagation(); } }, true);
+  function rideP(dt) { const c = pass.car; tmp.set(pass.side, pass.cab ? 1.95 : pass.inside ? 1.25 : 1.47, pass.off).applyQuaternion(c.g.quaternion).add(c.g.position); P.pos.copy(tmp); if (pass.inside) { const Z = H.zombies; if (Z && Z.state) Z.state.hp = Math.min(100, (Z.state.hp || 0) + 4 * dt); } if (input && input.jump) leaveP(null, true); if (H.dead) leaveP(); }
+  function useP() { const S0 = sched(Date.now()); if (S0.at >= 0) { leaveP(STATIONS[S0.at]); return true; } if (pass.cab) { whistle(); msg('🚂 Between stations - JUMP to leap off', 1.6); return true; } const din = cars.find(c => c.kind === 'dining'); if (pass.car !== din && din) { pass.car = din; pass.side = .55; pass.off = (Math.random() - .5) * 6; pass.inside = true; msg('🍽️ You take a table in the dining car - coffee, pie and the view (you heal while you sit). USE again for the open car', 3.5); } else { pass.car = cars.find(c => c.kind === 'open'); pass.side = .95; pass.inside = false; msg('🚃 Back out to the open car', 2); } return true; }
+  function leaveP(st, jump) { H.trainRide = null; H.trainUse = null; H.onTrain = false; const c = pass && pass.car; if (pass && pass.cab) H.fp = pass.fp0; pass = null;
     if (st) { const x = st.plat.x + st.side.x * 2.4, z = st.plat.z + st.side.z * 2.4; P.pos.set(x, hAt(x, z), z); msg('🚉 ' + st.name + ' — whistle (Z) for your horse', 3); }
     else if (c) { tan.set(0, 0, 1).applyQuaternion(c.g.quaternion); const x = c.g.position.x - tan.z * 3.8, z = c.g.position.z + tan.x * 3.8; P.pos.set(x, hAt(x, z), z); if (jump) msg('You leap clear of the train', 2); } }
+  let clackD = 0, inTun = false; function rideSounds(dt, v, s0) { if (!pass || !sfx || !sfx.ctx || !sfx.nz) return; clackD += v * dt; if (clackD > 12.5) { clackD -= 12.5; sfx.nz('bandpass', 1400, 2, .06, .05); setTimeout(() => sfx.nz('bandpass', 1300, 2, .05, .05), 110); } if (v > 6 && Math.random() < dt * 2) sfx.nz('lowpass', 300, .5, .03, .8);
+    const ii = path.cum.findIndex(c => c > s0) - 1, t2 = TUN.some(([a, b]) => ii >= a && ii <= b); if (t2 !== inTun) { inTun = t2; if (t2) whistle(); } }
   function passTick() { if (!STATIONS.length) return; const S0 = sched(Date.now()); if (pass) { if (S0.at >= 0 && lastAt !== S0.at) msg(`🚉 ${STATIONS[S0.at].name} — USE to get off`, 3); else if (S0.at < 0 && lastAt >= 0) msg(`🚂 Next stop: ${STATIONS[S0.next].name}`, 2.5); }
-    for (const [k, st] of STATIONS.entries()) if (st.spot) st.spot.label = S0.at === k ? '🚂 Board the train (' + Math.ceil(S0.left) + ' s)' : '🚉 ' + st.name + ' · next train ' + (() => { const w = Math.round(untilAt(k)); return w >= 60 ? Math.floor(w / 60) + ' min' : w + ' s'; })();
+    for (const [k, st] of STATIONS.entries()) if (st.cab) st.cab.label = S0.at === k ? '🚂 Ride in the locomotive cab (' + Math.ceil(S0.left) + ' s)' : ''; for (const [k, st] of STATIONS.entries()) if (st.spot) st.spot.label = S0.at === k ? '🚂 Board the train (' + Math.ceil(S0.left) + ' s)' : '🚉 ' + st.name + ' · next train ' + (() => { const w = Math.round(untilAt(k)); return w >= 60 ? Math.floor(w / 60) + ' min' : w + ' s'; })();
     if (S0.at !== lastAt && (S0.at >= 0 || lastAt >= 0)) { const dl = Math.hypot(P.pos.x - cars[0].g.position.x, P.pos.z - cars[0].g.position.z); if (dl < 300) whistle(); } lastAt = S0.at; }
   // ---------- rolling stock ----------
   const M = { black: new THREE.MeshStandardMaterial({ color: 0x1c1c20, metalness: .5, roughness: .45 }), red: new THREE.MeshStandardMaterial({ color: 0x8a1e16, roughness: .55 }), gold: new THREE.MeshStandardMaterial({ color: 0xd8a83a, metalness: .6, roughness: .35, emissive: 0x2a1800 }),
@@ -180,6 +183,6 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
     sT -= dt; if (sT <= 0 && dl < 400) { sT = .12; tmp.set(0, 5.2, 3.1).applyQuaternion(loco.g.quaternion).add(loco.g.position); sp.set([tmp.x, tmp.y, tmp.z], si * 3); sAge[si] = 0; si = (si + 1) % SN; }
     for (let i = 0; i < SN; i++) { sAge[i] += dt; sp[i * 3 + 1] += dt * 2.2; } sg.attributes.position.needsUpdate = true; smoke.material.size = 4.5;
     wT -= dt; if (wT <= 0) { wT = 25 + Math.random() * 20; if (dl < 260 && VNOW > 1) whistle(); }
-    passTick(); heistTick(dt); }
+    passTick(); rideSounds(dt, VNOW, s - 30); heistTick(dt); }
   return { update, get stations() { return STATIONS; }, get tunnels() { return TUN.length; }, sched: () => sched(Date.now()), boardP, get passenger() { return !!pass; }, get guards() { return guards; }, get heist() { return heist; }, get cars() { return cars; }, get length() { return L; }, board: () => cars.length && board(cars.find(c => c.kind === 'express')) };
 }

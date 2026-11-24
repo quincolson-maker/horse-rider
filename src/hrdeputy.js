@@ -1,16 +1,17 @@
 // v170 HIRED GUNS (sheriff's office, 500): two deputies follow you for 3 minutes and shoot the dead near you.
 // They keep up when you ride by catching up out of sight. Hire them at the store (Gear tab).
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=203';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=204';
 export function createDeputies({ scene, H, P, hAt, msg, sfx, mobile }) {
-  let D = [], T = 0; const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
+  let D = [], T = 0, pool = []; const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const flashM = new THREE.MeshBasicMaterial({ color: 0xffd080, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
   function hire() { const g = H.guns; if (!g || g.pts() < 500) { msg('Not enough points', 1.5); return; } g.state.spent = (g.state.spent || 0) + 500; g.save && g.save(); if (D.length) { T += 180; msg('Your deputies sign on for another 3 minutes', 2); return; }
+    if (pool.length) { D = pool; pool = []; for (const d of D) { const a = d.off; d.c.g.position.set(P.pos.x + Math.sin(a) * 3, P.pos.y, P.pos.z + Math.cos(a) * 3); d.c.g.visible = true; scene.add(d.c.g); scene.add(d.fl); } T = 180; msg('🤠 Two deputies ride with you for 3 minutes', 3); return; }
     for (let i = 0; i < 2; i++) { const c = makeFrontierCharacter({ kind: 'townsfolk', sex: 'male', quality: mobile ? 'low' : 'high', coat: [0x3a2c20, 0x2a3440][i], top: 0xe6dcc6, hatC: [0x2a1e14, 0x4a3a28][i], skin: [0xb07a54, 0x7a4c30][i], hair: 0x1a120c, bandana: 0x8a1a1a, name: 'Deputy' });
       const star = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, .012, 5), new THREE.MeshStandardMaterial({ color: 0xffcf4a, metalness: .7, roughness: .3 })); star.rotation.x = Math.PI / 2; star.position.set(-.1, .18, .14); c.spine && c.spine.add(star);
       const fl = new THREE.Mesh(new THREE.SphereGeometry(.12, 6, 4), flashM.clone()); scene.add(fl); const a = i ? -2.2 : 2.2; c.g.position.set(P.pos.x + Math.sin(a) * 3, P.pos.y, P.pos.z + Math.cos(a) * 3); scene.add(c.g); D.push({ c, fl, off: a, cd: Math.random(), sp: 0 }); }
     T = 180; msg('🤠 Two deputies ride with you for 3 minutes', 3); tone('triangle', 392, 523, .3, .15); }
-  function dismiss() { for (const d of D) { d.c.g.removeFromParent(); d.fl.removeFromParent(); } D = []; }
+  function dismiss() { for (const d of D) { d.c.g.removeFromParent(); d.fl.removeFromParent(); } pool = D; D = []; } // v204: kept for next time (no rebuild, no leak)
   function update(dt) { if (!D.length) return; T -= dt; if (T <= 0 || H.dead && T < 170) { dismiss(); msg('Your deputies head back to town', 2); return; }
     const me = H.mounted ? H.mounted.pos : P.pos, Z = H.zombies;
     for (const d of D) { const g = d.c.g, ang = (H.mounted ? H.mounted.yaw : (P.yaw || 0)) + d.off, tx = me.x + Math.sin(ang) * 3.2, tz = me.z + Math.cos(ang) * 3.2, dx = tx - g.position.x, dz = tz - g.position.z, dist = Math.hypot(dx, dz);

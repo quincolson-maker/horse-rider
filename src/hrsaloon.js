@@ -3,13 +3,13 @@
 // bandit or a random brawl), the dealer in the dark corner (snow = fast, green = slow), three slot machines upstairs (seated
 // first-person view, 10/50/100 bets, jackpot 6000), swinging batwing doors, warm lamps, light shafts and dust.
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=93';
-import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=93';
-import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=93';
-import {createCasino} from './hrcasino.js?v=93';
-import {createSaloonDecor} from './hrsaloondecor.js?v=93';
-import { createSaloonPlus } from './hrsaloonplus.js?v=93';
-import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=93';
+import { PERF } from './perfopts.js?v=94';
+import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=94';
+import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=94';
+import {createCasino} from './hrcasino.js?v=94';
+import {createSaloonDecor} from './hrsaloondecor.js?v=94';
+import { createSaloonPlus } from './hrsaloonplus.js?v=94';
+import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=94';
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
 // ---------------- slots: pure math (tests use it) ----------------
 export const SLOT = { NAMES: ['cactus', 'cherry', 'horseshoe', 'bell', 'buffalo'], W: [10, 9, 7, 4, 2], THREE: [0, 5, 10, 25, 60], TWO_CHERRY: 3, ONE_CHERRY: 1, BETS: [10, 50, 100] };
@@ -19,7 +19,7 @@ export function slotMult(r) { const [a, b, c] = r; if (a === b && b === c) retur
 export function slotPay(r, bet) { return slotMult(r) * bet; }
 export function slotRTP() { const T = SLOT.W.reduce((a, b) => a + b, 0), n = SLOT.W.length; let e = 0; for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) for (let c = 0; c < n; c++) e += SLOT.W[a] * SLOT.W[b] * SLOT.W[c] / T ** 3 * slotMult([a, b, c]); return e; }
 export const REEL_PHASE = .65; // which part of the reel texture faces the window
-export const PRICES = { bandit: 100, dance: 100, snow: 150, green: 50, maxBandits: 5, banditKill: 5, fightWin: 50 };
+export const PRICES = { revue: 300, bandit: 100, dance: 100, snow: 150, green: 50, maxBandits: 5, banditKill: 5, fightWin: 50 };
 // ---------------- symbol art (canvas) ----------------
 function drawSym(x, k, cx, cy, s, theme=0) { x.save(); x.translate(cx, cy); x.scale(s / 100, s / 100); x.lineCap = 'round'; x.lineJoin = 'round';
   if(theme){const cfg=themeOf(theme),ink=theme===1?'#204b50':'#9b6626';x.fillStyle=ink;x.strokeStyle=ink;x.lineWidth=5;
@@ -167,7 +167,7 @@ export function createSaloon(c) {
   S.inside = () => { const [lx, lz] = T.toL(s, P.pos.x, P.pos.z); return lx > -17.1 && lx < -.9 && lz > -.1 && lz < 10.1 && P.pos.y < s.y0 + Y2 + 3 && P.pos.y > s.y0 - 1; }; // hotfix: the local player is in the saloon (either floor)
   function render() { if (!panel) return; let h = '<button class="x" data-a="x">✕ EXIT</button>'; const p = pts();
     if (panel.kind === 'bandits') { const n = S.bandits.length; h += `<h3>THE GUNSLINGERS' TABLE</h3><div class="bal">${p} points · ${n}/${PRICES.maxBandits} riding with you</div><div style="font-size:13px;margin:6px">They follow you (on their own horses when you ride), shoot zombies (+${PRICES.banditKill} per kill for you) and never shoot riders or horses.</div><button class="big" data-a="hire" ${p < PRICES.bandit || n >= PRICES.maxBandits ? 'disabled' : ''}>HIRE ONE · ${PRICES.bandit}</button>` + (n ? '<button data-a="fire">LET THEM GO</button>' : ''); }
-    else if (panel.kind === 'dance') { h += `<h3>THE RED GARTER REVUE</h3><div class="bal">${p} points</div><div style="font-size:13px;margin:4px">Pay a dancer ${PRICES.dance} points for a can-can + feather-fan routine on the stage.</div>` + DANCERS.map((d, i) => `<button data-a="dance" data-i="${i}" ${p < PRICES.dance || S.dance ? 'disabled' : ''}>${d.name}</button>`).join(''); }
+    else if (panel.kind === 'dance') { h += `<h3>THE RED GARTER REVUE</h3><div class="bal">${p} points</div><div style="font-size:13px;margin:4px">Pay a dancer ${PRICES.dance} points for a can-can + feather-fan routine on the stage.</div>` + DANCERS.map((d, i) => `<button data-a="dance" data-i="${i}" ${p < PRICES.dance || S.dance ? 'disabled' : ''}>${d.name}</button>`).join('') + `<div style="font-size:13px;margin:8px 4px 4px">🎭 <b>Full revue</b> — all three in a can-can kick line under the spotlight, footlights up, confetti finale.</div><button data-a="revue" ${p < PRICES.revue || S.dance ? 'disabled' : ''}>FULL REVUE · ${PRICES.revue}</button>`; }
     else if (panel.kind === 'dealer') { h += `<h3>"PSST… OVER HERE"</h3><div class="bal">${p} points</div><div class="row"><span>❄ Mountain Snow — 60 s of real speed (then a crash)</span><button data-a="snow" ${p < PRICES.snow ? 'disabled' : ''}>${PRICES.snow}</button></div><div class="row"><span>🌿 Prairie Green — 90 s mellow and slow, steady aim</span><button data-a="green" ${p < PRICES.green ? 'disabled' : ''}>${PRICES.green}</button></div>`; }
     else if (panel.kind === 'slot') { const M = panel.data, r = M.res || M.show || [4, 4, 4], wl = M.winLine; h += `<h3>${themeOf(M.theme).name} · #${M.i + 1}</h3><div class="row"><span class="bal">💰 ${p}</span><span class="won">${M.msg || ''}</span></div><div class="reels">${r.map((k, i) => `<div class="${wl && wl[i] ? 'win' : ''}"><img src="${symIcon(k,M.theme)}" alt="${themeOf(M.theme).names[k]}"></div>`).join('')}</div>` +
       `<div>${SLOT.BETS.map(b => `<button data-a="bet" data-b="${b}" class="${S.bet === b ? 'on' : ''}">BET ${b}</button>`).join('')}</div><button class="big" data-a="spin" ${M.spin || p < S.bet ? 'disabled' : ''}>${M.spin ? 'SPINNING…' : 'SPIN'}</button><button data-a="spin" ${M.spin || p < S.bet ? 'disabled' : ''}>PULL LEVER</button>` +
@@ -175,7 +175,7 @@ export function createSaloon(c) {
     ui.innerHTML = h; }
   ui.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const a = b.dataset.a;
     if (a === 'x') return close(); if (a === 'hire') hire(); if (a === 'fire') { for (const B of S.bandits) dropBandit(B, true); S.bandits.length = 0; msg('The gunslingers tip their hats and ride off', 2); }
-    if (a === 'dance') startDance(+b.dataset.i, true); if (a === 'snow' || a === 'green') buy(a); if (a === 'bet') { S.bet = +b.dataset.b; } if (a === 'spin') spin(); render(); });
+    if (a === 'dance') startDance(+b.dataset.i, true); if (a === 'revue') startRevue(true); if (a === 'snow' || a === 'green') buy(a); if (a === 'bet') { S.bet = +b.dataset.b; } if (a === 'spin') spin(); render(); });
   S.bet = 10;
 
   // ---- the town's E / tap hook ----
@@ -246,7 +246,27 @@ export function createSaloon(c) {
   function startDance(i, paid) { if (S.dance) return false; if (paid && !spend(PRICES.dance)) return false; const D = S.dancers[i]; if (!D) return false; S.dance = { i, t: 0, len: 26 }; D.mode = 'dance'; const p = Lh(-15.4, F + .4, 1.9); D.g.position.copy(p); D.baseYaw = rot + Math.PI / 2; D.g.rotation.y = D.baseYaw; S.danced = (S.danced || 0) + 1;
     close(); H.noGun = true; if (G()) G().holster(); msg(DANCERS[i].name + ' takes the stage — press E / tap EXIT to leave', 3); music(true); showExit(true); return true; }
   S.startDance = startDance;
-  function endDance() { if (!S.dance) return; const D = S.dancers[S.dance.i]; D.mode = 'idle'; const p = Lh(D.home[0], F + .4, D.home[1]); D.g.position.copy(p); S.dance = null; H.noGun = false; music(false); showExit(false); }
+  // ---- v94 FULL REVUE: three dancers in a kick line, a sweeping spotlight + light cone, footlights, cheering crowd, confetti finale ----
+  const RV = { cone: null, spot: null, foot: null, tgt: new THREE.Object3D() }; scene.add(RV.tgt);
+  { const footM = new THREE.MeshStandardMaterial({ color: 0xfff1c8, emissive: 0xffd27a, emissiveIntensity: 0, roughness: .4 }); RV.foot = footM; const bulb = new THREE.SphereGeometry(.055, 10, 8), cup = new THREE.CylinderGeometry(.08, .1, .08, 10, 1, true), brassM = new THREE.MeshStandardMaterial({ color: 0xb08a3a, metalness: .8, roughness: .35, side: THREE.DoubleSide });
+    for (let i = 0; i < 8; i++) { const z = .75 + i * .34, pb = Lh(-13.88, F + .47, z), b = new THREE.Mesh(bulb, footM); b.position.copy(pb); scene.add(b); const c2 = new THREE.Mesh(cup, brassM); c2.position.copy(pb).add(new THREE.Vector3(0, -.03, 0)); scene.add(c2); }
+    if (!mobile) { const sp = RV.spot = new THREE.SpotLight(0xfff0d0, 0, 16, .28, .45, 1.2); sp.position.copy(Lh(-11.2, F + 4.4, 1.9)); sp.target = RV.tgt; scene.add(sp); } // always in the scene (intensity 0): no shader recompiles when the show starts
+    const cg = new THREE.ConeGeometry(1, 1, 24, 1, true); cg.translate(0, -.5, 0); cg.rotateX(-Math.PI / 2); // apex at origin, opening along +z
+    RV.cone = new THREE.Mesh(cg, new THREE.MeshBasicMaterial({ color: 0xfff0c8, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false })); RV.cone.position.copy(Lh(-11.2, F + 4.4, 1.9)); RV.cone.visible = false; RV.cone.renderOrder = 6; scene.add(RV.cone); }
+  const LINE = [[-15.1, 1.0], [-14.9, 1.9], [-15.1, 2.8]];
+  function startRevue(paid) { if (S.dance) return false; if (paid && !spend(PRICES.revue)) return false; S.dance = { i: 1, t: 0, len: 40, all: true };
+    S.dancers.forEach((D, k) => { const q = LINE[k] || LINE[1], p = Lh(q[0], F + .4, q[1]); D.g.position.copy(p); D.baseYaw = rot + Math.PI / 2; D.g.rotation.y = D.baseYaw; D.mode = 'dance'; D.t = 0; });
+    S.danced = (S.danced || 0) + 1; const st = H.stats || (H.stats = {}); st.revues = (st.revues || 0) + 1; try { localStorage.setItem('hr_stats', JSON.stringify(st)); } catch (_) {}
+    close(); H.noGun = true; if (G()) G().holster(); msg('🎭 The Red Garter Revue! Footlights up — press E / tap EXIT to leave', 3.5); music(true); showExit(true); RV.cone.visible = true; return true; }
+  S.startRevue = startRevue;
+  function revueTick(dt) { const R = S.dance; const on = !!(R && R.all), k = on ? Math.min(1, R.t / 1.5, (R.len - R.t) / 1.5) : 0; RV.k = (RV.k || 0) + (k - (RV.k || 0)) * Math.min(1, dt * 4);
+    RV.foot.emissiveIntensity = RV.k * 3.2; if (RV.spot) RV.spot.intensity = RV.k * 60; RV.cone.material.opacity = RV.k * .13; RV.cone.visible = RV.k > .01; if (!on && RV.k < .01) return;
+    const t = R ? R.t : 0, idx = Math.floor(t / 4.5) % 3, w = (t % 4.5) / 4.5, a = S.dancers[idx], b = S.dancers[(idx + 1) % 3], e = w < .75 ? 0 : (w - .75) / .25, ee = e * e * (3 - 2 * e);
+    if (a && b) RV.tgt.position.lerpVectors(a.g.position, b.g.position, ee).add(new THREE.Vector3(0, .1, 0));
+    const from = RV.cone.position, d = RV.tgt.position.clone().sub(from), L = d.length(); RV.cone.lookAt(RV.tgt.position); RV.cone.scale.set(Math.tan(.3) * L, Math.tan(.3) * L, L);
+    if (on) { R.cheer = (R.cheer || 0) - dt; if (R.cheer <= 0) { R.cheer = 2.2 + Math.random() * 2; for (const D of [...S.seated, ...S.drifters]) if (Math.random() < .5) D.cheerT = 1.4; if (sfx.ctx) sfx.tone('triangle', 880 + Math.random() * 300, 700, .12, .06); }
+      if (!R.fin && R.t > R.len - 3) { R.fin = true; if (c.fx && c.fx.debris) for (const D of S.dancers) { const p = D.g.position; c.fx.debris(p.x, p.y + 2.6, p.z, [0xff4a6a, 0xffd34a, 0x4ac8ff][S.dancers.indexOf(D)], 22, .9); } msg('👏 Bravo! The whole saloon is on its feet', 2.5); } } }
+  function endDance() { if (!S.dance) return; for (const D of (S.dance.all ? S.dancers : [S.dancers[S.dance.i]])) { D.mode = 'idle'; const p = Lh(D.home[0], F + .4, D.home[1]); D.g.position.copy(p); } S.dance = null; H.noGun = false; music(false); showExit(false); }
   S.endDance = endDance;
   let mus = null; function music(on) { if (mus) { clearInterval(mus); mus = null; } if (!on || !sfx.tone || !sfx.ctx) return; const notes = [392, 523, 659, 523, 587, 494, 392, 440, 523, 659, 784, 659, 587, 523, 494, 523]; let k = 0;
     mus = setInterval(() => { const n = notes[k++ % notes.length]; sfx.tone('triangle', n, n, .16, .07); if (k % 2) sfx.tone('square', n / 4, n / 4, .1, .03); if (k % 4 === 0) sfx.tone('triangle', n * 1.26, n * 1.26, .1, .04); }, 190); }
@@ -303,6 +323,7 @@ export function createSaloon(c) {
     remoteTick(dt);
     if (S.seat) { P.yaw = S.seatYaw + clamp(((P.yaw - S.seatYaw + Math.PI * 3) % TAU) - Math.PI, -1.25, 1.25); P.pitch = clamp(P.pitch, -.7, .55); const p = Lh(-15.25, Y2, S.seat.z); P.pos.set(p.x, p.y, p.z); H.fv.set(0, 0);
       if (keys.Space && !S.spaceDown) spin(); S.spaceDown = !!keys.Space; for (const [k, b] of [['Digit1', 10], ['Digit2', 50], ['Digit3', 100]]) if (keys[k]) S.setBet(b); if (keys.Escape) close(); }
+    revueTick(dt);
     if (S.dance) { S.dance.t += dt; const D = S.dancers[S.dance.i], p = D.g.position, dx = p.x - P.pos.x, dz = p.z - P.pos.z; P.yaw = lerpA(P.yaw, Math.atan2(-dx, -dz), Math.min(1, dt * 2)); if (S.dance.t > S.dance.len || Math.hypot(dx, dz) > 12) endDance(); else if (S.dance.t > 1 && (Math.abs(H.fv.length()) > 1.5)) endDance(); }
     if (!near) return;
     // NPC motion: seated bandits, drifters, dancers, Greta's rounds, the dealer
@@ -310,7 +331,7 @@ export function createSaloon(c) {
     for (const D of S.drifters) { if (S.fight && S.fight.opp.D === D) continue; if (D.downT > 0) { D.downT -= dt; D.koT = Math.min(1, (D.koT || 0) + dt * 2); poseDoll(D, dt, 'ko'); if (D.downT <= 0) { D.mode = D.home[3]; D.koT = 0; const p = Lh(D.home[0], F, D.home[1]); D.g.position.copy(p); } continue; } if (D.cheerT > 0) { D.cheerT -= dt; poseDoll(D, dt, 'cheer'); continue; }
       poseDoll(D, dt, D.brawl > 0 ? 'punch' : D.home[3]); if (D.brawl > 0) { D.brawl -= dt; D.pk = (D.t * 1.6) % 1; }
       const dd = Math.hypot(P.pos.x - D.g.position.x, P.pos.z - D.g.position.z); if (dd < .75 && H.fv.length() > 1.4 && Math.abs(P.pos.y - D.g.position.y) < 1 && !H.mounted) startFight(D); }
-    for (const D of S.dancers) { if (S.dance && S.dancers[S.dance.i] === D) { poseDoll(D, dt, 'dance'); continue; } poseDoll(D, dt, D.remoteDance ? 'dance' : 'idle'); D.remoteDance = 0; }
+    for (const D of S.dancers) { if (S.dance && (S.dance.all || S.dancers[S.dance.i] === D)) { poseDoll(D, dt, 'dance'); continue; } poseDoll(D, dt, D.remoteDance ? 'dance' : 'idle'); D.remoteDance = 0; }
     { const D = greta, r = D.route[D.ri], tgt = Lh(r[0], F, r[1]), dx = tgt.x - D.g.position.x, dz = tgt.z - D.g.position.z, d = Math.hypot(dx, dz); if (D.wait > 0) { D.wait -= dt; poseDoll(D, dt, 'idle'); } else if (d < .2) { D.wait = 3 + Math.random() * 4; D.ri = (D.ri + 1) % D.route.length; } else { const v = 1.1; D.g.position.x += dx / d * v * dt; D.g.position.z += dz / d * v * dt; D.g.rotation.y = lerpA(D.g.rotation.y, Math.atan2(dx, dz), Math.min(1, dt * 6)); poseDoll(D, dt, 'walk', v); }
       gretaSpot.x = D.g.position.x; gretaSpot.z = D.g.position.z; }
     poseDoll(dealer, dt, 'lean');

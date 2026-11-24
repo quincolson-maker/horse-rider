@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=319';
-import { PERF } from './perfopts.js?v=319';
+import { PF } from './perf.js?v=320';
+import { PERF } from './perfopts.js?v=320';
 import * as THREE from 'three';
 
 export const ZKINDS = {

@@ -57,6 +57,9 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'coyotes', title: 'Varmint Control', task: 'Put down 5 undead coyotes (they run in at night)', pay: 700, p: () => Math.min(1, ((H.stats && H.stats.zk_coyote) || 0) / 5), txt: () => `${Math.min(5, ((H.stats && H.stats.zk_coyote) || 0))} / 5` },
     { id: 'cookout', title: 'Cookout', task: 'Hunt a deer, then cook the venison at your camp fire (Camp kit)', pay: 500, p: () => ((H.stats && H.stats.cooked) || 0) > 0 ? 1 : 0, to: () => H.campPos || null },
     { id: 'panner', title: 'Gold Fever', task: 'Strike gold 3 times panning on the falls shore', pay: 500, p: () => Math.min(1, ((H.stats && H.stats.panned) || 0) / 3), txt: () => `${Math.min(3, ((H.stats && H.stats.panned) || 0))} / 3`, to: () => H.fishSpot || null },
+    { id: 'safecracker', title: 'Safecracker', task: 'Crack the General Store safe after dark (back room) and survive the posse', pay: 800, p: () => ((H.stats && H.stats.safes) || 0) > 0 ? 1 : 0, txt: () => (H.night || 0) > .5 ? 'the store is dark' : 'waits for night', to: () => H.places && H.places.town }, // v137
+    { id: 'sunset', title: 'Sunset Toast', task: 'Have a drink at the rooftop bar at dusk', pay: 300, p: () => H.stats && H.stats.toastDay ? 1 : 0, to: () => H.places && H.places.town },
+    { id: 'shrieker', title: 'Hush Now', task: 'Drop a screamer before it frenzies the horde (wave 3+)', pay: 600, p: () => ((H.stats && H.stats.zk_screamer) || 0) > 0 ? 1 : 0 },
     { id: 'slayer', title: 'Slayer', task: 'Drop 150 zombies', pay: 3000, ...killsSince('slayer', 150) },
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];

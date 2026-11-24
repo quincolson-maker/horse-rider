@@ -60,6 +60,9 @@ export function createBounty({ H, P, T, msg, sfx, PEN }) {
     { id: 'safecracker', title: 'Safecracker', task: 'Crack the General Store safe after dark (back room) and survive the posse', pay: 800, p: () => ((H.stats && H.stats.safes) || 0) > 0 ? 1 : 0, txt: () => (H.night || 0) > .5 ? 'the store is dark' : 'waits for night', to: () => H.places && H.places.town }, // v137
     { id: 'sunset', title: 'Sunset Toast', task: 'Have a drink at the rooftop bar at dusk', pay: 300, p: () => H.stats && H.stats.toastDay ? 1 : 0, to: () => H.places && H.places.town },
     { id: 'shrieker', title: 'Hush Now', task: 'Drop a screamer before it frenzies the horde (wave 3+)', pay: 600, p: () => ((H.stats && H.stats.zk_screamer) || 0) > 0 ? 1 : 0 },
+    { id: 'xmarks', title: 'X Marks the Spot', task: 'Dig up buried treasure (treasure map from the store, or fishing)', pay: 600, p: () => ((H.stats && H.stats.treasures) || 0) > 0 ? 1 : 0, to: () => H.treasurePos || null }, // v155
+    { id: 'scavenger', title: 'Scavenger', task: 'Pick up 15 things the dead drop (gold teeth, pouches, apples)', pay: 500, p: () => Math.min(1, ((H.stats && H.stats.loot) || 0) / 15), txt: () => `${Math.min(15, (H.stats && H.stats.loot) || 0)} / 15` },
+    { id: 'torchlight', title: 'Fire Brigade', task: 'Put out 5 torch-bearer zombies (they come at night)', pay: 600, p: () => Math.min(1, ((H.stats && H.stats.zk_torch) || 0) / 5), txt: () => `${Math.min(5, (H.stats && H.stats.zk_torch) || 0)} / 5` },
     { id: 'slayer', title: 'Slayer', task: 'Drop 150 zombies', pay: 3000, ...killsSince('slayer', 150) },
     { id: 'legend', title: 'Legend of the West', task: 'Drop 500 zombies', pay: 10000, ...killsSince('legend', 500) },
   ];

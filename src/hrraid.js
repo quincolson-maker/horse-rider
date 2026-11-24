@@ -26,7 +26,7 @@ export function createRaid({ scene, H, P, hAt, msg, sfx, mobile, fx }) {
 
   function start(gate) { const z = Z(); if (!z) return; R.on = true; R.gate = gate; R.max = R.hp = 100; R.armor = (() => { try { return localStorage.getItem('hr_gate') === '1'; } catch (_) { return false; } })(); R.kills = 0; R.raiders = []; R.waves = 0; R.doneCyc = cyc(); try { localStorage.setItem('hr_raid', String(R.doneCyc)); } catch (_) {}
     buildBar(gate.half); bar.position.set(gate.x, gate.y, gate.z); bar.rotation.y = gate.ang; bar.visible = true; R.shake = 0;
-    const n = mobile ? 10 : 16, w = z.state.wave || 1; R.total = n + 1;
+    const jobs = (H.bounty && H.bounty.state && H.bounty.state.done.length) || 0, n = (mobile ? 10 : 16) + Math.min(mobile ? 4 : 8, Math.floor(jobs / 4)), w = z.state.wave || 1; /* v190: raids grow with your rank */ R.total = n + 1;
     for (let b = 0; b < 3; b++) R.spawnQ.push({ t: b * 9, n: b === 2 ? n - 2 * Math.floor(n / 3) : Math.floor(n / 3), boss: b === 2 });
     msg(`🔔 NIGHT RAID! The dead are marching on the ${gateName(gate)} Gate — hold the barricade!`, 5); bell(); H.vib && H.vib(80); }
   function spawnBurst(q) { const z = Z(), g = R.gate; const kinds = ['walker', 'coyote', 'runner', 'crawler', 'lawman', 'bloater', 'torch', 'walker', 'coyote', 'screamer'];
@@ -47,10 +47,11 @@ export function createRaid({ scene, H, P, hAt, msg, sfx, mobile, fx }) {
     return 1; }
   function hitGate(d) { if (!R.on) return; R.hp = Math.max(0, R.hp - d * (R.armor ? .6 : 1)); R.shake = .25; if (sfx && sfx.at && sfx.ctx) sfx.at(bar.position, () => { sfx.nz('lowpass', 380, 1, .12, .7); tone('square', 90, 60, .08, .25); }, .5);
     if (R.hp <= 0) end(false); }
+  const jobs0 = () => (H.bounty && H.bounty.state && H.bounty.state.done.length) || 0;
   function end(win, quiet) { if (!R.on) return; R.on = false; R.spawnQ.length = 0;
     for (const o of R.raiders) o.raid = null;
     if (win) chest(R.gate);
-    if (win) { const p = 600 + R.kills * 40 + Math.round(R.hp * 6); award(p, 'raid'); bump('raids'); msg(`🏆 RAID REPELLED — the ${gateName(R.gate)} Gate held at ${Math.round(R.hp)}%  +${p}`, 5); tone('triangle', 523, 784, .5, .4); H.vib && H.vib([40, 40, 80]); }
+    if (win) { const p = 600 + R.kills * 40 + Math.round(R.hp * 6) + Math.floor(jobs0() / 4) * 100; award(p, 'raid'); bump('raids'); msg(`🏆 RAID REPELLED — the ${gateName(R.gate)} Gate held at ${Math.round(R.hp)}%  +${p}`, 5); tone('triangle', 523, 784, .5, .4); H.vib && H.vib([40, 40, 80]); }
     else if (!quiet) { const p = R.kills * 25; if (p) award(p, 'raid'); msg(`💥 The ${gateName(R.gate)} Gate fell! The town still stands — they can't get past the stakes.${p ? '  +' + p : ''}`, 5); }
     else msg('🌅 Dawn — the raiders scatter.', 3);
     if (!win && fxSplinter) fxSplinter(); bar.visible = false; if (el) el.style.display = 'none'; }

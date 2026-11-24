@@ -8,8 +8,8 @@
 //   - drifting mist, a faint rainbow in the spray, mossy boulders around the pool and along the cliff foot
 // Local frame (same as the cave): x = across the mouth, +z = out of the mouth, y = up from the ground at the mouth.
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=189';
-import { rockDetail } from './hrhideout.js?v=189';
+import { PERF } from './perfopts.js?v=190';
+import { rockDetail } from './hrhideout.js?v=190';
 
 const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 function hash(x, y) { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); }

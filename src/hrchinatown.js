@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=263';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=263';
-import { mergeStatic } from './hrmerge.js?v=263';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=264';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=264';
+import { mergeStatic } from './hrmerge.js?v=264';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -271,10 +271,10 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const heal = n => { const Z = H.zombies; if (Z && Z.state) Z.state.hp = Math.min(100, (Z.state.hp || 0) + n); };
   let fedT = 0, tonicT = 0, crackers = null;
   const prevUse = T.onUse; T.onUse = o => { if (!o || !o.ct) return prevUse ? prevUse(o) : false; const k = o.kind.slice(3), S = st();
-    if (k === 'tea') { if (pay(20)) { heal(100); msg('🍵 Jasmine tea, a quiet table - you feel whole again', 2.5); S.ctTea = (S.ctTea || 0) + 1; } }
+    if (k === 'tea') { if (pay(20)) { heal(100); H.burnT = 0; msg('🍵 Jasmine tea, a quiet table - you feel whole again', 2.5); S.ctTea = (S.ctTea || 0) + 1; } }
     else if (k === 'noodle') { if (pay(30)) { heal(60); fedT = 120; msg('🍜 Hot noodles - well fed for 2 minutes (double regen)', 2.5); S.ctFood = (S.ctFood || 0) + 1; } }
     else if (k === 'bakery') { if (pay(15)) { heal(40); msg('🥮 Warm egg tarts and a pork bun', 2); S.ctFood = (S.ctFood || 0) + 1; } }
-    else if (k === 'herb') { if (pay(150)) { tonicT = 180; heal(30); msg('🌿 Ginseng tonic - fast regen for 3 minutes', 2.5); } }
+    else if (k === 'herb') { if (pay(150)) { tonicT = 180; heal(30); H.burnT = 0; msg('🌿 Ginseng tonic - fast regen for 3 minutes', 2.5); } }
     else if (k === 'goods') { const g = H.guns; if (g && g.state && g.state.ammo && pay(120)) { for (const w of Object.keys(g.state.ammo)) { try { const mx = g.maxAmmo(w); if (mx > g.state.ammo[w]) g.state.ammo[w] = mx; } catch (_) {} } g.syncUI && g.syncUI(); g.save && g.save(); msg('📦 Every gun topped up', 2); } }
     else if (k === 'fire' && (H.night || 0) > .5 && H.fireworksNow) { if (pay(400)) { H.fireworksNow([CX, CZ]); S.ctShow = (S.ctShow || 0) + 1; S.ctFireNight = (S.ctFireNight || 0) + 1; msg('🎆 Look up!', 2); } }
     else if (k === 'fire') { if (pay(50)) { crackers = { t: 0, n: 0, x: P.pos.x + Math.sin(P.yaw || 0) * -2, z: P.pos.z + Math.cos(P.yaw || 0) * -2 }; S.ctFire = (S.ctFire || 0) + 1; if ((H.night || 0) > .5) S.ctFireNight = (S.ctFireNight || 0) + 1; msg('🧨 Stand back!', 1.5); } }
@@ -284,7 +284,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (k === 'bed') { heal(100); msg('🛏️ You stretch out for a while - rested and healed', 2.2); S.ctRest = (S.ctRest || 0) + 1; }
     else if (k === 'stall') { if (pay(10)) { heal(30); msg(o.food || '🍢 Skewers off the grill', 1.8); S.ctFood = (S.ctFood || 0) + 1; } }
     else if (k === 'riddle') { riddle(); }
-    else if (k === 'bench') { heal(60); const v = new Set(S.ctBenches || []); v.add(Math.round(o.x) + ',' + Math.round(o.z)); S.ctBenches = [...v]; msg(`🪨 You sit by the pond a while - the koi drift past (garden ${v.size} of 4)`, 2.2); S.ctBench = 1; }
+    else if (k === 'bench') { heal(60); H.burnT = 0; const v = new Set(S.ctBenches || []); v.add(Math.round(o.x) + ',' + Math.round(o.z)); S.ctBenches = [...v]; msg(`🪨 You sit by the pond a while - the koi drift past (garden ${v.size} of 4)`, 2.2); S.ctBench = 1; }
     else if (k === 'shrine') { if (S.ctShrine === day()) msg('🕯️ Your offering still burns', 1.6); else { S.ctShrine = day(); earn(40); msg('🕯️ You leave an orange and light a candle (+40)', 2.2); } }
     else if (k === 'view') { msg('🏮 Lanterns, tiled eaves and the range beyond', 2); S.ctView = 1; }
     else if (k === 'gold') { if (S.ctJade) msg('💚 Your jade charm is warm against your chest', 2); else if (pay(2000)) { S.ctJade = 1; msg('💚 A carved jade charm - you heal slowly but steadily from now on', 3); for (const q of spots) if (q.kind === 'ct_gold') q.label = '💍 Look over the jade and gold (charm owned)'; } }
@@ -348,8 +348,8 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   let rEl = null; function riddle() { const S = st(), d = day(); if (S.ctRidDay !== d) { S.ctRidDay = d; S.ctRidN = 0; } if ((S.ctRidN || 0) >= 5) { msg('🏮 You\'ve read every lantern tonight - new riddles tomorrow', 2.2); return; }
     const q = RID[(d * 7 + (S.ctRidN || 0) * 5) % RID.length], opts = [q[1], q[2], q[3]].sort(() => Math.random() - .5);
     if (!rEl) { rEl = document.createElement('div'); rEl.id = 'ctRiddle'; rEl.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:80;background:#2a120e;border:3px solid #d4a640;border-radius:14px;color:#f6e6c0;font:600 16px Georgia,serif;padding:16px 18px;max-width:min(92vw,420px);text-align:center;box-shadow:0 8px 30px #000a'; document.body.appendChild(rEl); }
-    rEl.innerHTML = `<div style="font:900 13px system-ui;letter-spacing:.1em;color:#e8b23a;margin-bottom:6px">🏮 LANTERN RIDDLE ${(S.ctRidN || 0) + 1} / 5</div><div style="margin-bottom:12px">${q[0]}</div>` + opts.map(o => `<button data-a="${o}" style="display:block;width:100%;margin:6px 0;padding:10px;border-radius:10px;border:2px solid #d4a640;background:#7a1c14;color:#fff3d6;font:700 15px system-ui">${o}</button>`).join('');
-    rEl.hidden = false; H.uiOpen = true; try { document.exitPointerLock && document.exitPointerLock(); } catch (_) {} for (const b of rEl.querySelectorAll('button')) b.onclick = () => { const ok = b.dataset.a === q[1]; S.ctRidN = (S.ctRidN || 0) + 1; rEl.hidden = true; H.uiOpen = false; S.ctRidDone = 1; if (ok) { earn(150); S.ctRiddles = (S.ctRiddles || 0) + 1; msg('🏮 Correct! +150', 2); sfx.tone && sfx.ctx && [784, 988, 1175].forEach((f, i) => setTimeout(() => sfx.tone('triangle', f, f, .06, .3), i * 110)); } else msg('🏮 Not quite - it was "' + q[1] + '"', 2.5); }; }
+    rEl.innerHTML = `<div style="font:900 13px system-ui;letter-spacing:.1em;color:#e8b23a;margin-bottom:6px">🏮 LANTERN RIDDLE ${(S.ctRidN || 0) + 1} / 5</div><div style="margin-bottom:12px">${q[0]}</div>` + opts.map((o, i) => `<button data-a="${o}" style="display:block;width:100%;margin:6px 0;padding:10px;border-radius:10px;border:2px solid #d4a640;background:#7a1c14;color:#fff3d6;font:700 15px system-ui">${i + 1}. ${o}</button>`).join('');
+    rEl.hidden = false; H.uiOpen = true; const keyH = e => { const n = { Digit1: 0, Digit2: 1, Digit3: 2, Numpad1: 0, Numpad2: 1, Numpad3: 2 }[e.code]; if (n != null && !rEl.hidden) { e.preventDefault(); e.stopPropagation(); rEl.querySelectorAll('button')[n].click(); } if (e.code === 'Escape' && !rEl.hidden) { rEl.hidden = true; H.uiOpen = false; } if (rEl.hidden) removeEventListener('keydown', keyH, true); }; addEventListener('keydown', keyH, true); try { document.exitPointerLock && document.exitPointerLock(); } catch (_) {} for (const b of rEl.querySelectorAll('button')) b.onclick = () => { const ok = b.dataset.a === q[1]; S.ctRidN = (S.ctRidN || 0) + 1; rEl.hidden = true; H.uiOpen = false; S.ctRidDone = 1; if (ok) { earn(150); S.ctRiddles = (S.ctRiddles || 0) + 1; msg('🏮 Correct! +150', 2); sfx.tone && sfx.ctx && [784, 988, 1175].forEach((f, i) => setTimeout(() => sfx.tone('triangle', f, f, .06, .3), i * 110)); } else msg('🏮 Not quite - it was "' + q[1] + '"', 2.5); }; }
 
   // ---------- v233 ROOFTOP RUN: race the loop of four roofs in the north-east block (over the plank bridges) against the clock ----------
   const RUN = (() => { const blk = built.filter(b => b.q === built[0].q); if (blk.length < 4) return null; const qc = blk[0].qc; const cps = blk.map(b => { const [x, z] = toW(b, W / 2 + 1, DP / 2 - 1); return [x, z, Math.atan2(x - qc[0], z - qc[1])]; }).sort((a, b) => a[2] - b[2]);

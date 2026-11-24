@@ -14,8 +14,11 @@ export function beachPad(x, z, h) {
   const sh = shoreX(z), S = BEACH.SEA; let t;
   if (x >= sh) t = S - Math.min(26, (x - sh) * .06 + Math.max(0, x - sh - 300) * .03);
   else { const d = sh - x; const sand = Math.min(d, 34) * .075; const hill = d > 34 ? Math.pow((d - 34) / 120, 1.45) * 78 : 0; const bumps = d > 50 ? (Math.sin(x * .045 + z * .03) * 6 + Math.sin(z * .07 - x * .02) * 4) * sstep(50, 140, d) : 0; t = S + sand + hill + bumps; }
+  const tm = terraceMask(x, z); if (tm > 0 && x < sh - 50) { const st = 3, t2 = S + 3 + (t - S) * .5, q = Math.floor(t2 / st) * st, f = t2 / st - Math.floor(t2 / st), riser = q + st * sstep(.86, 1, f); t = mix(t, riser, tm); } /* v339 rice terraces stepped into the hill */
   return mix(h, t, w);
 }
+// v339 the rice terraces: a bowl of hillside at the south end of the cove (like Banaue / Batad)
+export const terraceMask = (x, z) => sstep(100, 70, Math.hypot((x - 1025) * 1.1, z - (BEACH.ZC - 255)));
 export const depthAt = x => Math.max(0, (x - BEACH.SHORE) * .06);
 // ---- the surf (eta above sea level), foam 0..1, broken flag of the nearest wave ----
 const frac = v => v - Math.floor(v);

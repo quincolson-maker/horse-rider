@@ -13,6 +13,8 @@ export function createBreeds({ H, msg, sfx }) {
   const ld = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || 'null') ?? d; } catch (_) { return d; } }, sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
   const st = Object.assign({ owned: ['mustang'], on: 'mustang' }, ld('hr_breed', {})); let name = String(ld('hr_hname', '') || '');
   const cur = () => BREEDS.find(b => b.id === st.on) || BREEDS[0];
+  // v159 bond: every 3 km you ride together = +1 bond level (max 5): +1% speed and 4% less tiring per level
+  st.km = st.km || {}; const bond = () => Math.min(5, Math.floor((st.km[st.on] || 0) / 3)); let kmAcc = 0;
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   function onMount(h) { const b = cur(); if (h.baseS == null) h.baseS = h.g.scale.x; h.g.scale.setScalar(h.baseS * b.s); }
   function onDismount(h) { if (h && h.baseS != null) h.g.scale.setScalar(h.baseS); }
@@ -22,7 +24,7 @@ export function createBreeds({ H, msg, sfx }) {
     if (show && (!tag || tagName !== name)) { const THREE = window.__THREE; if (!THREE) return; if (tag) tag.removeFromParent(); const c = document.createElement('canvas'); c.width = 256; c.height = 64; const x = c.getContext('2d'); x.fillStyle = 'rgba(20,14,8,.7)'; x.beginPath(); x.roundRect ? x.roundRect(4, 8, 248, 48, 20) : x.rect(4, 8, 248, 48); x.fill(); x.fillStyle = '#ffd27a'; x.font = '800 30px system-ui'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('🐴 ' + name, 128, 33);
       const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); tag.scale.set(1.6, .4, 1); tag.renderOrder = 9; tagName = name; }
     if (!tag) return; if (show) { if (tag.parent !== h.g.parent) h.g.parent && h.g.parent.add(tag); tag.position.set(h.pos.x, h.pos.y + 2.55, h.pos.z); tag.visible = true; } else tag.visible = false; }
-  function tick(dt) { tagTick(); const h = H.mounted; if (!h || cur().id !== 'clyde' || (H.speed || 0) < 6) return; const Z = H.zombies; if (!Z) return; const fx = -Math.sin(h.yaw), fz = -Math.cos(h.yaw), now = performance.now();
+  function tick(dt) { tagTick(); if (H.mounted && Math.abs(H.speed || 0) > 1) { kmAcc += Math.abs(H.speed) * dt / 1000; if (kmAcc > .05) { const b0 = bond(); st.km[st.on] = (st.km[st.on] || 0) + kmAcc; kmAcc = 0; sv('hr_breed', st); const b1 = bond(); if (b1 > b0) msg(`🐎 Your bond with your ${cur().n} grew — level ${b1}/5 (faster, tires slower)`, 3.5); } } const h = H.mounted; if (!h || cur().id !== 'clyde' || (H.speed || 0) < 6) return; const Z = H.zombies; if (!Z) return; const fx = -Math.sin(h.yaw), fz = -Math.cos(h.yaw), now = performance.now();
     for (const o of Z.list) { if (!o.alive || o.kind === 'boss' || o.kind === 'outlaw') continue; const dx = o.pos.x - h.pos.x, dz = o.pos.z - h.pos.z, d = Math.hypot(dx, dz); if (d > 2.3 || (dx * fx + dz * fz) < 0) continue; if (now - (hit.get(o) || 0) < 900) continue; hit.set(o, now);
       o.push = [dx / d * 6 + fx * 4, dz / d * 6 + fz * 4]; o.flinch = 1; Z.onHit && Z.onHit(o, 'trample', false, o.pos.clone(), null, 70 / 50); tone('square', 110, 50, .12, .3); H.vib && H.vib(25); } }
 
@@ -41,6 +43,6 @@ export function createBreeds({ H, msg, sfx }) {
     toggle() { st.on = b.id; sv('hr_breed', st); if (H.mounted) onMount(H.mounted); msg(`Riding a ${b.n}`, 1.4); } }));
   items.push({ state: { id: 'hname', name: '📝 Name your horse' + (name ? '' : ''), price: 0, owned: true, maxed: false, get label() { return name ? 'RENAME' : 'NAME'; } }, buy() { rename(); }, toggle() { rename(); } });
   return { items, tick, onMount, onDismount, rename, list: BREEDS, state: st, get name() { return name; },
-    spd: () => cur().spd, drain: () => cur().drain, armor: () => cur().armor, breed: cur,
-    label: () => (name ? `“${name}” the ` : '') + cur().n };
+    spd: () => cur().spd * (1 + bond() * .01), drain: () => cur().drain * (1 - bond() * .04), bond, armor: () => cur().armor, breed: cur,
+    label: () => (name ? `“${name}” the ` : '') + cur().n + (bond() ? ` · bond ${bond()}` : '') };
 }

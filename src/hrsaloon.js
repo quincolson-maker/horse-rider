@@ -2,15 +2,15 @@
 // their table (hire one for 100: follows you on foot or on its own horse, shoots zombies, can die), bar fistfights (bump a
 // bandit or a random brawl), the dealer in the dark corner (snow = fast, green = slow), three slot machines upstairs (seated
 // first-person view, 10/50/100 bets, jackpot 6000), swinging batwing doors, warm lamps, light shafts and dust.
-import { mergeStatic } from './hrmerge.js?v=120';
+import { mergeStatic } from './hrmerge.js?v=121';
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=120';
-import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=120';
-import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=120';
-import {createCasino} from './hrcasino.js?v=120';
-import {createSaloonDecor} from './hrsaloondecor.js?v=120';
-import { createSaloonPlus } from './hrsaloonplus.js?v=120';
-import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=120';
+import { PERF } from './perfopts.js?v=121';
+import {mergeGeometries} from '../addons/utils/BufferGeometryUtils.js?v=121';
+import {makeFrontierCharacter, addLowLOD} from './hrcharacters.js?v=121';
+import {createCasino} from './hrcasino.js?v=121';
+import {createSaloonDecor} from './hrsaloondecor.js?v=121';
+import { createSaloonPlus } from './hrsaloonplus.js?v=121';
+import {themeOf,themedSpin,themedMultiplier,themedRTP} from './hrcasinogames.js?v=121';
 const TAU = Math.PI * 2, clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
 // ---------------- slots: pure math (tests use it) ----------------
 export const SLOT = { NAMES: ['cactus', 'cherry', 'horseshoe', 'bell', 'buffalo'], W: [10, 9, 7, 4, 2], THREE: [0, 5, 10, 25, 60], TWO_CHERRY: 3, ONE_CHERRY: 1, BETS: [10, 50, 100] };
@@ -332,7 +332,7 @@ export function createSaloon(c) {
     for (const D of S.seated) poseDoll(D, dt, D.cheerT > 0 ? 'cheer' : 'sit'), D.cheerT = Math.max(0, (D.cheerT || 0) - dt);
     for (const D of S.drifters) { if (S.fight && S.fight.opp.D === D) continue; if (D.downT > 0) { D.downT -= dt; D.koT = Math.min(1, (D.koT || 0) + dt * 2); poseDoll(D, dt, 'ko'); if (D.downT <= 0) { D.mode = D.home[3]; D.koT = 0; const p = Lh(D.home[0], F, D.home[1]); D.g.position.copy(p); } continue; } if (D.cheerT > 0) { D.cheerT -= dt; poseDoll(D, dt, 'cheer'); continue; }
       poseDoll(D, dt, D.brawl > 0 ? 'punch' : D.home[3]); if (D.brawl > 0) { D.brawl -= dt; D.pk = (D.t * 1.6) % 1; }
-      const dd = Math.hypot(P.pos.x - D.g.position.x, P.pos.z - D.g.position.z); if (dd < .75 && H.fv.length() > 1.4 && Math.abs(P.pos.y - D.g.position.y) < 1 && !H.mounted) startFight(D); }
+      const dd = Math.hypot(P.pos.x - D.g.position.x, P.pos.z - D.g.position.z); if (dd < .6 && H.fv.length() > 6 && Math.abs(P.pos.y - D.g.position.y) < 1 && !H.mounted) startFight(D); /* v121: only a full-tilt shove starts a brawl (walking past no longer does) */ }
     for (const D of S.dancers) { if (S.dance && (S.dance.all || S.dancers[S.dance.i] === D)) { poseDoll(D, dt, 'dance'); continue; } poseDoll(D, dt, D.remoteDance ? 'dance' : 'idle'); D.remoteDance = 0; }
     { const D = greta, r = D.route[D.ri], tgt = Lh(r[0], F, r[1]), dx = tgt.x - D.g.position.x, dz = tgt.z - D.g.position.z, d = Math.hypot(dx, dz); if (D.wait > 0) { D.wait -= dt; poseDoll(D, dt, 'idle'); } else if (d < .2) { D.wait = 3 + Math.random() * 4; D.ri = (D.ri + 1) % D.route.length; } else { const v = 1.1; D.g.position.x += dx / d * v * dt; D.g.position.z += dz / d * v * dt; D.g.rotation.y = lerpA(D.g.rotation.y, Math.atan2(dx, dz), Math.min(1, dt * 6)); poseDoll(D, dt, 'walk', v); }
       gretaSpot.x = D.g.position.x; gretaSpot.z = D.g.position.z; }

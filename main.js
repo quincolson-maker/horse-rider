@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=89';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=89';
-import './src/hraudio.js?v=89';
-import './src/stylize.js?v=89'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=89';
-import { FX, SFX } from './src/fx.js?v=89';
-import { initTouch } from './src/touch.js?v=89';
-import { createHorseRider } from './src/horse.js?v=89';
-import { createHorseNet } from './src/horsenet.js?v=89';
+import './src/assetshim.js?v=90';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=90';
+import './src/hraudio.js?v=90';
+import './src/stylize.js?v=90'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=90';
+import { FX, SFX } from './src/fx.js?v=90';
+import { initTouch } from './src/touch.js?v=90';
+import { createHorseRider } from './src/horse.js?v=90';
+import { createHorseNet } from './src/horsenet.js?v=90';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=89';
+import { PF, initPerf } from './src/perf.js?v=90';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');
@@ -125,7 +125,7 @@ function setupSettingsX() { const st = (k, v) => { try { localStorage.setItem(k,
   { const gb = $('grassBtn'), on = gt('hr_grass', '0') === '1'; gb.textContent = '🌿 Grass blades: ' + (on ? 'ON' : 'OFF'); gb.setAttribute('aria-pressed', on); gb.onclick = () => { st('hr_grass', on ? '0' : '1'); location.reload(); }; }
   const cur = gt('vr_quality', 'auto'); for (const b of $('qSeg').children) { b.classList.toggle('on', b.dataset.q === cur); b.onclick = () => { if (b.dataset.q === gt('vr_quality', 'auto')) return; st('vr_quality', b.dataset.q); const u = new URL(location.href); u.searchParams.delete('q'); location.href = u.toString(); }; }
   const touch = matchMedia('(pointer: coarse)').matches, rows = touch ? [['Left thumb', 'move / steer'], ['Right thumb', 'look around'], ['RIDE / USE', 'mount, talk, buy; with no horse near it whistles yours over'], ['FIRE / AIM', 'shoot / zoom; FIRE also draws your last gun'], ['Gun swap', 'cycles guns, then 🧨 dynamite (hold FIRE to aim, let go to throw)'], ['JUMP', 'jump'], ['⋯', 'more: settings, fullscreen']]
-    : [['W A S D', 'move / steer'], ['Mouse', 'look'], ['Shift', 'gallop / run'], ['Space', 'jump'], ['E', 'mount, use, talk, buy'], ['F · Q', 'draw a gun · next gun'], ['1–6 · 8 · 9', 'six-shooter, rifle, Buffalo, Tommy, Golden, Gatling · M4 · MP5'], ['0', 'Sun Pyramid'], ['7', 'dynamite: hold click to aim, release to throw'], ['Click · Right-click', 'shoot · aim'], ['R · X', 'reload · holster'], ['C', 'first / third person'], ['Z', 'whistle for your horse'], ['G · B', 'axe · build'], ['M', 'world map'], ['L', 'leaderboard'], ['V', 'voice chat'], ['H', 'help'], ['O', 'settings']];
+    : [['W A S D', 'move / steer'], ['Mouse', 'look'], ['Shift', 'gallop / run'], ['Space', 'jump'], ['E', 'mount, use, talk, buy'], ['L', 'throw the lasso (buy it at the store)'], ['F · Q', 'draw a gun · next gun'], ['1–6 · 8 · 9', 'six-shooter, rifle, Buffalo, Tommy, Golden, Gatling · M4 · MP5'], ['0', 'Sun Pyramid'], ['7', 'dynamite: hold click to aim, release to throw'], ['Click · Right-click', 'shoot · aim'], ['R · X', 'reload · holster'], ['C', 'first / third person'], ['Z', 'whistle for your horse'], ['G · B', 'axe · build'], ['M', 'world map'], ['L', 'leaderboard'], ['V', 'voice chat'], ['H', 'help'], ['O', 'settings']];
   rows.push(['🎮 Controller', 'L-stick move (click sprint) · R-stick look · RT shoot · LT aim · A jump · X use · B reload · Y/RB swap · LB whistle · D-up dynamite · Start settings']); $('ctlList').innerHTML = rows.map(([k, v]) => `<b>${k}</b><span>${v}</span>`).join(''); { const kp = $('keys'); if (kp) kp.innerHTML = '<div style="display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12px;text-align:left">' + rows.map(([k, v]) => `<b style="color:#ffd98a">${k}</b><span>${v}</span>`).join('') + '</div><div style="margin-top:6px;opacity:.7;font-size:11px">H to close</div>'; } } // v74: the H panel was empty
 setTimeout(() => { try { const v = +(localStorage.getItem('hr_vol') ?? 50); sfx.vol = v / 100; if (sfx.master) sfx.master.gain.value = sfx.vol; } catch (_) {} }, 0);
 function syncFov() { setupSettingsX(); const v = horse.state.fovH; $('fovRange').value = v; $('fovVal').textContent = v + '°'; syncChar(); }

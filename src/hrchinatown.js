@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=297';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=297';
-import { mergeStatic } from './hrmerge.js?v=297';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=298';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=298';
+import { mergeStatic } from './hrmerge.js?v=298';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -490,7 +490,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   function clockTick() { if (!CLK) return; const d = new Date(), m = d.getMinutes() + d.getSeconds() / 60, hh = (d.getHours() % 12) + m / 60; if (Math.abs(m - CLK.last) < .05) return; CLK.last = m; CLK.mm.rotation.z = -m / 60 * Math.PI * 2; CLK.hm.rotation.z = -hh / 12 * Math.PI * 2; CLK.face.material.emissiveIntensity = .05 + (H.night || 0) * .6; }
 
   // ---------- v296 a HOME in Chinatown: rent the rooms above the print shop and you respawn there (when you have no camp pitched) ----------
-  const HOME = (() => { const hb = built.find(b => b.shop[1] === 'PRINT SHOP') || built[3]; const [x, z] = toW(hb, W / 2 - 1, DP / 2 + 1.6), y = y0 + F1; const sp = spot(hb, W / 2 - 1, F1, DP / 2 + 1.6, 'ct_home', '', 1.6); const deco = new THREE.Group(); { const add = (g, m, lx, ly, lz) => { const me = new THREE.Mesh(g, m); const [wx, wz] = toW(hb, lx, lz); me.position.set(wx, y0 + ly, wz); me.rotation.y = hb.rot; deco.add(me); }; add(new THREE.BoxGeometry(2.2, .02, 1.5), M.red, W / 2 - 1, F1 + .01, DP / 2 + .2); add(new THREE.BoxGeometry(2.0, .02, 1.3), M.gold, W / 2 - 1, F1 + .02, DP / 2 + .2); add(new THREE.BoxGeometry(.9, .5, .5), M.wood, 7.4, F1 + .25, DP - .6); add(new THREE.BoxGeometry(.92, .06, .52), M.gold, 7.4, F1 + .52, DP - .6); add(new THREE.SphereGeometry(.22, 10, 8), M.paper, W / 2 - 1, F1 + 1.9, DP / 2 + .2); add(new THREE.BoxGeometry(.5, .7, .05), M.jade, 2.0, F1 + 1.7, DP - .2); } deco.visible = false; scene.add(deco); /* v297 your own touches */ const set = () => { const S = st(); sp.label = S.ctHome ? '🏠 Your rooms - rest here (heal)' : '🏠 Rent these rooms as your home (3000 pts · respawn here)'; if (S.ctHome) H.homePos = [x, z, y]; deco.visible = !!S.ctHome; }; set(); return { sp, set }; })();
+  const HOME = (() => { const hb = built.find(b => b.shop[1] === 'PRINT SHOP') || built[3]; const [x, z] = toW(hb, W / 2 - 1, DP / 2 + 1.6), y = y0 + F1; const sp = spot(hb, W / 2 - 1, F1, DP / 2 + 1.6, 'ct_home', '', 1.6); const deco = new THREE.Group(); { const add = (g, m, lx, ly, lz) => { const me = new THREE.Mesh(g, m); const [wx, wz] = toW(hb, lx, lz); me.position.set(wx, y0 + ly, wz); me.rotation.y = hb.rot; deco.add(me); }; add(new THREE.BoxGeometry(2.2, .02, 1.5), M.red, W / 2 - 1, F1 + .01, DP / 2 + .2); add(new THREE.BoxGeometry(2.0, .02, 1.3), M.gold, W / 2 - 1, F1 + .02, DP / 2 + .2); add(new THREE.BoxGeometry(.9, .5, .5), M.wood, 7.4, F1 + .25, 1.2); add(new THREE.BoxGeometry(.92, .06, .52), M.gold, 7.4, F1 + .52, 1.2); add(new THREE.SphereGeometry(.22, 10, 8), M.paper, W / 2 - 1, F1 + 1.9, DP / 2 + .2); add(new THREE.BoxGeometry(.5, .7, .05), M.jade, 2.0, F1 + 1.7, DP - .2); } deco.visible = false; scene.add(deco); /* v297 your own touches */ const set = () => { const S = st(); sp.label = S.ctHome ? '🏠 Your rooms - rest here (heal)' : '🏠 Rent these rooms as your home (3000 pts · respawn here)'; if (S.ctHome) H.homePos = [x, z, y]; deco.visible = !!S.ctHome; }; set(); return { sp, set }; })();
   const prevUse8 = T.onUse; T.onUse = o => { if (o === HOME.sp) { const S = st(); if (S.ctHome) { heal(100); msg('🏠 You rest in your own rooms. Home.', 2.2); } else if (pay(3000)) { S.ctHome = 1; HOME.set(); msg('🏠 The rooms are yours! If you fall (and have no camp pitched) you\'ll wake up here.', 4); } return true; } return prevUse8 ? prevUse8(o) : false; };
 
   // ---------- per frame ----------

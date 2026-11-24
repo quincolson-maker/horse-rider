@@ -3,7 +3,7 @@
 //  prickly-pear and saguaro-style cacti on the dry sunny slopes, and a belt of far conifers climbing the lower mountain
 //  slopes outside the walkable area (cheap far-LOD trees, no shadows) so the ranges read as layered forest → rock → snow.
 import * as THREE from 'three';
-import { PERF } from './perfopts.js?v=297';
+import { PERF } from './perfopts.js?v=298';
 
 function build(parts) { // parts: [geometry, [r,g,b] | fn(y)->rgb] -> one non-indexed geometry with vertex colours
   const pos = [], nor = [], col = [];

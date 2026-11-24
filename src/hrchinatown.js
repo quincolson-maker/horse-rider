@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=293';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=293';
-import { mergeStatic } from './hrmerge.js?v=293';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=294';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=294';
+import { mergeStatic } from './hrmerge.js?v=294';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -345,7 +345,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   function watchTick(dt, me) { const on = (H.night || 0) > .55 && Math.hypot(me.x - CX, me.z - CZ) < 110; WM.D.g.visible = on; if (!on) return; const L = 33, per = 8 * L; WM.d = (WM.d + dt * 1.1) % per; const d = WM.d, side = Math.floor(d / (2 * L)), u = d % (2 * L) - L; const [x, z] = side === 0 ? [u, -L] : side === 1 ? [L, u] : side === 2 ? [-u, L] : [-L, -u];
     const nx = side === 0 ? 1 : side === 2 ? -1 : 0, nz = side === 1 ? 1 : side === 3 ? -1 : 0; WM.D.g.position.set(CX + x, T.floorAt(CX + x, CZ + z, y0 + .5), CZ + z); WM.D.g.rotation.y = Math.atan2(nx, nz); poseFrontierCharacter(WM.D, dt, { speed: 1.1 });
     if ((WM.c = (WM.c || 0) - dt) <= 0) { WM.c = 30; if (Math.hypot(me.x - CX - x, me.z - CZ - z) < 30 && sfx.tone && sfx.ctx) { [0, 220, 440].forEach(ms => setTimeout(() => sfx.tone('square', 1200, 1100, .05, .05), ms)); } } }
-  function peopleTick(dt, me) { const close = Math.hypot(me.x - CX, me.z - CZ) < 110; for (const p of people) p.D.g.visible = close; for (const k of keepers) k.D.g.visible = close; for (const r of roofers) r.D.g.visible = close; for (const c2 of chess) c2.D.g.visible = close; PG.visible = close; if (!close) return;
+  function peopleTick(dt, me) { const close = Math.hypot(me.x - CX, me.z - CZ) < (mobile ? 60 : 80); for (const p of people) p.D.g.visible = close; for (const k of keepers) k.D.g.visible = close; for (const r of roofers) r.D.g.visible = close; for (const c2 of chess) c2.D.g.visible = close; PG.visible = close; if (!close) return;
     const late = (H.night || 0) > .7, wetOut = ((H.wx && H.wx.rain) || 0) > .5; people.forEach((p, i) => { p.D.g.visible = !(late && i % 2) && !(wetOut && i % 3) && !(p.inside > 0); }); /* v287 the rain sends most of the crowd indoors */
     for (const p of people) { if (p.inside > 0) p.inside -= dt; if (p.wait > 0) { p.wait -= dt; poseFrontierCharacter(p.D, dt, { speed: 0 }); } else { if (!p.tg) { const dr = DOORS.find(q => Math.hypot(q[0] - p.x, q[1] - p.z) < 6 && Math.random() < .15); if (dr) p.tg = dr; } if (!p.tg) { const opts = WP.filter(w => { const d = Math.hypot(w[0] - p.x, w[1] - p.z); return d > 3 && d < 7; }); p.tg = opts[(Math.random() * opts.length) | 0] || WP[(Math.random() * WP.length) | 0]; }
         const dx = p.tg[0] - p.x, dz = p.tg[1] - p.z, d = Math.hypot(dx, dz); if (d < .3) { if (p.tg.door) { p.inside = 6 + Math.random() * 12; p.wait = p.inside; } p.tg = null; if (Math.random() < .35) p.wait = Math.max(p.wait, 2 + Math.random() * 5); } else { const st2 = Math.min(d, p.sp * dt); p.x += dx / d * st2; p.z += dz / d * st2; p.D.g.rotation.y = Math.atan2(dx, dz); }

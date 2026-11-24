@@ -5,7 +5,7 @@ export function createDrops({ scene, H, P, msg, sfx }) {
   const list = [], gold = new THREE.MeshStandardMaterial({ color: 0xffd34a, metalness: .9, roughness: .25, emissive: 0x6a4a00, emissiveIntensity: .8 }), red = new THREE.MeshStandardMaterial({ color: 0xc0201a, roughness: .5, emissive: 0x400000 }), sack = new THREE.MeshStandardMaterial({ color: 0x8a6a3a, roughness: .9 });
   const G = { tooth: new THREE.ConeGeometry(.08, .2, 5), pouch: new THREE.SphereGeometry(.16, 8, 6), apple: new THREE.SphereGeometry(.11, 8, 6) };
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
-  function drop(p) { if (list.length > 14) return; const r = Math.random(), kind = r < .65 ? 'tooth' : r < .85 ? 'pouch' : r < .95 ? 'apple' : 'dyn';
+  function drop(p) { if (list.length > 14) return; if (Math.random() < .03 && H.treasure && H.treasure.newMap) { H.treasure.newMap('Clutched in a dead hand'); return; } const r = Math.random(), kind = r < .65 ? 'tooth' : r < .85 ? 'pouch' : r < .95 ? 'apple' : 'dyn';
     const m = new THREE.Mesh(kind === 'pouch' ? G.pouch : kind === 'apple' ? G.apple : G.tooth, kind === 'pouch' ? sack : kind === 'apple' ? red : gold); if (kind === 'dyn') { m.material = red; m.scale.set(.6, 1.6, .6); } if (kind === 'tooth') m.rotation.x = Math.PI;
     m.position.set(p.x, p.y + .35, p.z); scene.add(m); list.push({ m, kind, t: 60, y: p.y + .35 }); }
   function grab(d) { const g = H.guns; let txt = ''; if (d.kind === 'tooth' && g) { g.state.score += 25; txt = '🦷 Gold tooth  +25'; } else if (d.kind === 'pouch' && g) { g.state.score += 80; txt = '💰 Coin pouch  +80'; }

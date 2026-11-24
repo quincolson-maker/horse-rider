@@ -1,7 +1,7 @@
 // v99 HATS at the General Store. Each one swaps out the straw hat and sits on the Head bone, so it follows every animation.
 // The straw hat comes back when you take the new one off. The spec-ops helmet still wins while the kit is on.
 import * as THREE from 'three';
-import { wearHat } from './hrkit.js?v=252';
+import { wearHat } from './hrkit.js?v=253';
 const HX = 0, HY = .835, HZ = .065; // skull centre in bind-pose model space (the same frame hrkit's helmet uses)
 const felt = (c, r = .85) => new THREE.MeshStandardMaterial({ color: c, roughness: r });
 // lathe profile helper: [radius, height] pairs, revolved around the head axis

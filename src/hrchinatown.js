@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=252';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=252';
-import { mergeStatic } from './hrmerge.js?v=252';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=253';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=253';
+import { mergeStatic } from './hrmerge.js?v=253';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -370,7 +370,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
   const prevUse4 = T.onUse; T.onUse = o => { if (STG && STG.includes(o)) { if (pay(40)) { const [x, z] = o.to, y = T.floorAt(x, z, 1e9) + .05; if (H.mounted) { H.mounted.pos.set(x, y, z); H.speed = 0; } else P.pos.set(x, y, z); H.vy = 0; msg('🐎 The stage rattles off... and you\'re there', 2.2); const S = st(); S.ctStage = (S.ctStage || 0) + 1; if (sfx.nz && sfx.ctx) sfx.nz('lowpass', 500, 1, .2, .6); } return true; } return prevUse4 ? prevUse4(o) : false; };
 
   // ---------- per frame ----------
-  let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0, musT = 2, musI = 3, incT = 0;
+  let welcome = false, nightK = -1, t = 0, roofT = 0, steamT = 0, musT = 2, musI = 3, incT = 0, swT = 0;
   function update(dt) { t += dt; const me = H.mounted ? H.mounted.pos : P.pos, inside = Math.abs(me.x - CX) < E && Math.abs(me.z - CZ) < E; peopleTick(dt, me); dragonTick(dt, me); runTick(dt, me); if (inside && (roofT -= dt) <= 0) { roofT = .5; for (const b of built) { if (me.y < b.y0 + RF - .3) break; const [lx, lz] = T.toL ? T.toL(b, me.x, me.z) : [0, 0]; if (lx > 0 && lx < W && lz > 0 && lz < DP && me.y > b.y0 + RF - .3) { const S = st(), v = new Set(S.ctRoofs || []); if (!v.has(b.name + b.cx.toFixed(0) + b.cz.toFixed(0))) { v.add(b.name + b.cx.toFixed(0) + b.cz.toFixed(0)); S.ctRoofs = [...v]; msg(`🏯 Rooftop ${v.size} of ${built.length}`, 1.6); } } } }
     if (inside && !welcome) { welcome = true; msg('🏮 Chinatown - 唐人街', 3); const S = st(); if (!S.ctVisit) { S.ctVisit = 1; earn(200); setTimeout(() => msg('First visit to Chinatown  +200', 2.5), 2000); } } else if (!inside && Math.hypot(me.x - CX, me.z - CZ) > 90) welcome = false;
     if (nightK > .6 && (H.night || 0) <= .6 && Math.hypot(me.x - CX, me.z - CZ) < 200 && sfx.tone && sfx.ctx) { [0, 2.6, 5.2].forEach(d => setTimeout(() => { sfx.tone('sine', 82, 80, .35, 4); sfx.tone('sine', 164, 160, .12, 3); }, d * 1000)); msg('🔔 The temple bell greets the dawn over Chinatown', 2.5); } /* v234 */
@@ -383,6 +383,7 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     if (n > .3 && Math.hypot(me.x - CX, me.z - CZ) < 150) { const f = 1 + .07 * Math.sin(t * 7.3) + .05 * Math.sin(t * 12.1 + 1); M.lamp.emissiveIntensity = (.5 + 3.2 * n) * f; M.paper.emissiveIntensity = (.15 + 2.2 * n) * (2 - f); } /* v240 lantern flicker */
     if (fx && fx.smoke && Math.hypot(me.x - CX, me.z - CZ) < 60 && (incT -= dt) <= 0) { incT = 1.2; fx.smoke.emit(CX + (Math.random() - .5) * .3, y0 + 2.1, CZ + (Math.random() - .5) * .3, 0, .35, 0, .85, .85, .82, .35, 3, 1.2, -.005, .08); } /* v243 incense smoke from the urn */
     if (H.stats && H.stats.ctJade && !H.dead) heal(dt * .4); /* v248 jade charm */
+    if (Math.hypot(me.x - CX, me.z - CZ) < 90 && (swT -= dt) <= 0) { swT = mobile ? .1 : .05; const wind = .06 + ((H.wx && (H.wx.rain || H.wx.dust)) ? .18 : 0), m4 = LI.userData.m || (LI.userData.m = new THREE.Matrix4()); LP.forEach((p, i) => { const k = Math.sin(t * 1.7 + p[0] * .3 + p[2] * .2) * wind; m4.makeTranslation(CX + p[0] + k * .6, y0 + p[1] - Math.abs(k) * .3, CZ + p[2] + k * .4); LI.setMatrixAt(i, m4); }); LI.instanceMatrix.needsUpdate = true; } /* v253 lanterns sway in the wind */
     if (fedT > 0) { fedT -= dt; heal(dt * 1.5); } if (tonicT > 0) { tonicT -= dt; heal(dt * 3); }
     if (crackers) { crackers.t -= dt; if (crackers.t <= 0) { crackers.t = .07 + Math.random() * .08; crackers.n++; const x = crackers.x + (Math.random() - .5) * 1.2, z = crackers.z + (Math.random() - .5) * 1.2, y = (H.town ? H.town.floorAt(x, z, me.y + 1) : hAt(x, z)) + .1;
       if (sfx.nz && sfx.ctx) sfx.nz('highpass', 1800 + Math.random() * 1500, .8, .22, .05); if (fx && fx.smoke) fx.smoke.emit(x, y, z, (Math.random() - .5) * 2, 1 + Math.random(), (Math.random() - .5) * 2, .85, .8, .75, .5, .9, .7, -.02, .3); if (fx && fx.spark) fx.spark(x, y + .1, z); if (crackers.n > 40) crackers = null; } } }

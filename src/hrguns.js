@@ -3,8 +3,8 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=183';
-import { buildM4, buildMP5, detailize } from './hrmodern.js?v=183'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=184';
+import { buildM4, buildMP5, detailize } from './hrmodern.js?v=184'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -352,7 +352,7 @@ export function createGuns(c) {
       if (killed) { tone('sine', 1320, 1320, .09, .16); setTimeout(() => tone('sine', 1760, 1760, .16, .14), 70); } else if (head) tone('triangle', 2100, 1700, .07, .14); else tone('triangle', 1250, 1050, .05, .09); }; })();
   H.hitX = hitX;
   // v85 combat feel: bigger hit markers, a real headshot bell, floating damage numbers at the hit point, vibration
-  const vib = ms => { try { if (navigator.vibrate && !H.noVibe) navigator.vibrate(ms); } catch (_) {} }; H.vib = vib;
+  try { H.noVibe = localStorage.getItem('hr_vib') === '0'; } catch (_) {} const vib = ms => { try { if (navigator.vibrate && !H.noVibe) navigator.vibrate(ms); } catch (_) {} }; H.vib = vib;
   const dmgNum = (() => { if (typeof document === 'undefined') return () => {}; const st = document.createElement('style');
     st.textContent = '#hrHitX{width:52px!important;height:52px!important;margin:-26px 0 0 -26px!important}#hrHitX i{width:4px!important;height:15px!important;margin:-7.5px 0 0 -2px!important}#hrHitX i:nth-child(1){transform:rotate(45deg) translateY(-16px)!important}#hrHitX i:nth-child(2){transform:rotate(135deg) translateY(-16px)!important}#hrHitX i:nth-child(3){transform:rotate(225deg) translateY(-16px)!important}#hrHitX i:nth-child(4){transform:rotate(315deg) translateY(-16px)!important}#hrHitX.kl i{height:19px!important}'
       + '.hrDmg{position:fixed;left:0;top:0;pointer-events:none;z-index:59;font:900 20px system-ui,sans-serif;color:#fff;text-shadow:0 2px 0 #000,0 0 6px #000;white-space:nowrap;transform:translate(-50%,-50%);animation:hrDmgUp .85s ease-out forwards}.hrDmg.h{color:#ffd23a;font-size:24px}.hrDmg.k{color:#ff5a4a;font-size:26px}'

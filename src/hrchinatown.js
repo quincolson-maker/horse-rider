@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=277';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=277';
-import { mergeStatic } from './hrmerge.js?v=277';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=278';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=278';
+import { mergeStatic } from './hrmerge.js?v=278';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -212,9 +212,10 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     else if (kind === 'herb') { c(mid - 1, 2.4, 4.6, .7, 1.05); for (let r = 0; r < 2; r++) { box(s, M.wood, 1.4 + r * 3.4, F0 + 1.3, DP - .4, 3.2, 2.6, .5); for (let i = 0; i < 6; i++) for (let j = 0; j < 7; j++) box(s, M.gold, .4 + r * 3.4 + i * .5, F0 + .25 + j * .34, DP - .66, .06, .06, .04); } for (let k = 0; k < 5; k++) cyl(s, M.cream, 1.2 + k * .5, F0 + 1.2, 2.4, .12, .3, 8); }
     else if (kind === 'goods' || kind === 'gold' || kind === 'tailor' || kind === 'books') { c(mid - 1, 2.6, 4.8, .7, 1.05, kind === 'gold' ? M.dark : M.wood); for (const [x, w] of [[1.8, 3.2], [5.6, 3.2]]) shelf(x, DP - .35, w); shelf(.45, 5.5, .5); for (let k = 0; k < 10; k++) box(s, k % 2 ? M.red : M.cream, .8 + (k % 5) * .55, F0 + 1.05 + Math.floor(k / 5) * .6, DP - .55, .4, .4, .25);
       if (kind === 'goods') for (let k = 0; k < 6; k++) cyl(s, M.wood, 1.2 + k * .75, F0 + .45, 5.6, .3, .9, 10); if (kind === 'tailor') for (let k = 0; k < 5; k++) box(s, [M.red, M.jade, M.gold, M.cream, M.green][k], 1 + k * .9, F0 + 1.3, 5.2, .6, 1.6, .08); if (kind === 'gold') { box(s, M.glass, mid - 1, F0 + 1.25, 2.6, 4.6, .35, .6); } }
-    else if (kind === 'bakery') { c(mid - 1, 2.4, 4.6, .7, 1.05); for (let k = 0; k < 8; k++) cyl(s, M.gold, mid - 3 + k * .55, F0 + 1.12, 2.4, .16, .08, 10); box(s, M.stone, 2, F0 + .9, DP - 1, 2.4, 1.8, 1.4); box(s, M.dark, 2, F0 + .8, DP - 1.72, .9, .6, .05); }
+    else if (kind === 'bakery') { c(mid - 1, 2.4, 4.6, .7, 1.05); for (let k = 0; k < 3; k++) for (let j = 0; j < 2; j++) { cyl(s, M.plank, mid - 2.6 + j * .7, F0 + 1.15 + k * .16, 2.4, .26, .14, 12); } /* v278 bamboo steamer stacks */ for (let k = 0; k < 8; k++) cyl(s, M.gold, mid - 3 + k * .55, F0 + 1.12, 2.4, .16, .08, 10); box(s, M.stone, 2, F0 + .9, DP - 1, 2.4, 1.8, 1.4); box(s, M.dark, 2, F0 + .8, DP - 1.72, .9, .6, .05); }
     else if (kind === 'fire') { c(mid - 1, 2.4, 4.6, .7, 1.05, M.red); for (let k = 0; k < 14; k++) cyl(s, M.red, .9 + (k % 7) * .7, F0 + 1.1 + Math.floor(k / 7) * .5, DP - .6, .08, .4, 8); shelf(3, DP - .35, 4.5); }
     else if (kind === 'hall') { for (let r = 0; r < 3; r++) for (let k = 0; k < 4; k++) box(s, M.wood, 1.6 + k * 1.6, F0 + .25, 3 + r * 1.6, 1.2, .5, .4); box(s, M.red, mid, F0 + .4, DP - 1, 4, .8, 1.2); box(s, M.gold, mid, F0 + 2.0, DP - .3, 3, 1.4, .06); }
+    else if (kind === 'temple' && (() => { for (const [x, z] of [[2.5, 3], [mid, 4.2], [W - 3, 3], [3.2, 6], [W - 3.6, 6]]) { box(s, M.black, x, F1 - .5, z, .02, 1.0, .02); for (let k = 0; k < 4; k++) cyl(s, M.gold, x, F1 - 1.05 - k * .12, z, .32 - k * .07, .04, 14); } return false; })()) {}
     else if (kind === 'temple') { box(s, M.red, mid, F0 + .55, DP - 1.4, 4.4, 1.1, 1.4); box(s, M.gold, mid, F0 + 1.15, DP - 1.4, 4.5, .08, 1.45); cyl(s, M.gold, mid, F0 + 1.35, DP - 1.6, .28, .32, 12); for (const sx of [-1.4, 1.4]) { cyl(s, M.red, mid + sx, F0 + 1.5, DP - 1.8, .06, .7, 6); sph(s, M.lamp, mid + sx, F0 + 2.0, DP - 1.8, .1); } box(s, M.gold, mid, F0 + 2.6, DP - .3, 4, 2, .08); for (let k = 0; k < 4; k++) sph(s, M.lamp, 1.5 + k * 2.8, F0 + 2.9, 3, .32, 1.3); }
     else if (kind === 'theatre') { box(s, M.plank, (W - 1.6 + .6) / 2, F0 + .5, DP - 2, W - 2.2, 1.0, 3.2); floor(s, .6, W - 1.6, DP - 3.6, DP - .4, F0 + 1.0); box(s, M.red, mid, F0 + 2.8, DP - .5, W - 1.2, 3.6, .08); for (const sx of [.9, W - .9]) box(s, M.red, sx, F0 + 2.4, DP - 3.5, .5, 3.0, .2); for (let r = 0; r < 3; r++) box(s, M.wood, mid, F0 + .25, 1.6 + r * 1.3, W - 3, .5, .5); }
   }

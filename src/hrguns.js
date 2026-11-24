@@ -3,8 +3,8 @@
 // (six-round cylinder, one-cartridge-at-a-time reload, lever cycle that must finish before the next rifle shot, fan fire),
 // the spread model (walk / horseback / speed / hip / ADS / fan), the small aim-assist cone and the horseback firing arc clamp.
 // Rewritten: no CDN import (uses the game's bundled three.js), no global input listeners outside Horse Rider, no per-shot
-import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=208';
-import { buildM4, buildMP5, detailize } from './hrmodern.js?v=208'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
+import { buildTommyReplica, createTommyEffects } from './hrtommy.js?v=209';
+import { buildM4, buildMP5, detailize } from './hrmodern.js?v=209'; // v70 store guns // v36 Frontier (ChatGPT-generated, supplied by Quin)
 // scene.traverse raycasts (analytic ray tests against targets, horses, trees, rocks, fences and the heightfield instead),
 // realistic procedural models (extruded / lathed parts, PBR blued + case-hardened steel, brass, walnut), the gun in the rider's
 // hand with 2-bone arm IK, over-the-shoulder aim camera, recoil, black-powder smoke, shooting range targets, and shot sync.
@@ -336,7 +336,7 @@ export function createGuns(c) {
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), v3 = new THREE.Vector3(), q1 = new THREE.Quaternion(), m1 = new THREE.Matrix4(), aimDir = new THREE.Vector3(0, 0, -1), muz = new THREE.Vector3();
   const remote = new Map(); let fireHeld = false, firePend = false, lastFire = false, aimHeld = false, reloadHeld = false, toast = 0, toastTxt = '';
   const gun = () => state.weapon && models[state.weapon], baseAmmo = w => MOD(w) || w === 'shotgun' ? S[w + 'Rounds'] : w === 'rifle' ? S.rifleRounds : w === 'sniper' ? S.sniperRounds : w === 'tommy' ? S.tommyRounds : w === 'gatling' ? S.gatlingRounds : w === 'gold' ? S.goldRounds : S.revolverRounds * (dual() ? 2 : 1), tier = w => state.up[w] | 0,
-    maxAmmo = w => Math.max(1, Math.round(baseAmmo(w) * S.tierMag[tier(w)] - (SCOPED(w) && tier(w) < 3 ? .49 : 0))), rangeOf = w => MOD(w) || w === 'shotgun' ? S[w + 'Range'] : w === 'rifle' ? S.rifleRange : w === 'sniper' ? S.sniperRange : w === 'tommy' ? S.tommyRange : w === 'gatling' ? S.gatlingRange : w === 'gold' ? S.goldRange : S.revolverRange, dmgMul = w => S.tierDmg[tier(w)] * (w === 'shotgun' ? pelN : 1); let pelN = 1;
+    maxAmmo = w => Math.max(1, Math.round(baseAmmo(w) * S.tierMag[tier(w)] * (H.bandolier && !SCOPED(w) ? 1.25 : 1) - (SCOPED(w) && tier(w) < 3 ? .49 : 0))), /* v209 bandolier */ rangeOf = w => MOD(w) || w === 'shotgun' ? S[w + 'Range'] : w === 'rifle' ? S.rifleRange : w === 'sniper' ? S.sniperRange : w === 'tommy' ? S.tommyRange : w === 'gatling' ? S.gatlingRange : w === 'gold' ? S.goldRange : S.revolverRange, dmgMul = w => S.tierDmg[tier(w)] * (w === 'shotgun' ? pelN : 1); let pelN = 1;
   const flights = []; // buffalo-rifle bullets in the air (impact after the flight time)
   const tone = (...a) => { if (sfx.ctx) sfx.tone(...a); }, nz = (...a) => { if (sfx.ctx) sfx.nz(...a); };
   const click = (f = 3200, v = .14) => nz('highpass', f, .7, v, .03);
@@ -380,7 +380,7 @@ export function createGuns(c) {
   function save() { try { localStorage.setItem('hr_v33', JSON.stringify({ score: state.score, kills: state.kills || 0, spent: state.spent || 0, owned: state.owned, up: state.up, att: state.att })); } catch (_) {} }
 
   function draw(w) { if (!models[w] || !state.owned[w]) return false; if (H.dyn && H.dyn.equipped()) H.dyn.equip(false); if (H.mountT > 0 || H.dismT > 0) return false; if (state.weapon === w) return true;
-    state.weapon = w; state.last = w; state.reloading = false; state.cycling = false; clock.cooldown = .15; clock.draw = S.drawTime; state.cocked = true; state.chambered = state.ammo.rifle > 0; state.breath = 1; if (w === 'gold') state.gz = S.goldFovMax; state.winded = false;
+    state.weapon = w; state.last = w; state.reloading = false; state.cycling = false; clock.cooldown = H.quickDraw ? .07 : .15; clock.draw = S.drawTime * (H.quickDraw ? .5 : 1); state.cocked = true; state.chambered = state.ammo.rifle > 0; state.breath = 1; if (w === 'gold') state.gz = S.goldFovMax; state.winded = false;
     click(2400, .12); setTimeout(() => click(4200, .08), 120); syncUI(); return true; }
   function holster() { if (!state.weapon) return; state.weapon = null; state.aiming = false; state.reloading = false; input.ads = false; click(1800, .1); syncUI(); }
   const ORDER = ['revolver', 'rifle', 'sniper', 'tommy', 'gold', 'gatling', 'm4', 'mp5', 'shotgun'], owned = () => ORDER.filter(w => state.owned[w]);
@@ -568,7 +568,7 @@ export function createGuns(c) {
   const SHORT = { revolver: '🔫 Six-shooter', rifle: '🔫 Lever rifle', sniper: '🔭 Buffalo', tommy: '🔫 Tommy', gold: '🔭 Golden', gatling: '⚙️ Gatling', m4: '🔫 M4', mp5: '🔫 MP5', shotgun: '💥 Coach gun' };
   const wheel = (() => { let el = null, items = [], sel = -1, isOpen = false, acc = [0, 0];
     const build = () => { if (!el) { el = document.createElement('div'); el.id = 'hrWheel'; document.body.appendChild(el); const st = document.createElement('style'); st.textContent = '#hrWheel{position:fixed;left:50%;top:50%;width:min(76vmin,420px);height:min(76vmin,420px);transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(20,14,8,.25) 22%,rgba(20,14,8,.78) 23%,rgba(20,14,8,.78) 70%,rgba(20,14,8,0) 71%);z-index:60;pointer-events:none;display:none}#hrWheel.on{display:block}#hrWheel b{position:absolute;transform:translate(-50%,-50%);font:800 12px system-ui,sans-serif;color:#f3e2c0;text-shadow:0 1px 2px #000;padding:6px 8px;border-radius:10px;white-space:nowrap;border:1.5px solid transparent}#hrWheel b.cur{border-color:#e0b06066}#hrWheel b.sel{background:#d9a656;color:#2a1d12;text-shadow:none;transform:translate(-50%,-50%) scale(1.15)}#hrWheel i{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:900 13px system-ui;color:#ffd27a;font-style:normal;text-align:center}'; document.head.appendChild(st); }
-      const D = H.dyn; items = owned().map(w => ({ w, t: (SHORT[w] || WNAME[w]) + (tier(w) ? ' ' + ['', '🥉', '🥈', '🥇'][tier(w)] : '') + (w === state.weapon ? '' : ` · ${state.ammo[w]}`) })); if (D && D.state.count > 0) items.push({ w: 'dyn', t: '🧨 Dynamite ×' + D.state.count }); items.push({ w: null, t: '✋ Holster' });
+      const D = H.dyn; items = owned().map(w => ({ w, t: (SHORT[w] || WNAME[w]) + (tier(w) ? ' ' + ['', '🥉', '🥈', '🥇'][tier(w)] : '') + (w === state.weapon ? '' : ` · ${state.ammo[w]}`) })); if (D && D.state.count > 0) items.push({ w: 'dyn', t: '🧨 Dynamite ×' + D.state.count }); if (H.sun && H.sun.state && H.sun.state.owned) items.push({ w: 'sun', t: '☀ Sun Pyramid' }); items.push({ w: null, t: '✋ Holster' });
       el.innerHTML = items.map((it, i) => { const a = i / items.length * Math.PI * 2 - Math.PI / 2, r = 36; return `<b data-i="${i}" class="${(it.w === state.weapon || (it.w === 'dyn' && D && D.equipped())) ? 'cur' : ''}" style="left:${50 + Math.cos(a) * r}%;top:${50 + Math.sin(a) * r}%">${it.t}</b>`; }).join('') + '<i>WEAPONS</i>'; };
     const mark = i => { if (i === sel || !el) return; sel = i; el.querySelectorAll('b').forEach((b, k) => b.classList.toggle('sel', k === sel)); const it = items[sel]; el.querySelector('i').textContent = it ? it.t.replace(/^\S+\s/, '') : 'WEAPONS'; };
     const pick = (dx, dy) => { if (Math.hypot(dx, dy) < 18) return; let a = Math.atan2(dy, dx) + Math.PI / 2; if (a < 0) a += Math.PI * 2; mark(Math.round(a / (Math.PI * 2) * items.length) % items.length); };
@@ -576,7 +576,7 @@ export function createGuns(c) {
       point(x, y) { const r = el.getBoundingClientRect(); pick(x - (r.left + r.width / 2), y - (r.top + r.height / 2)); },
       move(dx, dy) { acc[0] = Math.max(-200, Math.min(200, acc[0] + dx)); acc[1] = Math.max(-200, Math.min(200, acc[1] + dy)); pick(acc[0], acc[1]); },
       close(apply) { if (!isOpen) return; isOpen = false; el.classList.remove('on'); H.wheelOpen = false; const it = items[sel]; if (!apply || !it) return; const D = H.dyn;
-        if (it.w === 'dyn') { if (D) { holster(); D.equip(true); } } else if (it.w) { if (D && D.equipped()) D.equip(false); draw(it.w); } else { if (D && D.equipped()) D.equip(false); holster(); } syncUI(); } }; })();
+        if (it.w === 'sun') { if (D && D.equipped()) D.equip(false); holster(); H.sun.hold(true); } else if (it.w === 'dyn') { if (D) { holster(); D.equip(true); } } else if (it.w) { if (D && D.equipped()) D.equip(false); if (H.sun && H.sun.state.held) H.sun.hold(false); draw(it.w); } else { if (D && D.equipped()) D.equip(false); holster(); } syncUI(); } }; })();
   let qT = null; addEventListener('keydown', e => { if (e.code === 'KeyQ' && !e.repeat && !H.uiOpen && !mobile) { clearTimeout(qT); qT = setTimeout(() => wheel.open(), 260); } });
   addEventListener('keyup', e => { if (e.code === 'KeyQ') { clearTimeout(qT); if (wheel.isOpen) wheel.close(true); } });
   addEventListener('mousemove', e => { if (wheel.isOpen) { if (document.pointerLockElement) wheel.move(e.movementX, e.movementY); else wheel.point(e.clientX, e.clientY); } });

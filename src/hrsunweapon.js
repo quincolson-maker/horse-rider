@@ -4,7 +4,7 @@
 // normal host-checked zombie hits (co-op safe). Balance: 0.55 s charge, then 4.5 s before the next pulse, 90 m reach,
 // up to 450 damage that falls to half at the 3.8 m edge of the blast.
 import * as THREE from 'three';
-import { createSunPyramidWeapon } from './hrsuntemple.js?v=208';
+import { createSunPyramidWeapon } from './hrsuntemple.js?v=209';
 
 export const SUN = { dmg: 450, radius: 3.8, range: 90, cooldown: 4.5, beam: 1.3 };
 export function createSunItem(c) {
@@ -16,7 +16,7 @@ export function createSunItem(c) {
   const fwd = new THREE.Vector3(), right = new THREE.Vector3(), up = new THREE.Vector3(), org = new THREE.Vector3(), tmp = new THREE.Vector3();
   let btn = null, hud = null;
   function ui() { if (!hud) { hud = document.createElement('div'); hud.id = 'hrSun'; hud.style.cssText = 'position:fixed;left:50%;bottom:88px;transform:translateX(-50%);font:600 13px system-ui,sans-serif;color:#ffd27a;text-shadow:0 1px 3px #000;pointer-events:none;display:none;z-index:30'; document.body.appendChild(hud); }
-    if (mobile && !btn && S.owned) { btn = document.createElement('button'); btn.id = 'tSun'; btn.textContent = '☀'; btn.style.cssText = 'position:fixed;right:14px;bottom:47%;width:54px;height:54px;border-radius:50%;border:2px solid #ffcf6a;background:rgba(60,40,10,.55);color:#ffd27a;font-size:26px;z-index:40;touch-action:none';
+    if (false && mobile && !btn && S.owned) { /* v209: the floating ☀ button is gone - pick the Sun Pyramid from the weapon wheel (hold the gun button) */ btn = document.createElement('button'); btn.id = 'tSun'; btn.textContent = '☀'; btn.style.cssText = 'position:fixed;right:14px;bottom:47%;width:54px;height:54px;border-radius:50%;border:2px solid #ffcf6a;background:rgba(60,40,10,.55);color:#ffd27a;font-size:26px;z-index:40;touch-action:none';
       btn.addEventListener('touchstart', e => { e.preventDefault(); if (!S.held) hold(true); else pend = true; }, { passive: false }); btn.addEventListener('click', () => { if (!S.held) hold(true); else pend = true; }); document.body.appendChild(btn); } }
   function save() { try { localStorage.setItem('hr_sun', S.owned ? '1' : '0'); } catch (_) {} }
   function give() { S.owned = true; save(); ui(); }

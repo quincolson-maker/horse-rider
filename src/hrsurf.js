@@ -9,9 +9,9 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=356';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=356';
-import { mergeStatic } from './hrmerge.js?v=356';
+import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=357';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=357';
+import { mergeStatic } from './hrmerge.js?v=357';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});
@@ -84,14 +84,14 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     if (R.mode === 'ride' && sfx.nz && sfx.ctx && (sprayT -= dt) <= 0) { sprayT = .12; sfx.nz('highpass', 2500 + R.sp * 100, .5, .015 + Math.min(.05, R.sp * .004) + Math.abs(R.carve || 0) * .03, .14); }
     if (R.mode === 'ride' && fx && fx.smoke && Math.abs(R.carve || 0) > .35 && R.sp > 5) { const sd = R.carve > 0 ? 1 : -1; fx.smoke.emit(x - dir[0] * .8 + dir[1] * .3 * sd, y + .2, z - dir[1] * .8 - dir[0] * .3 * sd, -dir[1] * sd * 2.5, 1.6 + R.sp * .12, dir[0] * sd * 2.5, .95, .98, 1, .7, .8, .5, -.06, .35); }
   }
-  function paddle(dt, t, c, jumpEdge) { waveAt(R.x, R.z, t, wv); const w = wv.wave; R.duck = Math.max(0, R.duck - dt); if (jumpEdge && R.duck <= 0 && !(R.catchHint)) { R.duck = 1.1; if (sfx.nz && sfx.ctx) sfx.nz('lowpass', 500, 1, .1, .3); }
+  let padT = 0; function paddle(dt, t, c, jumpEdge) { waveAt(R.x, R.z, t, wv); const w = wv.wave; R.duck = Math.max(0, R.duck - dt); if (fx && fx.smoke && c.fw > .3 && R.duck <= 0 && (padT -= dt) <= 0) { padT = .33; const sx = Math.random() < .5 ? -1 : 1, dir = R.dir || [1, 0], y = SEA + (wv.eta || 0); fx.smoke.emit(R.x - dir[1] * .5 * sx, y + .15, R.z + dir[0] * .5 * sx, -dir[0] * .6, .9, -dir[1] * .6, .9, .96, 1, .45, .6, .4, -.05, .25); if (sfx.nz && sfx.ctx) sfx.nz('bandpass', 1500, 1, .025, .12); } if (R.duck > .9 && fx && fx.smoke) { for (let k = 0; k < 2; k++) fx.smoke.emit(R.x + (Math.random() - .5), SEA + .1, R.z + (Math.random() - .5), 0, .6, 0, .85, .95, 1, .4, .5, .4, -.02, .2); } /* v357 paddle splashes + duck-dive bubbles */ if (jumpEdge && R.duck <= 0 && !(R.catchHint)) { R.duck = 1.1; if (sfx.nz && sfx.ctx) sfx.nz('lowpass', 500, 1, .1, .3); }
     R.a += c.sd * 1.9 * dt; R.sp += (c.fw * 2.3 * QB().pad - R.sp * 1.1) * dt; R.sp = Math.max(0, R.sp); R.dir = [Math.cos(R.a), Math.sin(R.a)];
     let px = R.dir[0] * R.sp, pz = R.dir[1] * R.sp; if (w && w.broken && w.u > -6 && w.u < 9 && R.duck <= 0) { const push = Math.min(1.6, w.A) * 3.2; px -= push; if (Math.random() < dt * 2) R.a += (Math.random() - .5) * .8; }
     R.x += px * dt; R.z += pz * dt; R.z = clamp(R.z, -260, 590); R.x = Math.min(R.x, 1450);
     // catching: an unbroken face rising under you while you point at the beach and paddle
     R.catchHint = !!(w && !w.broken && w.s > .45 && w.u > -3.2 && w.u < 3.5 && R.dir[0] < -.25); if (R.catchHint) { R.catchT += c.fw > .3 ? dt : 0; if (jumpEdge || R.catchT > .45) popUp(t, w); } else R.catchT = 0;
     if (R.x < shoreX(R.z) + 10 && R.sp < 2) { const x = shoreX(R.z) - 2; P.pos.set(x, hAt(x, R.z), R.z); leave('🏖️ You carry your board up the sand'); } }
-  function popUp(t, w) { R.mode = 'ride'; R.k = w.k; R.u = R.x - crestX(R.k, R.z, t); const d = R.dir; R.th = clamp(Math.atan2(-d[0], -d[1]), -1.2, 2.6); R.sp = Math.max(8, R.sp + 5.5); R.carve = 0; R.tube = false; R.ride = { t: 0, tube: 0, airs: 0, peak: 0, turnAcc: 0, lastTrick: '' }; score = 0; combo = 1; lastTh = R.th; msg('🏄 POP UP! Angle along the face - race the curl south', 2.2); P.pitch = Math.min(P.pitch, -.18); if (sfx.tone && sfx.ctx) sfx.tone('triangle', 520, 880, .08, .25); }
+  function popUp(t, w) { if (fx && fx.smoke) for (let k = 0; k < 10; k++) fx.smoke.emit(R.x + (Math.random() - .5) * 1.4, SEA + 1.2, R.z + (Math.random() - .5) * 1.4, (Math.random() - .5) * 2, 1.6, (Math.random() - .5) * 2, .95, .98, 1, .5, .8, .6, -.06, .3); R.mode = 'ride'; R.k = w.k; R.u = R.x - crestX(R.k, R.z, t); const d = R.dir; R.th = clamp(Math.atan2(-d[0], -d[1]), -1.2, 2.6); R.sp = Math.max(8, R.sp + 5.5); R.carve = 0; R.tube = false; R.ride = { t: 0, tube: 0, airs: 0, peak: 0, turnAcc: 0, lastTrick: '' }; score = 0; combo = 1; lastTh = R.th; msg('🏄 POP UP! Angle along the face - race the curl south', 2.2); P.pitch = Math.min(P.pitch, -.18); if (sfx.tone && sfx.ctx) sfx.tone('triangle', 520, 880, .08, .25); }
   function ride(dt, t, c, jumpEdge) { const r = R.ride; r.t += dt; const cx = crestX(R.k, R.z, t), x = cx + R.u, ez = surfaceAt(x + .35, R.z, t) - surfaceAt(x - .35, R.z, t), face = clamp(ez / .7, 0, 1.4); waveAt(x, R.z, t, wv); const A = wv.wave ? wv.wave.A : 1;
     // steering (carve), pump, stall
     const rate = (2.6 + 2.2 * clamp(1 - R.sp / 14, 0, 1)) * QB().turn; let sd = c.sd;

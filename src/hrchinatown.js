@@ -6,9 +6,9 @@
 // Everything is built as boxes in each building's local frame and merged per material over the whole district (a dozen draw
 // calls), distance-culled, and registered with the town's walk / wall system (floors + height-aware walls).
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=318';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=318';
-import { mergeStatic } from './hrmerge.js?v=318';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=319';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=319';
+import { mergeStatic } from './hrmerge.js?v=319';
 
 export const CT = { x: -22, z: 92, hw: 40, hd: 40 }; // footprint (also keeps trees and rocks out)
 export const ctAvoid = (x, z) => Math.abs(x - CT.x) < CT.hw + 4 && Math.abs(z - CT.z) < CT.hd + 10;
@@ -375,15 +375,16 @@ export function createChinatown({ scene, H, P, T, hAt, msg, sfx, mobile, fx }) {
     // dancers under the poles: simple dark-trousered legs pairs
     const NL = Math.floor(NS / 2) + 1, IL = new THREE.InstancedMesh(new THREE.BoxGeometry(.35, .9, .25), new THREE.MeshStandardMaterial({ color: 0x1a1a22 }), NL); IL.frustumCulled = false; g.add(IL); const legs = Array.from({ length: NL }, (_, k) => [new THREE.Object3D(), k * 2]);
     return { g, head, segs, legs, IB, IF, IP, IL, NS, on: false, t: 0, cool: 90 + Math.random() * 120, gcool: 0 }; })();
+  const drSpot = { x: 1e6, z: 0, y: 0, kind: 'ct_drjoin', label: '🐉 Take a pole and join the dragon dance', r: 2.2, ct: true }; T.spots.push(drSpot);
   const startDragon = why => { if (DR.on) return; DR.on = true; DR.t = 0; DR.g.visible = true; msg(why || '🐉 The dragon dance comes down the avenue!', 3); const S = st(); S.ctDragon = (S.ctDragon || 0) + 1; };
   function dragonTick(dt, me) { const near = Math.hypot(me.x - CX, me.z - CZ) < 120; if (DR.gcool > 0) DR.gcool -= dt; if (!DR.on) { const slot = Math.floor(Date.now() / 360000), into = Date.now() / 1000 - slot * 360; if (near && slot !== DR.slot && into < 30) { DR.slot = slot; startDragon(); DR.t = into; } return; } /* v242: the parade runs on the shared clock - every 6 minutes on the dot, so everyone in Chinatown sees the same dragon */
     DR.t += dt; const sp = 2.2, z0 = -E + 2 + DR.t * sp, path = d => { const z = z0 - d; return [Math.sin(z * .35 + DR.t * .8) * 2.2, z]; };
     const place = (o, d, bob) => { const [x, z] = path(d), [x2, z2] = path(d + .6); o.position.set(CX + x, y0 + 2.2 + Math.sin(DR.t * 4 - d * .9) * .45 * bob, CZ + z); o.rotation.y = Math.atan2(x - x2, z - z2); };
-    place(DR.head, 0, 1); DR.segs.forEach((sg, i) => { place(sg, (i + 1) * .95, 1); sg.updateMatrix(); DR.IB.setMatrixAt(i, sg.matrix); DR.IF.setMatrixAt(i, sg.matrix); DR.IP.setMatrixAt(i, sg.matrix); }); DR.legs.forEach(([lg, i], k) => { const [x, z] = path(i * .95); lg.position.set(CX + x + Math.sin(DR.t * 9 + i) * .1, y0 + .45, CZ + z); lg.updateMatrix(); DR.IL.setMatrixAt(k, lg.matrix); }); for (const m of [DR.IB, DR.IF, DR.IP, DR.IL]) m.instanceMatrix.needsUpdate = true;
+    place(DR.head, 0, 1); if (!H.mounted && !DR.join) { drSpot.x = DR.head.position.x; drSpot.z = DR.head.position.z; drSpot.y = y0; } else drSpot.x = 1e6; if (DR.join) { if (H.mounted) DR.join = false; else { const [jx, jz] = path(2.9); P.pos.set(CX + jx + .6, y0 + .02, CZ + jz); H.vy = 0; } } DR.segs.forEach((sg, i) => { place(sg, (i + 1) * .95, 1); sg.updateMatrix(); DR.IB.setMatrixAt(i, sg.matrix); DR.IF.setMatrixAt(i, sg.matrix); DR.IP.setMatrixAt(i, sg.matrix); }); DR.legs.forEach(([lg, i], k) => { const [x, z] = path(i * .95); lg.position.set(CX + x + Math.sin(DR.t * 9 + i) * .1, y0 + .45, CZ + z); lg.updateMatrix(); DR.IL.setMatrixAt(k, lg.matrix); }); for (const m of [DR.IB, DR.IF, DR.IP, DR.IL]) m.instanceMatrix.needsUpdate = true;
     if (sfx.tone && sfx.ctx && near) { DR.beat = (DR.beat || 0) - dt; if (DR.beat <= 0) { DR.beat = .42; DR.b = (DR.b || 0) + 1; sfx.tone('sine', 95, 60, .35, .18); if (DR.b % 4 === 3) sfx.nz && sfx.nz('highpass', 4500, .6, .14, .35); if (DR.b % 8 === 7) sfx.tone('sine', 140, 132, .15, 1.2); } }
     { const hx = DR.head.position.x, hz = DR.head.position.z; DR.tot = (DR.tot || 0) + dt; if (Math.hypot(me.x - hx, me.z - hz) < 14) DR.fol = (DR.fol || 0) + dt; }
-    if (z0 - DR.NS * .95 > E + 6) { DR.on = false; DR.g.visible = false; if (DR.tot > 10 && DR.fol / DR.tot > .7) { earn(120); msg('🐉 You followed the dragon all the way - good fortune +120', 3); } DR.tot = DR.fol = 0; } }
-  const prevUse2 = T.onUse; T.onUse = o => { if (o && o.kind === 'ct_hall' && !DR.on && DR.gcool <= 0) { DR.gcool = 180; setTimeout(() => startDragon('🐉 The gong calls out the dragon!'), 1500); } return prevUse2 ? prevUse2(o) : false; };
+    if (z0 - DR.NS * .95 > E + 6) { DR.on = false; DR.g.visible = false; if (DR.join) { DR.join = false; earn(200); const S = st(); S.ctDrDance = (S.ctDrDance || 0) + 1; msg('🐉 You carried a pole the whole way - the crowd cheers! +200', 3.5); } else if (DR.tot > 10 && DR.fol / DR.tot > .7) { earn(120); msg('🐉 You followed the dragon all the way - good fortune +120', 3); } DR.tot = DR.fol = 0; drSpot.x = 1e6; } }
+  const prevUse2 = T.onUse; T.onUse = o => { if (o === drSpot) { if (DR.on && !H.mounted) { DR.join = true; msg('🐉 You grab a pole under the dragon - keep it high!', 2.5); } return true; } if (o && o.kind === 'ct_hall' && !DR.on && DR.gcool <= 0) { DR.gcool = 180; setTimeout(() => startDragon('🐉 The gong calls out the dragon!'), 1500); } return prevUse2 ? prevUse2(o) : false; };
 
   const RID = [['What has keys but can\'t open a lock?', 'A piano', 'A jailer', 'A map'], ['What gets wetter the more it dries?', 'A towel', 'A river', 'A sponge cake'], ['What has a face and two hands but no arms or legs?', 'A clock', 'A scarecrow', 'A playing card'],
     ['What has a neck but no head?', 'A bottle', 'A shirt collar', 'A guitar case'], ['The more you take, the more you leave behind. What are they?', 'Footsteps', 'Coins', 'Photographs'], ['What travels the world but stays in a corner?', 'A stamp', 'The moon', 'A spider'],

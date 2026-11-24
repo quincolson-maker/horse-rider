@@ -9,7 +9,7 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ } from './hrbeachwave.js?v=330';
+import { BEACH, shoreX, waveAt, peelZ } from './hrbeachwave.js?v=331';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});
@@ -30,20 +30,20 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
   const bMat = new THREE.MeshStandardMaterial({ color: COLS[(board || 1) - 1] || COLS[0], roughness: .35 }), brd = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CapsuleGeometry(.27, 1.65, 4, 14), bMat); b.rotation.x = Math.PI / 2; b.scale.set(1, 1, .22); brd.add(b); const st = new THREE.Mesh(new THREE.BoxGeometry(.03, .05, 2.1), new THREE.MeshStandardMaterial({ color: 0x3a2a1a })); st.position.y = .03; brd.add(st); const fin = new THREE.Mesh(new THREE.BoxGeometry(.02, .16, .2), bMat); fin.position.set(0, -.1, -.9); brd.add(fin); }
   brd.visible = false; scene.add(brd);
   // ---------- HUD ----------
-  const hud = document.createElement('div'); hud.id = 'hrSurf'; hud.style.cssText = 'position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:31;font:800 15px system-ui,sans-serif;color:#fff;text-shadow:0 2px 4px #000a;text-align:center;pointer-events:none;display:none'; document.body.appendChild(hud);
+  const hud = document.createElement('div'); hud.id = 'hrSurf'; hud.style.cssText = 'position:fixed;left:50%;top:150px;transform:translateX(-50%);z-index:31;font:800 15px system-ui,sans-serif;color:#fff;text-shadow:0 2px 4px #000a;text-align:center;pointer-events:none;display:none'; document.body.appendChild(hud);
   const ex = document.createElement('button'); ex.textContent = '🏖️ To shore'; ex.style.cssText = 'position:fixed;right:12px;top:118px;z-index:32;padding:8px 12px;border-radius:10px;border:2px solid #fff8;background:#0a6a7acc;color:#fff;font:700 13px system-ui;display:none'; document.body.appendChild(ex);
   // ---------- state ----------
   const R = { mode: null, x: 0, z: 0, a: Math.PI * 0, sp: 0, duck: 0, k: 0, u: 0, th: 0, ride: null, air: null, wipe: 0, pop: 0, catchT: 0 };
   let score = 0, combo = 1, lastTh = 0, tubeT = 0, lastJump = false, sprayT = 0, crashT = 0, best = 0; try { best = +localStorage.getItem('hr_surfbest') || 0; } catch (_) {}
   const ctrl = () => { const k = keys || {}, i = input || {}; const fw = (k.KeyW || k.ArrowUp ? 1 : 0) + Math.max(0, -(i.mz || 0)), bk = (k.KeyS || k.ArrowDown ? 1 : 0) + Math.max(0, i.mz || 0), sd = (k.KeyD || k.ArrowRight ? 1 : 0) - (k.KeyA || k.ArrowLeft ? 1 : 0) + (i.mx || 0), j = !!(k.Space || i.jump); return { fw: Math.min(1, fw), bk: Math.min(1, bk), sd: clamp(sd, -1, 1), j }; };
   const crestX = (k, z, t) => XS - C * (t - k * TP) - (z - ZC) * K;
-  function enter() { if (B.surfing) return; B.surfing = true; R.mode = 'paddle'; R.x = P.pos.x; R.z = P.pos.z; R.a = 0; R.sp = 0; R.duck = 0; H.trainRide = tick; H.trainUse = () => { leave('🏖️ You paddle in'); return true; }; brd.visible = true; ex.style.display = ''; hud.style.display = ''; msg('🏄 Paddle out past the whitewater (W), duck-dive (JUMP) under the broken waves, then turn for the beach as a wave rises', 4.5); const s = S(); s.surfSessions = (s.surfSessions || 0) + 1; }
-  function leave(why) { if (R.ride) bank(); B.surfing = false; R.mode = null; H.trainRide = null; H.trainUse = null; brd.visible = false; ex.style.display = 'none'; hud.style.display = 'none'; const av = H.meAv; if (av && av.body) { av.body.rotation.x = av.body.rotation.z = 0; resetPose(av); } if (why) msg(why, 2); }
+  function enter() { if (B.surfing) return; B.surfing = true; lastT = -1; R.mode = 'paddle'; R.x = P.pos.x; R.z = P.pos.z; R.a = 0; R.sp = 0; R.duck = 0; H.trainRide = tick; H.trainUse = () => { leave('🏖️ You paddle in'); return true; }; brd.visible = true; ex.style.display = ''; hud.style.display = ''; msg('🏄 Paddle out past the whitewater (W), duck-dive (JUMP) under the broken waves, then turn for the beach as a wave rises', 4.5); const s = S(); s.surfSessions = (s.surfSessions || 0) + 1; }
+  function leave(why) { if (R.ride) bank(); H.camDist = 0; B.surfing = false; R.mode = null; H.trainRide = null; H.trainUse = null; brd.visible = false; ex.style.display = 'none'; hud.style.display = 'none'; const av = H.meAv; if (av && av.body) { av.body.rotation.x = av.body.rotation.z = 0; resetPose(av); } if (why) msg(why, 2); }
   ex.onclick = () => { if (B.surfing) { const x = shoreX(R.z) - 3; P.pos.set(x, hAt(x, R.z), R.z); leave('🏖️ Back on the sand'); } };
   function bank() { const r = R.ride; R.ride = null; if (!r) return; const tot = Math.round(score); if (tot > 40) { const pts = Math.round(tot / 4); earn(pts); const s = S(); s.surfRides = (s.surfRides || 0) + 1; s.surfBest = Math.max(s.surfBest || 0, tot); s.surfTube = Math.max(s.surfTube || 0, +r.tube.toFixed(1)); s.surfAirs = (s.surfAirs || 0) + r.airs;
       const rec = tot > best; if (rec) { best = tot; try { localStorage.setItem('hr_surfbest', String(best)); } catch (_) {} } msg(`🏄 Ride score ${tot.toLocaleString()}${r.tube > .5 ? ` · ${r.tube.toFixed(1)} s in the barrel` : ''}${r.airs ? ` · ${r.airs} air${r.airs > 1 ? 's' : ''}` : ''}  +${pts}${rec ? '  ★ NEW BEST' : ''}`, 4); } score = 0; combo = 1; }
   const flash = (t, n) => { score += n * combo; combo = Math.min(8, combo + (n >= 200 ? 1 : .5)); R.ride && (R.ride.lastTrick = t); hudMsg = t; hudT = 1.4; if (sfx.tone && sfx.ctx) sfx.tone('triangle', 660 + combo * 60, 880 + combo * 60, .06, .18); };
-  let hudMsg = '', hudT = 0;
+  let hudMsg = '', hudT = 0; let assist = true; try { assist = localStorage.getItem('hr_surfassist') !== '0'; } catch (_) {} const setAssist = v => { assist = !!v; try { localStorage.setItem('hr_surfassist', v ? '1' : '0'); } catch (_) {} };
   // ---------- avatar pose: stance on the board (bone overrides on top of the idle clip) ----------
   const bones = {}; function findBones(av) { if (bones.ok || !av || !av.W) return; av.W.m.traverse(o => { if (!o.isBone) return; const n = o.name.toLowerCase().replace(/mixamorig:?/, ''); for (const k of ['hips', 'spine', 'spine1', 'spine2', 'neck', 'leftarm', 'rightarm', 'leftforearm', 'rightforearm', 'leftupleg', 'rightupleg', 'leftleg', 'rightleg']) if (n === k || n.endsWith(k) && !bones[k]) bones[k] = o; }); bones.ok = true; }
   const q = new THREE.Quaternion(), e3 = new THREE.Euler();
@@ -55,8 +55,10 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
   // ---------- the main loop (called by horse.js in place of walking while surfing) ----------
   const nrm = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), qb = new THREE.Quaternion(), fwd = new THREE.Vector3(), m4 = new THREE.Matrix4();
   function surfaceAt(x, z, t) { waveAt(x, z, t, wv2); return SEA + wv2.eta; }
-  function tick(dt) { const t = (Date.now() / 1000) % 3600, c = ctrl(), jumpEdge = c.j && !lastJump; lastJump = c.j; dt = Math.min(dt, .05);
-    if (R.mode === 'paddle') paddle(dt, t, c, jumpEdge); else if (R.mode === 'ride') ride(dt, t, c, jumpEdge); else if (R.mode === 'air') air(dt, t, c); else if (R.mode === 'wipe') wipe(dt, t);
+  let lastT = -1; function tick(dt0) { const t = (Date.now() / 1000) % 3600, c = ctrl(); let jumpEdge = c.j && !lastJump; lastJump = c.j;
+    // the waves run on the wall clock, so the rider integrates wall-clock time too (in small sub-steps) - a slow frame never lets the curl jump ahead of you
+    let dt = lastT < 0 || t < lastT ? dt0 : t - lastT; lastT = t; dt = Math.min(dt, .5); const n = Math.max(1, Math.ceil(dt / .03)), h = dt / n;
+    for (let i = 0; i < n; i++) { const ti = t - dt + h * (i + 1); if (R.mode === 'paddle') paddle(h, ti, c, jumpEdge); else if (R.mode === 'ride') ride(h, ti, c, jumpEdge); else if (R.mode === 'air') air(h, ti, c); else if (R.mode === 'wipe') wipe(h, ti); jumpEdge = false; if (!B.surfing) break; }
     if (!B.surfing) return;
     // place the board + rider
     const x = R.x, z = R.z, y = surfaceAt(x, z, t), dir = R.dir || [Math.cos(R.a), Math.sin(R.a)], yAir = R.mode === 'air' ? R.air.y : y;
@@ -67,7 +69,7 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     const av = H.meAv; if (av && av.body) { av.body.visible = !H.fp; av.body.position.copy(P.pos); if (R.mode === 'paddle') { av.body.rotation.set(-1.35, yaw + Math.PI, 0, 'YXZ'); av.body.position.y += .45; } else if (R.mode === 'wipe') { av.body.rotation.set(Math.sin(t * 9) * 2, yaw, Math.cos(t * 7) * 2, 'YXZ'); } else { av.body.rotation.set(0, yaw + Math.PI / 2 + (R.mode === 'air' ? R.air.spin : 0), clamp(R.carve * .25, -.4, .4), 'YXZ'); av.body.position.y -= .05; }
       if (av.W) { av.W.update(dt, 0); stance(av, R.mode === 'ride' ? clamp(.35 + R.sp * .03 + (R.tube ? .5 : 0), 0, 1) : .6, R.carve || 0, R.mode === 'paddle', t); } }
     // camera: drift behind the direction of travel
-    const vy = Math.atan2(-dir[0], -dir[1]); let d = vy - P.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); P.yaw += d * Math.min(1, dt * (R.mode === 'ride' ? 1.6 : .8));
+    const cvx = dir[0] + (R.mode === 'ride' || R.mode === 'air' ? .95 : 0), cvz = dir[1], vy = Math.atan2(-cvx, -cvz); /* ride cam: look across the face from the shoulder */ H.camDist = R.mode === 'ride' || R.mode === 'air' ? 4.6 + Math.min(2, (R.sp || 0) * .12) : 3.6; let d = vy - P.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); P.yaw += d * Math.min(1, dt * (R.mode === 'ride' ? 1.6 : .8));
     // HUD
     hudT -= dt; hud.innerHTML = R.mode === 'ride' || R.mode === 'air' ? `<div style="font-size:26px">${Math.round(score).toLocaleString()} <span style="color:#ffd23a">×${combo.toFixed(1)}</span></div><div>${(R.sp || 0).toFixed(1)} m/s${R.tube ? ' · <span style="color:#7affff">BARREL ' + R.ride.tube.toFixed(1) + 's</span>' : ''}</div>${hudT > 0 ? `<div style="color:#ffd23a;font-size:20px">${hudMsg}</div>` : ''}`
       : R.mode === 'paddle' ? `<div>${R.duck > 0 ? '🫧 duck-dive' : R.catchHint ? '🌊 <span style="color:#ffd23a">WAVE! paddle / JUMP to pop up</span>' : '🏄 paddling'}${best ? ` · best ride ${best.toLocaleString()}` : ''}</div>` : R.mode === 'wipe' ? '<div style="color:#ff8a7a;font-size:22px">WIPEOUT</div>' : '';
@@ -82,11 +84,13 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     // catching: an unbroken face rising under you while you point at the beach and paddle
     R.catchHint = !!(w && !w.broken && w.s > .45 && w.u > -3.2 && w.u < 3.5 && R.dir[0] < -.25); if (R.catchHint) { R.catchT += c.fw > .3 ? dt : 0; if (jumpEdge || R.catchT > .45) popUp(t, w); } else R.catchT = 0;
     if (R.x < shoreX(R.z) + 10 && R.sp < 2) { const x = shoreX(R.z) - 2; P.pos.set(x, hAt(x, R.z), R.z); leave('🏖️ You carry your board up the sand'); } }
-  function popUp(t, w) { R.mode = 'ride'; R.k = w.k; R.u = R.x - crestX(R.k, R.z, t); const d = R.dir; R.th = clamp(Math.atan2(-d[0], -d[1]), -1.2, 2.6); R.sp = Math.max(6, R.sp + 4.5); R.carve = 0; R.tube = false; R.ride = { t: 0, tube: 0, airs: 0, peak: 0, turnAcc: 0, lastTrick: '' }; score = 0; combo = 1; lastTh = R.th; msg('🏄 POP UP! Angle along the face - race the curl south', 2.2); if (sfx.tone && sfx.ctx) sfx.tone('triangle', 520, 880, .08, .25); }
+  function popUp(t, w) { R.mode = 'ride'; R.k = w.k; R.u = R.x - crestX(R.k, R.z, t); const d = R.dir; R.th = clamp(Math.atan2(-d[0], -d[1]), -1.2, 2.6); R.sp = Math.max(8, R.sp + 5.5); R.carve = 0; R.tube = false; R.ride = { t: 0, tube: 0, airs: 0, peak: 0, turnAcc: 0, lastTrick: '' }; score = 0; combo = 1; lastTh = R.th; msg('🏄 POP UP! Angle along the face - race the curl south', 2.2); P.pitch = Math.min(P.pitch, -.18); if (sfx.tone && sfx.ctx) sfx.tone('triangle', 520, 880, .08, .25); }
   function ride(dt, t, c, jumpEdge) { const r = R.ride; r.t += dt; const cx = crestX(R.k, R.z, t), x = cx + R.u, ez = surfaceAt(x + .35, R.z, t) - surfaceAt(x - .35, R.z, t), face = clamp(ez / .7, 0, 1.4); waveAt(x, R.z, t, wv); const A = wv.wave ? wv.wave.A : 1;
     // steering (carve), pump, stall
-    const rate = 2.6 + 2.2 * clamp(1 - R.sp / 14, 0, 1); R.carve = c.sd; R.th += c.sd * rate * dt; R.th = Math.atan2(Math.sin(R.th), Math.cos(R.th)); R.sp *= 1 - Math.abs(c.sd) * .04 * dt;
-    const down = Math.sin(R.th); R.sp += (G * .85 * face * down + (c.fw && face > .08 ? 2.1 : 0) - (c.bk ? 3.2 : 0) - .06 * R.sp - .012 * R.sp * R.sp) * dt; R.sp = clamp(R.sp, 0, 19);
+    const rate = 2.6 + 2.2 * clamp(1 - R.sp / 14, 0, 1); let sd = c.sd;
+    if (assist && Math.abs(c.sd) < .15) { const tgt = -A * .55, want = clamp((R.u - tgt) * .45, -.55, .75) * (Math.cos(R.th) >= 0 ? 1 : -1) + (Math.cos(R.th) >= 0 ? 0 : Math.PI); let d = Math.atan2(Math.sin(want - R.th), Math.cos(want - R.th)); sd = clamp(d * 2.5, -.8, .8); } /* surf assist: holds a trim line mid-face */
+    R.carve = sd; R.th += sd * rate * dt; R.th = Math.atan2(Math.sin(R.th), Math.cos(R.th)); R.sp *= 1 - Math.abs(sd) * .04 * dt;
+    const down = Math.sin(R.th), trim = Math.abs(Math.cos(R.th)) > .35 ? 6 * Math.min(face, .9) * Math.abs(Math.cos(R.th)) : 0; /* the moving face keeps feeding a rider who trims along it */ R.sp += (G * .85 * face * down + trim + (c.fw && face > .08 ? 2.1 : 0) - (c.bk ? 3.2 : 0) - .06 * R.sp - .012 * R.sp * R.sp) * dt; R.sp = clamp(R.sp, 0, 19);
     const du = -R.sp * down * dt, dz = -R.sp * Math.cos(R.th) * dt; R.u += du; R.z += dz; R.z = clamp(R.z, -300, 640);
     R.x = crestX(R.k, R.z, t) + R.u; R.dir = [-Math.sin(R.th), -Math.cos(R.th)];
     // the curl: where is the peel relative to you?
@@ -105,7 +109,7 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     // ends: over the back, outran the wave, caught by the curl
     if (R.u > 1.6) { bank(); R.mode = 'paddle'; R.a = Math.atan2(R.dir[1], R.dir[0]); R.sp = 1; msg('🏄 You kick out over the back', 1.8); return; }
     if (R.sp < 1.4 && face < .06) { bank(); R.mode = 'paddle'; R.sp = .5; R.a = Math.PI; msg('🏄 The wave runs away from you', 1.8); return; }
-    if (behind > 6 && R.u > -A * 1.6 && crestX(R.k, R.z, t) < XB + 2) { wipeout('🌊 The curl caught you!'); return; }
+    if (behind > 6 && R.u > -A * 1.6 && crestX(R.k, R.z, t) < XB + 2) { if (R.sp < 3.5) { bank(); R.mode = 'paddle'; R.sp = .5; R.a = Math.PI; msg('🏄 The wave closes out - you straighten out and ride the foam in', 2); } else wipeout('🌊 The curl caught you!'); return; }
     if (R.x < shoreX(R.z) + 8) { bank(); const sx = shoreX(R.z) - 2; P.pos.set(sx, hAt(sx, R.z), R.z); leave('🏖️ You ride it all the way to the sand'); return; } }
   function air(dt, t, c) { const a = R.air, r = R.ride; a.vy -= G * dt; a.y += a.vy * dt; a.spin += c.sd * 7.5 * dt; a.pitch = Math.sin(Math.min(1, (a.vy + 6) / 12) * Math.PI) * -.2;
     R.u += 2.4 * dt; R.z += -R.sp * Math.cos(R.th) * dt * .6; R.x = crestX(R.k, R.z, t) + R.u; R.dir = [-Math.sin(R.th), -Math.cos(R.th)];
@@ -113,10 +117,28 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
       else wipeout('💥 Bad landing!'); } }
   function wipeout(why) { const s = S(); s.surfWipes = (s.surfWipes || 0) + 1; R.ride && (score *= .35); bank(); R.mode = 'wipe'; R.wipe = 2.4; R.tube = false; msg(why + ' WIPEOUT', 2.2); if (sfx.nz && sfx.ctx) { sfx.nz('lowpass', 300, 1, .35, 1.2); sfx.nz('bandpass', 1200, .6, .2, .8); } }
   function wipe(dt, t) { R.wipe -= dt; R.x -= 3 * dt; R.z += (Math.random() - .5) * dt; if (R.wipe <= 0) { R.mode = 'paddle'; R.sp = 0; R.a = 0; R.dir = [1, 0]; msg('🏄 You surface and climb back on your board', 2); } }
+  // ---------- THE CURL: a translucent lip that pitches over the face at each wave's peel point (CPU-built, ~300 verts) ----------
+  const LZ = 26, LA = 12, lipPos = new Float32Array(LZ * LA * 3), lipFoam = new Float32Array(LZ * LA), lipIdx = []; for (let j = 0; j < LZ - 1; j++) for (let i = 0; i < LA - 1; i++) { const a = j * LA + i, b = a + 1, c2 = a + LA, d = c2 + 1; lipIdx.push(a, c2, b, b, c2, d); }
+  const lipG = new THREE.BufferGeometry(); lipG.setAttribute('position', new THREE.BufferAttribute(lipPos, 3)); lipG.setAttribute('foam', new THREE.BufferAttribute(lipFoam, 1)); lipG.setIndex(lipIdx);
+  const lipM = new THREE.ShaderMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false, uniforms: { uNight: { value: 0 } }, vertexShader: 'attribute float foam; varying float vF; varying vec3 vW; void main(){ vF = foam; vW = position; gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'uniform float uNight; varying float vF; varying vec3 vW; void main(){ vec3 c = mix(vec3(.2, .82, .76), vec3(.97, .99, 1.0), clamp(vF, 0.0, 1.0)); float n = fract(sin(dot(floor(vW.xz * 3.0), vec2(12.9, 78.2))) * 43758.5); c = mix(c, vec3(1.0), step(.82, n) * vF); c *= mix(1.0, .3, uNight); gl_FragColor = vec4(c, mix(.62, .95, vF)); }' });
+  const lip = new THREE.Mesh(lipG, lipM); lip.frustumCulled = false; lip.visible = false; lip.renderOrder = 4; scene.add(lip);
+  function curl(t) { const me = P.pos; if (me.x < 1060 || Math.abs(me.z - ZC) > 460) { lip.visible = false; return; }
+    // which wave: the one you ride, else the nearest one that is peeling within view
+    let k = R.ride ? R.k : null; if (k == null) { const k0 = Math.floor(t / TP); let bd = 1e9; for (let j = 0; j < 6; j++) { const kk = k0 - j, pz = peelZ(kk, t); if (pz < -240 || pz > 560) continue; const d = Math.abs(pz - me.z); if (d < bd) { bd = d; k = kk; } } }
+    if (k == null) { lip.visible = false; return; } const pz = peelZ(k, t); if (pz < -240 || pz > 560) { lip.visible = false; return; }
+    const amp = .75 + .6 * ((k * .618034) - Math.floor(k * .618034)) + (k % 5 === 0 ? .55 : 0), A = amp * 2.5; lip.visible = true; lipM.uniforms.uNight.value = H.night || 0;
+    for (let j = 0; j < LZ; j++) { const z = pz - 8 + j * (24 / (LZ - 1)), rel = z - pz, grow = clamp((rel + 8) / 8, 0, 1), fall = clamp(1 - (rel - 2) / 14, 0, 1), cx = crestX(k, z, t);
+      const r = A * .55 * grow, cy = A * (.95 - .45 * grow), cu = -r * .9; for (let i = 0; i < LA; i++) { const th = Math.PI / 2 - i / (LA - 1) * (Math.PI * (.35 + .7 * grow)), u = cu + Math.cos(th) * r * (i ? 1 : 0) + (i ? 0 : 0), h = cy + Math.sin(th) * r * fall * (1 - .35 * (1 - grow)) * 1, o = (j * LA + i) * 3;
+        lipPos[o] = cx + (i ? u : -.2); lipPos[o + 1] = SEA + Math.max(.1, i ? h * fall + (1 - fall) * A * .2 : A * (.98 - .4 * (1 - fall))); lipPos[o + 2] = z; lipFoam[j * LA + i] = clamp((i / (LA - 1)) * 1.3 * grow + (1 - fall) * .9 + (rel > 0 ? .25 : 0), 0, 1); } }
+    lipG.attributes.position.needsUpdate = true; lipG.attributes.foam.needsUpdate = true; lipG.computeBoundingSphere();
+    if (fx && fx.smoke && (curl.sp = (curl.sp || 0) - .016) <= 0 && Math.abs(pz - me.z) < 120) { curl.sp = .06; const cx = crestX(k, pz + 1.5, t); fx.smoke.emit(cx - A * .7, SEA + A * .6, pz + 1.5 + Math.random() * 3, (Math.random() - .5) * 2, 1.5 + Math.random() * 2.5, 2 + Math.random() * 3, .96, .98, 1, .55, 1.6, 1.4, -.04, .4); } }
+
   // ---------- per frame (not surfing): rentals, entering the water, ambient crash sounds ----------
   const prevUse = T.onUse; T.onUse = o => { if (o === rent) { board = (board % COLS.length) + 1; bMat.color.setHex(COLS[board - 1]); try { localStorage.setItem('hr_board', String(board)); } catch (_) {} setRentLabel(); msg(`🏄 Board #${board} is yours - walk into the water to paddle out`, 3); const s = S(); s.surfBoard = 1; return true; } return prevUse ? prevUse(o) : false; };
-  function update(dt, t) { if (B.surfing) { if (H.mounted || H.dead) leave(); return; }
+  function update(dt, t) { curl(t); if (B.surfing) { if (H.mounted || H.dead) leave(); return; }
     const me = P.pos; if (board && !H.mounted && !H.trainRide && me.x > shoreX(me.z) + 13 && me.x < 1460 && Math.abs(me.z - ZC) < 430) enter();
     if (me.x > 1040 && Math.abs(me.z - ZC) < 500 && sfx.nz && sfx.ctx && (crashT -= dt) <= 0) { crashT = 1.6 + Math.random() * 2.5; const d = Math.max(20, Math.abs(me.x - XB)); sfx.nz('lowpass', 420 + Math.random() * 300, .7, Math.min(.12, 6 / d), 1.8 + Math.random()); } }
-  return { update, get state() { return R; }, enter, leave };
+  const testPop = () => { const t = (Date.now() / 1000) % 3600; waveAt(R.x, R.z, t, wv); if (wv.wave && !wv.wave.broken && wv.wave.u > -2.5 && wv.wave.u < 1.5 && wv.wave.s > .45) { popUp(t, wv.wave); return true; } return false; };
+  return { update, get state() { return R; }, enter, leave, testPop, setAssist, get assist() { return assist; }, peel: () => R.ride ? peelZ(R.k, (Date.now() / 1000) % 3600) : null };
 }

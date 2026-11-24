@@ -2,7 +2,7 @@
 // The same wave formula runs in JS (surf physics) and in the ocean's vertex shader (WAVE_GLSL), driven by the wall clock,
 // so every rider sees the same sets roll in. Waves travel toward the shore (-x) with crests set at an angle, so each wave
 // breaks first at the north end of the cove and the break PEELS south along the beach - you ride the open shoulder ahead of it.
-export const BEACH = { SEA: 70, SHORE: 1128, XB: 1180, XS: 1470, XSH: 1340, ZC: 150, C: 6.5, K: .6, T: 12, NW: 6, Z0: -230, Z1: 530 };
+export const BEACH = { SEA: 70, SHORE: 1128, XB: 1180, XS: 1470, XSH: 1340, ZC: 150, C: 6.5, K: .9, T: 12, NW: 6, Z0: -230, Z1: 530 };
 const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const mix = (a, b, t) => a + (b - a) * t;
 // the shoreline bends out into two headlands at the ends of the cove
@@ -22,7 +22,7 @@ const frac = v => v - Math.floor(v);
 export function surfTime(now = Date.now()) { return (now / 1000) % 3600; }
 export function waveAt(x, z, t, o) {
   const { XB, XS, XSH, ZC, C, K, T, NW } = BEACH; let eta = 0, foam = 0, near = null, nd = 1e9; const k0 = Math.floor(t / T);
-  for (let j = 0; j < NW; j++) { const k = k0 - j, age = t - k * T, base = XS - C * age, amp = .55 + .55 * frac(k * .618034) + (k % 5 === 0 ? .45 : 0);
+  for (let j = 0; j < NW; j++) { const k = k0 - j, age = t - k * T, base = XS - C * age, amp = .75 + .6 * frac(k * .618034) + (k % 5 === 0 ? .55 : 0);
     const cx = base - (z - ZC) * K, u = x - cx; if (u < -45 || u > 70) continue;
     const s = Math.max(0, Math.min(1, (XSH - cx) / (XSH - XB)));
     if (cx > XB) { const A = amp * (1 + 1.5 * s * s), w = u < 0 ? mix(9, 2.4, s * s) : mix(15, 9, s); eta += A * Math.exp(-(u * u) / (w * w)); if (s > .85 && u > -2.5 && u < 1.2) foam = Math.max(foam, (s - .85) * 5 * (1 - Math.abs(u + .6) / 2)); if (Math.abs(u) < nd) { nd = Math.abs(u); near = { k, cx, u, A, s, broken: false, amp }; } }
@@ -38,7 +38,7 @@ uniform float uT;
 float fr(float v){ return v - floor(v); }
 vec2 surfWave(vec2 p){ float eta = 0.0, foam = 0.0; float k0 = floor(uT / ${BEACH.T.toFixed(1)});
   for (int j = 0; j < ${BEACH.NW}; j++) { float k = k0 - float(j); float age = uT - k * ${BEACH.T.toFixed(1)}; float base = ${BEACH.XS.toFixed(1)} - ${BEACH.C.toFixed(2)} * age;
-    float amp = .55 + .55 * fr(k * .618034) + (mod(k, 5.0) < .5 ? .45 : 0.0); float cx = base - (p.y - ${BEACH.ZC.toFixed(1)}) * ${BEACH.K.toFixed(2)}; float u = p.x - cx;
+    float amp = .75 + .6 * fr(k * .618034) + (mod(k, 5.0) < .5 ? .55 : 0.0); float cx = base - (p.y - ${BEACH.ZC.toFixed(1)}) * ${BEACH.K.toFixed(2)}; float u = p.x - cx;
     if (u < -45.0 || u > 70.0) continue; float s = clamp((${BEACH.XSH.toFixed(1)} - cx) / (${(BEACH.XSH - BEACH.XB).toFixed(1)}), 0.0, 1.0);
     if (cx > ${BEACH.XB.toFixed(1)}) { float A = amp * (1.0 + 1.5 * s * s); float w = u < 0.0 ? mix(9.0, 2.4, s * s) : mix(15.0, 9.0, s); eta += A * exp(-(u * u) / (w * w));
       if (s > .85 && u > -2.5 && u < 1.2) foam = max(foam, (s - .85) * 5.0 * (1.0 - abs(u + .6) / 2.0)); }

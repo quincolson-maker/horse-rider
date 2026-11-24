@@ -2,9 +2,9 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
-import { mergeStatic } from './hrmerge.js?v=198';
+import { mergeStatic } from './hrmerge.js?v=199';
 import * as THREE from 'three';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=198';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=199';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['express', 10]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
@@ -148,6 +148,9 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
     const SS = sched(Date.now()), s = SS.s, VNOW = SS.v; H.trainSched = SS; let off = 0; const pw = new THREE.Vector3(), pt = new THREE.Vector3();
     for (const c of cars) { const mid = s - off - c.len / 2; at(mid + c.len / 2 - 1, pw, pt); const front = pw.clone(); at(mid - c.len / 2 + 1, pw, pt); const back = pw.clone(); c.g.position.copy(front).add(back).multiplyScalar(.5); c.g.lookAt(tmp.copy(front).add(c.g.position).sub(back));
       for (const w of c.ws) w.rotation.x -= VNOW * dt / .7; off += c.len + GAP; }
+    const L0 = cars[0]; if (!L0.lamp) { const lm = new THREE.Mesh(new THREE.CylinderGeometry(.28, .32, .4, 12), new THREE.MeshBasicMaterial({ color: 0xfff2c0 })); lm.rotation.x = Math.PI / 2; lm.position.set(0, 3.3, 4.7); L0.g.add(lm);
+      const cg = new THREE.ConeGeometry(4, 26, 16, 1, true); cg.translate(0, -13, 0); cg.rotateX(-Math.PI / 2); const cone = new THREE.Mesh(cg, new THREE.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false })); cone.position.set(0, 3.3, 4.8); L0.g.add(cone); L0.lamp = { lm, cone }; } // v199 headlamp
+    { const n = H.night || 0; L0.lamp.cone.material.opacity = Math.max(0, n - .35) * .16; L0.lamp.cone.visible = n > .4; L0.lamp.lm.material.color.setScalar(.55 + .45 * Math.min(1, n * 1.5)); }
     const loco = cars[0]; H.trainPos = [loco.g.position.x, loco.g.position.z]; const dl = Math.hypot(P.pos.x - loco.g.position.x, P.pos.z - loco.g.position.z);
     sT -= dt; if (sT <= 0 && dl < 400) { sT = .12; tmp.set(0, 5.2, 3.1).applyQuaternion(loco.g.quaternion).add(loco.g.position); sp.set([tmp.x, tmp.y, tmp.z], si * 3); sAge[si] = 0; si = (si + 1) % SN; }
     for (let i = 0; i < SN; i++) { sAge[i] += dt; sp[i * 3 + 1] += dt * 2.2; } sg.attributes.position.needsUpdate = true; smoke.material.size = 4.5;

@@ -1,7 +1,7 @@
 // v99 HATS at the General Store. Each one swaps out the straw hat and sits on the Head bone, so it follows every animation.
 // The straw hat comes back when you take the new one off. The spec-ops helmet still wins while the kit is on.
 import * as THREE from 'three';
-import { wearHat } from './hrkit.js?v=176';
+import { wearHat } from './hrkit.js?v=177';
 const HX = 0, HY = .835, HZ = .065; // skull centre in bind-pose model space (the same frame hrkit's helmet uses)
 const felt = (c, r = .85) => new THREE.MeshStandardMaterial({ color: c, roughness: r });
 // lathe profile helper: [radius, height] pairs, revolved around the head axis
@@ -29,6 +29,9 @@ const HATS = [
   { id: 'brown', n: 'Trail-worn brown', price: 600, b: g => stetson(g, 0x5a3a22, 0x2a1a10, .29, false) },
   { id: 'bowler', n: 'Bowler', price: 700, b: bowler },
   { id: 'gambler', n: "Gambler's flat-brim", price: 900, b: gambler },
+  { id: 'tophat', n: 'Undertaker top hat', price: 1100, b: g => { const m = felt(0x121212, .6), base = HY - .008; const c = new THREE.Mesh(new THREE.CylinderGeometry(.15, .145, .3, 32), m); c.scale.set(.92, 1, 1.08); c.position.set(HX, base + .15, HZ); g.add(c); const b = new THREE.Mesh(new THREE.CylinderGeometry(.24, .24, .015, 32), m); b.scale.set(.95, 1, 1.08); b.position.set(HX, base, HZ); g.add(b); const band = new THREE.Mesh(new THREE.CylinderGeometry(.152, .152, .04, 32, 1, true), felt(0x5a1010, .5)); band.material.side = THREE.DoubleSide; band.scale.set(.92, 1, 1.08); band.position.set(HX, base + .03, HZ); g.add(band); } },
+  { id: 'vaquero', n: 'Vaquero sombrero', price: 1300, b: g => { stetson(g, 0x8a6a3a, 0x3a2414, .42, false); } },
+  { id: 'ranger', n: 'Ranger hat + feather', price: 1000, b: g => { stetson(g, 0x6a5a48, 0x2a1a10); const f = new THREE.Mesh(new THREE.ConeGeometry(.025, .3, 6), felt(0xd8d0c0, .8)); f.position.set(HX + .15, HY + .12, HZ - .05); f.rotation.z = -.5; g.add(f); } },
 ];
 export function createHats({ H, msg, rig }) {
   const ld = () => { try { return JSON.parse(localStorage.getItem('hr_hats') || 'null') || {}; } catch (_) { return {}; } }, st = Object.assign({ owned: [], on: null }, ld());

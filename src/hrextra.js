@@ -88,6 +88,12 @@ export function createExtra({ scene, H, P, hAt, msg, sfx, mobile }) {
     x.fillStyle = '#3a2414'; x.font = 'bold 17px Georgia,serif'; ['🐉 Dragon dance', 'every six minutes', '🏮 Night market & riddles', '🍵 Tea · noodles · herbs', '🎭 Opera nightly', '🐎 Stage from this', 'signpost: 40 pts'].forEach((l, i) => x.fillText(l, 128, 112 + i * 30)); const ct = new THREE.CanvasTexture(cv); ct.colorSpace = THREE.SRGBColorSpace;
     const m = new THREE.Mesh(new THREE.PlaneGeometry(.6, .8), new THREE.MeshStandardMaterial({ map: ct, roughness: .95 })), [wx, wz] = T.toW(s, -12.4, -.3); m.position.set(wx, s.y0 + 1.75, wz); m.rotation.set(0, s.rot + Math.PI, -.03); m.name = 'chinatown handbill'; scene.add(m); H.cullAdd && H.cullAdd(m, 90, { x: wx, z: wz }); }; });
 
+  // v323 a second handbill on the saloon front: Silver Creek wants ore
+  add(() => { let done = false; return () => { if (done) return; const T = H.town, s = T && T.town; if (!s || !H.minecamp || !H.minecamp.info) return; done = true;
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 340; const x = cv.getContext('2d'); x.fillStyle = '#ece0c4'; x.fillRect(0, 0, 256, 340); x.fillStyle = '#3a3a44'; x.fillRect(10, 10, 236, 70); x.fillStyle = '#e8e8f0'; x.textAlign = 'center'; x.font = 'bold 30px Georgia,serif'; x.fillText('ORE WANTED', 128, 54); x.font = '14px Georgia,serif'; x.fillText('Silver Creek Diggings', 128, 74);
+    x.fillStyle = '#3a2414'; x.font = 'bold 18px Georgia,serif'; ['⛏ Pick your own ore', 'Assay office pays', '120 a chunk', '✨ Gold strikes!', '🐎 Stage from this', 'signpost: 40 pts', 'West of the pen'].forEach((l, i) => x.fillText(l, 128, 114 + i * 30)); const ct = new THREE.CanvasTexture(cv); ct.colorSpace = THREE.SRGBColorSpace;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(.6, .8), new THREE.MeshStandardMaterial({ map: ct, roughness: .95 })), [wx, wz] = T.toW(s, -14.6, -.3); m.position.set(wx, s.y0 + 1.75, wz); m.rotation.set(0, s.rot + Math.PI, .03); m.name = 'silver creek handbill'; scene.add(m); H.cullAdd && H.cullAdd(m, 90, { x: wx, z: wz }); }; });
+
   X.update = dt => { X.t += dt; for (const f of X.parts) f(dt); };
   return X;
 }

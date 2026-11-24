@@ -2,10 +2,10 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
-import { mergeStatic } from './hrmerge.js?v=364';
+import { mergeStatic } from './hrmerge.js?v=365';
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=364';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=364';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=365';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=365';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['dining', 11], ['express', 10], ['caboose', 7]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
@@ -65,7 +65,13 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
       for (const sd of [-.72, .72]) { const v = new THREE.Vector3(sd, .14, 0).applyQuaternion(q).add(p); m4.compose(v, q, sc); rails.setMatrixAt(i * 2 + (sd > 0 ? 1 : 0), m4); }
       const gnd = hAt(p.x, p.z); const v = p.clone(); v.y -= .3; m4.compose(v, q, sc); bed.setMatrixAt(i, m4); if (p.y - gnd > 1.4 && i % 3 === 0) for (const sd of [-1.2, 1.2]) { const pv = new THREE.Vector3(sd, 0, 0).applyQuaternion(q).add(p); posts.push([pv.x, gnd, pv.z, p.y - gnd]); } }
     const tr = new THREE.InstancedMesh(postG, new THREE.MeshStandardMaterial({ color: 0x5a3e24, roughness: .9 }), Math.max(1, posts.length)); posts.forEach(([x, y, z, h], i) => { m4.compose(p.set(x, y + h / 2 - .3, z), q.identity(), sc.set(1, h + .2, 1)); tr.setMatrixAt(i, m4); }); tr.count = posts.length; sc.set(1, 1, 1);
-    for (const o of [ties, rails, bed, tr]) { o.receiveShadow = true; o.frustumCulled = false; scene.add(o); } }
+    for (const o of [ties, rails, bed, tr]) { o.receiveShadow = true; o.frustumCulled = false; scene.add(o); }
+    /* v365 telegraph poles every 40 m beside the line, with crossarms and glass insulators, wires sagging between */ { const PL = []; for (let sv = 0; sv < L; sv += 40) { if (skipS(sv)) continue; at(sv, p, t); const sx = t.z, sz = -t.x, sl = Math.hypot(sx, sz) || 1, x = p.x + sx / sl * 4.2, z = p.z + sz / sl * 4.2, gy = hAt(x, z); if (Math.abs(gy - p.y) > 3) continue; PL.push([x, gy, z, Math.atan2(t.x, t.z)]); }
+      const pg = new THREE.CylinderGeometry(.11, .14, 7, 6); pg.translate(0, 3.5, 0); const ag = new THREE.BoxGeometry(1.6, .12, .12); ag.translate(0, 6.6, 0); const ig = new THREE.CylinderGeometry(.05, .05, .14, 5); const ins = []; for (const dx of [-.65, -.25, .25, .65]) { const c = ig.clone(); c.translate(dx, 6.75, 0); ins.push(c); }
+      const pm = new THREE.InstancedMesh(mergeGeometries([pg, ag]), new THREE.MeshStandardMaterial({ color: 0x5a4430, roughness: .9 }), PL.length), im = new THREE.InstancedMesh(mergeGeometries(ins), new THREE.MeshStandardMaterial({ color: 0x5ac8b0, roughness: .2, metalness: .1 }), PL.length);
+      PL.forEach(([x, y, z, ry], i) => { m4.compose(p.set(x, y, z), q.setFromEuler(e.set(0, ry + Math.PI / 2, 0)), sc.set(1, 1, 1)); pm.setMatrixAt(i, m4); im.setMatrixAt(i, m4); }); for (const o of [pm, im]) { o.frustumCulled = false; scene.add(o); }
+      const wp = []; for (let i = 0; i < PL.length - 1; i++) { const a2 = PL[i], b2 = PL[i + 1]; if (Math.hypot(a2[0] - b2[0], a2[2] - b2[2]) > 60) continue; for (const dx of [-.65, .65]) { const ra = [Math.cos(a2[3]) * dx, Math.sin(a2[3]) * -dx], rb = [Math.cos(b2[3]) * dx, Math.sin(b2[3]) * -dx]; for (let k = 0; k < 6; k++) { const u0 = k / 6, u1 = (k + 1) / 6, sag = u => Math.sin(u * Math.PI) * .7; wp.push(a2[0] + ra[0] + (b2[0] + rb[0] - a2[0] - ra[0]) * u0, a2[1] + 6.8 + (b2[1] - a2[1]) * u0 - sag(u0), a2[2] + ra[1] + (b2[2] + rb[1] - a2[2] - ra[1]) * u0, a2[0] + ra[0] + (b2[0] + rb[0] - a2[0] - ra[0]) * u1, a2[1] + 6.8 + (b2[1] - a2[1]) * u1 - sag(u1), a2[2] + ra[1] + (b2[2] + rb[1] - a2[2] - ra[1]) * u1); } } }
+      const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(wp, 3)); const wl = new THREE.LineSegments(wg, new THREE.LineBasicMaterial({ color: 0x2a2a2a })); wl.frustumCulled = false; scene.add(wl); } }
   // ---------- v77 tunnels + stations ----------
   function buildTunnels() { const rock = new THREE.MeshStandardMaterial({ color: 0x5a5148, roughness: 1, side: THREE.DoubleSide }), stone = new THREE.MeshStandardMaterial({ color: 0x8a7e6c, roughness: .95 }), dark = new THREE.MeshBasicMaterial({ color: 0x0c0a08, side: THREE.DoubleSide });
     const p = new THREE.Vector3(), t = new THREE.Vector3(), RN = 15, Wd = 3.4, Ht = 5.6;

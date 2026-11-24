@@ -3,9 +3,9 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=364';
-import { createSurf } from './hrsurf.js?v=364';
-import { mergeStatic } from './hrmerge.js?v=364';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=365';
+import { createSurf } from './hrsurf.js?v=365';
+import { mergeStatic } from './hrmerge.js?v=365';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };

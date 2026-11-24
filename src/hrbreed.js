@@ -4,10 +4,10 @@
 // Name your horse at the General Store. The name shows while you ride and on your horse's map pin.
 const BREEDS = [
   { id: 'mustang', n: 'Mustang', price: 0, spd: 1, drain: 1, armor: 1, s: 1, about: 'tough all-rounder' },
-  { id: 'quarter', n: 'Quarter Horse', price: 2500, spd: 1.05, drain: .9, armor: .95, s: .98, about: '+5% speed, steady' },
-  { id: 'appaloosa', n: 'Appaloosa', price: 3000, spd: 1.03, drain: .75, armor: .85, s: 1, about: 'stamina + hardy' },
-  { id: 'arabian', n: 'Arabian', price: 4500, spd: 1.1, drain: .7, armor: 1.1, s: .96, about: '+10% speed, tireless, delicate' },
-  { id: 'clyde', n: 'Clydesdale', price: 5000, spd: .9, drain: .8, armor: .55, s: 1.08, about: 'huge + armored, tramples zombies' },
+  { id: 'quarter', coat: 1, n: 'Quarter Horse', price: 2500, spd: 1.05, drain: .9, armor: .95, s: .98, about: '+5% speed, steady' },
+  { id: 'appaloosa', coat: 5, n: 'Appaloosa', price: 3000, spd: 1.03, drain: .75, armor: .85, s: 1, about: 'stamina + hardy' },
+  { id: 'arabian', coat: 2, n: 'Arabian', price: 4500, spd: 1.1, drain: .7, armor: 1.1, s: .96, about: '+10% speed, tireless, delicate' },
+  { id: 'clyde', coat: 3, n: 'Clydesdale', price: 5000, spd: .9, drain: .8, armor: .55, s: 1.08, about: 'huge + armored, tramples zombies' },
 ];
 export function createBreeds({ H, msg, sfx }) {
   const ld = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || 'null') ?? d; } catch (_) { return d; } }, sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
@@ -20,7 +20,7 @@ export function createBreeds({ H, msg, sfx }) {
   let feath = null; const HOOF = [[7, -.13, .27], [10, .13, .27], [13, -.14, -.89], [16, .14, -.89]];
   function feathers(h, on) { if (feath) { for (const m of feath) m.removeFromParent(); feath = null; } const THREE = window.__THREE; if (!on || !THREE || !h || !h.g.userData.bones || h.g.userData.kind !== 'real') return; const u = h.g.userData, mat = new THREE.MeshStandardMaterial({ color: 0xf2ede2, roughness: 1 }); feath = [];
     h.g.updateMatrixWorld(true); for (const [bi, x, z] of HOOF) { const m = new THREE.Mesh(new THREE.CylinderGeometry(.075, .13, .24, 10, 1, true), mat); m.material.side = THREE.DoubleSide; m.position.set(x, .16, z); u.mdl.add(m); m.updateMatrixWorld(true); if (u.bones[bi]) u.bones[bi].attach(m); feath.push(m); } }
-  function onMount(h) { const b = cur(); if (h.baseS == null) h.baseS = h.g.scale.x; h.g.scale.setScalar(h.baseS * b.s); feathers(h, b.id === 'clyde'); }
+  function onMount(h) { const b = cur(); if (h.baseS == null) h.baseS = h.g.scale.x; h.g.scale.setScalar(h.baseS * b.s); feathers(h, b.id === 'clyde'); if (b.coat != null && H.myCoat && H.myCoat() < 0 && H.applyCoat) H.applyCoat(h, b.coat); } /* v182 breed coat (unless you bought the Coat Kit) */
   function onDismount(h) { if (h && h.baseS != null) h.g.scale.setScalar(h.baseS); feathers(h, false); }
   const hit = new WeakMap();
   // v139 name tag above your horse when you're on foot nearby

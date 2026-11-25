@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=376';
-import { PERF } from './perfopts.js?v=376';
+import { PF } from './perf.js?v=377';
+import { PERF } from './perfopts.js?v=377';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -260,7 +260,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
     preacherTick(o, dt); undertakerTick(o, dt); o.raidGo = null; if (o.raid && Z.raidHook) { const r = Z.raidHook(o, dt); if (r === 1) return; o.raidGo = r || null; } // v89 night raid: march on the gate
     const T = o.tgt = (o.retT = (o.retT || 0) - dt) <= 0 || !o.tgt || (o.tgt.kind === 'player' && o.tgt.p.gone) ? chooseTarget(o) : o.tgt; if (o.retT <= 0) o.retT = .5;
     let tx = T ? (T.kind === 'horse' ? T.h.pos.x : T.p.x) : PEN.x, tz = T ? (T.kind === 'horse' ? T.h.pos.z : T.p.z) : PEN.z; if (o.raidGo) { tx = o.raidGo[0]; tz = o.raidGo[1]; }
-    const dist = Math.hypot(tx - o.pos.x, tz - o.pos.z), reach = o.K.reach + (T && (T.kind === 'horse' || T.p.horse) ? .8 : 0), safe = !o.raidGo && T && (T.kind === 'horse' ? inPenSafe(tx, tz) : inPenSafe(T.p.x, T.p.z) || ((T.p.y ?? o.pos.y) - o.pos.y > 2.6));
+    const dist = Math.hypot(tx - o.pos.x, tz - o.pos.z), reach = o.K.reach + (T && (T.kind === 'horse' || T.p.horse) ? .8 : 0), safe = !o.raidGo && T && (T.kind === 'horse' ? inPenSafe(tx, tz) : inPenSafe(T.p.x, T.p.z) || ((T.p.y ?? o.pos.y) - o.pos.y > 2.6) || (H.onTrain && Math.hypot(T.p.x - P.pos.x, T.p.z - P.pos.z) < 1.5) || !!(H.beach && H.beach.surfing && Math.hypot(T.p.x - P.pos.x, T.p.z - P.pos.z) < 1.5)); /* v377 riders on the train and surfers are out of reach */
     o.cd -= dt;
     if (T && dist < reach && !safe && !o.raidGo) { o.st = 1; o.sp = 0; const want = Math.atan2(-(tx - o.pos.x), -(tz - o.pos.z)); o.yaw += Math.atan2(Math.sin(want - o.yaw), Math.cos(want - o.yaw)) * Math.min(1, dt * 8);
       if (o.kind === 'bloater') { if (Z.role() !== 'client') { o.hp = 0; kill(o, false, 'bandit'); } return; } // v87: it bursts on you

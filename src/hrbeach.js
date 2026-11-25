@@ -3,9 +3,9 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=376';
-import { createSurf } from './hrsurf.js?v=376';
-import { mergeStatic } from './hrmerge.js?v=376';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=377';
+import { createSurf } from './hrsurf.js?v=377';
+import { mergeStatic } from './hrmerge.js?v=377';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -218,7 +218,7 @@ export function createBeach(ctx) {
     root.add(g); T.spots.push({ x: x + 3, y, z, kind: 'bch_sari', label: '🏪 Sari-sari store: snacks (15 pts · heal)', r: 2, bch: true }); }
 
   // ---------- safe zone, swimming, deep-water check ----------
-  (H.safeRects || (H.safeRects = [])).push({ x: 1090, z: ZC, hw: 160, hd: 440, name: 'PARADISE COVE', label: '🛡 NO ZOMBIES · PARADISE COVE' });
+  (H.safeRects || (H.safeRects = [])).push({ x: 1190, z: ZC, hw: 330, hd: 480, name: 'PARADISE COVE', label: '🛡 NO ZOMBIES · PARADISE COVE' });
   H.places && (H.places.cove = { x: 1100, z: ZC });
   B.deep = (x, z) => x > shoreX(z) + 16; B.root = root;
   const wv = {}; let swimMsg = false, welcome = false;

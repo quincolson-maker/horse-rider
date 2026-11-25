@@ -3,9 +3,9 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=397';
-import { createSurf } from './hrsurf.js?v=397';
-import { mergeStatic } from './hrmerge.js?v=397';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=398';
+import { createSurf } from './hrsurf.js?v=398';
+import { mergeStatic } from './hrmerge.js?v=398';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -60,7 +60,7 @@ float shoreX(float z){ float az = abs(z - ${ZC.toFixed(1)}); return ${BEACH.SHOR
   const oceanM = new THREE.ShaderMaterial({ uniforms: oceanU, transparent: true, depthWrite: false, side: THREE.DoubleSide,
     vertexShader: WAVE_GLSL + `
       varying vec3 vW; varying vec3 vN; varying float vFoam; varying float vDepth;
-      void main(){ vec2 p = position.xz; vec2 w = surfWave(p); float e1 = surfWave(p + vec2(.7, 0.0)).x, e2 = surfWave(p + vec2(0.0, .7)).x;
+      void main(){ vec2 p = position.xz; float edgeF = smoothstep(1488.0, 1420.0, p.x) * smoothstep(-268.0, -225.0, p.y) * smoothstep(598.0, 545.0, p.y); /* v398 waves fade out before the surf mesh ends - no sawtooth on the horizon */ vec2 w = surfWave(p) * vec2(edgeF, 1.0); float e1 = surfWave(p + vec2(.7, 0.0)).x * edgeF, e2 = surfWave(p + vec2(0.0, .7)).x * edgeF;
         vN = normalize(vec3(-(e1 - w.x) / .7, 1.0, -(e2 - w.x) / .7)); vFoam = w.y; vec3 wp = vec3(p.x, ${SEA.toFixed(1)} + w.x, p.y); vW = wp;
         float az = abs(p.y - ${ZC.toFixed(1)}); float sh = ${BEACH.SHORE.toFixed(1)} + 150.0 * smoothstep(300.0, 430.0, az) + 6.0 * sin(p.y * .021) + 4.0 * sin(p.y * .053); vDepth = max(0.0, (p.x - sh) * .06);
         gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0); }`,

@@ -65,7 +65,7 @@ export function createExtra({ scene, H, P, hAt, msg, sfx, mobile }) {
     return () => { const now = performance.now(), f = now - last; last = now; if (off || document.hidden || f > 400) return; acc += f; n++; if (acc < 1000) return; const ms = acc / n; acc = 0; n = 0; coolT--;
       const want = GX.renderer.getPixelRatio(); if (Math.abs(want - cur) > .01) { base = want; cur = want; } /* the player changed quality */
       if (ms > 25) { slow++; fast = 0; } else if (ms < 17) { fast++; slow = 0; } else { slow = fast = 0; }
-      if (slow >= 3 && coolT <= 0 && cur > base * .62) { cur = Math.max(base * .6, cur - .1); GX.setPR(cur); coolT = 4; slow = 0; }
+      if (slow >= 3 && coolT <= 0 && cur > base * .82) { cur = Math.max(base * .8, cur - .05); GX.setPR(cur); coolT = 4; slow = 0; }
       else if (fast >= 6 && coolT <= 0 && cur < base - .01) { cur = Math.min(base, cur + .1); GX.setPR(cur); coolT = 6; fast = 0; } }; });
 
   // v227 PHOTO FILTERS: in photo mode press F to cycle Natural / Sepia / Silver / Golden hour / Moonlight / Vivid

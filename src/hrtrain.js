@@ -2,10 +2,10 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
-import { mergeStatic } from './hrmerge.js?v=368';
+import { mergeStatic } from './hrmerge.js?v=369';
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=368';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=368';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=369';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=369';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['dining', 11], ['express', 10], ['caboose', 7]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
@@ -129,6 +129,7 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
   function leaveP(st, jump) { H.trainRide = null; H.trainUse = null; H.onTrain = false; const c = pass && pass.car; if (pass && pass.cab) H.fp = pass.fp0; pass = null;
     if (st) { const x = st.plat.x + st.side.x * 2.4, z = st.plat.z + st.side.z * 2.4; P.pos.set(x, hAt(x, z), z); msg('🚉 ' + st.name + ' — whistle (Z) for your horse', 3); }
     else if (c) { tan.set(0, 0, 1).applyQuaternion(c.g.quaternion); const x = c.g.position.x - tan.z * 3.8, z = c.g.position.z + tan.x * 3.8; P.pos.set(x, hAt(x, z), z); if (jump) msg('You leap clear of the train', 2); } }
+  let lastV = 0, depPuff = -1; function brakeAndSteam(dt, SS) { const loco = cars[0], dl = Math.hypot(P.pos.x - loco.g.position.x, P.pos.z - loco.g.position.z); if (lastV > 3 && SS.v <= 3 && SS.v > .2 && dl < 150 && sfx && sfx.ctx && sfx.tone) { sfx.tone('sawtooth', 2600, 2300, .03, 1.4); sfx.nz && sfx.nz('highpass', 4000, 4, .03, 1.2); } if (SS.at >= 0 && SS.left < 2 && depPuff !== SS.at && dl < 200) { depPuff = SS.at; for (let k = 0; k < 14; k++) { tmp.set((Math.random() - .5) * 3, .6, 3 + (Math.random() - .5) * 2).applyQuaternion(loco.g.quaternion).add(loco.g.position); sp.set([tmp.x, tmp.y, tmp.z], si * 3); sAge[si] = 0; si = (si + 1) % SN; } if (sfx && sfx.ctx && sfx.nz) sfx.nz('highpass', 1800, .5, .12, 1.6); } if (SS.at < 0) depPuff = -1; lastV = SS.v; } /* v369 */
   let clackD = 0, inTun = false; function rideSounds(dt, v, s0) { if (!pass || !sfx || !sfx.ctx || !sfx.nz) return; clackD += v * dt; if (clackD > 12.5) { clackD -= 12.5; sfx.nz('bandpass', 1400, 2, .06, .05); setTimeout(() => sfx.nz('bandpass', 1300, 2, .05, .05), 110); } if (v > 6 && Math.random() < dt * 2) sfx.nz('lowpass', 300, .5, .03, .8);
     const ii = path.cum.findIndex(c => c > s0) - 1, t2 = TUN.some(([a, b]) => ii >= a && ii <= b); if (t2 !== inTun) { inTun = t2; if (t2) whistle(); } }
   function passTick() { if (!STATIONS.length) return; const S0 = sched(Date.now()); if (pass) { if (S0.at >= 0 && lastAt !== S0.at) msg(`🚉 ${STATIONS[S0.at].name} — USE to get off`, 3); else if (S0.at < 0 && lastAt >= 0) msg(`🚂 Next stop: ${STATIONS[S0.next].name}`, 2.5); }
@@ -211,6 +212,6 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
     for (const [k, st] of STATIONS.entries()) { const b = st.board; if (!b || (b.t -= dt) > 0) continue; b.t = 5; if (Math.hypot(P.pos.x - st.plat.x, P.pos.z - st.plat.z) > 70) continue; const x = b.cv.getContext('2d'), w = Math.round(untilAt(k)), nx = [1, 2, 3].map(j => STATIONS[(k + j) % STATIONS.length].name);
       x.fillStyle = '#20241f'; x.fillRect(0, 0, 256, 160); x.strokeStyle = '#7a5a3a'; x.lineWidth = 10; x.strokeRect(5, 5, 246, 150); x.fillStyle = '#efeadc'; x.textAlign = 'center'; x.font = 'bold 20px Georgia,serif'; x.fillText(st.name.toUpperCase(), 128, 34); x.font = '16px Georgia,serif'; x.fillText(SS.at === k ? 'TRAIN IN - ALL ABOARD!' : 'NEXT TRAIN  ' + (w >= 60 ? Math.floor(w / 60) + ' min ' + (w % 60) + ' s' : w + ' s'), 128, 62); x.font = '14px Georgia,serif'; x.fillStyle = '#d8d0b0'; nx.forEach((n2, j) => x.fillText((j ? '· ' : 'then ') + n2, 128, 92 + j * 20)); b.tx.needsUpdate = true; }
     { const at0 = SS.at; for (const [k, st] of STATIONS.entries()) { if (!st.folk) continue; const near = Math.hypot(P.pos.x - st.plat.x, P.pos.z - st.plat.z) < 140; const board = at0 === k && SS.left < DWELL - 4; for (const D of st.folk) { const v = near && !board; if (D.g.visible !== v) D.g.visible = v; if (v) poseFrontierCharacter(D, dt, { speed: 0 }); } } }
-    passTick(); rideSounds(dt, VNOW, s - 30); heistTick(dt); }
+    passTick(); rideSounds(dt, VNOW, s - 30); brakeAndSteam(dt, SS); heistTick(dt); }
   return { update, get stations() { return STATIONS; }, get tunnels() { return TUN.length; }, sched: () => sched(Date.now()), boardP, get passenger() { return !!pass; }, get guards() { return guards; }, get heist() { return heist; }, get cars() { return cars; }, get length() { return L; }, board: () => cars.length && board(cars.find(c => c.kind === 'express')) };
 }

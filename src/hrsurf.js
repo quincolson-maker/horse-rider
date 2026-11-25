@@ -9,9 +9,9 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=402';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=402';
-import { mergeStatic } from './hrmerge.js?v=402';
+import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=403';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=403';
+import { mergeStatic } from './hrmerge.js?v=403';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});
@@ -146,7 +146,7 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     R.catchHint = !!(w && !w.broken && w.s > .4 && w.u > -3.4 && w.u < 1.2 && R.dir[0] < (assist ? .15 : -.25)); if (R.catchHint) { R.catchT += c.fw > .3 ? dt : 0; if (jumpEdge || R.catchT > (assist ? .25 : .4)) popUp(t, w); } else R.catchT = 0;
     if (R.x < shoreX(R.z) + 10 && R.sp < 2) { const x = shoreX(R.z) - 2; P.pos.set(x, hAt(x, R.z), R.z); leave('🏖️ You carry your board up the sand'); } }
   function recStart(t) { rec = { t0: t, pts: [] }; }
-  function popUp(t, w) { if (fx && fx.smoke) for (let k = 0; k < 10; k++) emitS(R.x + (Math.random() - .5) * 1.4, SEA + 1.2, R.z + (Math.random() - .5) * 1.4, (Math.random() - .5) * 2, 1.6, (Math.random() - .5) * 2, .95, .98, 1, .5, .8, .6, -.06, .3); R.mode = 'ride'; R.popT = .42; recStart(t); R.k = w.k; R.u = Math.min(.3, R.x - crestX(R.k, R.z, t)); R.th = .62; /* v384 the shoulder is always south (waves peel N->S): pop up angled down the line, never into the curl */ R.sp = Math.max(8, R.sp + 5.5); R.carve = 0; R.tube = false; R.ride = { t: 0, tube: 0, airs: 0, peak: 0, turnAcc: 0, lastTrick: '' }; score = 0; combo = 1; lastTh = R.th; msg('🏄 POP UP! Angle along the face - race the curl south', 2.2); buzz(35); R.punch = 1; if (w.s > .93 && Math.abs(w.u) < .8) setTimeout(() => R.ride && flash('😱 LATE DROP', 250), 300); if (sfx.tone && sfx.ctx) sfx.tone('triangle', 520, 880, .08, .25); if (sfx.nz && sfx.ctx) { sfx.nz('bandpass', 700, .8, .25, .35); setTimeout(() => sfx.nz('highpass', 2200, .7, .18, .3), 90); } }
+  function popUp(t, w) { if (fx && fx.smoke) for (let k = 0; k < 10; k++) emitS(R.x + (Math.random() - .5) * 1.4, SEA + 1.2, R.z + (Math.random() - .5) * 1.4, (Math.random() - .5) * 2, 1.6, (Math.random() - .5) * 2, .95, .98, 1, .5, .8, .6, -.06, .3); R.mode = 'ride'; R.popT = .42; recStart(t); R.k = w.k; R.u = Math.min(.3, R.x - crestX(R.k, R.z, t)); R.th = .62; /* v384 the shoulder is always south (waves peel N->S): pop up angled down the line, never into the curl */ R.sp = Math.max(10.5, R.sp + 6.5); R.grace = 1.6; /* v403 a stronger drop and a moment of grace so you can set your line */ R.carve = 0; R.tube = false; R.ride = { t: 0, tube: 0, airs: 0, peak: 0, turnAcc: 0, lastTrick: '' }; score = 0; combo = 1; lastTh = R.th; msg('🏄 POP UP! Angle along the face - race the curl south', 2.2); buzz(35); R.punch = 1; if (w.s > .93 && Math.abs(w.u) < .8) setTimeout(() => R.ride && flash('😱 LATE DROP', 250), 300); if (sfx.tone && sfx.ctx) sfx.tone('triangle', 520, 880, .08, .25); if (sfx.nz && sfx.ctx) { sfx.nz('bandpass', 700, .8, .25, .35); setTimeout(() => sfx.nz('highpass', 2200, .7, .18, .3), 90); } }
   function ride(dt, t, c, jumpEdge) { const r = R.ride; r.t += dt; const cx = crestX(R.k, R.z, t), x = cx + R.u, ez = surfaceAt(x + .35, R.z, t) - surfaceAt(x - .35, R.z, t), face = clamp(ez / .7, 0, 1.4); waveAt(x, R.z, t, wv); const A = wv.wave ? wv.wave.A : 1; const ahead = Math.max(0, peelZ(R.k, t) - R.z), pocket = Math.exp(-Math.max(0, ahead - 5) / 11); R.pocket = pocket; R.ahead = ahead; /* v385 the POCKET: the wave's push is strongest right by the curl and fades on the open shoulder */
     // steering (carve), pump, stall
     const rate = (2.6 + 2.2 * clamp(1 - R.sp / 14, 0, 1)) * QB().turn; let sd = c.sd; if (!c.hd && c.ks) { const dx = -Math.cos(R.th), dz = Math.sin(R.th); sd = c.ks * (dx * c.rx + dz * c.rz >= 0 ? 1 : -1); } if (c.hd) { const tt = Math.atan2(-c.hd[0], -c.hd[1]), dd = Math.atan2(Math.sin(tt - R.th), Math.cos(tt - R.th)); sd = clamp(dd * 2.2, -1, 1); }
@@ -179,6 +179,7 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     // ends: over the back, outran the wave, caught by the curl
     if (R.u > 1.6) { bank(); R.mode = 'paddle'; R.a = Math.atan2(R.dir[1], R.dir[0]); R.sp = 1; msg('🏄 You kick out over the back', 1.8); return; }
     if (R.sp < 1.4 && face < .06) { bank(); R.mode = 'paddle'; R.sp = .5; R.a = Math.PI; msg('🏄 The wave runs away from you', 1.8); return; }
+    R.grace = Math.max(0, (R.grace || 0) - dt); if (R.grace > 0 && behind > 0) { R.z -= Math.min(behind + 1, 12 * dt); } /* during the drop the curl can't swallow you */
     if (behind > 6 && R.u > -A * 1.6 && crestX(R.k, R.z, t) < XB + 2) { if (R.sp < 3.5) { bank(); R.mode = 'paddle'; R.sp = .5; R.a = Math.PI; msg('🏄 The wave closes out - you straighten out and ride the foam in', 2); } else wipeout('🌊 The curl caught you!'); return; }
     if (R.x < shoreX(R.z) + 8) { bank(); const sx = shoreX(R.z) - 2; P.pos.set(sx, hAt(sx, R.z), R.z); leave('🏖️ You ride it all the way to the sand'); return; } }
   function air(dt, t, c) { const a = R.air, r = R.ride; a.vy -= G * dt; a.y += a.vy * dt; a.spin += c.sd * 7.5 * dt; if (c.bk > .5) a.grab = (a.grab || 0) + dt; if (c.fw > .5 && (a.vy > 0 || a.flip > 0 || a.y - surfaceAt(R.x, R.z, t) > 1.2)) a.flip = Math.min(1, (a.flip || 0) + dt * 1.5); /* v392 FLIP works whenever there's air under you */ a.pitch = Math.sin(Math.min(1, (a.vy + 6) / 12) * Math.PI) * -.2;

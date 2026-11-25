@@ -3,9 +3,9 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=382';
-import { createSurf } from './hrsurf.js?v=382';
-import { mergeStatic } from './hrmerge.js?v=382';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=383';
+import { createSurf } from './hrsurf.js?v=383';
+import { mergeStatic } from './hrmerge.js?v=383';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -105,7 +105,7 @@ float shoreX(float z){ float az = abs(z - ${ZC.toFixed(1)}); return ${BEACH.SHOR
     for (let i = 0; i < N * 5 && n < N; i++) { const z = -320 + rnd() * 960, x = shoreX(z) - 60 - rnd() * 230; if (x < 885 || Math.abs(z - ZC) > 470) continue; if (terraceMask(x, z) > .05 || nearFalls(x, z)) continue; const y = hAt(x, z), s = 3.5 + rnd() * 5.5; m4.makeScale(s, s * (.7 + rnd() * .4), s).setPosition(x, y + s * .55, z); JM.setMatrixAt(n, m4); JM.setColorAt(n, c.setHSL(.27 + rnd() * .08, .5 + rnd() * .2, .16 + rnd() * .12)); n++; }
     JMM.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vJp; varying float vJy;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvJp = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz; vJy = normal.y;');
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vJp; varying float vJy; float jh(vec3 p){ return fract(sin(dot(p, vec3(12.9, 78.2, 37.7))) * 43758.5); }').replace('#include <color_fragment>', '#include <color_fragment>\n{ vec3 q = floor(vJp * 2.6); float l = jh(q), l2 = jh(floor(vJp * 7.0)); float top = smoothstep(-.4, .9, vJy); diffuseColor.rgb *= (.55 + .45 * top) * (.78 + .32 * l) * (.9 + .2 * l2); diffuseColor.rgb += vec3(.05, .07, .0) * step(.86, l2) * top; }'); };
-    JM.count = n; JM.castShadow = !mobile; JM.name = 'jungle'; root.add(JM); }
+    JM.count = n; JM.castShadow = !mobile; JM.name = 'jungle'; root.add(JM); B._crown = [ico, JMM]; }
   /* v382 undergrowth: arching fern fronds and grass clumps carpet the green hillsides, swaying in the trade wind */
   { const mkTuft = (nb, len, wid, droop, seg) => { const P = [], C = []; for (let b = 0; b < nb; b++) { const a = b / nb * Math.PI * 2 + b * .37, ca = Math.cos(a), sa = Math.sin(a), L = len * (.75 + .25 * Math.sin(b * 2.3)), up = .9 - (b % 3) * .18; let prev = null;
         for (let k = 0; k <= seg; k++) { const t = k / seg, r = L * t, y = L * (up * t - droop * t * t), w = wid * Math.sin(Math.PI * Math.min(1, t * 1.15 + .05)) * (1 - t * .6), cx = ca * r, cz = sa * r, px = -sa * w, pz = ca * w, sh = .45 + .55 * t;
@@ -125,12 +125,15 @@ float shoreX(float z){ float az = abs(z - ${ZC.toFixed(1)}); return ${BEACH.SHOR
       .replace('#include <color_fragment>', `#include <color_fragment>
 { float a = atan(vKp.z, vKp.x) * 30.0; float bed = .5 + .5 * sin(vKp.y * 1.3 + kn(vec2(a * .1, vKp.y * .05)) * 4.0), streak = smoothstep(.55, .85, kn(vec2(a * .35, vKp.y * .015))) * smoothstep(.6, .2, abs(vKn.y));
   float rock = step(diffuseColor.g, diffuseColor.r * 1.15); vec3 c = diffuseColor.rgb; c *= mix(1.0, .9 + .14 * bed, rock); c = mix(c, c * vec3(.42, .42, .4), streak * rock * .85); c = mix(c, vec3(.78, .76, .7), rock * smoothstep(.6, .9, kn(vKp.xy * .08)) * .25);
-  c = mix(c, vec3(.28, .4, .2), rock * smoothstep(.55, .9, vKn.y) * .7); c *= mix(.55, 1.0, smoothstep(${(SEA - .5).toFixed(1)}, ${(SEA + 2.5).toFixed(1)}, vKp.y)); diffuseColor.rgb = c; }`); };
+  c = mix(c, vec3(.16, .26, .11), rock * smoothstep(.55, .9, vKn.y) * .7); c *= mix(.55, 1.0, smoothstep(${(SEA - .5).toFixed(1)}, ${(SEA + 2.5).toFixed(1)}, vKp.y)); diffuseColor.rgb = c; }`); };
   const karst = (x, z, R, Hh) => { const prof = []; for (let k = 0; k <= 14; k++) { const t = k / 14, r = R * (1.05 - .25 * t + .18 * Math.sin(t * 9 + R) * (1 - t) + (t > .92 ? -(t - .92) * 6 : 0)); prof.push(new THREE.Vector2(Math.max(.5, r), -8 + t * (Hh + 8))); } prof.push(new THREE.Vector2(.01, Hh + R * .15));
     const g = new THREE.LatheGeometry(prof, mobile ? 16 : 26); const p = g.attributes.position, col = []; for (let i = 0; i < p.count; i++) { const px = p.getX(i), py = p.getY(i), pz = p.getZ(i), a = Math.atan2(pz, px), nn = Math.sin(a * 5 + py * .2) * .5 + Math.sin(a * 13 - py * .07) * .5, k = 1 + nn * .12; p.setX(i, px * k); p.setZ(i, pz * k);
-        const top = sstep(Hh * .82, Hh * .95, py), streak = Math.sin(a * 21 + py * .05) > .7 ? .82 : 1; const moss = sstep(.4, 1.2, Math.sin(a * 2.3 + py * .035) + Math.sin(a * 1.7 - py * .05) * .7) * (1 - top), gr = Math.max(top, moss * .85), st2 = .36 + nn * .05 - (streak < 1 ? .07 : 0); col.push(st2 + (.17 - st2) * gr, st2 - .01 + (.4 - st2) * gr, st2 - .06 + (.14 - st2 + .06) * gr); }
-    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals(); const m = new THREE.Mesh(g, KARSTM); m.position.set(x, SEA, z); m.castShadow = !mobile; m.name = 'karst'; root.add(m); };
+        const top = sstep(Hh * .82, Hh * .95, py), streak = Math.sin(a * 21 + py * .05) > .7 ? .82 : 1; const moss = sstep(.4, 1.2, Math.sin(a * 2.3 + py * .035) + Math.sin(a * 1.7 - py * .05) * .7) * (1 - top), gr = Math.max(top, moss * .85), st2 = .36 + nn * .05 - (streak < 1 ? .07 : 0); col.push(st2 + (.1 - st2) * gr * .9, st2 - .01 + (.24 - st2) * gr * .9, st2 - .06 + (.08 - st2 + .06) * gr * .9); }
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals(); const m = new THREE.Mesh(g, KARSTM); m.position.set(x, SEA, z); m.castShadow = !mobile; m.name = 'karst'; root.add(m);
+    /* v383 jungle crowns tufting the tower tops and clinging to ledges */ const topR = R * .8, nc = Math.round(Math.min(mobile ? 40 : 90, 10 + R * R / 35)); for (let i = 0; i < nc; i++) { const a = rnd() * 6.28, ledge = i > nc * .7, t = ledge ? .45 + rnd() * .4 : 1, rr = ledge ? R * (1.05 - .25 * t) * 1.02 : Math.sqrt(rnd()) * topR, yy = ledge ? -8 + t * (Hh + 8) : Hh * .97 + R * .1 * (1 - rr / topR), s = ledge ? 2 + rnd() * 3 : R * (.12 + rnd() * .1); KC.push([x + Math.cos(a) * rr, SEA + yy + s * .2, z + Math.sin(a) * rr, s]); } };
+  const KC = [];
   for (const [x, z, R, Hh] of [[1420, -120, 32, 95], [1560, 60, 46, 140], [1500, 330, 28, 80], [1700, 470, 60, 170], [1880, 160, 70, 210], [1640, -260, 40, 120], [1350, 480, 18, 55], [2100, -40, 80, 240]]) karst(x, z, R, Hh);
+  if (B._crown) { const [cg, cm] = B._crown, IM = new THREE.InstancedMesh(cg, cm, KC.length), m4 = new THREE.Matrix4(), c = new THREE.Color(); KC.forEach(([x, y, z, s], i) => { m4.makeScale(s, s * (.6 + rnd() * .3), s).setPosition(x, y, z); IM.setMatrixAt(i, m4); IM.setColorAt(i, c.setHSL(.26 + rnd() * .08, .5 + rnd() * .2, .17 + rnd() * .1)); }); IM.name = 'karst jungle'; root.add(IM); }
 
   // ---------- v336 beach life: bangka outriggers, nipa huts on stilts, a beach bar, umbrellas + loungers, a hammock, a bonfire, gulls ----------
   const GEO = new Map(), push = (m, g) => (GEO.get(m) || GEO.set(m, []).get(m)).push(g.index ? g.toNonIndexed() : g); const std = o => new THREE.MeshStandardMaterial(Object.assign({ roughness: .85 }, o));

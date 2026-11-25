@@ -2,7 +2,7 @@
 // Units are metres. -Z is forward, +Y up, origin at the trigger. Static parts are merged per material (one draw each);
 // the charging / cocking handle (recoil) and the magazine (reload) stay separate so they can move.
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=382';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=383';
 
 let MM = null;
 function modernMats() { if (MM) return MM;

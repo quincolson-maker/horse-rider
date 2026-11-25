@@ -32,9 +32,23 @@ float fb(vec3 p){ return n3(p) * .55 + n3(p * 2.1) * .3 + n3(p * 4.3) * .15; }`)
     if (lines) { x.fillStyle = 'rgba(0,0,0,.28)'; for (let y = 0; y < h; y += 32) x.fillRect(0, y + 22, w, 3); x.fillStyle = 'rgba(255,255,255,.06)'; for (let y = 0; y < h; y += 32) x.fillRect(0, y + 4, w, 2); x.fillStyle = 'rgba(0,0,0,.35)'; for (let y = 0; y < h; y += 32) for (let xx = 0; xx < w; xx += 32) x.fillRect(xx, y + 4, 2, 18); } });
   const flag = canvas(256, 140, (x, w, h) => { x.fillStyle = '#3b3a2c'; x.fillRect(0, 0, w, h); for (let i = 0; i < 7; i++) { x.fillStyle = i % 2 ? '#2a2a20' : '#55533f'; x.fillRect(0, i * (h / 7) + 0, w, h / 13); }
     x.fillStyle = '#2a2a20'; x.fillRect(w * .55, 0, w * .45, h * .54); x.fillStyle = '#6b6850'; for (let r = 0; r < 5; r++) for (let c = 0; c < 6; c++) { x.beginPath(); x.arc(w * .58 + c * 17, 10 + r * 14, 3, 0, 6.3); x.fill(); } x.strokeStyle = '#1b1b14'; x.lineWidth = 6; x.strokeRect(0, 0, w, h); }); // subdued, reversed (worn on the right side)
-  KM = { camo, rg: new THREE.MeshStandardMaterial({ color: 0x5b5f46, roughness: .9, map: weave('#c8c8c8', true) }), // ranger green MOLLE
-    rgP: new THREE.MeshStandardMaterial({ color: 0x555941, roughness: .92, map: weave('#c4c4c4', false) }),
-    coy: new THREE.MeshStandardMaterial({ color: 0x8b7656, roughness: .9, map: weave('#d0d0d0', false) }), // coyote boots / gloves
+  /* v379 REALISTIC FABRIC (after the user's reference photo): soft low-frequency mottling, dust building up toward the boots,
+     darker folds under overhangs, matte cloth. No high-frequency hash terms, so nothing shimmers or goes blocky on a phone. */
+  const fabric = (col, pat) => { const m = new THREE.MeshStandardMaterial({ color: col, roughness: .96, metalness: 0 }); m.onBeforeCompile = s2 => { s2.vertexShader = s2.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vF; varying vec3 vFN;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvF = position; vFN = normal;');
+      s2.fragmentShader = s2.fragmentShader.replace('#include <common>', `#include <common>
+varying vec3 vF; varying vec3 vFN;
+float fh(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
+float fn(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3. - 2. * f); return mix(mix(mix(fh(i), fh(i + vec3(1,0,0)), f.x), mix(fh(i + vec3(0,1,0)), fh(i + vec3(1,1,0)), f.x), f.y), mix(mix(fh(i + vec3(0,0,1)), fh(i + vec3(1,0,1)), f.x), mix(fh(i + vec3(0,1,1)), fh(i + vec3(1,1,1)), f.x), f.y), f.z); }`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+{ vec3 c = diffuseColor.rgb; float m1 = fn(vF * 3.0), m2 = fn(vF * 7.0 + 13.0);
+  ${pat ? `float a = fn(vF * 4.2 + 3.0), b = fn(vF * 5.5 + 17.0); c = mix(c, c * vec3(.72, .78, .62), smoothstep(.55, .6, a)); c = mix(c, c * vec3(1.18, 1.1, .92), smoothstep(.6, .65, b) * .8);` : ''}
+  c *= .9 + .16 * m1 + .06 * m2;                                   // cloth mottling
+  float dust = smoothstep(-.25, -.95, vF.y) * .45 + smoothstep(.3, .9, m2) * .08; c = mix(c, vec3(.55, .5, .42), dust);  // dust toward the boots
+  c *= mix(1.0, .78, smoothstep(.2, -.7, normalize(vFN).y));        // folds / undersides darker
+  diffuseColor.rgb = c; }`); }; return m; };
+  KM = { camo, jacket: fabric(0x626a58), pants: fabric(0x5f6450, true), beanie: fabric(0x4a5638), packM: fabric(0x55593e), rg: fabric(0x5e6146), // ranger green MOLLE
+    rgP: fabric(0x5a5d43),
+    coy: fabric(0x7a6a50), // coyote boots / gloves
     helm: new THREE.MeshStandardMaterial({ color: 0x6b6450, roughness: .75, metalness: .05, map: weave('#d6d6d6', false) }),
     black: new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: .6, metalness: .3 }), rubber: new THREE.MeshStandardMaterial({ color: 0x111111, roughness: .9 }),
     lens: new THREE.MeshStandardMaterial({ color: 0x122826, roughness: .05, metalness: .9, emissive: 0x0a3020, emissiveIntensity: .4 }),
@@ -94,6 +108,14 @@ function helmet(g, M) { const hx = 0, hy = .835, hz = .065, R = .158;
   // chin strap
   for (const s of [-1, 1]) { B(g, M.black, .012, .11, .006, s * .118, hy - .1, hz + .01, 0, 0, -s * .1); } B(g, M.black, .07, .012, .03, hx, hy - .18, hz + .09); }
 
+function beanie(g, M) { const hx = 0, hy = .835, hz = .065; const cap = new THREE.Mesh(new THREE.SphereGeometry(.152, 32, 16, 0, Math.PI * 2, 0, 1.62), M.beanie); cap.scale.set(1, 1.08, 1.1); cap.position.set(hx, hy - .02, hz); g.add(cap);
+  const cuff = new THREE.Mesh(new THREE.CylinderGeometry(.158, .156, .055, 32, 1, true), M.beanie); cuff.scale.set(1, 1, 1.1); cuff.position.set(hx, hy - .035, hz); cuff.material.side = THREE.DoubleSide; g.add(cuff); const top = new THREE.Mesh(new THREE.SphereGeometry(.06, 12, 8), M.beanie); top.scale.y = .5; top.position.set(hx, hy + .14, hz - .01); g.add(top); }
+function hood(g, M) { const h = new THREE.Mesh(new THREE.TorusGeometry(.125, .05, 10, 28), M.jacket); h.rotation.x = Math.PI / 2 + .35; h.scale.set(1.1, 1.05, .8); h.position.set(0, .655, -.02); g.add(h);
+  const back = new THREE.Mesh(new THREE.SphereGeometry(.13, 16, 10, 0, Math.PI * 2, 0, 1.4), M.jacket); back.rotation.x = -2.2; back.scale.set(1.15, .75, .6); back.position.set(0, .62, -.17); g.add(back); }
+function pack(g, M) { const z0 = -.36; RB(g, M.packM, .34, .42, .2, 0, .4, z0, .05); RB(g, M.packM, .3, .1, .19, 0, .64, z0 + .01, .04); /* main bag + lid */
+  RB(g, M.packM, .26, .2, .07, 0, .33, z0 - .12, .03); for (let i = 0; i < 4; i++) B(g, M.rg, .27, .012, .072, 0, .26 + i * .045, z0 - .12); /* front pocket with MOLLE rows */
+  for (const sd of [-1, 1]) { RB(g, M.packM, .06, .22, .14, sd * .2, .38, z0, .025); B(g, M.black, .014, .3, .012, sd * .1, .42, z0 - .16); B(g, M.buckle, .03, .02, .012, sd * .1, .47, z0 - .168); }
+  C(g, M.black, .01, .01, .12, 0, .7, z0 + .02, 0, 0, Math.PI / 2, 8); B(g, M.velcro, .07, .05, .005, .08, .55, z0 - .103); }
 export function wearKit(root, on) { if (!root || !root.userData) return false;
   const U = root.userData; if (U.kit) { for (const m of U.kit) m.visible = !!on; hat(U, !!on || !!U.customHat); if (U.hatG) U.hatG.visible = !on; if (U.jacket) for (const m of U.jacket) m.visible = on ? false : !!U.jkOn; return true; } if (!on) return true;
   let body = null; root.traverse(o => { if (o.isSkinnedMesh && !o.userData.kitPart && (!body || o.geometry.attributes.position.count > body.geometry.attributes.position.count)) body = o; }); if (!body || !body.geometry.attributes.normal) return false;
@@ -104,10 +126,13 @@ export function wearKit(root, on) { if (!root || !root.userData) return false;
   const S = n => new Set(n.map(bi).filter(i => i >= 0)), HANDS = S(['LeftHand', 'RightHand']), FEET = S(['LeftFoot', 'RightFoot', 'LeftToeBase', 'RightToeBase']), HEAD = S(['Head', 'head_end', 'headfront']), NECK = bi('neck');
   const parts = [], add = m => { if (m) { m.userData.kitPart = true; parts.push(m); } return m; };
   // 1. uniform: everything but head, hands, feet (neck only below the collar)
-  add(shell(body, v => !HANDS.has(dom[v]) && !FEET.has(dom[v]) && !HEAD.has(dom[v]) && !(dom[v] === NECK && pos.getY(v) > .66), (v, P) => P.y < -.05 ? .014 : P.y > .5 ? .012 : .016, M.camo, 'kit uniform'));
+  const LEGS = S(['LeftUpLeg', 'RightUpLeg', 'LeftLeg', 'RightLeg']), up = v => !HANDS.has(dom[v]) && !FEET.has(dom[v]) && !HEAD.has(dom[v]) && !(dom[v] === NECK && pos.getY(v) > .66);
+  add(shell(body, v => up(v) && !LEGS.has(dom[v]) && pos.getY(v) > .06, (v, P) => P.y > .5 ? .02 : P.y < .2 ? .018 : .026, M.jacket, 'kit softshell')); /* v379 a loose grey-green softshell over everything above the belt */
+  add(shell(body, v => up(v) && (LEGS.has(dom[v]) || pos.getY(v) <= .06), (v, P) => P.y < -.05 ? .014 : .016, M.pants, 'kit pants'));
   add(shell(body, v => HANDS.has(dom[v]), () => .007, M.coy, 'kit gloves')); add(shell(body, v => FEET.has(dom[v]), (v, P) => P.y < -.985 ? .004 : .012, M.coy, 'kit boots'));
   // 2. rigid gear
-  add(onBone(sk, 'Spine01', g => plateCarrier(g, M))); add(onBone(sk, 'Head', g => helmet(g, M)));
+  add(onBone(sk, 'Spine01', g => plateCarrier(g, M))); add(onBone(sk, 'Head', g => beanie(g, M))); add(onBone(sk, 'Spine01', g => { hood(g, M); pack(g, M); }));
+  add(onBone(sk, 'Hips', g => { const inner = new THREE.Group(); helmet(inner, M); inner.position.set(0, -.835, -.065); const o = new THREE.Group(); o.add(inner); o.position.set(-.2, -.02, -.1); o.rotation.set(.25, -1.2, 1.35); o.scale.setScalar(.95); g.add(o); B(g, M.black, .025, .09, .015, -.2, .1, -.12); })); /* helmet clipped to the belt (like the reference) */
   for (const [leg, s] of [['LeftLeg', 1], ['RightLeg', -1]]) add(onBone(sk, leg, g => { RB(g, M.black, .11, .14, .04, s * .19, -.44, .085, .03); B(g, M.black, .13, .018, .1, s * .19, -.41, .03); B(g, M.black, .13, .018, .1, s * .19, -.49, .03); }));
   add(onBone(sk, 'RightUpLeg', g => { B(g, M.rgP, .05, .03, .14, -.255, -.08, .0); RB(g, M.black, .05, .17, .09, -.27, -.2, .01, .015); B(g, M.black, .018, .05, .03, -.27, -.1, .04); B(g, M.rgP, .06, .03, .15, -.25, -.26, .0); })); // drop-leg holster
   add(onBone(sk, 'Hips', g => { // v73 battle belt: padded belt, buckle, pistol-mag pouches, rifle-mag pouch, dump pouch, IFAK

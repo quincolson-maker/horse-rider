@@ -2,7 +2,7 @@
 //  The well: USE to drink a cold dipper of water (+30 health, every 20 s).
 //  The trough: ride your horse up to it and it drinks, which refills its stamina and heals it.
 import * as THREE from 'three';
-import { mergeStatic } from './hrmerge.js?v=378';
+import { mergeStatic } from './hrmerge.js?v=379';
 export function createWell({ scene, H, P, T, hAt, msg, sfx }) {
   const s = T.structs.find(q => q.kind === 'town'); if (!s) return null;
   const stone = new THREE.MeshStandardMaterial({ color: 0x8a8278, roughness: .95 }), wood = new THREE.MeshStandardMaterial({ color: 0x6a4a2c, roughness: .9 }), water = new THREE.MeshStandardMaterial({ color: 0x2a4a5a, roughness: .05, metalness: .2 });

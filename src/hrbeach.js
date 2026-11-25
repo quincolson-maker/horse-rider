@@ -3,9 +3,9 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=373';
-import { createSurf } from './hrsurf.js?v=373';
-import { mergeStatic } from './hrmerge.js?v=373';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=374';
+import { createSurf } from './hrsurf.js?v=374';
+import { mergeStatic } from './hrmerge.js?v=374';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -191,11 +191,11 @@ export function createBeach(ctx) {
     SH.floors.push({ x0: px0 - 1080, x1: px1 - 1080, z0: pz - 1.2 - ZC, z1: pz + 1.2 - ZC, ya: py + .05, yb: py + .05, axis: 'x' });
     const boat = boats[0]; const path = new THREE.CatmullRomCurve3([[px1 + 3, pz], [1380, -200], [1600, -330], [1720, -200], [1650, -40], [1500, 140], [1560, 250], [1460, 400], [1330, 420], [1280, 200], [px1 + 3, pz + 1]].map(([x, z]) => new THREE.Vector3(x, 0, z)), true, 'centripetal');
     try { mergeStatic(pierG); } catch (_) {}
-    const sp = { x: px1 - 1, y: py, z: pz, kind: 'bch_tour', label: '⛵ Island-hopping tour on the bangka (50 pts · ~2 min)', r: 2.5, bch: true }; T.spots.push(sp); return { boat, path, len: path.getLength(), sp, on: false, u: 0, home: boat.position.clone(), homeRy: boat.rotation.y }; })();
+    const sp = { x: px1 - 1, y: py, z: pz, kind: 'bch_tour', label: '⛵ Island-hopping tour on the bangka (50 pts · ~5 min · USE to come back)', r: 2.5, bch: true }; T.spots.push(sp); return { boat, path, len: path.getLength(), sp, on: false, u: 0, home: boat.position.clone(), homeRy: boat.rotation.y }; })();
   function tourTick(dt, t) { if (!TOUR.on) return; TOUR.u = (performance.now() - TOUR.t0) / 1000 * 7 / TOUR.len; const b = TOUR.boat; if (TOUR.u >= 1) { TOUR.on = false; H.trainRide = null; H.trainUse = null; b.position.copy(TOUR.home); b.rotation.y = TOUR.homeRy; { const rf = b.getObjectByName('roof'); if (rf) rf.visible = true; } H.camDist = 0; P.pos.set(TOUR.sp.x, TOUR.sp.y + .1, TOUR.sp.z); msg('⛵ Back at the pier - salamat po!', 2.5); const S = H.stats || (H.stats = {}); S.tours = (S.tours || 0) + 1; return; }
     const p = TOUR.path.getPointAt(TOUR.u), tn = TOUR.path.getTangentAt(TOUR.u); waveAt(p.x, p.z, t, wv); b.position.set(p.x, SEA + wv.eta + .05, p.z); b.rotation.y = Math.atan2(tn.x, tn.z); b.rotation.z = Math.sin(t * 1.3) * .06; P.pos.set(p.x - tn.z * .2, b.position.y + .55, p.z + tn.x * .2); H.vy = 0; if (H.fv) H.fv.set(0, 0); { const av = H.meAv; if (av && av.body) { av.body.visible = !H.fp; av.body.position.set(P.pos.x, P.pos.y - .35, P.pos.z); av.body.rotation.set(0, b.rotation.y + Math.PI, 0); if (av.W) av.W.update(dt || .016, 0); } }
     if (sfx.nz && sfx.ctx && Math.random() < dt * 6) sfx.nz('lowpass', 160, 1, .025, .2); }
-  B.tour = TOUR; const tourStart = () => { const g = H.guns; if (!g || g.state.score < 50) { msg('You need 50 pts', 1.5); return; } if (H.mounted) { msg('⛵ Leave your horse on the beach first', 2); return; } g.state.score -= 50; g.save && g.save(); TOUR.on = true; TOUR.u = 0; TOUR.t0 = performance.now(); { const rf = TOUR.boat.getObjectByName('roof'); if (rf) rf.visible = false; } H.camDist = 5.5; H.trainRide = () => tourTick(0, surfTime()); H.trainUse = () => { msg('⛵ Enjoy the ride - the boatman brings you back to the pier', 2); return true; }; msg('⛵ The boatman pushes off - out past the karst towers we go!', 3); };
+  B.tour = TOUR; const tourStart = () => { const g = H.guns; if (!g || g.state.score < 50) { msg('You need 50 pts', 1.5); return; } if (H.mounted) { msg('⛵ Leave your horse on the beach first', 2); return; } g.state.score -= 50; g.save && g.save(); TOUR.on = true; TOUR.u = 0; TOUR.t0 = performance.now(); { const rf = TOUR.boat.getObjectByName('roof'); if (rf) rf.visible = false; } H.camDist = 5.5; H.trainRide = () => tourTick(0, surfTime()); H.trainUse = () => { TOUR.u = 1; TOUR.t0 = -1e9; tourTick(0, surfTime()); msg('⛵ The boatman turns back for the pier', 2); return true; }; /* v374 USE ends the tour early */ msg('⛵ The boatman pushes off - out past the karst towers we go!', 3); };
 
   // ---------- v358 the coral garden: a reef patch in the clear shallows south of the pier - snorkel it from the sand ----------
   const REEF = (() => { const rz = ZC - 230, rx = shoreX(rz) + 22, N = mobile ? 70 : 160, cols = [0xff6a8a, 0xffb03a, 0x9a5aff, 0x3ad8c8, 0xff4a3a, 0xf0e070]; const g1 = new THREE.IcosahedronGeometry(.5, 0), g2 = new THREE.ConeGeometry(.18, 1.1, 5), g3 = new THREE.SphereGeometry(.45, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2);

@@ -9,9 +9,9 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=399';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=399';
-import { mergeStatic } from './hrmerge.js?v=399';
+import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=400';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=400';
+import { mergeStatic } from './hrmerge.js?v=400';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});
@@ -44,7 +44,7 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })(), bMat = new THREE.MeshStandardMaterial({ color: COLS[(board || 1) - 1] || COLS[0], roughness: .28, metalness: .05, map: bTex }), brd = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CapsuleGeometry(.27, 1.65, 4, 14), bMat); b.rotation.x = Math.PI / 2; b.scale.set(1, 1, .22); brd.add(b); const st = new THREE.Mesh(new THREE.BoxGeometry(.03, .05, 2.1), new THREE.MeshStandardMaterial({ color: 0x3a2a1a })); st.position.y = .03; brd.add(st); const fin = new THREE.Mesh(new THREE.BoxGeometry(.02, .16, .2), bMat); fin.position.set(0, -.1, -.9); brd.add(fin); }
   brd.visible = false; scene.add(brd); brd.scale.set(1, 1, QB().len / 1.65);
   // ---------- HUD ----------
-  const hud = document.createElement('div'); hud.id = 'hrSurf'; hud.style.cssText = 'position:fixed;left:50%;top:150px;transform:translateX(-50%);z-index:31;font:800 15px system-ui,sans-serif;color:#fff;text-shadow:0 2px 4px #000a;text-align:center;pointer-events:none;display:none'; document.body.appendChild(hud);
+  const hud = document.createElement('div'); hud.id = 'hrSurf'; hud.style.cssText = 'position:fixed;left:50%;top:' + (mobile ? '84px' : '150px') + ';transform:translateX(-50%)' + (mobile ? ' scale(.82)' : '') + ';transform-origin:50% 0;z-index:31;font:800 15px system-ui,sans-serif;color:#fff;text-shadow:0 2px 4px #000a;text-align:center;pointer-events:none;display:none'; document.body.appendChild(hud);
   const ex = document.createElement('button'); ex.textContent = '🏖️ To shore'; ex.style.cssText = 'position:fixed;right:12px;top:118px;z-index:32;padding:8px 12px;border-radius:10px;border:2px solid #fff8;background:#0a6a7acc;color:#fff;font:700 13px system-ui;display:none'; document.body.appendChild(ex); for (const [k2, v2] of [['width', 'auto'], ['min-width', '0'], ['max-width', '140px']]) ex.style.setProperty(k2, v2, 'important');
   /* v384 skip the slog: one tap puts you in the lineup, just outside the break, facing the beach */
   const lu = document.createElement('button'); lu.textContent = '⏩ To the lineup'; lu.style.cssText = 'position:fixed;right:12px;top:160px;z-index:32;padding:8px 12px;border-radius:10px;border:2px solid #fff8;background:#1a8a4acc;color:#fff;font:700 13px system-ui;display:none;touch-action:manipulation'; document.body.appendChild(lu); for (const [k2, v2] of [['width', 'auto'], ['min-width', '0'], ['max-width', '160px']]) lu.style.setProperty(k2, v2, 'important');

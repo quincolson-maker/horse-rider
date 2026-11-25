@@ -9,9 +9,9 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=390';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=390';
-import { mergeStatic } from './hrmerge.js?v=390';
+import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=391';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=391';
+import { mergeStatic } from './hrmerge.js?v=391';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});
@@ -150,7 +150,7 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     if (QB().nose && Math.abs(Math.cos(R.th)) > .9 && R.sp > 6 && R.u > -A * .7) { r.nose = (r.nose || 0) + dt; if (r.nose > 2 && !r.noseCall) { r.noseCall = 1; flash('🦶 HANG TEN!', 300); } } else { r.nose = 0; r.noseCall = 0; }
     if (R.u > -.6 && R.u < .6 && behind > 0 && behind < 6 && R.sp > 5) { if (!r.fl) { r.fl = 1; flash('🌊 FLOATER', 160); } } else r.fl = 0;
     // launch off the lip
-    if (R.u > -.4 && down < -.3 && R.sp > 6.5 && (jumpEdge || R.sp * -down > 7.5)) { R.mode = 'air'; R.air = { y: surfaceAt(R.x, R.z, t) + .1, vy: 3 + R.sp * .32 * -down, spin: 0, pitch: 0, th0: R.th, grab: 0, flip: 0 }; msg('🛫 AIR! (A/D spin · S grab · W flip)', 1.2); return; }
+    if (jumpEdge && R.u > -1.0 && down < -.1 && R.sp > 5.5 || R.u > -.4 && down < -.3 && R.sp > 6.5 && R.sp * -down > 7.5) { /* v391 the AIR button launches whenever it says AIR! */ buzz(20); R.mode = 'air'; R.air = { y: surfaceAt(R.x, R.z, t) + .1, vy: 3.2 + R.sp * .34 * Math.max(.35, -down), spin: 0, pitch: 0, th0: R.th, grab: 0, flip: 0 }; msg('🛫 AIR! (A/D spin · S grab · W flip)', 1.2); return; }
     // ends: over the back, outran the wave, caught by the curl
     if (R.u > 1.6) { bank(); R.mode = 'paddle'; R.a = Math.atan2(R.dir[1], R.dir[0]); R.sp = 1; msg('🏄 You kick out over the back', 1.8); return; }
     if (R.sp < 1.4 && face < .06) { bank(); R.mode = 'paddle'; R.sp = .5; R.a = Math.PI; msg('🏄 The wave runs away from you', 1.8); return; }

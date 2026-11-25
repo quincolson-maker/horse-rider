@@ -3,9 +3,9 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=385';
-import { createSurf } from './hrsurf.js?v=385';
-import { mergeStatic } from './hrmerge.js?v=385';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=386';
+import { createSurf } from './hrsurf.js?v=386';
+import { mergeStatic } from './hrmerge.js?v=386';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -69,7 +69,9 @@ float shoreX(float z){ float az = abs(z - ${ZC.toFixed(1)}); return ${BEACH.SHOR
       void main(){ vec2 q = vW.xz; vec3 n = normalize(vN + vec3(sin(q.x * 1.3 + uT * 2.1) * .04 + sin(q.y * 1.7 - uT * 1.6) * .03, 0.0, cos(q.y * 1.1 + uT * 1.8) * .04 + sin(q.x * .9 + q.y * .7 + uT) * .03));
         vec3 v = normalize(cameraPosition - vW); float fres = pow(1.0 - max(dot(n, v), 0.0), 4.0);
         vec3 shallow = vec3(.16, .78, .74), mid = vec3(.03, .5, .62), deep = vec3(.01, .2, .4); vec3 col = mix(shallow, mid, smoothstep(.3, 3.0, vDepth)); col = mix(col, deep, smoothstep(3.0, 16.0, vDepth));
-        float face = smoothstep(.15, .8, -n.x) * smoothstep(.3, 2.5, vW.y - ${SEA.toFixed(1)}); col = mix(col, vec3(.1, .62, .6), face * .5); col += vec3(.05, .28, .22) * face * smoothstep(1.5, 4.0, vW.y - ${SEA.toFixed(1)}); // the face darkens to deep green-blue with light glowing through its thin top
+        float hgt = vW.y - ${SEA.toFixed(1)}, face = smoothstep(.05, .55, -n.x) * smoothstep(.15, 1.4, hgt), upf = smoothstep(.4, 4.8, hgt); /* v386 the face as a WALL: dark trough -> glassy emerald, sun glowing through the thin top, water drawing up the face in streaks */
+        vec3 fc = mix(vec3(.015, .2, .3), vec3(.06, .6, .56), upf); fc += vec3(.08, .42, .3) * pow(upf, 2.2) * (1.0 - uNight); float stk = vn(vec2(q.y * 1.3, hgt * .8 - uT * .9)) * .6 + vn(vec2(q.y * 4.3, hgt * 2.6 - uT * 1.4)) * .4; fc *= .78 + .42 * stk; fc = mix(fc, vec3(.75, .9, .92), smoothstep(.72, .95, stk) * upf * .35);
+        col = mix(col, fc, face * .9); float back = smoothstep(.1, .5, n.x) * smoothstep(.5, 2.0, hgt); col = mix(col, col * vec3(.8, .95, 1.05) + vec3(.04, .08, .1), back * .5); // the face darkens to deep green-blue with light glowing through its thin top
         float dif = max(dot(n, normalize(uSun)), 0.0); col *= .62 + .5 * dif;
         vec3 sky = mix(vec3(.62, .8, .96), vec3(.06, .09, .16), uNight); float dusk = smoothstep(.15, .45, uNight) * (1.0 - smoothstep(.55, .8, uNight)); sky = mix(sky, vec3(1.0, .5, .3), dusk * .8); vec3 rr = reflect(-v, n); float hz = clamp(rr.y, 0.0, 1.0); vec3 skyG = mix(sky * vec3(1.08, 1.05, 1.0) + .06, sky * vec3(.7, .82, 1.0), pow(hz, .5)); /* v382 graded sky in the reflection */
         float land = smoothstep(.0, -.6, rr.x) * smoothstep(.32, .04, rr.y) * smoothstep(2.0, 40.0, length(cameraPosition.xz - vW.xz)) * (1.0 - uNight * .6); skyG = mix(skyG, vec3(.08, .2, .1), land * .75); /* jungle hills mirrored in the sea */

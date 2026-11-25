@@ -9,9 +9,9 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=385';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=385';
-import { mergeStatic } from './hrmerge.js?v=385';
+import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=386';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=386';
+import { mergeStatic } from './hrmerge.js?v=386';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});
@@ -155,7 +155,7 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     // which wave: the one you ride, else the nearest one that is peeling within view
     let k = R.ride ? R.k : null; if (k == null) { const k0 = Math.floor(t / TP); let bd = 1e9; for (let j = 0; j < 6; j++) { const kk = k0 - j, pz = peelZ(kk, t); if (pz < -240 || pz > 560) continue; const d = Math.abs(pz - me.z); if (d < bd) { bd = d; k = kk; } } }
     if (k == null) { lip.visible = false; return; } const pz = peelZ(k, t); if (pz < -240 || pz > 560) { lip.visible = false; return; }
-    const amp = .75 + .6 * ((k * .618034) - Math.floor(k * .618034)) + (k % 5 === 0 ? .55 : 0), A = amp * 3.1 * SWELL.m; lip.visible = true; lipM.uniforms.uNight.value = H.night || 0;
+    const amp = .75 + .6 * ((k * .618034) - Math.floor(k * .618034)) + (k % 5 === 0 ? .55 : 0), A = amp * 3.6 * SWELL.m; lip.visible = true; lipM.uniforms.uNight.value = H.night || 0;
     for (let j = 0; j < LZ; j++) { const z = pz - 8 + j * (24 / (LZ - 1)), rel = z - pz, grow = clamp((rel + 8) / 8, 0, 1), fall = clamp(1 - (rel - 2) / 14, 0, 1), cx = crestX(k, z, t);
       const r = A * .55 * grow, cy = A * (.95 - .45 * grow), cu = -r * .9; for (let i = 0; i < LA; i++) { const th = Math.PI / 2 - i / (LA - 1) * (Math.PI * (.35 + .7 * grow)), u = cu + Math.cos(th) * r * (i ? 1 : 0) + (i ? 0 : 0), h = cy + Math.sin(th) * r * fall * (1 - .35 * (1 - grow)) * 1, o = (j * LA + i) * 3;
         lipPos[o] = cx + (i ? u : -.2); lipPos[o + 1] = SEA + Math.max(.1, i ? h * fall + (1 - fall) * A * .2 : A * (.98 - .4 * (1 - fall))); lipPos[o + 2] = z; lipFoam[j * LA + i] = clamp((i / (LA - 1)) * 1.3 * grow + (1 - fall) * .9 + (rel > 0 ? .25 : 0), 0, 1); } }

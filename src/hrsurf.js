@@ -9,9 +9,9 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=405';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=405';
-import { mergeStatic } from './hrmerge.js?v=405';
+import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=406';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=406';
+import { mergeStatic } from './hrmerge.js?v=406';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});
@@ -118,7 +118,7 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     if (R.mode === 'ride' && R.sp > 12) { brd.position.y += Math.sin(t * 61) * .012 * (R.sp - 12) * .3; } /* v393 board chatter at speed */
     if (R.mode === 'ride' && R.sp > 6 && Math.random() < dt * (3 + R.sp * .5)) emitS(x - dir[0] * .9, y + .12, z - dir[1] * .9, -dir[0] * 1.2 + (Math.random() - .5), .7 + Math.random() * .6, -dir[1] * 1.2 + (Math.random() - .5), .95, .98, 1, .3, .55, .8, -.08, .45); /* v393 tail spray */
     P.pos.set(x, brd.position.y + (R.mode === 'paddle' ? -.55 : .02), z); H.vy = 0; if (H.fv) H.fv.set(0, 0);
-    const av = H.meAv; if (av && av.body) { av.body.visible = !H.fp; av.body.position.copy(P.pos); if (R.mode === 'paddle') { av.body.rotation.set(-1.35, yaw + Math.PI, 0, 'YXZ'); av.body.position.y += .45; } else if (R.mode === 'wipe') { av.body.rotation.set(Math.sin(t * 9) * 2, yaw, Math.cos(t * 7) * 2, 'YXZ'); } else { R.popT = Math.max(0, (R.popT || 0) - dt); const pp = R.mode === 'ride' ? R.popT / .42 : 0, pe = pp * pp; if (pe > 0) { av.body.rotation.set(-1.35 * pe, yaw + Math.PI / 2 * (1 - pe) + Math.PI * pe, 0, 'YXZ'); av.body.position.y += .45 * pe - .05; } else { av.body.rotation.set(0, yaw + Math.PI / 2 + (R.mode === 'air' ? R.air.spin : 0), clamp(R.carve * .25, -.4, .4), 'YXZ'); av.body.position.y -= .05; } } /* v398 a real pop-up: from prone to a crouch in under half a second */
+    const av = H.meAv; if (av && av.body) { av.body.visible = !H.fp; av.body.position.copy(P.pos); if (R.mode === 'paddle') { av.body.rotation.set(-1.35, yaw + Math.PI, 0, 'YXZ'); av.body.position.y += .45; } else if (R.mode === 'wipe') { av.body.rotation.set(Math.sin(t * 9) * 2, yaw, Math.cos(t * 7) * 2, 'YXZ'); } else { R.popT = Math.max(0, (R.popT || 0) - dt); const pp = R.mode === 'ride' ? R.popT / .42 : 0, pe = pp * pp; if (pe > 0) { av.body.rotation.set(-1.35 * pe, yaw + Math.PI / 2 * (1 - pe) + Math.PI * pe, 0, 'YXZ'); av.body.position.y += .45 * pe - .05; } else { av.body.rotation.set(0, yaw + Math.PI / 2 + (R.mode === 'air' ? R.air.spin : 0), clamp(R.carve * .25, -.4, .4), 'YXZ'); av.body.position.y -= .05 + (R.mode === 'air' ? .55 + ((R.air && R.air.grab) > .1 ? .15 : 0) : clamp(.3 + Math.abs(R.carve || 0) * .35 + (R.tube ? .5 : 0), 0, 1) * .22); } /* v406 bent knees lower the hips: feet stay on the deck */ } /* v398 a real pop-up: from prone to a crouch in under half a second */
       if (av.W) { av.W.update(dt, 0); stance(av, R.mode === 'ride' ? (R.popT > 0 ? 1 : 0) + clamp(.3 + R.sp * .025 + (R.tube ? .5 : 0) + Math.abs(R.carve || 0) * .35 + ((R.ride && R.ride.pump) || 0) * .4, 0, 1) : R.mode === 'air' ? .8 : .6, R.carve || 0, R.mode === 'paddle', t); } }
     // camera: drift behind the direction of travel
     const riding = R.mode === 'ride' || R.mode === 'air'; if (riding) { R.camAl = (R.camAl == null ? 1 : R.camAl) + ((Math.cos(R.th) >= -.15 ? 1 : -1) - R.camAl) * Math.min(1, dt * 1.2); } else R.camAl = null; /* v385 surf cam: low and steady, looking down the line with the wave standing up beside you (not swinging with every carve) */
@@ -264,5 +264,5 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     if (me.x > 1040 && Math.abs(me.z - ZC) < 500 && sfx.nz && sfx.ctx && (crashT -= dt) <= 0) { crashT = 1.6 + Math.random() * 2.5; const d = Math.max(20, Math.abs(me.x - XB)); sfx.nz('lowpass', 420 + Math.random() * 300, .7, Math.min(.12, 6 / d), 1.8 + Math.random()); } }
   const testPop = () => { const t = (Date.now() / 1000) % 3600; waveAt(R.x, R.z, t, wv); if (wv.wave && !wv.wave.broken && wv.wave.u > -2.5 && wv.wave.u < 1.5 && wv.wave.s > .45) { popUp(t, wv.wave); return true; } return false; };
   const peelInfo = zRef => { const t = (Date.now() / 1000) % 3600, k0 = Math.floor(t / TP); let best = null; for (let j = 0; j < 6; j++) { const k = k0 - j, pz = peelZ(k, t); if (pz < -200 || pz > 500) continue; if (!best || Math.abs(pz - zRef) < Math.abs(best.pz - zRef)) best = { k, pz, cx: crestX(k, pz, t) }; } return best; };
-  return { update, toLineup, _scene: scene, peelInfo, locals: LOC, get state() { return R; }, enter, leave, testPop, setAssist, setLevel, get level() { return level; }, get assist() { return assist; }, peel: () => R.ride ? peelZ(R.k, (Date.now() / 1000) % 3600) : null };
+  return { update, toLineup, _scene: scene, _brd: brd, peelInfo, locals: LOC, get state() { return R; }, enter, leave, testPop, setAssist, setLevel, get level() { return level; }, get assist() { return assist; }, peel: () => R.ride ? peelZ(R.k, (Date.now() / 1000) % 3600) : null };
 }

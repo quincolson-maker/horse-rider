@@ -1,16 +1,16 @@
 // Voxel Raid · HORSE RIDER (v31): the link opens straight into Horse Rider (auto shared lobby, voice, guns, zombies, rideable
 // mountains). The old voxel raid / zombies modes and their menu were removed in v31; they live on in git history (<= v30).
-import './src/assetshim.js?v=405';
-import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=405';
-import './src/hraudio.js?v=405';
-import './src/stylize.js?v=405'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
-import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=405';
-import { FX, SFX } from './src/fx.js?v=405';
-import { initTouch } from './src/touch.js?v=405';
-import { createHorseRider } from './src/horse.js?v=405';
-import { createHorseNet } from './src/horsenet.js?v=405';
+import './src/assetshim.js?v=406';
+import { PERF, PERF_ITEMS, setPerf } from './src/perfopts.js?v=406';
+import './src/hraudio.js?v=406';
+import './src/stylize.js?v=406'; // v40 stylized art pipeline (patches shader chunks before any material compiles)
+import { createGraphics, loadPBR, pickQuality, IS_TOUCH } from './src/gfx.js?v=406';
+import { FX, SFX } from './src/fx.js?v=406';
+import { initTouch } from './src/touch.js?v=406';
+import { createHorseRider } from './src/horse.js?v=406';
+import { createHorseNet } from './src/horsenet.js?v=406';
 import * as THREE from 'three';
-import { PF, initPerf } from './src/perf.js?v=405';
+import { PF, initPerf } from './src/perf.js?v=406';
 const $ = id => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
 if (IS_TOUCH) document.body.classList.add('touch');

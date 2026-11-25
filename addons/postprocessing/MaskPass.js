@@ -1,4 +1,4 @@
-import { Pass } from './Pass.js?v=401';
+import { Pass } from './Pass.js?v=402';
 
 class MaskPass extends Pass {
 

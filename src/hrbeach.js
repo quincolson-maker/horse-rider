@@ -3,9 +3,9 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=401';
-import { createSurf } from './hrsurf.js?v=401';
-import { mergeStatic } from './hrmerge.js?v=401';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=402';
+import { createSurf } from './hrsurf.js?v=402';
+import { mergeStatic } from './hrmerge.js?v=402';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -14,7 +14,7 @@ export function createBeach(ctx) {
   const root = new THREE.Group(); root.name = 'Paradise Cove'; scene.add(root); const WFZ = ZC + 262, WFX = shoreX(WFZ) - 60, nearFalls = (x, z) => Math.hypot(x - WFX - 20, z - WFZ) < 34;
 
   // ---------- the sand + jungle + limestone skin over the coast ----------
-  { const X0 = 880, Z0 = -330, Z1 = 650, st = mobile ? 4 : 3; const nx = Math.ceil((1215 - X0) / st) + 1 /* v380 the skin now runs out under the shallows: a sand seabed */, nz = Math.ceil((Z1 - Z0) / st) + 1;
+  { const X0 = 880, Z0 = -330, Z1 = 650, st = mobile ? 4 : 3; const nx = Math.ceil((1330 - X0) / st) + 1 /* v402 out past the south headland too; v380 the skin now runs out under the shallows: a sand seabed */, nz = Math.ceil((Z1 - Z0) / st) + 1;
     const pos = new Float32Array(nx * nz * 3), col = new Float32Array(nx * nz * 4), idx = []; const hs = new Float32Array(nx * nz);
     for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const x = X0 + i * st, z = Z0 + j * st, k = j * nx + i; hs[k] = hAt(x, z); }
     for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const x = X0 + i * st, z = Z0 + j * st, k = j * nx + i, h = hs[k]; pos[k * 3] = x; pos[k * 3 + 1] = h + .14; pos[k * 3 + 2] = z;
@@ -57,16 +57,16 @@ float shoreX(float z){ float az = abs(z - ${ZC.toFixed(1)}); return ${BEACH.SHOR
   // ---------- the ocean: a dense surf patch + an outer ring of open sea, both on the wave shader ----------
   const sunDir = new THREE.Vector3(.4, .8, .3).normalize(); scene.traverse(o => { if (o.isDirectionalLight) sunDir.copy(o.position).normalize(); });
   const oceanU = { uSwell: { value: SWELL.m }, uT: { value: 0 }, uSun: { value: sunDir }, uNight: { value: 0 }, uFogC: { value: new THREE.Color(0xbcd0dc) } };
-  const oceanM = new THREE.ShaderMaterial({ uniforms: oceanU, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+  const oceanM = new THREE.ShaderMaterial({ uniforms: oceanU, transparent: true, depthWrite: true, /* v402 depth-write: far crests no longer paint over near faces (the sawtooth) */ side: THREE.DoubleSide,
     vertexShader: WAVE_GLSL + `
       varying vec3 vW; varying vec3 vN; varying float vFoam; varying float vDepth;
-      void main(){ vec2 p = position.xz; float edgeF = smoothstep(1488.0, 1420.0, p.x) * smoothstep(-268.0, -225.0, p.y) * smoothstep(598.0, 545.0, p.y); /* v398 waves fade out before the surf mesh ends - no sawtooth on the horizon */ vec2 w = surfWave(p) * vec2(edgeF, 1.0); float e1 = surfWave(p + vec2(.7, 0.0)).x * edgeF, e2 = surfWave(p + vec2(0.0, .7)).x * edgeF;
+      void main(){ vec2 p = position.xz; float edgeF = smoothstep(1488.0, 1345.0, p.x) * smoothstep(-268.0, -225.0, p.y) * smoothstep(598.0, 545.0, p.y); /* v398 waves fade out before the surf mesh ends - no sawtooth on the horizon */ vec2 w = surfWave(p) * vec2(edgeF, 1.0); float e1 = surfWave(p + vec2(.7, 0.0)).x * edgeF, e2 = surfWave(p + vec2(0.0, .7)).x * edgeF;
         vN = normalize(vec3(-(e1 - w.x) / .7, 1.0, -(e2 - w.x) / .7)); vFoam = w.y; vec3 wp = vec3(p.x, ${SEA.toFixed(1)} + w.x, p.y); vW = wp;
         float az = abs(p.y - ${ZC.toFixed(1)}); float sh = ${BEACH.SHORE.toFixed(1)} + 150.0 * smoothstep(300.0, 430.0, az) + 6.0 * sin(p.y * .021) + 4.0 * sin(p.y * .053); vDepth = max(0.0, (p.x - sh) * .06);
         gl_Position = projectionMatrix * viewMatrix * vec4(wp, 1.0); }`,
-    fragmentShader: `uniform float uT; uniform vec3 uSun; uniform float uNight; uniform vec3 uFogC; varying vec3 vW; varying vec3 vN; varying float vFoam; varying float vDepth;
+    fragmentShader: WAVE_GLSL + `uniform vec3 uSun; uniform float uNight; uniform vec3 uFogC; varying vec3 vW; varying vec3 vN; varying float vFoam; varying float vDepth;
       float h2(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5); } float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h2(i), h2(i + vec2(1, 0)), f.x), mix(h2(i + vec2(0, 1)), h2(i + vec2(1, 1)), f.x), f.y); }
-      void main(){ vec2 q = vW.xz; vec3 n = normalize(vN + vec3(sin(q.x * 1.3 + uT * 2.1) * .04 + sin(q.y * 1.7 - uT * 1.6) * .03, 0.0, cos(q.y * 1.1 + uT * 1.8) * .04 + sin(q.x * .9 + q.y * .7 + uT) * .03));
+      void main(){ vec2 q = vW.xz; vec3 nB = vN; ${mobile ? '' : 'if (abs(vN.x) > .12 && vW.x < 1350.0) { float e0 = surfWave(q).x, ex = surfWave(q + vec2(.45, 0.0)).x, ez = surfWave(q + vec2(0.0, .45)).x; nB = normalize(vec3(-(ex - e0) / .45, 1.0, -(ez - e0) / .45)); } /* v402 per-pixel normals on steep faces (desktop) */'} vec3 n = normalize(nB + vec3(sin(q.x * 1.3 + uT * 2.1) * .04 + sin(q.y * 1.7 - uT * 1.6) * .03, 0.0, cos(q.y * 1.1 + uT * 1.8) * .04 + sin(q.x * .9 + q.y * .7 + uT) * .03));
         vec3 v = normalize(cameraPosition - vW); float fres = pow(1.0 - max(dot(n, v), 0.0), 4.0);
         vec3 shallow = vec3(.16, .78, .74), mid = vec3(.03, .5, .62), deep = vec3(.01, .2, .4); vec3 col = mix(shallow, mid, smoothstep(.3, 3.0, vDepth)); col = mix(col, deep, smoothstep(3.0, 16.0, vDepth));
         float hgt = vW.y - ${SEA.toFixed(1)}, face = smoothstep(.05, .55, -n.x) * smoothstep(.15, 1.4, hgt), upf = smoothstep(.4, 4.8, hgt); /* v386 the face as a WALL: dark trough -> glassy emerald, sun glowing through the thin top, water drawing up the face in streaks */
@@ -77,13 +77,13 @@ float shoreX(float z){ float az = abs(z - ${ZC.toFixed(1)}); return ${BEACH.SHOR
         float land = smoothstep(.0, -.6, rr.x) * smoothstep(.32, .04, rr.y) * smoothstep(2.0, 40.0, length(cameraPosition.xz - vW.xz)) * (1.0 - uNight * .6); skyG = mix(skyG, vec3(.08, .2, .1), land * .75); /* jungle hills mirrored in the sea */
         col = mix(col, skyG, clamp(fres * .7 + .06, 0.0, .85)); col += vec3(1.0, .45, .2) * dusk * pow(max(dot(reflect(-normalize(vec3(-1.0, .15, .1)), n), v), 0.0), 18.0) * .9; // v360 a golden sunset path on the sea
         float spec = pow(max(dot(reflect(-uSun, n), v), 0.0), 140.0) * (1.0 - uNight) * 1.6;
-        float fm = vFoam * (.55 + .45 * vn(q * .7 + vec2(uT * .25, 0.0))) + smoothstep(.35, 0.0, vDepth) * (.5 + .5 * sin(q.y * .3 + uT * 1.5 + vn(q * .4) * 4.0)) * .6;
+        float vFp = vFoam > .004 ? surfWave(q).y : 0.0; /* v402 crest foam evaluated per pixel - no sawtooth triangles along the crests */ float fm = vFp * (.55 + .45 * vn(q * .7 + vec2(uT * .25, 0.0))) + smoothstep(.35, 0.0, vDepth) * (.5 + .5 * sin(q.y * .3 + uT * 1.5 + vn(q * .4) * 4.0)) * .6;
         float lace = smoothstep(.45, .75, vn(q * 1.6 + vec2(uT * .4, uT * .2)) * vn(q * 3.7 - uT * .3)); fm = max(fm, lace * smoothstep(1.2, .2, vDepth) * .6); /* v380 lacy foam in the shallows */
         fm = clamp(fm, 0.0, 1.0); col = mix(col, vec3(.96, .98, 1.0), fm); col += vec3(1.0) * pow(max(dot(reflect(-uSun, n), v), 0.0), 900.0) * step(.82, vn(q * 6.0 + uT)) * (1.0 - uNight) * 3.0; /* sun glitter */ col *= mix(1.0, .28, uNight); col += spec; col += vec3(.1, .75, .95) * fm * smoothstep(.5, .9, uNight) * (.6 + .4 * sin(uT * 3.0 + q.x * .4 + q.y * .3)); // bioluminescent surf after dark
         float a = mix(.42, .93, smoothstep(0.0, 2.5, vDepth)); a = max(a, fm); float dist = length(cameraPosition - vW); col = mix(col, uFogC, 1.0 - exp(-dist * .0007));
         gl_FragColor = vec4(col, a); }` });
   const mkGrid = (xs, zs, skip) => { const pos = [], idx = [], nx = xs.length, nz = zs.length; for (const z of zs) for (const x of xs) pos.push(x, 0, z); for (let j = 0; j < nz - 1; j++) for (let i = 0; i < nx - 1; i++) { if (skip && skip(xs[i], zs[j], xs[i + 1], zs[j + 1])) continue; const a = j * nx + i, b = a + 1, c = a + nx, d = c + 1; idx.push(a, c, b, b, c, d); } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); return g; };
-  const PX0 = 1104, PX1 = 1490, PZ0 = -270, PZ1 = 600; const xs = []; for (let x = PX0; x < 1150; x += mobile ? 2 : 1.4) xs.push(x); for (let x = 1150; x < 1235; x += mobile ? 1.4 : .75) xs.push(x); for (let x = 1235; x <= PX1; x += mobile ? 5 : 3) xs.push(x); const zs = []; for (let z = PZ0; z <= PZ1; z += mobile ? 3.5 : 2) zs.push(z); /* v351 lighter surf grid on phones */
+  const PX0 = 1104, PX1 = 1490, PZ0 = -270, PZ1 = 600; const xs = []; for (let x = PX0; x < 1150; x += mobile ? 2 : 1.4) xs.push(x); for (let x = 1150; x < 1235; x += mobile ? 1.4 : .75) xs.push(x); for (let x = 1235; x < 1345; x += mobile ? 3.15 : 1.8) xs.push(x); for (let x = 1345; x <= PX1; x += mobile ? 5 : 3) xs.push(x); /* v402 finer where crests steepen - no sawtooth along the lines */ const zs = []; for (let z = PZ0; z <= PZ1; z += mobile ? 3.5 : 2) zs.push(z); /* v351 lighter surf grid on phones */
   const surfMesh = new THREE.Mesh(mkGrid(xs, zs), oceanM); surfMesh.frustumCulled = false; surfMesh.renderOrder = 3; surfMesh.name = 'surf'; root.add(surfMesh);
   { const oxs = [], ozs = []; for (let x = 1100; x <= 4400; x += x < 1600 ? 20 : 80) oxs.push(x); for (let z = -900; z <= 1200; z += 30) ozs.push(z); const ring = new THREE.Mesh(mkGrid(oxs, ozs, (x0, z0, x1, z1) => x0 >= PX0 && x1 <= PX1 && z0 >= PZ0 && z1 <= PZ1 || x1 < shoreX((z0 + z1) / 2) - 30), oceanM); ring.frustumCulled = false; ring.renderOrder = 2; ring.position.y = -.02; ring.name = 'open sea'; root.add(ring); }
 

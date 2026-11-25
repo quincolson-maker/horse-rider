@@ -1,8 +1,8 @@
 // Frontier people: one vertex-colored SkinnedMesh per character, no external assets.
 // Detailed procedural art, not a scanned/photoreal human. Adult characters only.
 import * as THREE from 'three';
-import { PENDING } from './hrpuppet.js?v=401';
-import { upgradeFemale } from './hrfemale.js?v=401';
+import { PENDING } from './hrpuppet.js?v=402';
+import { upgradeFemale } from './hrfemale.js?v=402';
 export const PLAYER_VARIANTS = Object.freeze([
  {id:'george',name:'George Reed',tex:'assets/horses/rider_george',kind:'player',sex:'male',skin:0x4e2e20,hair:0x120d0b,hairStyle:'fade',beard:true,nose:1.35,lips:1.55,top:0xd5c7ac,bottom:0x343e43,coat:0x393024,hatC:0x32271e,bandana:0x934532,curls:true},
  {id:'cole',name:'Cole Mercer',kind:'player',sex:'male',skin:0xd5a080,hair:0x533a27,top:0xd8c6a2,bottom:0x343e43,coat:0x65503b,hatC:0x564431,bandana:0x934532},

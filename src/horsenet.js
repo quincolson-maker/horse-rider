@@ -5,11 +5,11 @@
 // lobby. Transport is the existing PeerJS co-op star (src/coop.js); voice is the existing mesh (src/voice.js).
 // Synced: each rider's position / facing / walking speed, which horse they ride and its pose; the host is the authority
 // for the free herd (clients mirror it). Guns: other riders see your drawn gun, aim and shots (tracer, flash, smoke, sound) — visual only, no combat.
-import { createNet, MAX_PLAYERS } from './coop.js?v=406';
-import { PERF } from './perfopts.js?v=406';
-import { validCv } from './hrskin.js?v=406';
-import { createVoice } from './voice.js?v=406';
-import { createAdvert, LOBBY_URL } from './lobby.js?v=406';
+import { createNet, MAX_PLAYERS } from './coop.js?v=407';
+import { PERF } from './perfopts.js?v=407';
+import { validCv } from './hrskin.js?v=407';
+import { createVoice } from './voice.js?v=407';
+import { createAdvert, LOBBY_URL } from './lobby.js?v=407';
 const $ = id => document.getElementById(id);
 const QS = new URLSearchParams(location.search);
 const LOOP = QS.get('loopnet') === '1', LOCAL = /^(localhost|127\.|\[::1\])/.test(location.hostname);
@@ -145,7 +145,7 @@ export function createHorseNet({ horse, P, msg }) {
         for (const [id, d] of L) if (voice.links.has(id) && d > VOICE_FAR) voice.drop(id); for (const [id, d] of L) if (!voice.links.has(id) && d < VOICE_NEAR && voice.links.size < VOICE_MESH) voice.peer(id); } }
     if (net.open && S.netT <= 0) { S.netT = rate;
       const st = { t: 'p', x: +x.toFixed(2), y: +(h ? h.pos.y : P.pos.y).toFixed(2), z: +z.toFixed(2), yw: +(h ? P.yaw : (H.bodyYaw ?? P.yaw)).toFixed(3), m: h ? h.id : -1, hc: h && H.myCoat ? H.myCoat() : -1, br: h && H.breed ? H.breed.list.indexOf(H.breed.breed()) : 0, pa: !h && H.pass ? H.pass.h.id : -1, hy: h ? +h.yaw.toFixed(3) : 0, sp: +(h ? H.speed : S.footSp).toFixed(2) };
-      if (horse.gunNet) Object.assign(st, horse.gunNet()); if (H.saloon) Object.assign(st, H.saloon.netState()); st.n = callsign().slice(0, 14); { const rn = H.ranch && H.ranch.netSite(); if (rn) st.rn = rn; } if (H.dead) st.dd = 1; if (isHost()) st.id = 'P1'; net.send(st); }
+      if (horse.gunNet) Object.assign(st, horse.gunNet()); if (H.saloon) Object.assign(st, H.saloon.netState()); st.n = callsign().slice(0, 14); { const rn = H.ranch && H.ranch.netSite(); if (rn) st.rn = rn; } if (H.dead) st.dd = 1; if (H.surfNet) { const q = H.surfNet(); if (q) st.sf = q; } /* v407 surfing is visible to others */ if (isHost()) st.id = 'P1'; net.send(st); }
     if (isHost() && net.open && S.herdT <= 0) { S.herdT = .25; net.send({ t: 'herd', h: horse.herd() }); }
     if (isHost() && S.code && (S.hbT = (S.hbT || 0) - dt) <= 0) { S.hbT = 5; try { localStorage.setItem('hr_mycode', JSON.stringify({ code: S.code, t: Date.now() })); } catch (_) {} }
     // v34: never stay offline: retry the lobby in the background (cold lobby server, PeerJS hiccup, came back from the background)

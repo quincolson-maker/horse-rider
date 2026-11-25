@@ -9,9 +9,9 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=406';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=406';
-import { mergeStatic } from './hrmerge.js?v=406';
+import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=407';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=407';
+import { mergeStatic } from './hrmerge.js?v=407';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});
@@ -262,6 +262,14 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
   function update(dt, t) { if ((sbTime -= dt) <= 0) { sbTime = 4; if (Math.hypot(P.pos.x - shX, P.pos.z - shZ) < 60) sbDraw(); } curl(t); wakeTick(dt, t); setTick(t); locTick(dt, t); if (heat) { heat.t -= dt; if (heat.t <= 0) heatEnd(); } if (B.surfing) { if (H.mounted || H.dead) leave(); return; }
     const me = P.pos; if (board && !H.mounted && !H.trainRide && me.x > shoreX(me.z) + 13 && me.x < 1460 && Math.abs(me.z - ZC) < 430) enter();
     if (me.x > 1040 && Math.abs(me.z - ZC) < 500 && sfx.nz && sfx.ctx && (crashT -= dt) <= 0) { crashT = 1.6 + Math.random() * 2.5; const d = Math.max(20, Math.abs(me.x - XB)); sfx.nz('lowpass', 420 + Math.random() * 300, .7, Math.min(.12, 6 / d), 1.8 + Math.random()); } }
+  /* v407 MULTIPLAYER: send mode + board + carve; draw a board under remote surfers and pose them (prone paddling, side-on stance, tumbling wipeout) */
+  H.surfNet = () => B.surfing ? [R.mode === 'paddle' ? 1 : R.mode === 'ride' ? 2 : R.mode === 'air' ? 3 : 4, board || 1, +((R.carve || 0)).toFixed(2), +(Math.atan2((R.dir || [1, 0])[0], (R.dir || [1, 0])[1])).toFixed(2)] : null;
+  H.surfRemote = (av, s) => { const sf = s && s.sf; if (!sf) { if (av.sfB) { av.sfB.visible = false; if (av.walker && av.sfW) { av.walker.rotation.set(0, Math.PI, 0); av.sfW = 0; } } return; }
+    if (!av.sfB) { av.sfB = brd.clone(true); av.sfB.traverse(o => { if (o.isMesh && o.material === bMat) o.material = bMat.clone(); }); scene.add(av.sfB); const d0 = av.dispose; av.dispose = () => { scene.remove(av.sfB); d0(); }; }
+    const [m, bi, cv, yw] = sf, b = av.sfB, t = (Date.now() / 1000) % 3600; b.visible = true; b.traverse(o => { if (o.isMesh && o.material !== bMat && o.material.color && o.geometry.type === 'CapsuleGeometry') o.material.color.setHex(COLS[(bi - 1) % COLS.length]); });
+    const x = av.g.position.x, z = av.g.position.z, y = m === 3 ? av.g.position.y : surfaceAt(x, z, t); b.position.set(x, y + .18, z); b.rotation.set(0, yw, m === 2 ? -cv * .45 : 0, 'YXZ'); if (m === 4) b.rotation.z = t * 6;
+    const w = av.walker, gy = av.g.rotation.y; if (w) { if (m === 1) w.rotation.set(-1.35, yw + Math.PI - gy, 0, 'YXZ'); else if (m === 4) w.rotation.set(Math.sin(t * 9) * 2, yw - gy, Math.cos(t * 7) * 2, 'YXZ'); else w.rotation.set(0, yw + Math.PI / 2 - gy, clamp(cv * .25, -.4, .4), 'YXZ'); av.sfW = 1; }
+    av.g.position.y = y + (m === 1 ? -.1 : .1); };
   const testPop = () => { const t = (Date.now() / 1000) % 3600; waveAt(R.x, R.z, t, wv); if (wv.wave && !wv.wave.broken && wv.wave.u > -2.5 && wv.wave.u < 1.5 && wv.wave.s > .45) { popUp(t, wv.wave); return true; } return false; };
   const peelInfo = zRef => { const t = (Date.now() / 1000) % 3600, k0 = Math.floor(t / TP); let best = null; for (let j = 0; j < 6; j++) { const k = k0 - j, pz = peelZ(k, t); if (pz < -200 || pz > 500) continue; if (!best || Math.abs(pz - zRef) < Math.abs(best.pz - zRef)) best = { k, pz, cx: crestX(k, pz, t) }; } return best; };
   return { update, toLineup, _scene: scene, _brd: brd, peelInfo, locals: LOC, get state() { return R; }, enter, leave, testPop, setAssist, setLevel, get level() { return level; }, get assist() { return assist; }, peel: () => R.ride ? peelZ(R.k, (Date.now() / 1000) % 3600) : null };

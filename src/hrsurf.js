@@ -9,9 +9,9 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=377';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=377';
-import { mergeStatic } from './hrmerge.js?v=377';
+import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=378';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=378';
+import { mergeStatic } from './hrmerge.js?v=378';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});

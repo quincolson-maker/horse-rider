@@ -5,71 +5,72 @@
 // Walk up to a horse, E / RIDE to mount (animated), same action reins in and steps down. RDR-style riding: four gaits with
 // weighty acceleration, stamina, camera-relative steering, free look, lean into turns, obstacle avoidance, hoof dust.
 // On foot the same rigged person is shown in third person (idle / walk / run blend; C toggles first person). If the models fail to load (or ?prochorse=1) the older procedural horse/rider are used.
-import { createDuel } from './hrduel.js?v=377';
-import { createWell } from './hrwell.js?v=377';
-import { createCemetery } from './hrcemetery.js?v=377';
-import { createDeputies } from './hrdeputy.js?v=377';
-import { createTreasure } from './hrtreasure.js?v=377';
-import { createDrops } from './hrdrops.js?v=377';
-import { createVault } from './hrvault.js?v=377';
-import { createGear } from './hrgear.js?v=377';
-import { createArm } from './hrarm.js?v=377';
-import { createAmbient } from './hrambient.js?v=377';
-import { createExtra } from './hrextra.js?v=377';
-import { createChinatown, ctAvoid } from './hrchinatown.js?v=377';
-import { beachPad } from './hrbeachwave.js?v=377';
-import { createBeach } from './hrbeach.js?v=377';
-import { createMineCamp, mcAvoid } from './hrminecamp.js?v=377';
-import { createCuller, mergeStatic as mergeStaticTree } from './hrmerge.js?v=377';
-import { createStats } from './hrstats.js?v=377';
-import { createBarding } from './hrbarding.js?v=377';
-import { createCamp } from './hrcamp.js?v=377';
-import { createHats } from './hrhats.js?v=377';
-import { createBreeds } from './hrbreed.js?v=377';
-import { createLasso } from './hrlasso.js?v=377';
-import { createRaid } from './hrraid.js?v=377';
-import { createCamo } from './hrcamo.js?v=377';
-import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=377';
-import { PERF } from './perfopts.js?v=377';
-import { PF } from './perf.js?v=377';
+import { createDuel } from './hrduel.js?v=378';
+import { createWell } from './hrwell.js?v=378';
+import { createCemetery } from './hrcemetery.js?v=378';
+import { createDeputies } from './hrdeputy.js?v=378';
+import { createTreasure } from './hrtreasure.js?v=378';
+import { createDrops } from './hrdrops.js?v=378';
+import { createVault } from './hrvault.js?v=378';
+import { createGear } from './hrgear.js?v=378';
+import { createArm } from './hrarm.js?v=378';
+import { createAmbient } from './hrambient.js?v=378';
+import { createExtra } from './hrextra.js?v=378';
+import { createChinatown, ctAvoid } from './hrchinatown.js?v=378';
+import { beachPad } from './hrbeachwave.js?v=378';
+import { makeRailCut } from './hrrailcut.js?v=378';
+import { createBeach } from './hrbeach.js?v=378';
+import { createMineCamp, mcAvoid } from './hrminecamp.js?v=378';
+import { createCuller, mergeStatic as mergeStaticTree } from './hrmerge.js?v=378';
+import { createStats } from './hrstats.js?v=378';
+import { createBarding } from './hrbarding.js?v=378';
+import { createCamp } from './hrcamp.js?v=378';
+import { createHats } from './hrhats.js?v=378';
+import { createBreeds } from './hrbreed.js?v=378';
+import { createLasso } from './hrlasso.js?v=378';
+import { createRaid } from './hrraid.js?v=378';
+import { createCamo } from './hrcamo.js?v=378';
+import { STYLE_ON, STYLE_GRADE } from './stylize.js?v=378';
+import { PERF } from './perfopts.js?v=378';
+import { PF } from './perf.js?v=378';
 import * as THREE from 'three';
-import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=377';
-import { createTommySuppressorItem } from './hrtommy-store.js?v=377';
-import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=377';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=377';
-import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=377';
-import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=377';
-import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=377';
-import { createGuns } from './hrguns.js?v=377';
-import { createHrZombies } from './hrzombies.js?v=377';
-import { createFlora } from './hrflora.js?v=377';
-import { createBounty } from './hrbounty.js?v=377';
-import { createNuggets } from './hrnuggets.js?v=377';
-import { createStable } from './hrstable.js?v=377';
-import { createLeaderboard } from './hrlb.js?v=377';
-import { createNight } from './hrnight.js?v=377';
-import { createRace } from './hrrace.js?v=377';
-import { buildPalisade } from './hrpalisade.js?v=377';
-import { createWeather } from './hrweather.js?v=377';
-import { createMusic } from './hrmusic.js?v=377';
-import { createTownLife } from './hrtownlife.js?v=377';
-import { createRanch } from './hrranch.js?v=377';
-import { createEvents } from './hrevents.js?v=377';
-import { createWild } from './hrwild.js?v=377';
-import { createTrain } from './hrtrain.js?v=377';
-import { createFishing } from './hrfish.js?v=377';
-import { createTown, wearJacket, townNight } from './hrtown.js?v=377';
-import { wearKit } from './hrkit.js?v=377';
-import { createMap } from './hrmap.js?v=377';
-import { createPuppets } from './hrpuppet.js?v=377';
-import { createSaloon } from './hrsaloon.js?v=377';
-import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=377';
-import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=377';
-import { createDynamite } from './hrdynamite.js?v=377';
-import { createSunItem } from './hrsunweapon.js?v=377';
-import { createBuild } from './hrbuild.js?v=377';
-import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=377';
-import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=377';
+import { skinRider, validCv, CHARACTERS } from './hrskin.js?v=378';
+import { createTommySuppressorItem } from './hrtommy-store.js?v=378';
+import { GLTFLoader } from '../addons/loaders/GLTFLoader.js?v=378';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=378';
+import { clone as cloneSkinned } from '../addons/utils/SkeletonUtils.js?v=378';
+import { mulberry, conifer, conifCards, broadleafCards, cardMaterial, needleTexture, leafTexture, TREE_WIND } from './hrtrees.js?v=378';
+import { ShaderPass } from '../addons/postprocessing/ShaderPass.js?v=378';
+import { createGuns } from './hrguns.js?v=378';
+import { createHrZombies } from './hrzombies.js?v=378';
+import { createFlora } from './hrflora.js?v=378';
+import { createBounty } from './hrbounty.js?v=378';
+import { createNuggets } from './hrnuggets.js?v=378';
+import { createStable } from './hrstable.js?v=378';
+import { createLeaderboard } from './hrlb.js?v=378';
+import { createNight } from './hrnight.js?v=378';
+import { createRace } from './hrrace.js?v=378';
+import { buildPalisade } from './hrpalisade.js?v=378';
+import { createWeather } from './hrweather.js?v=378';
+import { createMusic } from './hrmusic.js?v=378';
+import { createTownLife } from './hrtownlife.js?v=378';
+import { createRanch } from './hrranch.js?v=378';
+import { createEvents } from './hrevents.js?v=378';
+import { createWild } from './hrwild.js?v=378';
+import { createTrain } from './hrtrain.js?v=378';
+import { createFishing } from './hrfish.js?v=378';
+import { createTown, wearJacket, townNight } from './hrtown.js?v=378';
+import { wearKit } from './hrkit.js?v=378';
+import { createMap } from './hrmap.js?v=378';
+import { createPuppets } from './hrpuppet.js?v=378';
+import { createSaloon } from './hrsaloon.js?v=378';
+import { pickCaveSite, makePad, caveRect, createCave } from './hrcave.js?v=378';
+import { pickTempleSite, makeTemplePad, templeRect, createTemple } from './hrtemple.js?v=378';
+import { createDynamite } from './hrdynamite.js?v=378';
+import { createSunItem } from './hrsunweapon.js?v=378';
+import { createBuild } from './hrbuild.js?v=378';
+import { buildFeatures, buildMask, createChunks, createWater } from './hrterrain.js?v=378';
+import { makeRawH, trailSegments, segDist as segD, createSky, terrainMaterial as terrainMat2, loadTerrainTextures, buildTerrain, createGrass, loadRockModels } from './hrworld.js?v=378';
 const $ = id => document.getElementById(id);
 const S = 800, EDGE = 360;                // meadow half-extent (the mountains start around here)
 const WALK = 1050, CHUNK = 125, CH_LIM = 10, MASK_HALF = 1200; // v30: rideable half-extent (up into the mountains), detail-chunk size / limit, world-mask extent
@@ -87,13 +88,15 @@ const SEG = trailSegments(PEN, SPAWN), trailDist = (x, z) => { let d = 1e9; for 
 const BASE = rawH(PEN.x, PEN.z);
 function h0(x, z) { const d = Math.hypot(x - PEN.x, z - PEN.z); return BASE + (rawH(x, z) - BASE) * sstep(24, 60, d); }
 // mountain trails, ponds and the creek are carved into the height field (deterministic, same for every player): src/hrterrain.js
-const coveAvoid = (x, z) => x > 880 && Math.abs(z - 150) < 620; /* v330 no pines or boulders in Paradise Cove */
+const coveAvoid = (x, z) => (x > 880 && Math.abs(z - 150) < 620) || RAILCUT.near(x, z, 8); /* v330 no pines or boulders in Paradise Cove */
 let FEAT = null; const featAvoid = (x, z) => (Math.abs(x - PEN.x) < 75 && Math.abs(z - PEN.z) < 75) || clearing(x, z, 12) || inRange(x, z, 14) || trailDist(x, z) < 10 || coveAvoid(x, z);
 export function features() { return FEAT || (FEAT = buildFeatures(h0, { BASE, WALK, avoid: featAvoid })); }
 // v38 Bandit Falls: a flattened notch for the waterfall hideout, picked once from the carved terrain (same on every machine)
 let CAVE_SITE = null, CAVEPAD = null, TEMPLE_SITE = null, TEMPLEPAD = null; const QS0 = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams(), NOCAVE = QS0.get('cave') === '0', NOTEMPLE = QS0.get('temple') === '0';
 // v39 The Hollow Sun: a mound raised over the temple's halls + a flat apron at its seal (same on every machine)
-export function hAt(x, z) { let h = (FEAT || features()).carve(x, z, h0(x, z)); if (CAVEPAD) h = CAVEPAD(x, z, h); if (x > 860) h = beachPad(x, z, h); return TEMPLEPAD ? TEMPLEPAD(x, z, h) : h; } /* v330 Paradise Cove coast */
+function hAtBase(x, z) { let h = (FEAT || features()).carve(x, z, h0(x, z)); if (CAVEPAD) h = CAVEPAD(x, z, h); if (x > 860) h = beachPad(x, z, h); return TEMPLEPAD ? TEMPLEPAD(x, z, h) : h; } /* v330 Paradise Cove coast */
+const RAILCUT = makeRailCut(hAtBase); /* v378 railroad cuts instead of tunnels */
+export function hAt(x, z) { return RAILCUT.cut(x, z, hAtBase(x, z)); }
 
 function std(color, o = {}) { return new THREE.MeshStandardMaterial({ color, roughness: o.r ?? .85, metalness: o.m ?? 0, ...(o.map ? { map: o.map } : {}) }); }
 function box(g, w, h, d, m, x, y, z) { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; g.add(b); return b; }

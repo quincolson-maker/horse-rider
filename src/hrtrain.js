@@ -2,10 +2,10 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
-import { mergeStatic } from './hrmerge.js?v=377';
+import { mergeStatic } from './hrmerge.js?v=378';
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=377';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=377';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=378';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=378';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['dining', 11], ['express', 10], ['caboose', 7]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
@@ -37,6 +37,7 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
       for (let it = 0; it < 40; it++) for (let k = 0; k < ord.length; k++) { const a = ord[k], b = ord[(k + 1) % ord.length], d = ((b.i - a.i + N2) % N2) * 4, lim = G1 * d; const kb = (k + 1) % ord.length; if (ord[kb].name !== 'Dry Gulch') tgt[kb] = Math.max(tgt[k] - lim, Math.min(tgt[k] + lim, tgt[kb])); if (ord[k].name !== 'Dry Gulch') tgt[k] = Math.max(tgt[kb] - lim, Math.min(tgt[kb] + lim, tgt[k])); } // Dry Gulch (by town) is the anchor
       const fix = new Uint8Array(N2), Wn = 60; ord.forEach((st, si) => { const T0 = tgt[si]; st.y = T0; for (let k = -Wn; k <= Wn; k++) { const i = (st.i + k + N2) % N2, w = Math.abs(k) <= 4 ? 1 : (t => t * t * (3 - 2 * t))(1 - (Math.abs(k) - 4) / (Wn - 4)); y[i] = y[i] + (T0 - y[i]) * w; if (Math.abs(k) <= 4) { y[i] = T0; fix[i] = 1; } } });
       const G2 = .2 * 4; for (let pass = 0; pass < 12; pass++) { for (let i = 1; i < N2 * 2; i++) { const a = (i - 1) % N2, b = i % N2; if (!fix[b]) y[b] = Math.max(y[a] - G2, Math.min(y[a] + G2, y[b])); } for (let i = N2 * 2; i > 0; i--) { const a = i % N2, b = (i - 1) % N2; if (!fix[b]) y[b] = Math.max(y[a] - G2, Math.min(y[a] + G2, y[b])); } } }
+    for (let i = 0; i < N2; i++) if (g[i] > y[i]) y[i] = g[i]; /* v378 never below the ground: the railroad cuts give it a clean bed, so no more tunnels */
     for (let i = 1; i <= SPUR.ns; i++) y[SPUR.B0 + SPUR.ns - i] = y[SPUR.J0 + i]; y[SPUR.B0 + SPUR.ns] = y[SPUR.J0]; /* v330 the way back rides the same rails */
     for (let i = 0; i < N2; i++) P2[i][1] = y[i] + .35;
     // tunnels: runs where the ground stands more than 1.2 m over the rails (min 6 samples)

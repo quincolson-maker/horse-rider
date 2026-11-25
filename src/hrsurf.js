@@ -9,9 +9,9 @@
 // Physics run in the wave's frame (position along the crest z, distance in front of the crest u), so the rider genuinely rides
 // the moving, shoaling, peeling wave that the ocean shader draws.
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=370';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=370';
-import { mergeStatic } from './hrmerge.js?v=370';
+import { BEACH, shoreX, waveAt, peelZ, SWELL } from './hrbeachwave.js?v=371';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=371';
+import { mergeStatic } from './hrmerge.js?v=371';
 
 export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, keys, B, camera }) {
   const { SEA, XB, XS, ZC, C, K, T: TP } = BEACH, G = 9.8, S = () => H.stats || (H.stats = {});
@@ -106,6 +106,7 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     // the curl: where is the peel relative to you?
     const pz = peelZ(R.k, t), behind = R.z - pz; // >0: you are in the broken (north) part
     R.tube = !!(behind > -1.5 && behind < 5 && R.u < -.3 && R.u > -A * 1.25 && crestX(R.k, R.z, t) < XB + 12 && R.sp > 4);
+    if (R.tube && sfx.nz && sfx.ctx && (r.roar = (r.roar || 0) - dt) <= 0) { r.roar = .25; sfx.nz('lowpass', 260, .6, .05, .5); } /* v371 the roar inside the barrel */
     if (R.tube) { r.tube += dt; score += 70 * dt * combo; if (r.tube > .6 && !r.tubeCall) { r.tubeCall = 1; flash('🌀 BARREL!', 150); } } else if (r.tubeCall && r.tube > .6) { r.tubeCall = 0; flash(`🌀 Out of the barrel! ${r.tube.toFixed(1)}s`, Math.round(r.tube * 220)); }
     // score flow: speed on a steep face
     score += R.sp * face * 4 * dt * combo;
@@ -127,7 +128,7 @@ export function createSurf({ scene, H, P, T, hAt, msg, sfx, mobile, fx, input, k
     const s = surfaceAt(R.x, R.z, t); if (a.y <= s && a.vy < 0) { const turns = a.spin / Math.PI, half = Math.round(turns), off = Math.abs(turns - half); if (off < .3 && !(a.flip > .2 && a.flip < .9)) { const spins = Math.abs(half); R.th = R.th + half * Math.PI; if (spins % 2) R.th += 0; R.th = Math.atan2(Math.sin(R.th), Math.cos(R.th)); if (Math.sin(R.th) < -.2) R.th = Math.PI / 2 * .7 * (Math.cos(R.th) >= 0 ? 1 : -1) + (Math.cos(R.th) < 0 ? Math.PI : 0); R.u = Math.min(R.u, -.3); R.sp *= .85; R.mode = 'ride'; r.airs++; const grab = (a.grab || 0) > .35, flip = (a.flip || 0) >= .9, clean = off < .1; if (flip) { const s2 = S(); s2.surfFlips = (s2.surfFlips || 0) + 1; } flash((flip ? '🤸 FLIP ' : '') + (spins >= 2 ? `🔄 ${spins * 180}` : spins === 1 ? '🔄 180 REVERSE' : '🛬 AIR') + (grab ? ' + GRAB' : '') + (clean ? ' · PERFECT' : ''), 350 + spins * 300 + (grab ? 250 : 0) + (flip ? 700 : 0) + (clean ? 150 : 0)); }
       else wipeout('💥 Bad landing!'); } }
   function wipeout(why) { R.why = why + ' u' + R.u.toFixed(1) + ' sp' + R.sp.toFixed(1); const s = S(); s.surfWipes = (s.surfWipes || 0) + 1; R.ride && (score *= .35); bank(); R.mode = 'wipe'; R.wipe = 2.4; R.tube = false; msg(why + ' WIPEOUT', 2.2); if (sfx.nz && sfx.ctx) { sfx.nz('lowpass', 300, 1, .35, 1.2); sfx.nz('bandpass', 1200, .6, .2, .8); } }
-  function wipe(dt, t) { R.wipe -= dt; R.x -= 3 * dt; R.z += (Math.random() - .5) * dt; if (R.wipe <= 0) { R.mode = 'paddle'; R.sp = 0; R.a = 0; R.dir = [1, 0]; msg('🏄 You surface and climb back on your board', 2); } }
+  function wipe(dt, t) { if (R.wipe > 2.3 && fx && fx.smoke) for (let k = 0; k < 3; k++) fx.smoke.emit(R.x + (Math.random() - .5) * 2, SEA + 1, R.z + (Math.random() - .5) * 2, (Math.random() - .5) * 3, 2, (Math.random() - .5) * 3, .95, .98, 1, .7, 1.2, 1, -.05, .4); R.wipe -= dt; R.x -= 3 * dt; R.z += (Math.random() - .5) * dt; if (R.wipe <= 0) { R.mode = 'paddle'; R.sp = 0; R.a = 0; R.dir = [1, 0]; msg('🏄 You surface and climb back on your board', 2); } }
   // ---------- THE CURL: a translucent lip that pitches over the face at each wave's peel point (CPU-built, ~300 verts) ----------
   const LZ = 34, LA = 16, lipPos = new Float32Array(LZ * LA * 3), lipFoam = new Float32Array(LZ * LA), lipIdx = []; for (let j = 0; j < LZ - 1; j++) for (let i = 0; i < LA - 1; i++) { const a = j * LA + i, b = a + 1, c2 = a + LA, d = c2 + 1; lipIdx.push(a, c2, b, b, c2, d); }
   const lipG = new THREE.BufferGeometry(); lipG.setAttribute('position', new THREE.BufferAttribute(lipPos, 3)); lipG.setAttribute('foam', new THREE.BufferAttribute(lipFoam, 1)); lipG.setIndex(lipIdx);

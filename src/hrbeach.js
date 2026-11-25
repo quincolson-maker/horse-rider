@@ -3,9 +3,9 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=374';
-import { createSurf } from './hrsurf.js?v=374';
-import { mergeStatic } from './hrmerge.js?v=374';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=375';
+import { createSurf } from './hrsurf.js?v=375';
+import { mergeStatic } from './hrmerge.js?v=375';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -200,7 +200,7 @@ export function createBeach(ctx) {
   // ---------- v358 the coral garden: a reef patch in the clear shallows south of the pier - snorkel it from the sand ----------
   const REEF = (() => { const rz = ZC - 230, rx = shoreX(rz) + 22, N = mobile ? 70 : 160, cols = [0xff6a8a, 0xffb03a, 0x9a5aff, 0x3ad8c8, 0xff4a3a, 0xf0e070]; const g1 = new THREE.IcosahedronGeometry(.5, 0), g2 = new THREE.ConeGeometry(.18, 1.1, 5), g3 = new THREE.SphereGeometry(.45, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2);
     const mk = (geo, n) => { const im = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ roughness: .7, emissive: 0x101010 }), n), m4 = new THREE.Matrix4(), c = new THREE.Color(); for (let i = 0; i < n; i++) { const a = rnd() * 6.28, r = Math.sqrt(rnd()) * 22, x = rx + Math.cos(a) * r, z = rz + Math.sin(a) * r * 1.4, y = hAt(x, z), s2 = .6 + rnd() * 1.2; m4.makeScale(s2, s2 * (.6 + rnd()), s2).setPosition(x, y + .2, z); im.setMatrixAt(i, m4); im.setColorAt(i, c.set(cols[(rnd() * cols.length) | 0])); } im.name = 'coral'; root.add(im); return im; };
-    mk(g1, N); mk(g2, N); mk(g3, N >> 1); const sp = { x: shoreX(rz) - 2, y: SEA, z: rz, kind: 'bch_snorkel', label: '🤿 Snorkel the coral garden', r: 3, bch: true }; T.spots.push(sp); return { rx, rz }; })();
+    const C1 = mk(g1, N), C2 = mk(g2, N), C3 = mk(g3, N >> 1); for (const c of [C1, C2, C3]) H.cullAdd && H.cullAdd(c, 160, { x: rx, z: rz }); /* v375 corals only drawn when near */ const sp = { x: shoreX(rz) - 2, y: SEA, z: rz, kind: 'bch_snorkel', label: '🤿 Snorkel the coral garden', r: 3, bch: true }; T.spots.push(sp); return { rx, rz }; })();
   // ---------- v358 capiz-shell lanterns (parol stars) on the huts and string lights over the bar, glowing after dark ----------
   const lampM2 = new THREE.MeshStandardMaterial({ color: 0xffe0a0, emissive: 0xffb050, emissiveIntensity: .1 }); { const pts = []; hutZ.forEach((z, i) => { const x = shoreX(z) - 46 - (i % 2) * 6 + 2.6; pts.push([x, hAt(x, z) + 3.8, z]); }); for (let k = 0; k < 14; k++) { const z = ZC + 20 - 2.4 + k * .35, x = shoreX(ZC + 20) - 30 + 2.5; pts.push([x, hAt(x, ZC + 20) + 3.0 - Math.sin(k / 13 * Math.PI) * .3, z]); }
     const g = new THREE.OctahedronGeometry(.22, 0), LM = new THREE.InstancedMesh(g, lampM2, pts.length), m4 = new THREE.Matrix4(); pts.forEach(([x, y, z], i) => { m4.makeScale(i < hutZ.length ? 1.6 : .45, i < hutZ.length ? 1.6 : .45, i < hutZ.length ? .5 : .45).setPosition(x, y, z); LM.setMatrixAt(i, m4); }); LM.name = 'cove lanterns'; root.add(LM); }

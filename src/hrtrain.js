@@ -2,10 +2,10 @@
 // clock). Locomotive + tender + two coaches + a gold-trimmed EXPRESS car carrying the strongbox.
 // TRAIN HEIST: gallop alongside the express car to leap aboard. Three railroad guards on the roof shoot back; drop them,
 // then hold tight while the safe is blasted (+3,000). Once every 10 minutes. Ride off the side to jump down any time.
-import { mergeStatic } from './hrmerge.js?v=371';
+import { mergeStatic } from './hrmerge.js?v=372';
 import * as THREE from 'three';
-import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=371';
-import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=371';
+import { mergeGeometries } from '../addons/utils/BufferGeometryUtils.js?v=372';
+import { makeFrontierCharacter, poseFrontierCharacter } from './hrcharacters.js?v=372';
 export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) {
   const tone = (...a) => sfx && sfx.ctx && sfx.tone && sfx.tone(...a);
   const SPEED = 17, CARS = [['loco', 9.2], ['tender', 6], ['coach', 11], ['open', 10], ['dining', 11], ['express', 10], ['caboose', 7]], GAP = .6, DWELL = 14, ACC = 5; // v77: an open observation car to ride in
@@ -64,6 +64,8 @@ export function createTrain({ scene, H, P, hAt, msg, sfx, mobile, input, PEN }) 
     for (let i = 0; i < rn; i++) { at(i * 2.6 + 1.3, p, t); if (skipS(i * 2.6 + 1.3)) { m4.makeScale(0, 0, 0); rails.setMatrixAt(i * 2, m4); rails.setMatrixAt(i * 2 + 1, m4); bed.setMatrixAt(i, m4); continue; } const yaw = Math.atan2(t.x, t.z), pitch = -Math.asin(Math.max(-1, Math.min(1, t.y))); e.set(pitch, yaw, 0, 'YXZ'); q.setFromEuler(e);
       for (const sd of [-.72, .72]) { const v = new THREE.Vector3(sd, .14, 0).applyQuaternion(q).add(p); m4.compose(v, q, sc); rails.setMatrixAt(i * 2 + (sd > 0 ? 1 : 0), m4); }
       const gnd = hAt(p.x, p.z); const v = p.clone(); v.y -= .3; m4.compose(v, q, sc); bed.setMatrixAt(i, m4); if (p.y - gnd > 1.4 && i % 3 === 0) for (const sd of [-1.2, 1.2]) { const pv = new THREE.Vector3(sd, 0, 0).applyQuaternion(q).add(p); posts.push([pv.x, gnd, pv.z, p.y - gnd]); } }
+    { const bg = new THREE.BoxGeometry(.12, 1, .12), BR = []; for (let i = 0; i < posts.length - 2; i += 2) { const a2 = posts[i], b2 = posts[i + 2]; if (!b2 || Math.hypot(a2[0] - b2[0], a2[2] - b2[2]) > 9) continue; const h = Math.min(a2[3], b2[3]); if (h < 2.5) continue; for (let y = 1.2; y < h - .6; y += 2.4) BR.push([(a2[0] + b2[0]) / 2, a2[1] + y, (a2[2] + b2[2]) / 2, Math.hypot(a2[0] - b2[0], a2[2] - b2[2]), Math.atan2(b2[0] - a2[0], b2[2] - a2[2])]); }
+      if (BR.length) { const bm = new THREE.InstancedMesh(bg, new THREE.MeshStandardMaterial({ color: 0x5a3e24, roughness: .9 }), BR.length * 2); BR.forEach(([x, y, z, l, ry], i) => { for (const k of [0, 1]) { m4.compose(p.set(x, y, z), q.setFromEuler(e.set(k ? .9 : -.9, ry, 0, 'YXZ')), sc.set(1, Math.hypot(l, 2.2), 1)); bm.setMatrixAt(i * 2 + k, m4); } }); sc.set(1, 1, 1); bm.frustumCulled = false; scene.add(bm); } } /* v372 X-bracing on the timber trestles */
     const tr = new THREE.InstancedMesh(postG, new THREE.MeshStandardMaterial({ color: 0x5a3e24, roughness: .9 }), Math.max(1, posts.length)); posts.forEach(([x, y, z, h], i) => { m4.compose(p.set(x, y + h / 2 - .3, z), q.identity(), sc.set(1, h + .2, 1)); tr.setMatrixAt(i, m4); }); tr.count = posts.length; sc.set(1, 1, 1);
     for (const o of [ties, rails, bed, tr]) { o.receiveShadow = true; o.frustumCulled = false; scene.add(o); }
     /* v365 telegraph poles every 40 m beside the line, with crossarms and glass insulators, wires sagging between */ { const PL = []; for (let sv = 0; sv < L; sv += 40) { if (skipS(sv)) continue; at(sv, p, t); const sx = t.z, sz = -t.x, sl = Math.hypot(sx, sz) || 1, x = p.x + sx / sl * 4.2, z = p.z + sz / sl * 4.2, gy = hAt(x, z); if (Math.abs(gy - p.y) > 3) continue; PL.push([x, gy, z, Math.atan2(t.x, t.z)]); }

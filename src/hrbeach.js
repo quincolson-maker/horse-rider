@@ -3,9 +3,9 @@
 // Terrain comes from beachPad (hrbeachwave.js, folded into hAt); this module adds the sand/jungle skin, the ocean (a custom
 // shader running the same wave model as the surf physics), palms, jungle, karst islands, swimming, and the surf itself (hrsurf.js).
 import * as THREE from 'three';
-import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=381';
-import { createSurf } from './hrsurf.js?v=381';
-import { mergeStatic } from './hrmerge.js?v=381';
+import { BEACH, shoreX, waveAt, surfTime, WAVE_GLSL, depthAt, terraceMask, SWELL, swellOf } from './hrbeachwave.js?v=382';
+import { createSurf } from './hrsurf.js?v=382';
+import { mergeStatic } from './hrmerge.js?v=382';
 
 export function createBeach(ctx) {
   const { scene, H, P, T, hAt, msg, sfx, mobile, fx } = ctx, { SEA, ZC } = BEACH, B = { surfing: false };
@@ -43,7 +43,12 @@ float shoreX(float z){ float az = abs(z - ${ZC.toFixed(1)}); return ${BEACH.SHOR
   diffuseColor.rgb *= mix(vec3(1.0), (.74 + .26 * grain + .1 * rip) * vec3(1.0, .93, .8), sandish);
   float wet = sandish * smoothstep(7.0, 1.5, d); diffuseColor.rgb *= mix(1.0, .72, wet);
   float under = smoothstep(0.0, -2.0, d); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.82, .76, .6) * (.9 + .1 * grain), under);
-  diffuseColor.rgb += vec3(.55, .65, .6) * caus(vWp.xz, uT) * under * smoothstep(-60.0, -6.0, d) * .9; }`)
+  diffuseColor.rgb += vec3(.55, .65, .6) * caus(vWp.xz, uT) * under * smoothstep(-60.0, -6.0, d) * .9;
+  float green = (1.0 - sandish) * (1.0 - under) * step(diffuseColor.r * 1.05, diffuseColor.g); /* v382 grassy hillsides: big meadow patches, undergrowth clumps, blade-scale speckle, dry yellow tufts */
+  float g1 = sn(vWp.xz * .045), g2 = sn(vWp.xz * .35 + 7.0), g3 = sn(vWp.xz * 2.6), g4 = sn(vWp.xz * 11.0);
+  vec3 gc = diffuseColor.rgb * (.72 + .42 * g2) * (.86 + .22 * g3) * (.9 + .16 * g4);
+  gc *= vec3(.86, 1.0, .8); gc = mix(gc, gc * vec3(1.25, 1.12, .7), smoothstep(.7, .88, g1) * .35); gc = mix(gc, gc * vec3(.55, .7, .5), smoothstep(.55, .78, g2) * .6);
+  diffuseColor.rgb = mix(diffuseColor.rgb, gc, green); }`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
 { float sx = shoreX(vWp.z), d = sx - vWp.x; roughnessFactor = mix(roughnessFactor, .25, smoothstep(7.0, 1.5, d) * smoothstep(-1.0, 0.0, d) * step(vWp.y, ${(SEA + 3).toFixed(1)})); }`); };
     const m = new THREE.Mesh(g, skinM);
@@ -66,7 +71,9 @@ float shoreX(float z){ float az = abs(z - ${ZC.toFixed(1)}); return ${BEACH.SHOR
         vec3 shallow = vec3(.16, .78, .74), mid = vec3(.03, .5, .62), deep = vec3(.01, .2, .4); vec3 col = mix(shallow, mid, smoothstep(.3, 3.0, vDepth)); col = mix(col, deep, smoothstep(3.0, 16.0, vDepth));
         float face = smoothstep(.15, .8, -n.x) * smoothstep(.3, 2.5, vW.y - ${SEA.toFixed(1)}); col = mix(col, vec3(.1, .62, .6), face * .5); col += vec3(.05, .28, .22) * face * smoothstep(1.5, 4.0, vW.y - ${SEA.toFixed(1)}); // the face darkens to deep green-blue with light glowing through its thin top
         float dif = max(dot(n, normalize(uSun)), 0.0); col *= .62 + .5 * dif;
-        vec3 sky = mix(vec3(.62, .8, .96), vec3(.06, .09, .16), uNight); float dusk = smoothstep(.15, .45, uNight) * (1.0 - smoothstep(.55, .8, uNight)); sky = mix(sky, vec3(1.0, .5, .3), dusk * .8); col = mix(col, sky, fres * .55); col += vec3(1.0, .45, .2) * dusk * pow(max(dot(reflect(-normalize(vec3(-1.0, .15, .1)), n), v), 0.0), 18.0) * .9; // v360 a golden sunset path on the sea
+        vec3 sky = mix(vec3(.62, .8, .96), vec3(.06, .09, .16), uNight); float dusk = smoothstep(.15, .45, uNight) * (1.0 - smoothstep(.55, .8, uNight)); sky = mix(sky, vec3(1.0, .5, .3), dusk * .8); vec3 rr = reflect(-v, n); float hz = clamp(rr.y, 0.0, 1.0); vec3 skyG = mix(sky * vec3(1.08, 1.05, 1.0) + .06, sky * vec3(.7, .82, 1.0), pow(hz, .5)); /* v382 graded sky in the reflection */
+        float land = smoothstep(.0, -.6, rr.x) * smoothstep(.32, .04, rr.y) * smoothstep(2.0, 40.0, length(cameraPosition.xz - vW.xz)) * (1.0 - uNight * .6); skyG = mix(skyG, vec3(.08, .2, .1), land * .75); /* jungle hills mirrored in the sea */
+        col = mix(col, skyG, clamp(fres * .7 + .06, 0.0, .85)); col += vec3(1.0, .45, .2) * dusk * pow(max(dot(reflect(-normalize(vec3(-1.0, .15, .1)), n), v), 0.0), 18.0) * .9; // v360 a golden sunset path on the sea
         float spec = pow(max(dot(reflect(-uSun, n), v), 0.0), 140.0) * (1.0 - uNight) * 1.6;
         float fm = vFoam * (.55 + .45 * vn(q * .7 + vec2(uT * .25, 0.0))) + smoothstep(.35, 0.0, vDepth) * (.5 + .5 * sin(q.y * .3 + uT * 1.5 + vn(q * .4) * 4.0)) * .6;
         float lace = smoothstep(.45, .75, vn(q * 1.6 + vec2(uT * .4, uT * .2)) * vn(q * 3.7 - uT * .3)); fm = max(fm, lace * smoothstep(1.2, .2, vDepth) * .6); /* v380 lacy foam in the shallows */
@@ -99,6 +106,17 @@ float shoreX(float z){ float az = abs(z - ${ZC.toFixed(1)}); return ${BEACH.SHOR
     JMM.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vJp; varying float vJy;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvJp = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz; vJy = normal.y;');
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vJp; varying float vJy; float jh(vec3 p){ return fract(sin(dot(p, vec3(12.9, 78.2, 37.7))) * 43758.5); }').replace('#include <color_fragment>', '#include <color_fragment>\n{ vec3 q = floor(vJp * 2.6); float l = jh(q), l2 = jh(floor(vJp * 7.0)); float top = smoothstep(-.4, .9, vJy); diffuseColor.rgb *= (.55 + .45 * top) * (.78 + .32 * l) * (.9 + .2 * l2); diffuseColor.rgb += vec3(.05, .07, .0) * step(.86, l2) * top; }'); };
     JM.count = n; JM.castShadow = !mobile; JM.name = 'jungle'; root.add(JM); }
+  /* v382 undergrowth: arching fern fronds and grass clumps carpet the green hillsides, swaying in the trade wind */
+  { const mkTuft = (nb, len, wid, droop, seg) => { const P = [], C = []; for (let b = 0; b < nb; b++) { const a = b / nb * Math.PI * 2 + b * .37, ca = Math.cos(a), sa = Math.sin(a), L = len * (.75 + .25 * Math.sin(b * 2.3)), up = .9 - (b % 3) * .18; let prev = null;
+        for (let k = 0; k <= seg; k++) { const t = k / seg, r = L * t, y = L * (up * t - droop * t * t), w = wid * Math.sin(Math.PI * Math.min(1, t * 1.15 + .05)) * (1 - t * .6), cx = ca * r, cz = sa * r, px = -sa * w, pz = ca * w, sh = .45 + .55 * t;
+          const cur = [[cx - px, y, cz - pz], [cx + px, y, cz + pz], sh]; if (prev) { const [a0, a1, s0] = prev, [b0, b1, s1] = cur; P.push(...a0, ...a1, ...b0, ...a1, ...b1, ...b0); C.push(s0, s0, s1, s0, s1, s1); } prev = cur; } }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); const cc = new Float32Array(C.length * 3); C.forEach((v, i) => { cc[i * 3] = v; cc[i * 3 + 1] = v; cc[i * 3 + 2] = v; }); g.setAttribute('color', new THREE.BufferAttribute(cc, 3)); g.computeVertexNormals(); return g; };
+    const UM = new THREE.MeshStandardMaterial({ vertexColors: true, side: THREE.DoubleSide, roughness: .8 }); UM.onBeforeCompile = sh => { sh.uniforms.uT = B.skinU.uT; sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uT;').replace('#include <begin_vertex>', '#include <begin_vertex>\n{ vec4 ip = instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0); float sw = sin(uT * 1.6 + ip.x * .21 + ip.z * .17) * .08 * position.y; transformed.x += sw; transformed.z += sw * .6; }'); };
+    const kinds = [[mkTuft(11, 1.7, .26, .8, 5), mobile ? 1400 : 4200, .17], [mkTuft(16, 1.0, .07, .3, 3), mobile ? 1600 : 5000, .23]], m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), c = new THREE.Color(), sc = new THREE.Vector3(), ps = new THREE.Vector3();
+    kinds.forEach(([geo, N, hue], ki) => { const IM = new THREE.InstancedMesh(geo, UM, N); let n = 0;
+      for (let i = 0; i < N * 6 && n < N; i++) { const z = ZC - 460 + rnd() * 920, r0 = rnd(), x = shoreX(z) - 42 - r0 * r0 * 240; if (x < 890) continue; if (terraceMask(x, z) > .05 || nearFalls(x, z)) continue; const y = hAt(x, z); if (y < SEA + 3.5) continue; const sl = Math.abs(hAt(x + 1.5, z) - hAt(x - 1.5, z)) + Math.abs(hAt(x, z + 1.5) - hAt(x, z - 1.5)); if (sl > 3.2) continue;
+        const s = (ki ? .9 : 1.1) + rnd() * 1.1; m4.compose(ps.set(x, y - .05, z), q.setFromEuler(e.set((rnd() - .5) * .2, rnd() * 6.28, (rnd() - .5) * .2)), sc.set(s, s * (.8 + rnd() * .4), s)); IM.setMatrixAt(n, m4); IM.setColorAt(n, c.setHSL(hue + rnd() * .06, .55 + rnd() * .2, ki ? .2 + rnd() * .12 : .14 + rnd() * .1)); n++; }
+      IM.count = n; IM.name = ki ? 'grass clumps' : 'ferns'; IM.receiveShadow = true; root.add(IM); }); }
 
   // ---------- karst islands: tall limestone towers with jungle caps standing out of the sea ----------
   /* v380 limestone: horizontal bedding layers, dark vertical rain-streaks, pale weathered faces, lichen; a wet dark band at the waterline */

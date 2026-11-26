@@ -11,7 +11,7 @@ export function initTouch(input, look, act, unlockAudio) {
   const restStick = () => { stick.classList.remove('active'); stick.style.left = '18%'; stick.style.top = '70%'; knob.style.transform = ''; };
   restStick();
   // joystick zone: a circle around the resting stick (18% / 70%), radius ~26% of the short side (85-125 px)
-  const zone = () => ({ x: innerWidth * .18, y: innerHeight * .7, r: Math.max(85, Math.min(125, Math.min(innerWidth, innerHeight) * .26)) }); /* v214: smaller stick zone - drag anywhere else on the screen to look */
+  const zone = () => { const r0 = (document.getElementById('touch') || document.body).getBoundingClientRect(); return { x: r0.left + r0.width * .18, y: r0.top + r0.height * .7, r: Math.max(85, Math.min(125, Math.min(innerWidth, innerHeight) * .26)) }; }; /* v409 zone follows the safe-area inset */ /* v214: smaller stick zone - drag anywhere else on the screen to look */
   const inZone = (x, y) => { const z = zone(); return Math.hypot(x - z.x, y - z.y) <= z.r; };
   // one shared look arbiter for every drag surface (left dead space, right half, FIRE)
   const lk = new Map(); // pointerId -> [x, y]; Map keeps start order, the last entry steers
@@ -65,3 +65,10 @@ export function initTouch(input, look, act, unlockAudio) {
   document.addEventListener('gesturestart', e => e.preventDefault());
   addEventListener('blur', () => { input.mx = input.mz = 0; input.fire = input.jump = input.use = false; });
 }
+
+/* v409 iPhone Safari: block pinch / double-tap page zoom and undo any zoom or drift left by a rotation (it cropped the buttons off both edges) */
+(() => { const no = e => { e.preventDefault(); }; for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, no, { passive: false });
+  let lastT = 0; document.addEventListener('touchend', e => { const n = Date.now(); if (n - lastT < 320 && !(e.target.closest && e.target.closest('input,textarea,select,a'))) e.preventDefault(); lastT = n; }, { passive: false });
+  const meta = document.querySelector('meta[name=viewport]'), base = meta && meta.content;
+  const fix = () => { if (window.scrollX || window.scrollY) window.scrollTo(0, 0); const vv = window.visualViewport; if (meta && vv && (vv.scale > 1.01 || vv.offsetLeft > 1 || vv.offsetTop > 1)) { meta.content = base + ',minimum-scale=1'; setTimeout(() => { meta.content = base; }, 60); } };
+  for (const ev of ['orientationchange', 'resize']) addEventListener(ev, () => { fix(); setTimeout(fix, 300); setTimeout(fix, 900); }); if (window.visualViewport) { visualViewport.addEventListener('resize', fix); visualViewport.addEventListener('scroll', fix); } setInterval(fix, 2000); })();

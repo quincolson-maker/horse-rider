@@ -5,8 +5,8 @@
 // they travel fast across open country and slow to their kind's pace near players, steer around trees / rocks, and
 // the HORSE PEN is a safe zone: it is indestructible (nothing here ever damages the fence or gate) and no zombie may
 // stand inside it, the gate gap included; they walk around it and crowd at the rails. Guns kill them (headshots x2.4).
-import { PF } from './perf.js?v=408';
-import { PERF } from './perfopts.js?v=408';
+import { PF } from './perf.js?v=409';
+import { PERF } from './perfopts.js?v=409';
 import * as THREE from 'three';
 
 export const ZKINDS = {
@@ -146,7 +146,7 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
   const DM = {}; const dm = () => DM.tin ? DM : Object.assign(DM, { tin: new THREE.MeshStandardMaterial({ color: 0x9aa0a6, metalness: .85, roughness: .38 }), rust: new THREE.MeshStandardMaterial({ color: 0x7a4a2a, metalness: .5, roughness: .7 }), gold: new THREE.MeshStandardMaterial({ color: 0xd8b04a, metalness: .9, roughness: .3 }), hat: new THREE.MeshStandardMaterial({ color: 0x1c1a18, roughness: .85 }),
       pus: new THREE.MeshStandardMaterial({ color: 0x9ac23a, emissive: 0x4a7a10, emissiveIntensity: .6, roughness: .35 }), plate: new THREE.CylinderGeometry(.27, .24, .46, 16, 1, true, -1.25, 2.5), badge: new THREE.CylinderGeometry(.045, .045, .012, 5), crown: new THREE.CylinderGeometry(.13, .14, .14, 14), brim: new THREE.CylinderGeometry(.27, .27, .02, 20), blob: new THREE.SphereGeometry(1, 10, 8) });
   function decorate(o) { const k = o.kind, M = dm(), s = o.K.s, add = (geo, mat, x, y, z, rx = 0, ry = 0, rz = 0, sc = 1) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y * s, z); m.rotation.set(rx, ry, rz); m.scale.setScalar(sc); m.castShadow = true; o.g.add(m); return m; };
-    if (k === 'crawler') { o.B.m.rotation.set(-1.32, Math.PI, 0); o.B.m.position.set(0, .3, .55); }
+    if (k === 'crawler') { o.B.m.rotation.set(-1.45, Math.PI, 0); o.B.m.position.set(0, .16, .55); }
     else { o.B.m.rotation.set(0, Math.PI, 0); o.B.m.position.set(0, 0, 0); }
     if (k === 'bloater') { o.B.m.scale.set(s * 1.38, s, s * 1.32); for (let i = 0; i < 9; i++) { const a = i * 2.4, h = .95 + (i % 3) * .17; add(M.blob, M.pus, Math.cos(a) * .3, h, Math.sin(a) * .27, 0, 0, 0, .05 + (i % 4) * .018); } o.boomed = false; }
     if (k === 'torch') { const Bn = o.B.m.userData && o.B.m.userData.B, hand = null; /* bones are in model units (cm scale) - hold the torch from the body group instead */ if (hand && !o.B.torch) { const tg = new THREE.Group(); const st = new THREE.Mesh(new THREE.CylinderGeometry(.025, .03, .6, 6), M.rust); st.position.y = .2; tg.add(st);
@@ -233,7 +233,15 @@ float zn(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(z
   // ---- per-frame ----
   const raised = [[.14, .08, 1], [.1, .06, 1]], FR = new THREE.Frustum(), PSM = new THREE.Matrix4(), SPH = new THREE.Sphere();
   function pose(o, dt, v, close = true) { const B = o.B; if (B.outlaw) { B.update(dt, v, o); return; } if (B.coyote) { B.update(dt, o.alive ? v : 0); return; } if (B.stand) { o.g.rotation.x = o.alive ? .12 : 0; return; }
-    if (!o.alive) { B.update(dt, 0); return; } const run = o.kind === 'runner';
+    if (!o.alive) { B.update(dt, 0); return; }
+    if (o.kind === 'crawler') { /* v409 a real CRAWL (was the walk cycle laid flat = 'swimming'): arms claw ahead and drag the body, legs trail, head up */
+      B.update(dt, 0); o.cph = (o.cph || 0) + dt * (1.2 + Math.min(v, 2) * 2.2); const root = B.m, Bn = root.userData.B; root.rotation.z = Math.sin(o.cph) * .1; root.position.y = .16 + Math.max(0, Math.sin(o.cph * 2)) * .04;
+      if (!Bn || !c.aimBone || !close) return; const ph = o.cph;
+      c.aimBone(root, Bn.Spine02, Bn.Spine01, [Math.sin(ph) * .12, 1, -.08]); c.aimBone(root, Bn.neck, Bn.Head, [0, 1, -.55]);
+      for (const [s2, L, off] of [[1, 'Left', 0], [-1, 'Right', Math.PI]]) { const q = Math.sin(ph + off), reach = (q + 1) / 2; c.aimBone(root, Bn[L + 'Arm'], Bn[L + 'ForeArm'], [s2 * (.35 - .1 * reach), .25 + .95 * reach, .55 - .2 * reach]); c.aimBone(root, Bn[L + 'ForeArm'], Bn[L + 'Hand'], [s2 * .05, .45 * reach, 1]);
+        c.aimBone(root, Bn[L + 'UpLeg'], Bn[L + 'Leg'], [s2 * (.16 + .05 * q), -1, .12]); c.aimBone(root, Bn[L + 'Leg'], Bn[L + 'Foot'], [s2 * .1, -1, -.25 - .15 * Math.max(0, -q)]); }
+      return; }
+    const run = o.kind === 'runner';
     B.update(dt * (run ? 1 : .75), run ? Math.max(v, 2.5) : Math.min(v, 1.4)); const root = B.m, Bn = root.userData.B; if (!Bn || !c.aimBone || !close) return; // bone posing (hunch, reach) only up close: cheap on phones
     const sw = Math.sin(o.anim * (run ? 7 : 3)) * .06; // hunched, head lolling, arms reaching forward (root space: +z forward, -x right)
     c.aimBone(root, Bn.Spine02, Bn.Spine01, [sw * .5, 1, .32]); c.aimBone(root, Bn.neck, Bn.Head, [.18 + sw, 1, .45]); o.twT = (o.twT ?? 1 + rnd() * 3) - dt; if (o.twT < .12) { Bn.Head.rotateZ(Math.sin(o.twT * 60) * .35); Bn.Head.rotateX(.15); if (o.twT <= 0) o.twT = 1.5 + rnd() * 4; } // head twitch
